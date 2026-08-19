@@ -46,7 +46,12 @@ docs/
 
 ## 문서
 
-- [게임 PRD](./docs/PRD.md)
+- [게임 PRD](./docs/PRD.md): 전체 방향과 확정 범위
+- [전투 시스템 및 밸런스](./docs/COMBAT_SYSTEM.md): 턴 규칙, 수치와 적 패턴
+- [주문 및 마법진](./docs/SPELL_GLYPH_SPEC.md): 주문 5종의 획과 판정 기준
+- [층별 진행 및 튜토리얼](./docs/LEVEL_FLOW.md): 10층부터 8층까지의 플레이 흐름
+- [UI/UX](./docs/UI_UX_SPEC.md): 화면, 입력, 상태와 접근성
+- [스토리 및 대사](./docs/NARRATIVE.md): 정보 공개 순서, 기록과 실제 대사
 
 ## Git 전략
 
@@ -115,4 +120,3 @@ setting/#3-projectStructure
 #### 작업 브랜치
 
 기능 개발, 버그 수정, 문서 수정, 설정 변경 등 태그가 붙는 모든 작업은 브랜치 컨벤션에 맞는 별도 브랜치에서 진행합니다.
-
