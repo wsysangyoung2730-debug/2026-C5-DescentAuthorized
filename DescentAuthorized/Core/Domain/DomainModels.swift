@@ -356,6 +356,7 @@ enum SceneID: String, Codable, Sendable {
     case floor8ResidualBattle
     case floor8SealedDoor
     case floor8AdministratorBattle
+    case floor8Reward
     case floor8DescentDoor
     case demoComplete
 }
@@ -394,7 +395,7 @@ struct RewardCandidate: Codable, Equatable, Identifiable, Sendable {
     let obscuredName: String
     let category: SpellCategory
     let tier: ScrollTier
-    let resolvedSpell: SpellID
+    let resolvedSpell: SpellID?
 }
 
 struct SpellMastery: Codable, Equatable, Sendable {
@@ -413,6 +414,7 @@ struct GameProgress: Codable, Equatable, Sendable {
     var readRecordIDs: Set<String>
     var tutorials: Set<TutorialFlag>
     var spellMastery: [SpellID: SpellMastery]
+    var completedTrainingSpells: Set<SpellID>
     var selectedRewardIDs: [String]
     var isDemoComplete: Bool
 
@@ -427,6 +429,7 @@ struct GameProgress: Codable, Equatable, Sendable {
         readRecordIDs: [],
         tutorials: [],
         spellMastery: [:],
+        completedTrainingSpells: [],
         selectedRewardIDs: [],
         isDemoComplete: false
     )
