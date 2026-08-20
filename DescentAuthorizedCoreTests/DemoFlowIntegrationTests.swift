@@ -62,10 +62,13 @@ final class DemoFlowIntegrationTests: XCTestCase {
                 return
             }
 
+            let turnBeforeCasting = battle.turnNumber
             if battle.phase == .playerTurn {
                 try castTurn(in: &session)
             }
-            if session.encounter != nil {
+            if session.encounter != nil,
+               session.battleState?.phase == .playerTurn,
+               session.battleState?.turnNumber == turnBeforeCasting {
                 _ = try session.handle(.finishTurn)
             }
         }

@@ -108,6 +108,35 @@ final class DemoGameSessionTests: XCTestCase {
         XCTAssertTrue(events.contains(.encounterStarted(.recordsAdministrator)))
     }
 
+    func testTwoStrokeSpellAutomaticallyAdvancesEnemyTurn() throws {
+        var progress = GameProgress.newGame
+        progress.currentFloor = .floor9
+        progress.currentScene = .floor9RecordsBattle
+        progress.checkpoint = .recordsBattle
+        progress.learnedSpells = [.barrierPiercing]
+        var session = DemoGameSession(progress: progress)
+        _ = try session.handle(.startEncounter)
+
+        let spell = SpellCatalog.spell(.barrierPiercing)
+        let events = try session.handle(.castSpell(
+            spell: spell.id,
+            strokes: referenceStrokes(for: spell),
+            inputMethod: .pencil
+        ))
+
+        XCTAssertEqual(session.battleState?.phase, .playerTurn)
+        XCTAssertEqual(session.battleState?.turnNumber, 2)
+        XCTAssertEqual(session.battleState?.resources.remainingStrokes, 2)
+        XCTAssertEqual(session.battleState?.player.hp, 86)
+        XCTAssertTrue(events.contains(.combat(.enemyActionStarted(
+            .attack(name: "기록 찌르기", damage: 14, isStrong: false)
+        ))))
+        XCTAssertTrue(events.contains(.combat(.turnStarted(
+            number: 2,
+            intent: .grantNormalBarrier(name: "문서 방벽", amount: 22)
+        ))))
+    }
+
     func testCheckpointRestartRequiresActiveEncounter() throws {
         var session = try makeRecordsBattleSession()
 
