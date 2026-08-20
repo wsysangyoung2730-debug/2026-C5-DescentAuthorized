@@ -8,8 +8,14 @@ final class GameSessionStore: ObservableObject {
     @Published var presentedError: PresentedGameError?
 
     private var coordinator: GameSessionCoordinator
+    private weak var achievementReporter: (any GameAchievementReporting)?
+    private let achievementTracker = GameAchievementTracker()
 
-    init(saveStore: (any GameSaveStore)? = nil) {
+    init(
+        saveStore: (any GameSaveStore)? = nil,
+        achievementReporter: (any GameAchievementReporting)? = nil
+    ) {
+        self.achievementReporter = achievementReporter
         let store = saveStore ?? FileGameSaveStore(fileURL: Self.defaultSaveURL)
         do {
             let coordinator = try GameSessionCoordinator(saveStore: store)
@@ -27,6 +33,7 @@ final class GameSessionStore: ObservableObject {
                 message: "새 게임 상태로 시작합니다."
             )
         }
+        reportAchievementSnapshot()
     }
 
     var progress: GameProgress { session.progress }
@@ -39,6 +46,7 @@ final class GameSessionStore: ObservableObject {
             let events = try coordinator.execute(command)
             session = coordinator.session
             latestEvents = events
+            reportAchievementSnapshot()
             return events
         } catch {
             presentedError = PresentedGameError(
@@ -54,6 +62,7 @@ final class GameSessionStore: ObservableObject {
             try coordinator.replaceWithNewGame()
             session = coordinator.session
             latestEvents = []
+            reportAchievementSnapshot()
         } catch {
             presentedError = PresentedGameError(
                 title: "새 게임을 시작하지 못했습니다",
@@ -64,6 +73,10 @@ final class GameSessionStore: ObservableObject {
 
     func clearEvents() {
         latestEvents = []
+    }
+
+    private func reportAchievementSnapshot() {
+        achievementReporter?.submit(achievementTracker.updates(for: session.progress))
     }
 
     func saveForLifecycleTransition() {

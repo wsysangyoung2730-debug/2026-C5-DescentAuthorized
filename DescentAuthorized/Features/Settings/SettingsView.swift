@@ -3,10 +3,12 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameCenter: GameCenterManager
 
     @State private var testStrokes: [DrawnStroke] = []
     @State private var lastInputMethod: DrawingInputMethod?
     @State private var canvasController = RuneDrawingCanvasController()
+    @State private var isShowingAchievements = false
 
     var body: some View {
         NavigationStack {
@@ -56,6 +58,31 @@ struct SettingsView: View {
                     }
                     .frame(minHeight: 44)
                 }
+
+                Section("Game Center") {
+                    Label(gameCenter.statusTitle, systemImage: gameCenterStatusIcon)
+                        .foregroundStyle(gameCenter.isAuthenticated ? .primary : .secondary)
+
+                    if gameCenter.isAuthenticated {
+                        Button {
+                            isShowingAchievements = true
+                        } label: {
+                            Label("업적 보기", systemImage: "trophy")
+                        }
+                    } else {
+                        Button {
+                            gameCenter.authenticate(force: true)
+                        } label: {
+                            Label("다시 연결", systemImage: "arrow.clockwise")
+                        }
+                    }
+
+                    if let syncError = gameCenter.lastSyncError {
+                        Text(syncError)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
             .navigationTitle("설정")
             .navigationBarTitleDisplayMode(.inline)
@@ -75,6 +102,10 @@ struct SettingsView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .fullScreenCover(isPresented: $isShowingAchievements) {
+            GameCenterDashboardView()
+                .ignoresSafeArea()
+        }
     }
 
     private var drawingSurface: some View {
@@ -148,5 +179,9 @@ struct SettingsView: View {
         case nil:
             "circle.dotted"
         }
+    }
+
+    private var gameCenterStatusIcon: String {
+        gameCenter.isAuthenticated ? "person.crop.circle.badge.checkmark" : "person.crop.circle.badge.xmark"
     }
 }
