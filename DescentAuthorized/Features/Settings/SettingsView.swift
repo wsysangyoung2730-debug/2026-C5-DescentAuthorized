@@ -59,6 +59,47 @@ struct SettingsView: View {
                     .frame(minHeight: 44)
                 }
 
+                Section("소리와 반응") {
+                    Toggle(
+                        "효과음",
+                        isOn: settingBinding(
+                            get: { $0.soundEffectsEnabled },
+                            set: appSettings.setSoundEffectsEnabled
+                        )
+                    )
+                    Toggle(
+                        "배경음",
+                        isOn: settingBinding(
+                            get: { $0.musicEnabled },
+                            set: appSettings.setMusicEnabled
+                        )
+                    )
+                    Toggle(
+                        "햅틱",
+                        isOn: settingBinding(
+                            get: { $0.hapticsEnabled },
+                            set: appSettings.setHapticsEnabled
+                        )
+                    )
+                }
+
+                Section("화면 효과") {
+                    Toggle(
+                        "번쩍임 줄이기",
+                        isOn: settingBinding(
+                            get: { $0.reducedFlashes },
+                            set: appSettings.setReducedFlashes
+                        )
+                    )
+                    Toggle(
+                        "동작 줄이기",
+                        isOn: settingBinding(
+                            get: { $0.reducedMotion },
+                            set: appSettings.setReducedMotion
+                        )
+                    )
+                }
+
                 Section("Game Center") {
                     Label(gameCenter.statusTitle, systemImage: gameCenterStatusIcon)
                         .foregroundStyle(gameCenter.isAuthenticated ? .primary : .secondary)
@@ -156,6 +197,16 @@ struct SettingsView: View {
         Binding(
             get: { appSettings.inputPreference },
             set: { appSettings.setInputPreference($0) }
+        )
+    }
+
+    private func settingBinding(
+        get: @escaping (GameSettings) -> Bool,
+        set: @escaping (Bool) -> Void
+    ) -> Binding<Bool> {
+        Binding(
+            get: { get(appSettings.settings) },
+            set: set
         )
     }
 

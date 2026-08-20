@@ -7,21 +7,86 @@ enum DrawingInputPreference: String, Codable, CaseIterable, Sendable {
 }
 
 struct GameSettings: Codable, Equatable, Sendable {
-    static let currentVersion = 1
+    static let currentVersion = 2
     static let defaults = GameSettings(
         saveVersion: currentVersion,
-        inputPreference: .automatic
+        inputPreference: .automatic,
+        soundEffectsEnabled: true,
+        musicEnabled: true,
+        hapticsEnabled: true,
+        reducedFlashes: false,
+        reducedMotion: false
     )
 
     var saveVersion: Int
     var inputPreference: DrawingInputPreference
+    var soundEffectsEnabled: Bool
+    var musicEnabled: Bool
+    var hapticsEnabled: Bool
+    var reducedFlashes: Bool
+    var reducedMotion: Bool
 
     init(
         saveVersion: Int = currentVersion,
-        inputPreference: DrawingInputPreference = .automatic
+        inputPreference: DrawingInputPreference = .automatic,
+        soundEffectsEnabled: Bool = true,
+        musicEnabled: Bool = true,
+        hapticsEnabled: Bool = true,
+        reducedFlashes: Bool = false,
+        reducedMotion: Bool = false
     ) {
         self.saveVersion = saveVersion
         self.inputPreference = inputPreference
+        self.soundEffectsEnabled = soundEffectsEnabled
+        self.musicEnabled = musicEnabled
+        self.hapticsEnabled = hapticsEnabled
+        self.reducedFlashes = reducedFlashes
+        self.reducedMotion = reducedMotion
+    }
+
+    func migratedToCurrentVersion() -> GameSettings {
+        var migrated = self
+        migrated.saveVersion = Self.currentVersion
+        return migrated
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case saveVersion
+        case inputPreference
+        case soundEffectsEnabled
+        case musicEnabled
+        case hapticsEnabled
+        case reducedFlashes
+        case reducedMotion
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        saveVersion = try container.decodeIfPresent(Int.self, forKey: .saveVersion) ?? 1
+        inputPreference = try container.decodeIfPresent(
+            DrawingInputPreference.self,
+            forKey: .inputPreference
+        ) ?? .automatic
+        soundEffectsEnabled = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .soundEffectsEnabled
+        ) ?? true
+        musicEnabled = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .musicEnabled
+        ) ?? true
+        hapticsEnabled = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .hapticsEnabled
+        ) ?? true
+        reducedFlashes = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .reducedFlashes
+        ) ?? false
+        reducedMotion = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .reducedMotion
+        ) ?? false
     }
 }
 

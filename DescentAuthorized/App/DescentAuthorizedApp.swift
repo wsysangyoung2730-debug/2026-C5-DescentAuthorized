@@ -5,11 +5,14 @@ struct DescentAuthorizedApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var appSettings = AppSettings()
     @StateObject private var gameCenter: GameCenterManager
+    @StateObject private var gameFeedback: GameFeedbackManager
     @StateObject private var gameSession: GameSessionStore
 
     init() {
         let gameCenter = GameCenterManager()
+        let gameFeedback = GameFeedbackManager()
         _gameCenter = StateObject(wrappedValue: gameCenter)
+        _gameFeedback = StateObject(wrappedValue: gameFeedback)
         _gameSession = StateObject(
             wrappedValue: GameSessionStore(achievementReporter: gameCenter)
         )
@@ -34,6 +37,13 @@ struct DescentAuthorizedApp: App {
                 }
                 .task {
                     gameCenter.authenticate()
+                    gameFeedback.apply(settings: appSettings.settings)
+                }
+                .onChange(of: gameSession.latestEvents) { _, events in
+                    gameFeedback.consume(events, settings: appSettings.settings)
+                }
+                .onChange(of: appSettings.settings) { _, settings in
+                    gameFeedback.apply(settings: settings)
                 }
                 .fullScreenCover(item: $gameCenter.authenticationRequest) { request in
                     GameCenterAuthenticationView(viewController: request.viewController)

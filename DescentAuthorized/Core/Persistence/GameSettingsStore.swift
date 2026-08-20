@@ -43,10 +43,10 @@ struct UserDefaultsGameSettingsStore: GameSettingsStore {
     func load() -> GameSettings {
         guard let data = defaults.data(forKey: key),
               let settings = try? JSONDecoder().decode(GameSettings.self, from: data),
-              settings.saveVersion <= GameSettings.currentVersion else {
+              (1...GameSettings.currentVersion).contains(settings.saveVersion) else {
             return .defaults
         }
-        return settings
+        return settings.migratedToCurrentVersion()
     }
 
     func save(_ settings: GameSettings) throws {

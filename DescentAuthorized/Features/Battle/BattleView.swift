@@ -24,11 +24,11 @@ struct BattleView: View {
             }
 
             Color.red
-                .opacity(playerHitFlash ? 0.24 : 0)
+                .opacity(playerHitFlash ? (appSettings.reducedFlashes ? 0.08 : 0.24) : 0)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
-            if strongAttackFlash {
+            if strongAttackFlash && !appSettings.reducedFlashes {
                 Rectangle()
                     .stroke(Color.red.opacity(0.85), lineWidth: 8)
                     .ignoresSafeArea()
@@ -429,21 +429,21 @@ struct BattleView: View {
     }
 
     private func pulseEnemy() {
-        withAnimation(.easeOut(duration: 0.12)) { enemyHitFlash = true }
+        animate(.easeOut(duration: 0.12)) { enemyHitFlash = true }
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(260))
-            withAnimation(.easeIn(duration: 0.2)) { enemyHitFlash = false }
+            animate(.easeIn(duration: 0.2)) { enemyHitFlash = false }
         }
     }
 
     private func pulsePlayer(strong: Bool) {
-        withAnimation(.easeOut(duration: 0.08)) {
+        animate(.easeOut(duration: 0.08)) {
             playerHitFlash = true
             strongAttackFlash = strong
         }
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(strong ? 420 : 260))
-            withAnimation(.easeIn(duration: 0.2)) {
+            animate(.easeIn(duration: 0.2)) {
                 playerHitFlash = false
                 strongAttackFlash = false
             }
@@ -451,13 +451,24 @@ struct BattleView: View {
     }
 
     private func showFeedback(_ text: String, color: Color) {
-        withAnimation(.spring(response: 0.24)) {
+        animate(.spring(response: 0.24)) {
             feedbackText = text
             feedbackColor = color
         }
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(900))
-            withAnimation(.easeOut(duration: 0.2)) { feedbackText = nil }
+            animate(.easeOut(duration: 0.2)) { feedbackText = nil }
+        }
+    }
+
+    private func animate(
+        _ animation: Animation,
+        changes: () -> Void
+    ) {
+        if appSettings.reducedMotion {
+            changes()
+        } else {
+            withAnimation(animation, changes)
         }
     }
 

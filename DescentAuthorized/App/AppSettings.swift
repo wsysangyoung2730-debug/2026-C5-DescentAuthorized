@@ -16,9 +16,38 @@ final class AppSettings: ObservableObject {
         settings.inputPreference
     }
 
+    var reducedFlashes: Bool { settings.reducedFlashes }
+    var reducedMotion: Bool { settings.reducedMotion }
+
     func setInputPreference(_ preference: DrawingInputPreference) {
+        update { try $0.setInputPreference(preference) }
+    }
+
+    func setSoundEffectsEnabled(_ isEnabled: Bool) {
+        update { try $0.setSoundEffectsEnabled(isEnabled) }
+    }
+
+    func setMusicEnabled(_ isEnabled: Bool) {
+        update { try $0.setMusicEnabled(isEnabled) }
+    }
+
+    func setHapticsEnabled(_ isEnabled: Bool) {
+        update { try $0.setHapticsEnabled(isEnabled) }
+    }
+
+    func setReducedFlashes(_ isEnabled: Bool) {
+        update { try $0.setReducedFlashes(isEnabled) }
+    }
+
+    func setReducedMotion(_ isEnabled: Bool) {
+        update { try $0.setReducedMotion(isEnabled) }
+    }
+
+    private func update(
+        _ operation: (inout GameSettingsManager) throws -> Void
+    ) {
         do {
-            try manager.setInputPreference(preference)
+            try operation(&manager)
             settings = manager.settings
         } catch {
             showsPersistenceError = true
