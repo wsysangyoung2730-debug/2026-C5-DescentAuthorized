@@ -320,6 +320,7 @@ enum BattleEvent: Equatable, Sendable {
     case turnStarted(number: Int, intent: EnemyAction)
     case spellResolved(spell: SpellID, grade: CastingGrade)
     case spellRejected(spell: SpellID, reason: CastingFailure)
+    case resourcesChanged(mana: Double, strokes: Int)
     case damageApplied(target: CombatantID, amount: Int, remainingHP: Int)
     case normalBarrierChanged(target: CombatantID, amount: Int)
     case absoluteBarrierChanged(target: CombatantID, charges: Int)
