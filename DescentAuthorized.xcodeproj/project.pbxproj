@@ -23,6 +23,9 @@
 		100000000000000000000018 /* GameProgressionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000018 /* GameProgressionController.swift */; };
 		100000000000000000000019 /* GameSaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000019 /* GameSaveStore.swift */; };
 		100000000000000000000020 /* DemoGameSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000020 /* DemoGameSession.swift */; };
+		100000000000000000000021 /* InputSettingsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000021 /* InputSettingsModels.swift */; };
+		100000000000000000000022 /* DrawingInputPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000022 /* DrawingInputPolicy.swift */; };
+		100000000000000000000023 /* GameSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000023 /* GameSettingsStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +46,9 @@
 		200000000000000000000018 /* GameProgressionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameProgressionController.swift; sourceTree = "<group>"; };
 		200000000000000000000019 /* GameSaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSaveStore.swift; sourceTree = "<group>"; };
 		200000000000000000000020 /* DemoGameSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoGameSession.swift; sourceTree = "<group>"; };
+		200000000000000000000021 /* InputSettingsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputSettingsModels.swift; sourceTree = "<group>"; };
+		200000000000000000000022 /* DrawingInputPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingInputPolicy.swift; sourceTree = "<group>"; };
+		200000000000000000000023 /* GameSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSettingsStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +116,7 @@
 			isa = PBXGroup;
 			children = (
 				200000000000000000000010 /* DomainModels.swift */,
+				200000000000000000000021 /* InputSettingsModels.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -127,6 +134,7 @@
 		40000000000000000000000D /* GlyphEngine */ = {
 			isa = PBXGroup;
 			children = (
+				200000000000000000000022 /* DrawingInputPolicy.swift */,
 				200000000000000000000014 /* GlyphGeometry.swift */,
 				200000000000000000000015 /* GlyphEvaluator.swift */,
 			);
@@ -153,6 +161,7 @@
 		400000000000000000000010 /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
+				200000000000000000000023 /* GameSettingsStore.swift */,
 				200000000000000000000019 /* GameSaveStore.swift */,
 			);
 			path = Persistence;
@@ -283,6 +292,9 @@
 				100000000000000000000018 /* GameProgressionController.swift in Sources */,
 				100000000000000000000019 /* GameSaveStore.swift in Sources */,
 				100000000000000000000020 /* DemoGameSession.swift in Sources */,
+				100000000000000000000021 /* InputSettingsModels.swift in Sources */,
+				100000000000000000000022 /* DrawingInputPolicy.swift in Sources */,
+				100000000000000000000023 /* GameSettingsStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

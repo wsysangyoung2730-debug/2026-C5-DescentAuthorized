@@ -22,6 +22,7 @@ struct GlyphEvaluator: Sendable {
         }
 
         let mana = calculateMana(spell: spell, strokes: strokes, erasureZones: erasureZones)
+        let inputProfile = DrawingInputPolicy.evaluationProfile(for: inputMethod)
         var passedRequiredNodes = 0
         var totalRequiredNodes = 0
         var nodeScores = [Double]()
@@ -31,7 +32,7 @@ struct GlyphEvaluator: Sendable {
 
         for (index, stroke) in strokes.enumerated() {
             let spec = spell.glyph.strokes[index]
-            let nodeRadius = spec.nodeRadius + (inputMethod == .finger ? 1 : 0)
+            let nodeRadius = spec.nodeRadius * inputProfile.nodeRadiusMultiplier
 
             guard let first = stroke.points.first,
                   first.distance(to: spec.start) <= nodeRadius else {
@@ -73,7 +74,11 @@ struct GlyphEvaluator: Sendable {
             }
 
             nodeScores.append(nodeResult.score)
-            pathScores.append(pathScore(stroke.points, reference: spec.referencePath, radius: spec.pathRadius))
+            pathScores.append(pathScore(
+                stroke.points,
+                reference: spec.referencePath,
+                radius: spec.pathRadius * inputProfile.pathRadiusMultiplier
+            ))
 
             guard let last = stroke.points.last else {
                 return rejected(.incompleteGlyph, spell: spell, mana: mana)
@@ -108,7 +113,8 @@ struct GlyphEvaluator: Sendable {
                 from: crossing.center,
                 toPolyline: strokes[crossing.secondStrokeIndex].points
             )
-            guard firstDistance <= crossing.radius, secondDistance <= crossing.radius else {
+            let crossingRadius = crossing.radius * inputProfile.crossingRadiusMultiplier
+            guard firstDistance <= crossingRadius, secondDistance <= crossingRadius else {
                 return rejected(
                     .missingCrossing,
                     spell: spell,
@@ -118,8 +124,8 @@ struct GlyphEvaluator: Sendable {
                 )
             }
             structureScores.append(
-                (proximityScore(firstDistance, radius: crossing.radius)
-                    + proximityScore(secondDistance, radius: crossing.radius)) / 2
+                (proximityScore(firstDistance, radius: crossingRadius)
+                    + proximityScore(secondDistance, radius: crossingRadius)) / 2
             )
         }
 
