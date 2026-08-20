@@ -160,9 +160,25 @@ struct GameProgressionController: Sendable {
         try requireScene(.floor8ProtectionRoom)
         progress.learnedSpells.insert(.basicBarrier)
         progress.tutorials.insert(.defense)
+        return [.spellLearned(.basicBarrier)]
+    }
+
+    mutating func completeProtectionTraining(
+        grade: CastingGrade
+    ) throws -> [ProgressionEvent] {
+        try requireScene(.floor8ProtectionRoom)
+        guard progress.learnedSpells.contains(.basicBarrier) else {
+            throw ProgressionError.requirementMissing("learned basic barrier")
+        }
+        guard grade != .rejected else {
+            throw ProgressionError.requirementMissing("successful barrier training cast")
+        }
+
+        progress.completedTrainingSpells.insert(.basicBarrier)
         progress.checkpoint = .residualBattle
         return [
-            .spellLearned(.basicBarrier),
+            .trainingCompleted(spell: .basicBarrier, grade: grade),
+            updateMastery(spell: .basicBarrier, grade: grade),
             .checkpointChanged(.residualBattle),
             .sceneChanged(setScene(.floor8ResidualBattle))
         ]

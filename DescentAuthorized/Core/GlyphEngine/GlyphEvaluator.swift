@@ -13,15 +13,37 @@ struct GlyphEvaluator: Sendable {
         inputMethod: DrawingInputMethod,
         erasureZones: [ErasureZone] = []
     ) -> CastingEvaluation {
+        evaluate(
+            glyph: spell.glyph,
+            recommendedMana: spell.recommendedMana,
+            strokes: strokes,
+            inputMethod: inputMethod,
+            erasureZones: erasureZones
+        )
+    }
+
+    func evaluate(
+        glyph: GlyphDefinition,
+        recommendedMana: Double,
+        strokes: [DrawnStroke],
+        inputMethod: DrawingInputMethod,
+        erasureZones: [ErasureZone] = []
+    ) -> CastingEvaluation {
         guard !strokes.isEmpty, strokes.allSatisfy({ !$0.points.isEmpty }) else {
-            return rejected(.noInput, spell: spell)
+            return rejected(.noInput, glyph: glyph)
         }
 
-        guard strokes.count == spell.requiredStrokes else {
-            return rejected(.wrongStrokeCount, spell: spell)
+        guard strokes.count == glyph.requiredStrokeCount else {
+            return rejected(.wrongStrokeCount, glyph: glyph)
         }
 
-        let mana = calculateMana(spell: spell, strokes: strokes, erasureZones: erasureZones)
+        let estimate = GlyphManaEstimator().estimate(
+            glyph: glyph,
+            recommendedMana: recommendedMana,
+            strokes: strokes,
+            erasureZones: erasureZones
+        )
+        let mana = (total: estimate.total, inZones: estimate.inErasureZones)
         let inputProfile = DrawingInputPolicy.evaluationProfile(for: inputMethod)
         var passedRequiredNodes = 0
         var totalRequiredNodes = 0
@@ -31,14 +53,14 @@ struct GlyphEvaluator: Sendable {
         var gradeCap: CastingGrade?
 
         for (index, stroke) in strokes.enumerated() {
-            let spec = spell.glyph.strokes[index]
+            let spec = glyph.strokes[index]
             let nodeRadius = spec.nodeRadius * inputProfile.nodeRadiusMultiplier
 
             guard let first = stroke.points.first,
                   first.distance(to: spec.start) <= nodeRadius else {
                 return rejected(
                     .invalidStart,
-                    spell: spell,
+                    glyph: glyph,
                     mana: mana,
                     passedNodes: passedRequiredNodes,
                     requiredNodes: totalRequiredNodes + spec.requiredNodes.count
@@ -56,7 +78,7 @@ struct GlyphEvaluator: Sendable {
             guard nodeResult.passed == spec.requiredNodes.count else {
                 return rejected(
                     .missingRequiredNode,
-                    spell: spell,
+                    glyph: glyph,
                     mana: mana,
                     passedNodes: passedRequiredNodes,
                     requiredNodes: totalRequiredNodes
@@ -81,13 +103,13 @@ struct GlyphEvaluator: Sendable {
             ))
 
             guard let last = stroke.points.last else {
-                return rejected(.incompleteGlyph, spell: spell, mana: mana)
+                return rejected(.incompleteGlyph, glyph: glyph, mana: mana)
             }
             let endDistance = last.distance(to: spec.end)
             guard endDistance <= nodeRadius * 2 else {
                 return rejected(
                     .invalidEnd,
-                    spell: spell,
+                    glyph: glyph,
                     mana: mana,
                     passedNodes: passedRequiredNodes,
                     requiredNodes: totalRequiredNodes
@@ -99,10 +121,10 @@ struct GlyphEvaluator: Sendable {
             structureScores.append((startScore + endScore) / 2)
         }
 
-        for crossing in spell.glyph.crossings {
+        for crossing in glyph.crossings {
             guard crossing.firstStrokeIndex < strokes.count,
                   crossing.secondStrokeIndex < strokes.count else {
-                return rejected(.missingCrossing, spell: spell, mana: mana)
+                return rejected(.missingCrossing, glyph: glyph, mana: mana)
             }
 
             let firstDistance = GlyphGeometry.distance(
@@ -117,7 +139,7 @@ struct GlyphEvaluator: Sendable {
             guard firstDistance <= crossingRadius, secondDistance <= crossingRadius else {
                 return rejected(
                     .missingCrossing,
-                    spell: spell,
+                    glyph: glyph,
                     mana: mana,
                     passedNodes: passedRequiredNodes,
                     requiredNodes: totalRequiredNodes
@@ -132,7 +154,7 @@ struct GlyphEvaluator: Sendable {
         guard mana.total <= maximumMana else {
             return rejected(
                 .manaDepleted,
-                spell: spell,
+                glyph: glyph,
                 mana: mana,
                 passedNodes: passedRequiredNodes,
                 requiredNodes: totalRequiredNodes
@@ -142,7 +164,7 @@ struct GlyphEvaluator: Sendable {
         let nodes = average(nodeScores)
         let path = average(pathScores)
         let structure = average(structureScores)
-        let manaEfficiency = manaEfficiencyScore(used: mana.total, recommended: spell.recommendedMana)
+        let manaEfficiency = manaEfficiencyScore(used: mana.total, recommended: recommendedMana)
         let score = nodes * 0.4 + path * 0.35 + structure * 0.15 + manaEfficiency * 0.1
         var grade = grade(for: score)
         if let gradeCap, grade > gradeCap {
@@ -152,7 +174,7 @@ struct GlyphEvaluator: Sendable {
         guard grade != .rejected else {
             return rejected(
                 .incompleteGlyph,
-                spell: spell,
+                glyph: glyph,
                 mana: mana,
                 passedNodes: passedRequiredNodes,
                 requiredNodes: totalRequiredNodes,
@@ -180,25 +202,6 @@ struct GlyphEvaluator: Sendable {
                 manaEfficiency: manaEfficiency
             )
         )
-    }
-
-    private func calculateMana(
-        spell: SpellDefinition,
-        strokes: [DrawnStroke],
-        erasureZones: [ErasureZone]
-    ) -> (total: Double, inZones: Double) {
-        let referenceLength = spell.glyph.strokes.reduce(0) {
-            $0 + GlyphGeometry.length(of: $1.referencePath)
-        }
-        guard referenceLength > 0 else { return (maximumMana, 0) }
-
-        let weighted = strokes.reduce(into: (total: 0.0, inZones: 0.0)) { result, stroke in
-            let length = GlyphGeometry.weightedLength(of: stroke.points, erasureZones: erasureZones)
-            result.total += length.total
-            result.inZones += length.inErasureZones
-        }
-        let scale = spell.recommendedMana / referenceLength
-        return (weighted.total * scale, weighted.inZones * scale)
     }
 
     private func evaluateNodes(
@@ -283,7 +286,7 @@ struct GlyphEvaluator: Sendable {
 
     private func rejected(
         _ failure: CastingFailure,
-        spell: SpellDefinition,
+        glyph: GlyphDefinition,
         mana: (total: Double, inZones: Double) = (0, 0),
         passedNodes: Int = 0,
         requiredNodes: Int? = nil,
@@ -301,7 +304,7 @@ struct GlyphEvaluator: Sendable {
             manaUsed: mana.total,
             manaUsedInErasureZones: mana.inZones,
             passedRequiredNodeCount: passedNodes,
-            requiredNodeCount: requiredNodes ?? spell.glyph.strokes.reduce(0) { $0 + $1.requiredNodes.count },
+            requiredNodeCount: requiredNodes ?? glyph.strokes.reduce(0) { $0 + $1.requiredNodes.count },
             breakdown: breakdown
         )
     }

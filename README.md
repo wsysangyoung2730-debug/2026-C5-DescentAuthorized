@@ -28,7 +28,7 @@ DescentAuthorized.xcodeproj
 - 자동, Apple Pencil 전용, 손가락 전용 입력 설정
 - 순수 Swift 턴 상태 관리
 
-현재 저장소에는 기획 문서와 함께 마법진 판정, 턴제 전투, 적 패턴, 데모 진행, 보상 및 저장을 실행할 수 있는 비 UI 코어가 포함되어 있습니다.
+현재 저장소에서는 임시 시각 요소로 10층부터 8층까지 진행하고, 7층 문에 도달하는 전체 플레이 데모를 실행할 수 있습니다. RealityKit 2.5D 무대와 Blender 에셋은 후속 단계에서 현재 화면의 배경과 적 실루엣을 교체합니다.
 
 ## 폴더 구조
 
@@ -46,6 +46,7 @@ DescentAuthorized/
 ├── Features/
 │   ├── Home/            # 시작 화면
 │   ├── Battle/          # 전투 및 드로잉 입력
+│   ├── Progression/     # 층 탐색, 보상, 하강문과 엔딩
 │   └── Settings/        # 입력 방식 설정과 입력 확인
 └── Resources/           # 이미지, 사운드, 에셋
 DescentAuthorizedCoreTests/ # 비 UI 코어 자동 테스트
@@ -60,8 +61,8 @@ docs/                        # 기획 및 구현 문서
 - [층별 진행 및 튜토리얼](./docs/LEVEL_FLOW.md): 10층부터 8층까지의 플레이 흐름
 - [UI/UX](./docs/UI_UX_SPEC.md): 화면, 입력, 상태와 접근성
 - [스토리 및 대사](./docs/NARRATIVE.md): 정보 공개 순서, 기록과 실제 대사
-- [비UI 프로토타입 구현 계획](./docs/IMPLEMENTATION_PLAN.md): 코어 아키텍처와 단계별 완료 조건
-- [비UI 코어 구현 현황](./docs/CORE_IMPLEMENTATION_STATUS.md): 현재 동작 범위, 검증 결과와 다음 작업
+- [구현 계획](./docs/IMPLEMENTATION_PLAN.md): 코어 아키텍처와 단계별 완료 조건
+- [플레이 데모 구현 현황](./docs/CORE_IMPLEMENTATION_STATUS.md): 현재 동작 범위, 검증 결과와 다음 작업
 - [Pencil 및 손가락 입력 구현 계획](./docs/INPUT_IMPLEMENTATION_PLAN.md): 입력 정책, 설정 저장과 단계별 검증 기준
 
 ## 코어 검증
@@ -70,7 +71,7 @@ docs/                        # 기획 및 구현 문서
 swift test
 ```
 
-Xcode 프로젝트의 iPad 앱 타깃도 동일한 코어 소스를 직접 포함하므로 별도의 코드 복사 없이 UI에서 `DemoGameSession`을 연결할 수 있습니다.
+Xcode 프로젝트의 iPad 앱 타깃은 동일한 코어 소스를 사용하며, 화면 상태와 체크포인트 저장은 `GameSessionStore`가 관리합니다.
 
 ## Git 전략
 

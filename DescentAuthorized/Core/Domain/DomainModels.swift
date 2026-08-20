@@ -208,6 +208,21 @@ struct SpellDefinition: Codable, Equatable, Sendable {
     var requiredStrokes: Int { glyph.requiredStrokeCount }
 }
 
+enum DescentDoorGlyphID: String, Codable, CaseIterable, Sendable {
+    case floor10
+    case floor9
+    case floor8
+}
+
+struct DescentDoorGlyphDefinition: Codable, Equatable, Sendable {
+    let id: DescentDoorGlyphID
+    let name: String
+    let recommendedMana: Double
+    let glyph: GlyphDefinition
+
+    var requiredStrokes: Int { glyph.requiredStrokeCount }
+}
+
 // MARK: - Combat domain
 
 enum CombatantID: Codable, Hashable, Sendable {

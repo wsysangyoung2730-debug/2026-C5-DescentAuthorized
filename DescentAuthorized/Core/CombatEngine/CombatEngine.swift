@@ -29,6 +29,7 @@ struct CombatEngine: Sendable {
     init(
         enemy: EnemyDefinition,
         playerHP: Int = 100,
+        playerNormalBarrier: Int = 0,
         learnedSpells: Set<SpellID> = Set(SpellID.allCases)
     ) {
         enemyDefinition = enemy
@@ -39,7 +40,8 @@ struct CombatEngine: Sendable {
                 id: .player,
                 name: "익명 봉인관",
                 maxHP: 100,
-                hp: playerHP
+                hp: playerHP,
+                normalBarrier: playerNormalBarrier
             ),
             enemy: CombatantState(
                 id: .enemy(enemy.id),
@@ -60,6 +62,14 @@ struct CombatEngine: Sendable {
         guard state.phase == .preparing, state.turnNumber == 0 else { return [] }
 
         var events: [BattleEvent] = [.battleStarted(enemy: enemyDefinition.id)]
+        if state.player.normalBarrier > 0 {
+            events.append(
+                .normalBarrierChanged(
+                    target: state.player.id,
+                    amount: state.player.normalBarrier
+                )
+            )
+        }
         if state.enemy.absoluteBarrierCharges > 0 {
             events.append(
                 .absoluteBarrierChanged(
@@ -334,4 +344,3 @@ struct CombatEngine: Sendable {
         }
     }
 }
-

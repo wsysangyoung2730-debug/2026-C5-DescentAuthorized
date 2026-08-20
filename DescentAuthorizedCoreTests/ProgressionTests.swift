@@ -23,6 +23,7 @@ final class ProgressionTests: XCTestCase {
 
         _ = try controller.enterProtectionRoom()
         _ = try controller.learnBasicBarrier()
+        _ = try controller.completeProtectionTraining(grade: .approved)
         _ = try controller.completeEncounter(
             enemy: .observationResidual,
             remainingPlayerHP: 25
@@ -87,6 +88,7 @@ final class ProgressionTests: XCTestCase {
 
         _ = try controller.enterProtectionRoom()
         _ = try controller.learnBasicBarrier()
+        _ = try controller.completeProtectionTraining(grade: .approved)
         _ = try controller.completeEncounter(
             enemy: .observationResidual,
             remainingPlayerHP: 10
