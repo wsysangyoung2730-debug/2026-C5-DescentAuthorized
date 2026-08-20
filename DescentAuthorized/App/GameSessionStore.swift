@@ -66,6 +66,18 @@ final class GameSessionStore: ObservableObject {
         latestEvents = []
     }
 
+    func saveForLifecycleTransition() {
+        guard hasSavedProgress else { return }
+        do {
+            try coordinator.saveCurrentProgress()
+        } catch {
+            presentedError = PresentedGameError(
+                title: "진행 상황을 저장하지 못했습니다",
+                message: "앱으로 돌아온 뒤 저장 공간을 확인해 주세요."
+            )
+        }
+    }
+
     private static var defaultSaveURL: URL {
         let baseURL = FileManager.default.urls(
             for: .applicationSupportDirectory,

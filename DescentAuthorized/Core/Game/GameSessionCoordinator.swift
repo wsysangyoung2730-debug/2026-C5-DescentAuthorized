@@ -5,16 +5,17 @@ struct GameSessionCoordinator {
     private(set) var hasSavedProgress: Bool
 
     private let saveStore: any GameSaveStore
+    private let progressValidator: GameProgressValidator
 
     init(
         saveStore: any GameSaveStore,
-        restoreFromStore: Bool = true
+        restoreFromStore: Bool = true,
+        progressValidator: GameProgressValidator = GameProgressValidator()
     ) throws {
         self.saveStore = saveStore
+        self.progressValidator = progressValidator
         if restoreFromStore, let progress = try saveStore.load() {
-            guard progress.saveVersion <= GameProgress.newGame.saveVersion else {
-                throw GameSaveError.unsupportedVersion(progress.saveVersion)
-            }
+            try progressValidator.validate(progress)
             session = DemoGameSession(progress: progress)
             hasSavedProgress = progress != .newGame
         } else {
@@ -44,6 +45,7 @@ struct GameSessionCoordinator {
     }
 
     mutating func saveCurrentProgress() throws {
+        try progressValidator.validate(session.progress)
         try saveStore.save(session.progress)
         hasSavedProgress = session.progress != .newGame
     }

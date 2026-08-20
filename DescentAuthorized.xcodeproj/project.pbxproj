@@ -46,6 +46,7 @@
 		100000000000000000000041 /* Floor8ExplorationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000041 /* Floor8ExplorationView.swift */; };
 		100000000000000000000042 /* Floor8DescentDoorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000042 /* Floor8DescentDoorView.swift */; };
 		100000000000000000000043 /* DemoCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000043 /* DemoCompleteView.swift */; };
+		100000000000000000000044 /* GameProgressValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000044 /* GameProgressValidator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -89,6 +90,7 @@
 		200000000000000000000041 /* Floor8ExplorationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Floor8ExplorationView.swift; sourceTree = "<group>"; };
 		200000000000000000000042 /* Floor8DescentDoorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Floor8DescentDoorView.swift; sourceTree = "<group>"; };
 		200000000000000000000043 /* DemoCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoCompleteView.swift; sourceTree = "<group>"; };
+		200000000000000000000044 /* GameProgressValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameProgressValidator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -207,6 +209,7 @@
 		400000000000000000000010 /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
+				200000000000000000000044 /* GameProgressValidator.swift */,
 				200000000000000000000028 /* GameSettingsManager.swift */,
 				200000000000000000000023 /* GameSettingsStore.swift */,
 				200000000000000000000019 /* GameSaveStore.swift */,
@@ -399,6 +402,7 @@
 				100000000000000000000041 /* Floor8ExplorationView.swift in Sources */,
 				100000000000000000000042 /* Floor8DescentDoorView.swift in Sources */,
 				100000000000000000000043 /* DemoCompleteView.swift in Sources */,
+				100000000000000000000044 /* GameProgressValidator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

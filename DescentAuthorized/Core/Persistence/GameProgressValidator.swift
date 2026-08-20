@@ -1,0 +1,262 @@
+import Foundation
+
+enum GameProgressValidationError: Error, Equatable, Sendable {
+    case unsupportedVersion(Int)
+    case invalidPlayerHP(Int)
+    case floorSceneMismatch(floor: FloorID, scene: SceneID)
+    case checkpointSceneMismatch(checkpoint: CheckpointID, scene: SceneID)
+    case missingRequirement(String)
+    case unknownReward(String)
+    case duplicateReward(String)
+    case invalidMastery(SpellID)
+    case completionStateMismatch
+}
+
+struct GameProgressValidator: Sendable {
+    let supportedSaveVersion: Int
+
+    init(supportedSaveVersion: Int = GameProgress.newGame.saveVersion) {
+        self.supportedSaveVersion = supportedSaveVersion
+    }
+
+    func validate(_ progress: GameProgress) throws {
+        guard (1...supportedSaveVersion).contains(progress.saveVersion) else {
+            throw GameProgressValidationError.unsupportedVersion(progress.saveVersion)
+        }
+        guard (1...GameProgressionController.maximumPlayerHP).contains(progress.playerHP) else {
+            throw GameProgressValidationError.invalidPlayerHP(progress.playerHP)
+        }
+
+        try validateLocation(progress)
+        try validateCollectionIntegrity(progress)
+        try validateProgressionRequirements(progress)
+    }
+
+    private func validateLocation(_ progress: GameProgress) throws {
+        let expectedFloor = floor(for: progress.currentScene)
+        guard progress.currentFloor == expectedFloor else {
+            throw GameProgressValidationError.floorSceneMismatch(
+                floor: progress.currentFloor,
+                scene: progress.currentScene
+            )
+        }
+
+        let allowedCheckpoints = checkpoints(for: progress.currentScene)
+        guard allowedCheckpoints.contains(progress.checkpoint) else {
+            throw GameProgressValidationError.checkpointSceneMismatch(
+                checkpoint: progress.checkpoint,
+                scene: progress.currentScene
+            )
+        }
+
+        let isCompletionScene = progress.currentScene == .demoComplete
+        guard progress.isDemoComplete == isCompletionScene else {
+            throw GameProgressValidationError.completionStateMismatch
+        }
+    }
+
+    private func validateCollectionIntegrity(_ progress: GameProgress) throws {
+        guard progress.completedTrainingSpells.isSubset(of: progress.learnedSpells) else {
+            throw GameProgressValidationError.missingRequirement("trained spells must be learned")
+        }
+
+        for (spell, mastery) in progress.spellMastery {
+            guard progress.learnedSpells.contains(spell),
+                  mastery.successfulCasts > 0,
+                  mastery.bestGrade != .rejected else {
+                throw GameProgressValidationError.invalidMastery(spell)
+            }
+        }
+
+        let knownRewards = Dictionary(
+            uniqueKeysWithValues: [FloorID.floor9, .floor8]
+                .flatMap { RewardCatalog.candidates(for: $0) }
+                .map { ($0.id, $0) }
+        )
+        var selectedRewards = Set<String>()
+        for rewardID in progress.selectedRewardIDs {
+            guard knownRewards[rewardID] != nil else {
+                throw GameProgressValidationError.unknownReward(rewardID)
+            }
+            guard selectedRewards.insert(rewardID).inserted else {
+                throw GameProgressValidationError.duplicateReward(rewardID)
+            }
+        }
+
+        for floor in [FloorID.floor9, .floor8] {
+            let floorRewardIDs = Set(RewardCatalog.candidates(for: floor).map(\.id))
+            let count = progress.selectedRewardIDs.filter(floorRewardIDs.contains).count
+            guard count <= 1 else {
+                throw GameProgressValidationError.duplicateReward("floor\(floor.rawValue)")
+            }
+        }
+    }
+
+    private func validateProgressionRequirements(_ progress: GameProgress) throws {
+        let scene = progress.currentScene
+        let floor10Learned: Set<SpellID> = [.afterglowErasure, .riftSeverance]
+        let floor9RewardIDs = Set(RewardCatalog.candidates(for: .floor9).map(\.id))
+        let floor8RewardIDs = Set(RewardCatalog.candidates(for: .floor8).map(\.id))
+
+        if scenes(from: .floor10GlyphArchive).contains(scene) {
+            try require(
+                progress.learnedSpells.contains(.afterglowErasure),
+                "잔광 말소 습득"
+            )
+        }
+
+        if scenes(from: .floor10DescentDoor).contains(scene) {
+            try require(
+                progress.learnedSpells.isSuperset(of: floor10Learned)
+                    && progress.completedTrainingSpells.isSuperset(of: floor10Learned),
+                "10층 공격 주문 훈련 완료"
+            )
+        }
+
+        if scenes(from: .floor9RewardVault).contains(scene) {
+            try require(
+                progress.defeatedEnemies.contains(.recordsAdministrator),
+                "기록 관리자 처치"
+            )
+        }
+
+        if scenes(from: .floor9DescentDoor).contains(scene) {
+            try require(
+                progress.selectedRewardIDs.contains(where: floor9RewardIDs.contains)
+                    && progress.learnedSpells.contains(.barrierPiercing),
+                "9층 주문서 선택"
+            )
+        }
+
+        if scenes(from: .floor8ResidualBattle).contains(scene) {
+            try require(
+                progress.learnedSpells.contains(.basicBarrier)
+                    && progress.completedTrainingSpells.contains(.basicBarrier),
+                "초급 방벽 훈련 완료"
+            )
+        }
+
+        if scenes(from: .floor8SealedDoor).contains(scene) {
+            try require(
+                progress.defeatedEnemies.contains(.observationResidual)
+                    && progress.learnedSpells.contains(.sealRelease),
+                "관측 잔류체 처치와 봉인 해제 습득"
+            )
+        }
+
+        if scenes(from: .floor8Reward).contains(scene) {
+            try require(
+                progress.defeatedEnemies.contains(.observationAdministrator),
+                "관측 관리자 처치"
+            )
+        }
+
+        if scenes(from: .floor8DescentDoor).contains(scene) {
+            try require(
+                progress.selectedRewardIDs.contains(where: floor8RewardIDs.contains),
+                "8층 주문서 선택"
+            )
+        }
+
+        if progress.defeatedEnemies.contains(.observationResidual) {
+            try require(
+                progress.defeatedEnemies.contains(.recordsAdministrator),
+                "9층 선행 전투 완료"
+            )
+        }
+        if progress.defeatedEnemies.contains(.observationAdministrator) {
+            try require(
+                progress.defeatedEnemies.isSuperset(of: [
+                    .recordsAdministrator,
+                    .observationResidual
+                ]),
+                "8층 선행 전투 완료"
+            )
+        }
+    }
+
+    private func require(_ condition: @autoclosure () -> Bool, _ name: String) throws {
+        guard condition() else {
+            throw GameProgressValidationError.missingRequirement(name)
+        }
+    }
+
+    private func floor(for scene: SceneID) -> FloorID {
+        switch scene {
+        case .floor10MeetingRoom,
+             .floor10Office,
+             .floor10GlyphArchive,
+             .floor10TrainingWall,
+             .floor10DescentDoor:
+            .floor10
+        case .floor9Entrance,
+             .floor9RecordsBattle,
+             .floor9RewardVault,
+             .floor9DescentDoor:
+            .floor9
+        case .floor8Antechamber,
+             .floor8ProtectionRoom,
+             .floor8ResidualBattle,
+             .floor8SealedDoor,
+             .floor8AdministratorBattle,
+             .floor8Reward,
+             .floor8DescentDoor:
+            .floor8
+        case .demoComplete:
+            .floor7
+        }
+    }
+
+    private func checkpoints(for scene: SceneID) -> Set<CheckpointID> {
+        switch scene {
+        case .floor10MeetingRoom,
+             .floor10Office,
+             .floor10GlyphArchive,
+             .floor10TrainingWall,
+             .floor10DescentDoor:
+            [.floor10Start]
+        case .floor9Entrance:
+            [.floor10Complete]
+        case .floor9RecordsBattle:
+            [.recordsBattle]
+        case .floor9RewardVault, .floor9DescentDoor:
+            [.recordsDefeated]
+        case .floor8Antechamber, .floor8ProtectionRoom:
+            [.floor8Start]
+        case .floor8ResidualBattle:
+            [.residualBattle]
+        case .floor8SealedDoor:
+            [.residualDefeated]
+        case .floor8AdministratorBattle:
+            [.observationBattle]
+        case .floor8Reward, .floor8DescentDoor:
+            [.observationDefeated]
+        case .demoComplete:
+            [.demoComplete]
+        }
+    }
+
+    private func scenes(from firstScene: SceneID) -> Set<SceneID> {
+        let orderedScenes: [SceneID] = [
+            .floor10MeetingRoom,
+            .floor10Office,
+            .floor10TrainingWall,
+            .floor10GlyphArchive,
+            .floor10DescentDoor,
+            .floor9Entrance,
+            .floor9RecordsBattle,
+            .floor9RewardVault,
+            .floor9DescentDoor,
+            .floor8Antechamber,
+            .floor8ProtectionRoom,
+            .floor8ResidualBattle,
+            .floor8SealedDoor,
+            .floor8AdministratorBattle,
+            .floor8Reward,
+            .floor8DescentDoor,
+            .demoComplete
+        ]
+        guard let index = orderedScenes.firstIndex(of: firstScene) else { return [] }
+        return Set(orderedScenes[index...])
+    }
+}

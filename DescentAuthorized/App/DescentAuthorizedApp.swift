@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct DescentAuthorizedApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var appSettings = AppSettings()
     @StateObject private var gameSession = GameSessionStore()
 
@@ -16,6 +17,10 @@ struct DescentAuthorizedApp: App {
                         message: Text(error.message),
                         dismissButton: .default(Text("확인"))
                     )
+                }
+                .onChange(of: scenePhase) { _, phase in
+                    guard phase == .inactive || phase == .background else { return }
+                    gameSession.saveForLifecycleTransition()
                 }
         }
     }
