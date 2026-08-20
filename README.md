@@ -25,9 +25,12 @@ DescentAuthorized.xcodeproj
 - SwiftUI
 - RealityKit 기반 2.5D 전투 무대
 - Apple Pencil 및 손가락 드로잉 입력
+- 자동, Apple Pencil 전용, 손가락 전용 입력 설정
 - 순수 Swift 턴 상태 관리
+- Game Center 임시 업적과 오프라인 동기화 원장
+- 햅틱, 오디오 연결 계층과 접근성 설정
 
-현재 저장소에는 개발을 시작하기 위한 iPadOS 프로젝트 골격과 기획 문서만 포함합니다.
+현재 저장소에서는 임시 시각 요소로 10층부터 8층까지 진행하고, 7층 문에 도달하는 전체 플레이 데모를 실행할 수 있습니다. RealityKit 2.5D 무대와 Blender 에셋은 후속 단계에서 현재 화면의 배경과 적 실루엣을 교체합니다.
 
 ## 폴더 구조
 
@@ -35,18 +38,44 @@ DescentAuthorized.xcodeproj
 DescentAuthorized/
 ├── App/                 # 앱 진입점
 ├── Core/
-│   └── Game/            # 전투 상태와 공통 게임 규칙
+│   ├── Content/         # 주문, 적, 보상 데이터
+│   ├── Domain/          # 공통 데이터 모델
+│   ├── GlyphEngine/     # 마법진 경로 및 마나 판정
+│   ├── CombatEngine/    # 턴 전투와 적 패턴
+│   ├── Progression/     # 10층부터 8층까지의 진행 규칙
+│   ├── Persistence/     # 체크포인트 저장 및 복원
+│   └── Game/            # 통합 데모 세션
 ├── Features/
 │   ├── Home/            # 시작 화면
-│   └── Battle/          # 전투 기능
+│   ├── Battle/          # 전투 및 드로잉 입력
+│   ├── Progression/     # 층 탐색, 보상, 하강문과 엔딩
+│   └── Settings/        # 입력, 피드백, Game Center와 일시정지
 └── Resources/           # 이미지, 사운드, 에셋
-docs/
-└── PRD.md               # 게임 기획 기준 문서
+DescentAuthorizedCoreTests/ # 비 UI 코어 자동 테스트
+docs/                        # 기획 및 구현 문서
 ```
 
 ## 문서
 
-- [게임 PRD](./docs/PRD.md)
+- [게임 PRD](./docs/PRD.md): 전체 방향과 확정 범위
+- [전투 시스템 및 밸런스](./docs/COMBAT_SYSTEM.md): 턴 규칙, 수치와 적 패턴
+- [주문 및 마법진](./docs/SPELL_GLYPH_SPEC.md): 주문 5종의 획과 판정 기준
+- [층별 진행 및 튜토리얼](./docs/LEVEL_FLOW.md): 10층부터 8층까지의 플레이 흐름
+- [UI/UX](./docs/UI_UX_SPEC.md): 화면, 입력, 상태와 접근성
+- [스토리 및 대사](./docs/NARRATIVE.md): 정보 공개 순서, 기록과 실제 대사
+- [구현 계획](./docs/IMPLEMENTATION_PLAN.md): 코어 아키텍처와 단계별 완료 조건
+- [플레이 데모 구현 현황](./docs/CORE_IMPLEMENTATION_STATUS.md): 현재 동작 범위, 검증 결과와 다음 작업
+- [Pencil 및 손가락 입력 구현 계획](./docs/INPUT_IMPLEMENTATION_PLAN.md): 입력 정책, 설정 저장과 단계별 검증 기준
+- [Game Center 임시 업적](./docs/GAME_CENTER_SETUP.md): 업적 ID, 조건과 App Store Connect 설정
+- [오디오 에셋 연결 명세](./docs/AUDIO_ASSET_MANIFEST.md): 효과음·배경음 파일명과 이벤트 연결
+
+## 코어 검증
+
+```bash
+swift test
+```
+
+Xcode 프로젝트의 iPad 앱 타깃은 동일한 코어 소스를 사용하며, 화면 상태와 체크포인트 저장은 `GameSessionStore`가 관리합니다.
 
 ## Git 전략
 
@@ -115,4 +144,3 @@ setting/#3-projectStructure
 #### 작업 브랜치
 
 기능 개발, 버그 수정, 문서 수정, 설정 변경 등 태그가 붙는 모든 작업은 브랜치 컨벤션에 맞는 별도 브랜치에서 진행합니다.
-
