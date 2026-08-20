@@ -61,6 +61,12 @@ struct DemoFlowView: View {
         case .floor9Entrance:
             Floor9EntranceView()
 
+        case .floor9RewardVault:
+            RewardSelectionView(floor: .floor9)
+
+        case .floor9DescentDoor:
+            Floor9DescentDoorView()
+
         default:
             unavailableScene
         }
