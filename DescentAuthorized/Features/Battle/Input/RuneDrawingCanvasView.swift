@@ -2,7 +2,7 @@ import UIKit
 
 @MainActor
 final class RuneDrawingCanvasView: UIView {
-    var onStrokesChanged: (([DrawnStroke], DrawingInputMethod?) -> Void)?
+    var onDrawingChanged: ((RuneDrawingState) -> Void)?
     var onInputRejected: ((StrokeCaptureError) -> Void)?
 
     private(set) var inputPreference: DrawingInputPreference
@@ -13,6 +13,10 @@ final class RuneDrawingCanvasView: UIView {
     }
 
     var guideNodes: [NormalizedPoint] = [] {
+        didSet { setNeedsDisplay() }
+    }
+
+    var erasureZones: [ErasureZone] = [] {
         didSet { setNeedsDisplay() }
     }
 
@@ -128,6 +132,7 @@ final class RuneDrawingCanvasView: UIView {
                     samples: coalesced.map(rawSample(for:))
                 )
                 activeDisplayPoints.append(contentsOf: coalesced.map(location(for:)))
+                notifyStateChanged()
                 setNeedsDisplay()
             } catch let error as StrokeCaptureError {
                 onInputRejected?(error)
@@ -183,6 +188,7 @@ final class RuneDrawingCanvasView: UIView {
     override func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else { return }
 
+        drawErasureZones(in: context)
         drawGuides(in: context)
         for stroke in captureSession.completedStrokes {
             drawStroke(
@@ -220,9 +226,15 @@ final class RuneDrawingCanvasView: UIView {
 
     private func notifyStateChanged() {
         updateAccessibilityValue()
-        onStrokesChanged?(
-            captureSession.completedStrokes,
-            captureSession.activeMethod ?? captureSession.lastCompletedMethod
+        let activeStroke = activeDisplayPoints.isEmpty
+            ? nil
+            : DrawnStroke(points: activeDisplayPoints.map(normalizedPoint(for:)))
+        onDrawingChanged?(
+            RuneDrawingState(
+                completedStrokes: captureSession.completedStrokes,
+                activeStroke: activeStroke,
+                inputMethod: captureSession.activeMethod ?? captureSession.lastCompletedMethod
+            )
         )
     }
 
@@ -269,6 +281,44 @@ final class RuneDrawingCanvasView: UIView {
             x: bounds.width * point.x / 100,
             y: bounds.height * point.y / 100
         )
+    }
+
+    private func normalizedPoint(for point: CGPoint) -> NormalizedPoint {
+        guard bounds.width > 0, bounds.height > 0 else {
+            return NormalizedPoint(x: 0, y: 0)
+        }
+        return NormalizedPoint(
+            x: min(max(point.x / bounds.width * 100, 0), 100),
+            y: min(max(point.y / bounds.height * 100, 0), 100)
+        )
+    }
+
+    private func drawErasureZones(in context: CGContext) {
+        for zone in erasureZones {
+            let topLeft = canvasPoint(for: NormalizedPoint(
+                x: zone.bounds.minX,
+                y: zone.bounds.minY
+            ))
+            let bottomRight = canvasPoint(for: NormalizedPoint(
+                x: zone.bounds.maxX,
+                y: zone.bounds.maxY
+            ))
+            let zoneRect = CGRect(
+                x: topLeft.x,
+                y: topLeft.y,
+                width: bottomRight.x - topLeft.x,
+                height: bottomRight.y - topLeft.y
+            )
+
+            context.saveGState()
+            context.setFillColor(UIColor.systemRed.withAlphaComponent(0.1).cgColor)
+            context.fill(zoneRect)
+            context.setStrokeColor(UIColor.systemRed.withAlphaComponent(0.45).cgColor)
+            context.setLineWidth(1)
+            context.setLineDash(phase: 0, lengths: [4, 5])
+            context.stroke(zoneRect.insetBy(dx: 0.5, dy: 0.5))
+            context.restoreGState()
+        }
     }
 
     private func drawGuides(in context: CGContext) {

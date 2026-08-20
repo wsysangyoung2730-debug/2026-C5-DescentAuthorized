@@ -21,7 +21,12 @@ struct GlyphEvaluator: Sendable {
             return rejected(.wrongStrokeCount, spell: spell)
         }
 
-        let mana = calculateMana(spell: spell, strokes: strokes, erasureZones: erasureZones)
+        let estimate = GlyphManaEstimator().estimate(
+            spell: spell,
+            strokes: strokes,
+            erasureZones: erasureZones
+        )
+        let mana = (total: estimate.total, inZones: estimate.inErasureZones)
         let inputProfile = DrawingInputPolicy.evaluationProfile(for: inputMethod)
         var passedRequiredNodes = 0
         var totalRequiredNodes = 0
@@ -180,25 +185,6 @@ struct GlyphEvaluator: Sendable {
                 manaEfficiency: manaEfficiency
             )
         )
-    }
-
-    private func calculateMana(
-        spell: SpellDefinition,
-        strokes: [DrawnStroke],
-        erasureZones: [ErasureZone]
-    ) -> (total: Double, inZones: Double) {
-        let referenceLength = spell.glyph.strokes.reduce(0) {
-            $0 + GlyphGeometry.length(of: $1.referencePath)
-        }
-        guard referenceLength > 0 else { return (maximumMana, 0) }
-
-        let weighted = strokes.reduce(into: (total: 0.0, inZones: 0.0)) { result, stroke in
-            let length = GlyphGeometry.weightedLength(of: stroke.points, erasureZones: erasureZones)
-            result.total += length.total
-            result.inZones += length.inErasureZones
-        }
-        let scale = spell.recommendedMana / referenceLength
-        return (weighted.total * scale, weighted.inZones * scale)
     }
 
     private func evaluateNodes(
