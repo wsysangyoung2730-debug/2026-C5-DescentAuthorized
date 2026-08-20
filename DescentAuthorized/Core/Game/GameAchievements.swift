@@ -21,30 +21,44 @@ struct GameAchievementUpdate: Codable, Equatable, Sendable {
     }
 }
 
-struct GameAchievementQueue: Codable, Equatable, Sendable {
-    private(set) var percentages: [GameAchievementID: Int] = [:]
-
-    var isEmpty: Bool { percentages.isEmpty }
-
-    var pendingUpdates: [GameAchievementUpdate] {
-        percentages
-            .map(GameAchievementUpdate.init)
-            .sorted { $0.id.rawValue < $1.id.rawValue }
-    }
+struct GameAchievementLedger: Codable, Equatable, Sendable {
+    private(set) var desiredPercentages: [GameAchievementID: Int] = [:]
+    private(set) var reportedPercentages: [String: [GameAchievementID: Int]] = [:]
 
     mutating func merge(_ updates: [GameAchievementUpdate]) {
         for update in updates where update.percentComplete > 0 {
-            percentages[update.id] = max(
-                percentages[update.id] ?? 0,
+            desiredPercentages[update.id] = max(
+                desiredPercentages[update.id] ?? 0,
                 update.percentComplete
             )
         }
     }
 
-    mutating func acknowledge(_ reportedUpdates: [GameAchievementUpdate]) {
-        for update in reportedUpdates where percentages[update.id] == update.percentComplete {
-            percentages.removeValue(forKey: update.id)
+    func updatesToReport(for playerID: String) -> [GameAchievementUpdate] {
+        let playerReports = reportedPercentages[playerID] ?? [:]
+        return desiredPercentages
+            .compactMap { id, desiredPercentage in
+                guard desiredPercentage > (playerReports[id] ?? 0) else { return nil }
+                return GameAchievementUpdate(
+                    id: id,
+                    percentComplete: desiredPercentage
+                )
+            }
+            .sorted { $0.id.rawValue < $1.id.rawValue }
+    }
+
+    mutating func acknowledge(
+        _ reportedUpdates: [GameAchievementUpdate],
+        for playerID: String
+    ) {
+        var playerReports = reportedPercentages[playerID] ?? [:]
+        for update in reportedUpdates {
+            playerReports[update.id] = max(
+                playerReports[update.id] ?? 0,
+                update.percentComplete
+            )
         }
+        reportedPercentages[playerID] = playerReports
     }
 }
 

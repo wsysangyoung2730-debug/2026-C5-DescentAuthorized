@@ -27,6 +27,8 @@ DescentAuthorized.xcodeproj
 - Apple Pencil 및 손가락 드로잉 입력
 - 자동, Apple Pencil 전용, 손가락 전용 입력 설정
 - 순수 Swift 턴 상태 관리
+- Game Center 임시 업적과 오프라인 동기화 원장
+- 햅틱, 오디오 연결 계층과 접근성 설정
 
 현재 저장소에서는 임시 시각 요소로 10층부터 8층까지 진행하고, 7층 문에 도달하는 전체 플레이 데모를 실행할 수 있습니다. RealityKit 2.5D 무대와 Blender 에셋은 후속 단계에서 현재 화면의 배경과 적 실루엣을 교체합니다.
 
@@ -47,7 +49,7 @@ DescentAuthorized/
 │   ├── Home/            # 시작 화면
 │   ├── Battle/          # 전투 및 드로잉 입력
 │   ├── Progression/     # 층 탐색, 보상, 하강문과 엔딩
-│   └── Settings/        # 입력 방식 설정과 입력 확인
+│   └── Settings/        # 입력, 피드백, Game Center와 일시정지
 └── Resources/           # 이미지, 사운드, 에셋
 DescentAuthorizedCoreTests/ # 비 UI 코어 자동 테스트
 docs/                        # 기획 및 구현 문서
@@ -64,6 +66,8 @@ docs/                        # 기획 및 구현 문서
 - [구현 계획](./docs/IMPLEMENTATION_PLAN.md): 코어 아키텍처와 단계별 완료 조건
 - [플레이 데모 구현 현황](./docs/CORE_IMPLEMENTATION_STATUS.md): 현재 동작 범위, 검증 결과와 다음 작업
 - [Pencil 및 손가락 입력 구현 계획](./docs/INPUT_IMPLEMENTATION_PLAN.md): 입력 정책, 설정 저장과 단계별 검증 기준
+- [Game Center 임시 업적](./docs/GAME_CENTER_SETUP.md): 업적 ID, 조건과 App Store Connect 설정
+- [오디오 에셋 연결 명세](./docs/AUDIO_ASSET_MANIFEST.md): 효과음·배경음 파일명과 이벤트 연결
 
 ## 코어 검증
 

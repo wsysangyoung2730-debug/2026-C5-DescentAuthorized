@@ -39,25 +39,44 @@ final class GameAchievementTests: XCTestCase {
         XCTAssertNil(updates[.demoCompleted])
     }
 
-    func testQueueKeepsHighestProgressAndAcknowledgesOnlyReportedValue() {
-        var queue = GameAchievementQueue()
-        queue.merge([
+    func testLedgerKeepsHighestProgressForEachPlayer() {
+        var ledger = GameAchievementLedger()
+        ledger.merge([
             GameAchievementUpdate(id: .spellArchive, percentComplete: 20),
             GameAchievementUpdate(id: .spellArchive, percentComplete: 40)
         ])
 
-        let oldBatch = queue.pendingUpdates
-        queue.merge([
+        let firstBatch = ledger.updatesToReport(for: "player-a")
+        ledger.acknowledge(firstBatch, for: "player-a")
+        ledger.merge([
             GameAchievementUpdate(id: .spellArchive, percentComplete: 60)
         ])
-        queue.acknowledge(oldBatch)
 
         XCTAssertEqual(
-            queue.pendingUpdates,
+            ledger.updatesToReport(for: "player-a"),
             [GameAchievementUpdate(id: .spellArchive, percentComplete: 60)]
         )
-        queue.acknowledge(queue.pendingUpdates)
-        XCTAssertTrue(queue.isEmpty)
+        XCTAssertEqual(
+            ledger.updatesToReport(for: "player-b"),
+            [GameAchievementUpdate(id: .spellArchive, percentComplete: 60)]
+        )
+    }
+
+    func testLedgerRoundTripsThroughJSON() throws {
+        var ledger = GameAchievementLedger()
+        ledger.merge([
+            GameAchievementUpdate(id: .firstGlyph, percentComplete: 100)
+        ])
+        ledger.acknowledge(
+            ledger.updatesToReport(for: "player"),
+            for: "player"
+        )
+
+        let data = try JSONEncoder().encode(ledger)
+        let decoded = try JSONDecoder().decode(GameAchievementLedger.self, from: data)
+
+        XCTAssertEqual(decoded, ledger)
+        XCTAssertTrue(decoded.updatesToReport(for: "player").isEmpty)
     }
 
     func testAchievementPercentagesAreClampedToGameCenterRange() {

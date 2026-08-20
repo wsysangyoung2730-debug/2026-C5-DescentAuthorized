@@ -12,6 +12,9 @@ struct BattleView: View {
     @State private var feedbackColor = Color.white
     @State private var showsFirstTurnBriefing = false
     @State private var didExperienceAbsoluteBarrier = false
+    @State private var enemyPulseTask: Task<Void, Never>?
+    @State private var playerPulseTask: Task<Void, Never>?
+    @State private var feedbackTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
@@ -58,9 +61,14 @@ struct BattleView: View {
                 showsFirstTurnBriefing = true
             }
         }
-        .onChange(of: gameSession.latestEvents) { _, events in
-            present(events)
+        .onChange(of: gameSession.eventSequence) { _, _ in
+            present(gameSession.latestEvents)
             selectAvailableSpell()
+        }
+        .onDisappear {
+            enemyPulseTask?.cancel()
+            playerPulseTask?.cancel()
+            feedbackTask?.cancel()
         }
         .preferredColorScheme(.dark)
     }
@@ -429,20 +437,24 @@ struct BattleView: View {
     }
 
     private func pulseEnemy() {
+        enemyPulseTask?.cancel()
         animate(.easeOut(duration: 0.12)) { enemyHitFlash = true }
-        Task { @MainActor in
+        enemyPulseTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(260))
+            guard !Task.isCancelled else { return }
             animate(.easeIn(duration: 0.2)) { enemyHitFlash = false }
         }
     }
 
     private func pulsePlayer(strong: Bool) {
+        playerPulseTask?.cancel()
         animate(.easeOut(duration: 0.08)) {
             playerHitFlash = true
             strongAttackFlash = strong
         }
-        Task { @MainActor in
+        playerPulseTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(strong ? 420 : 260))
+            guard !Task.isCancelled else { return }
             animate(.easeIn(duration: 0.2)) {
                 playerHitFlash = false
                 strongAttackFlash = false
@@ -451,12 +463,14 @@ struct BattleView: View {
     }
 
     private func showFeedback(_ text: String, color: Color) {
+        feedbackTask?.cancel()
         animate(.spring(response: 0.24)) {
             feedbackText = text
             feedbackColor = color
         }
-        Task { @MainActor in
+        feedbackTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(900))
+            guard !Task.isCancelled else { return }
             animate(.easeOut(duration: 0.2)) { feedbackText = nil }
         }
     }

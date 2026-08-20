@@ -39,8 +39,11 @@ struct DescentAuthorizedApp: App {
                     gameCenter.authenticate()
                     gameFeedback.apply(settings: appSettings.settings)
                 }
-                .onChange(of: gameSession.latestEvents) { _, events in
-                    gameFeedback.consume(events, settings: appSettings.settings)
+                .onChange(of: gameSession.eventSequence) { _, _ in
+                    gameFeedback.consume(
+                        gameSession.latestEvents,
+                        settings: appSettings.settings
+                    )
                 }
                 .onChange(of: appSettings.settings) { _, settings in
                     gameFeedback.apply(settings: settings)

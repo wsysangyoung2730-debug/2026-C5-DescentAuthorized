@@ -26,25 +26,25 @@ final class GameCenterManager: ObservableObject, GameAchievementReporting {
     @Published var authenticationRequest: GameCenterAuthenticationRequest?
 
     private let defaults: UserDefaults
-    private let queueKey: String
-    private var queue: GameAchievementQueue
+    private let ledgerKey: String
+    private var ledger: GameAchievementLedger
     private var isReporting = false
     private var didInstallAuthenticationHandler = false
 
     init(
         defaults: UserDefaults = .standard,
-        queueKey: String = "game-center.pending-achievements.v1"
+        ledgerKey: String = "game-center.achievement-ledger.v2"
     ) {
         self.defaults = defaults
-        self.queueKey = queueKey
-        if let data = defaults.data(forKey: queueKey),
-           let restoredQueue = try? JSONDecoder().decode(
-               GameAchievementQueue.self,
+        self.ledgerKey = ledgerKey
+        if let data = defaults.data(forKey: ledgerKey),
+           let restoredLedger = try? JSONDecoder().decode(
+               GameAchievementLedger.self,
                from: data
            ) {
-            queue = restoredQueue
+            ledger = restoredLedger
         } else {
-            queue = GameAchievementQueue()
+            ledger = GameAchievementLedger()
         }
     }
 
@@ -87,8 +87,8 @@ final class GameCenterManager: ObservableObject, GameAchievementReporting {
     }
 
     func submit(_ updates: [GameAchievementUpdate]) {
-        queue.merge(updates)
-        persistQueue()
+        ledger.merge(updates)
+        persistLedger()
         flushPendingAchievements()
     }
 
@@ -130,12 +130,13 @@ final class GameCenterManager: ObservableObject, GameAchievementReporting {
 
     private func flushPendingAchievements() {
         guard GKLocalPlayer.local.isAuthenticated,
-              !isReporting,
-              !queue.isEmpty else {
+              !isReporting else {
             return
         }
 
-        let updates = queue.pendingUpdates
+        let playerID = GKLocalPlayer.local.gamePlayerID
+        let updates = ledger.updatesToReport(for: playerID)
+        guard !updates.isEmpty else { return }
         let achievements = updates.map { update in
             let achievement = GKAchievement(identifier: update.id.rawValue)
             achievement.percentComplete = Double(update.percentComplete)
@@ -146,13 +147,18 @@ final class GameCenterManager: ObservableObject, GameAchievementReporting {
         isReporting = true
         GKAchievement.report(achievements) { [weak self] error in
             Task { @MainActor in
-                self?.finishReporting(updates: updates, error: error)
+                self?.finishReporting(
+                    updates: updates,
+                    playerID: playerID,
+                    error: error
+                )
             }
         }
     }
 
     private func finishReporting(
         updates: [GameAchievementUpdate],
+        playerID: String,
         error: Error?
     ) {
         isReporting = false
@@ -161,14 +167,14 @@ final class GameCenterManager: ObservableObject, GameAchievementReporting {
             return
         }
 
-        queue.acknowledge(updates)
-        persistQueue()
+        ledger.acknowledge(updates, for: playerID)
+        persistLedger()
         lastSyncError = nil
         flushPendingAchievements()
     }
 
-    private func persistQueue() {
-        guard let data = try? JSONEncoder().encode(queue) else { return }
-        defaults.set(data, forKey: queueKey)
+    private func persistLedger() {
+        guard let data = try? JSONEncoder().encode(ledger) else { return }
+        defaults.set(data, forKey: ledgerKey)
     }
 }

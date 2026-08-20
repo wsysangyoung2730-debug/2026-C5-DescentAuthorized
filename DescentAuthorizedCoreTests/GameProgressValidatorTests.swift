@@ -70,6 +70,31 @@ final class GameProgressValidatorTests: XCTestCase {
         }
     }
 
+    func testTrainingWallWithoutLearnedSpellIsRejected() {
+        var progress = GameProgress.newGame
+        progress.currentScene = .floor10TrainingWall
+
+        XCTAssertThrowsError(try validator.validate(progress)) { error in
+            XCTAssertEqual(
+                error as? GameProgressValidationError,
+                .missingRequirement("잔광 말소 습득")
+            )
+        }
+    }
+
+    func testGlyphArchiveRequiresCompletedFirstTraining() {
+        var progress = GameProgress.newGame
+        progress.currentScene = .floor10GlyphArchive
+        progress.learnedSpells = [.afterglowErasure]
+
+        XCTAssertThrowsError(try validator.validate(progress)) { error in
+            XCTAssertEqual(
+                error as? GameProgressValidationError,
+                .missingRequirement("잔광 말소 훈련 완료")
+            )
+        }
+    }
+
     private func assertValid(
         _ progress: GameProgress,
         file: StaticString = #filePath,

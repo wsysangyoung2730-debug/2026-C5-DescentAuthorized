@@ -98,14 +98,22 @@ struct GameProgressValidator: Sendable {
         let floor9RewardIDs = Set(RewardCatalog.candidates(for: .floor9).map(\.id))
         let floor8RewardIDs = Set(RewardCatalog.candidates(for: .floor8).map(\.id))
 
-        if scenes(from: .floor10GlyphArchive).contains(scene) {
+        if ![SceneID.floor10MeetingRoom, .floor10Office].contains(scene) {
             try require(
                 progress.learnedSpells.contains(.afterglowErasure),
                 "잔광 말소 습득"
             )
         }
 
-        if scenes(from: .floor10DescentDoor).contains(scene) {
+        if scene == .floor10GlyphArchive
+            || progress.learnedSpells.contains(.riftSeverance) {
+            try require(
+                progress.completedTrainingSpells.contains(.afterglowErasure),
+                "잔광 말소 훈련 완료"
+            )
+        }
+
+        if scene == .floor10DescentDoor || progress.currentFloor != .floor10 {
             try require(
                 progress.learnedSpells.isSuperset(of: floor10Learned)
                     && progress.completedTrainingSpells.isSuperset(of: floor10Learned),
@@ -113,14 +121,25 @@ struct GameProgressValidator: Sendable {
             )
         }
 
-        if scenes(from: .floor9RewardVault).contains(scene) {
+        if [
+            SceneID.floor9RewardVault,
+            .floor9DescentDoor,
+            .floor8Antechamber,
+            .floor8ProtectionRoom,
+            .floor8ResidualBattle,
+            .floor8SealedDoor,
+            .floor8AdministratorBattle,
+            .floor8Reward,
+            .floor8DescentDoor,
+            .demoComplete
+        ].contains(scene) {
             try require(
                 progress.defeatedEnemies.contains(.recordsAdministrator),
                 "기록 관리자 처치"
             )
         }
 
-        if scenes(from: .floor9DescentDoor).contains(scene) {
+        if scene == .floor9DescentDoor || progress.currentFloor.rawValue <= FloorID.floor8.rawValue {
             try require(
                 progress.selectedRewardIDs.contains(where: floor9RewardIDs.contains)
                     && progress.learnedSpells.contains(.barrierPiercing),
@@ -128,7 +147,14 @@ struct GameProgressValidator: Sendable {
             )
         }
 
-        if scenes(from: .floor8ResidualBattle).contains(scene) {
+        if [
+            SceneID.floor8ResidualBattle,
+            .floor8SealedDoor,
+            .floor8AdministratorBattle,
+            .floor8Reward,
+            .floor8DescentDoor,
+            .demoComplete
+        ].contains(scene) {
             try require(
                 progress.learnedSpells.contains(.basicBarrier)
                     && progress.completedTrainingSpells.contains(.basicBarrier),
@@ -136,7 +162,13 @@ struct GameProgressValidator: Sendable {
             )
         }
 
-        if scenes(from: .floor8SealedDoor).contains(scene) {
+        if [
+            SceneID.floor8SealedDoor,
+            .floor8AdministratorBattle,
+            .floor8Reward,
+            .floor8DescentDoor,
+            .demoComplete
+        ].contains(scene) {
             try require(
                 progress.defeatedEnemies.contains(.observationResidual)
                     && progress.learnedSpells.contains(.sealRelease),
@@ -144,14 +176,14 @@ struct GameProgressValidator: Sendable {
             )
         }
 
-        if scenes(from: .floor8Reward).contains(scene) {
+        if [SceneID.floor8Reward, .floor8DescentDoor, .demoComplete].contains(scene) {
             try require(
                 progress.defeatedEnemies.contains(.observationAdministrator),
                 "관측 관리자 처치"
             )
         }
 
-        if scenes(from: .floor8DescentDoor).contains(scene) {
+        if [SceneID.floor8DescentDoor, .demoComplete].contains(scene) {
             try require(
                 progress.selectedRewardIDs.contains(where: floor8RewardIDs.contains),
                 "8층 주문서 선택"
@@ -236,27 +268,4 @@ struct GameProgressValidator: Sendable {
         }
     }
 
-    private func scenes(from firstScene: SceneID) -> Set<SceneID> {
-        let orderedScenes: [SceneID] = [
-            .floor10MeetingRoom,
-            .floor10Office,
-            .floor10TrainingWall,
-            .floor10GlyphArchive,
-            .floor10DescentDoor,
-            .floor9Entrance,
-            .floor9RecordsBattle,
-            .floor9RewardVault,
-            .floor9DescentDoor,
-            .floor8Antechamber,
-            .floor8ProtectionRoom,
-            .floor8ResidualBattle,
-            .floor8SealedDoor,
-            .floor8AdministratorBattle,
-            .floor8Reward,
-            .floor8DescentDoor,
-            .demoComplete
-        ]
-        guard let index = orderedScenes.firstIndex(of: firstScene) else { return [] }
-        return Set(orderedScenes[index...])
-    }
 }

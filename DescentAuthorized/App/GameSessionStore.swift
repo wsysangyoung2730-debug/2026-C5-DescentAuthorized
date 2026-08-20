@@ -5,6 +5,7 @@ import SwiftUI
 final class GameSessionStore: ObservableObject {
     @Published private(set) var session: DemoGameSession
     @Published private(set) var latestEvents: [DemoSessionEvent] = []
+    @Published private(set) var eventSequence: UInt64 = 0
     @Published var presentedError: PresentedGameError?
 
     private var coordinator: GameSessionCoordinator
@@ -46,6 +47,7 @@ final class GameSessionStore: ObservableObject {
             let events = try coordinator.execute(command)
             session = coordinator.session
             latestEvents = events
+            eventSequence &+= 1
             reportAchievementSnapshot()
             return events
         } catch {
@@ -62,6 +64,7 @@ final class GameSessionStore: ObservableObject {
             try coordinator.replaceWithNewGame()
             session = coordinator.session
             latestEvents = []
+            eventSequence &+= 1
             reportAchievementSnapshot()
         } catch {
             presentedError = PresentedGameError(
@@ -73,6 +76,7 @@ final class GameSessionStore: ObservableObject {
 
     func clearEvents() {
         latestEvents = []
+        eventSequence &+= 1
     }
 
     private func reportAchievementSnapshot() {
