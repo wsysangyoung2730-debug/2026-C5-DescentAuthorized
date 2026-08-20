@@ -27,6 +27,8 @@
 		100000000000000000000022 /* DrawingInputPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000022 /* DrawingInputPolicy.swift */; };
 		100000000000000000000023 /* GameSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000023 /* GameSettingsStore.swift */; };
 		100000000000000000000024 /* StrokeProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000024 /* StrokeProcessor.swift */; };
+		100000000000000000000025 /* RuneDrawingCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000025 /* RuneDrawingCanvasView.swift */; };
+		100000000000000000000026 /* RuneDrawingCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000026 /* RuneDrawingCanvas.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +53,8 @@
 		200000000000000000000022 /* DrawingInputPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingInputPolicy.swift; sourceTree = "<group>"; };
 		200000000000000000000023 /* GameSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSettingsStore.swift; sourceTree = "<group>"; };
 		200000000000000000000024 /* StrokeProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeProcessor.swift; sourceTree = "<group>"; };
+		200000000000000000000025 /* RuneDrawingCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuneDrawingCanvasView.swift; sourceTree = "<group>"; };
+		200000000000000000000026 /* RuneDrawingCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuneDrawingCanvas.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -191,8 +195,18 @@
 			isa = PBXGroup;
 			children = (
 				200000000000000000000003 /* BattleView.swift */,
+				400000000000000000000011 /* Input */,
 			);
 			path = Battle;
+			sourceTree = "<group>";
+		};
+		400000000000000000000011 /* Input */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000025 /* RuneDrawingCanvasView.swift */,
+				200000000000000000000026 /* RuneDrawingCanvas.swift */,
+			);
+			path = Input;
 			sourceTree = "<group>";
 		};
 		400000000000000000000008 /* Resources */ = {
@@ -299,6 +313,8 @@
 				100000000000000000000022 /* DrawingInputPolicy.swift in Sources */,
 				100000000000000000000023 /* GameSettingsStore.swift in Sources */,
 				100000000000000000000024 /* StrokeProcessor.swift in Sources */,
+				100000000000000000000025 /* RuneDrawingCanvasView.swift in Sources */,
+				100000000000000000000026 /* RuneDrawingCanvas.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

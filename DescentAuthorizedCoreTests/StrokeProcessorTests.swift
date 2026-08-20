@@ -188,6 +188,19 @@ final class StrokeProcessorTests: XCTestCase {
         XCTAssertEqual(session.inputPreference, .pencilOnly)
     }
 
+    func testPreferenceChangeCancelsEvenStillAllowedActiveStroke() throws {
+        var session = StrokeCaptureSession(inputPreference: .automatic)
+        _ = try session.beginStroke(
+            contactID: 1,
+            method: .pencil,
+            sample: RawDrawingSample(x: 10, y: 10)
+        )
+
+        session.updateInputPreference(.pencilOnly)
+
+        XCTAssertFalse(session.hasActiveStroke)
+    }
+
     func testUndoAndClearManageCompletedStrokes() throws {
         var session = StrokeCaptureSession(maximumStrokeCount: 2)
         for (contactID, method) in [(1, DrawingInputMethod.finger), (2, .pencil)] {
