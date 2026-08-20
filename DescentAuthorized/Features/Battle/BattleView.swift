@@ -11,6 +11,7 @@ struct BattleView: View {
     @State private var feedbackText: String?
     @State private var feedbackColor = Color.white
     @State private var showsFirstTurnBriefing = false
+    @State private var didExperienceAbsoluteBarrier = false
 
     var body: some View {
         ZStack {
@@ -40,8 +41,8 @@ struct BattleView: View {
                     .allowsHitTesting(false)
             }
 
-            if showsFirstTurnBriefing, isRecordsBattle {
-                firstTurnBriefing
+            if showsFirstTurnBriefing {
+                battleBriefing
                     .transition(.opacity)
             }
 
@@ -52,7 +53,7 @@ struct BattleView: View {
         .task(id: gameSession.progress.currentScene) {
             startEncounterIfNeeded()
             selectAvailableSpell()
-            if isRecordsBattle,
+            if shouldShowFirstTurnBriefing,
                gameSession.battleState?.turnNumber == 1 {
                 showsFirstTurnBriefing = true
             }
@@ -255,6 +256,7 @@ struct BattleView: View {
     private func spellCard(_ spell: SpellDefinition, battle: BattleState) -> some View {
         let isSelected = selectedSpellID == spell.id
         let isAffordable = spell.requiredStrokes <= battle.resources.remainingStrokes
+        let isPermitted = isSpellPermitted(spell, battle: battle)
 
         return Button {
             selectedSpellID = spell.id
@@ -286,8 +288,8 @@ struct BattleView: View {
             .clipShape(RoundedRectangle(cornerRadius: 6))
         }
         .buttonStyle(.plain)
-        .disabled(!isAffordable || battle.phase != .playerTurn)
-        .opacity(isAffordable ? 1 : 0.4)
+        .disabled(!isAffordable || !isPermitted || battle.phase != .playerTurn)
+        .opacity(isAffordable && isPermitted ? 1 : 0.4)
         .accessibilityLabel("\(spell.name), \(categoryTitle(spell.category)), \(spell.requiredStrokes)획")
     }
 
@@ -360,11 +362,13 @@ struct BattleView: View {
         }
         if let selectedSpellID,
            battle.learnedSpells.contains(selectedSpellID),
-           SpellCatalog.spell(selectedSpellID).requiredStrokes <= battle.resources.remainingStrokes {
+           SpellCatalog.spell(selectedSpellID).requiredStrokes <= battle.resources.remainingStrokes,
+           isSpellPermitted(SpellCatalog.spell(selectedSpellID), battle: battle) {
             return
         }
         selectedSpellID = availableSpells(in: battle).first(where: {
             $0.requiredStrokes <= battle.resources.remainingStrokes
+                && isSpellPermitted($0, battle: battle)
         })?.id
     }
 
@@ -403,6 +407,7 @@ struct BattleView: View {
                 banner = (failureTitle(reason), .red)
             case .attackNegatedByAbsoluteBarrier:
                 banner = ("절대 방벽으로 무효화", .yellow)
+                didExperienceAbsoluteBarrier = true
             case let .normalBarrierChanged(target, amount):
                 if case .enemy = target, amount > 0 {
                     banner = ("문서 방벽 전개", .cyan)
@@ -467,6 +472,29 @@ struct BattleView: View {
 
     private var isRecordsBattle: Bool {
         gameSession.progress.currentScene == .floor9RecordsBattle
+    }
+
+    private var isResidualBattle: Bool {
+        gameSession.progress.currentScene == .floor8ResidualBattle
+    }
+
+    private var isObservationBattle: Bool {
+        gameSession.progress.currentScene == .floor8AdministratorBattle
+    }
+
+    private var shouldShowFirstTurnBriefing: Bool {
+        isRecordsBattle || isResidualBattle || isObservationBattle
+    }
+
+    @ViewBuilder
+    private var battleBriefing: some View {
+        if isResidualBattle {
+            residualBriefing
+        } else if isObservationBattle {
+            observationBriefing
+        } else {
+            firstTurnBriefing
+        }
     }
 
     private var firstTurnBriefing: some View {
@@ -550,6 +578,75 @@ struct BattleView: View {
                 .tint(.red)
             }
         }
+    }
+
+    private var residualBriefing: some View {
+        briefingOverlay(
+            title: "관측 잔류체 대응",
+            accent: .cyan,
+            rows: [
+                ("shield.fill", "훈련 방벽 20 유지", "보호 절차실에서 만든 방벽이 이번 전투의 첫 피해를 먼저 막는다."),
+                ("scope", "강공격은 한 턴 전에 예고", "초점 고정이 보이면 다음 집속 파편에 대비할 수 있다."),
+                ("pencil.and.outline", "공격과 방어를 같은 턴에 조합", "1획 공격과 1획 방어를 선택해 2획 안에서 대응한다.")
+            ]
+        )
+    }
+
+    private var observationBriefing: some View {
+        briefingOverlay(
+            title: "관측 관리자 절대 차폐",
+            accent: .yellow,
+            rows: [
+                ("shield.checkered", "절대 방벽 1회", "방벽이 유지되는 동안 공격과 부가 효과가 전부 무효화된다."),
+                ("sparkles", "먼저 공격 효과를 확인", "공격 주문을 한 번 시전해 절대 방벽의 차단 규칙을 직접 확인한다."),
+                ("lock.open.fill", "체험 후 봉인 해제", "차단을 확인하면 봉인 해제 카드가 활성화된다.")
+            ]
+        )
+    }
+
+    private func briefingOverlay(
+        title: String,
+        accent: Color,
+        rows: [(String, String, String)]
+    ) -> some View {
+        ZStack {
+            Color.black.opacity(0.72)
+                .ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 18) {
+                Label(title, systemImage: "exclamationmark.shield.fill")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(accent)
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    briefingRow(icon: row.0, title: row.1, detail: row.2)
+                }
+                Button("전투 시작") {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        showsFirstTurnBriefing = false
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(accent)
+                .frame(maxWidth: .infinity)
+            }
+            .padding(24)
+            .frame(maxWidth: 520)
+            .background(Color(red: 0.035, green: 0.04, blue: 0.055))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(accent.opacity(0.35), lineWidth: 1)
+            }
+        }
+    }
+
+    private func isSpellPermitted(_ spell: SpellDefinition, battle: BattleState) -> Bool {
+        if isObservationBattle,
+           spell.id == .sealRelease,
+           battle.enemy.absoluteBarrierCharges > 0,
+           !didExperienceAbsoluteBarrier {
+            return false
+        }
+        return true
     }
 
     private var floorLabel: String {

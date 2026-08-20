@@ -4,6 +4,7 @@ enum DemoCommand: Sendable {
     case leaveMeetingRoom
     case learnSpell(SpellID)
     case completeTraining(spell: SpellID, grade: CastingGrade)
+    case completeProtectionTraining(grade: CastingGrade)
     case approveDescentDoor
     case enterRecordsBattle
     case enterProtectionRoom
@@ -68,6 +69,9 @@ struct DemoGameSession: Sendable {
         case let .completeTraining(spell, grade):
             return wrap(try progression.completeTraining(spell: spell, grade: grade))
 
+        case let .completeProtectionTraining(grade):
+            return wrap(try progression.completeProtectionTraining(grade: grade))
+
         case .approveDescentDoor:
             return wrap(try progression.approveDescentDoor())
 
@@ -118,6 +122,7 @@ struct DemoGameSession: Sendable {
         var newEncounter = EncounterController(
             enemy: enemy,
             playerHP: progress.playerHP,
+            playerNormalBarrier: startingPlayerBarrier(for: enemy.id),
             learnedSpells: progress.learnedSpells
         )
         let battleEvents = try newEncounter.start()
@@ -212,6 +217,12 @@ struct DemoGameSession: Sendable {
         default:
             throw DemoSessionError.noEncounterForScene(progress.currentScene)
         }
+    }
+
+    private func startingPlayerBarrier(for enemy: EnemyID) -> Int {
+        enemy == .observationResidual && progress.learnedSpells.contains(.basicBarrier)
+            ? 20
+            : 0
     }
 
     private func resolvedGrade(from event: BattleEvent) -> CastingGrade? {

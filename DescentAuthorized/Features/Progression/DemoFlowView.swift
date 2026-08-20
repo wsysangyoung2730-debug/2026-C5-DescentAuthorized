@@ -67,6 +67,11 @@ struct DemoFlowView: View {
         case .floor9DescentDoor:
             Floor9DescentDoorView()
 
+        case .floor8Antechamber,
+             .floor8ProtectionRoom,
+             .floor8SealedDoor:
+            Floor8ExplorationView()
+
         default:
             unavailableScene
         }

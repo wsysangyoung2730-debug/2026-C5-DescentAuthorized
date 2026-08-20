@@ -7,11 +7,13 @@ struct EncounterController: Sendable {
     init(
         enemy: EnemyDefinition,
         playerHP: Int = 100,
+        playerNormalBarrier: Int = 0,
         learnedSpells: Set<SpellID> = Set(SpellID.allCases)
     ) {
         combat = CombatEngine(
             enemy: enemy,
             playerHP: playerHP,
+            playerNormalBarrier: playerNormalBarrier,
             learnedSpells: learnedSpells
         )
         nextPatternIndex = 0
@@ -87,4 +89,3 @@ struct EncounterController: Sendable {
         return events
     }
 }
-

@@ -2,6 +2,21 @@ import XCTest
 @testable import DescentAuthorizedCore
 
 final class DemoGameSessionTests: XCTestCase {
+    func testResidualEncounterKeepsBarrierFromProtectionTraining() throws {
+        var progress = GameProgress.newGame
+        progress.currentFloor = .floor8
+        progress.currentScene = .floor8ResidualBattle
+        progress.learnedSpells = [.afterglowErasure, .basicBarrier]
+        var session = DemoGameSession(progress: progress)
+
+        let events = try session.handle(.startEncounter)
+
+        XCTAssertEqual(session.battleState?.player.normalBarrier, 20)
+        XCTAssertTrue(events.contains(.combat(
+            .normalBarrierChanged(target: .player, amount: 20)
+        )))
+    }
+
     func testSessionConnectsRealCombatVictoryToFloorProgression() throws {
         var session = try makeRecordsBattleSession()
         let startEvents = try session.handle(.startEncounter)
