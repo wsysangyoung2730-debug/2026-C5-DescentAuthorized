@@ -58,6 +58,9 @@ struct DemoFlowView: View {
              .floor8AdministratorBattle:
             BattleView()
 
+        case .floor9Entrance:
+            Floor9EntranceView()
+
         default:
             unavailableScene
         }

@@ -10,6 +10,7 @@ struct BattleView: View {
     @State private var strongAttackFlash = false
     @State private var feedbackText: String?
     @State private var feedbackColor = Color.white
+    @State private var showsFirstTurnBriefing = false
 
     var body: some View {
         ZStack {
@@ -38,10 +39,23 @@ struct BattleView: View {
                     .transition(.scale.combined(with: .opacity))
                     .allowsHitTesting(false)
             }
+
+            if showsFirstTurnBriefing, isRecordsBattle {
+                firstTurnBriefing
+                    .transition(.opacity)
+            }
+
+            if gameSession.battleState?.phase == .defeat {
+                defeatOverlay
+            }
         }
         .task(id: gameSession.progress.currentScene) {
             startEncounterIfNeeded()
             selectAvailableSpell()
+            if isRecordsBattle,
+               gameSession.battleState?.turnNumber == 1 {
+                showsFirstTurnBriefing = true
+            }
         }
         .onChange(of: gameSession.latestEvents) { _, events in
             present(events)
@@ -389,6 +403,12 @@ struct BattleView: View {
                 banner = (failureTitle(reason), .red)
             case .attackNegatedByAbsoluteBarrier:
                 banner = ("절대 방벽으로 무효화", .yellow)
+            case let .normalBarrierChanged(target, amount):
+                if case .enemy = target, amount > 0 {
+                    banner = ("문서 방벽 전개", .cyan)
+                }
+            case .erasureZoneAdded:
+                banner = ("말소 구역 발생", .red)
             case let .enemyActionStarted(action):
                 if case let .attack(_, _, isStrong) = action {
                     strongAttack = isStrong
@@ -442,6 +462,93 @@ struct BattleView: View {
             true
         default:
             false
+        }
+    }
+
+    private var isRecordsBattle: Bool {
+        gameSession.progress.currentScene == .floor9RecordsBattle
+    }
+
+    private var firstTurnBriefing: some View {
+        ZStack {
+            Color.black.opacity(0.72)
+                .ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 18) {
+                Label("9층 전투 절차", systemImage: "exclamationmark.shield.fill")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.purple)
+
+                briefingRow(
+                    icon: "eye.fill",
+                    title: "관리자의 다음 행동을 먼저 확인",
+                    detail: "공격이 예고되면 피해를 감수할지, 턴을 어떻게 사용할지 결정한다."
+                )
+                briefingRow(
+                    icon: "scribble.variable",
+                    title: "마나는 남은 선의 길이",
+                    detail: "문양을 그리는 동안 실시간으로 줄며, 우회하거나 길게 그릴수록 더 소모된다."
+                )
+                briefingRow(
+                    icon: "pencil.and.outline",
+                    title: "이번 턴은 2획",
+                    detail: "현재의 1획 공격 주문은 한 턴에 두 번까지 조합할 수 있다."
+                )
+
+                Button("전투 시작") {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        showsFirstTurnBriefing = false
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.purple)
+                .frame(maxWidth: .infinity)
+            }
+            .padding(24)
+            .frame(maxWidth: 520)
+            .background(Color(red: 0.035, green: 0.04, blue: 0.055))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.purple.opacity(0.35), lineWidth: 1)
+            }
+        }
+    }
+
+    private func briefingRow(icon: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .frame(width: 28)
+                .foregroundStyle(.cyan)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var defeatOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.76)
+                .ignoresSafeArea()
+            VStack(spacing: 14) {
+                Image(systemName: "exclamationmark.octagon.fill")
+                    .font(.largeTitle)
+                    .foregroundStyle(.red)
+                Text("하강 봉인 절차 중단")
+                    .font(.title2.weight(.semibold))
+                Text("전투 진입 직전 상태에서 다시 시작합니다.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Button("전투 재시작") {
+                    gameSession.send(.restartEncounter)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+            }
         }
     }
 
