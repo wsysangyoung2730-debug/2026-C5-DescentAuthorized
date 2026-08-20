@@ -44,6 +44,8 @@
 		100000000000000000000039 /* RewardSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000039 /* RewardSelectionView.swift */; };
 		100000000000000000000040 /* Floor9DescentDoorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000040 /* Floor9DescentDoorView.swift */; };
 		100000000000000000000041 /* Floor8ExplorationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000041 /* Floor8ExplorationView.swift */; };
+		100000000000000000000042 /* Floor8DescentDoorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000042 /* Floor8DescentDoorView.swift */; };
+		100000000000000000000043 /* DemoCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000043 /* DemoCompleteView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -85,6 +87,8 @@
 		200000000000000000000039 /* RewardSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardSelectionView.swift; sourceTree = "<group>"; };
 		200000000000000000000040 /* Floor9DescentDoorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Floor9DescentDoorView.swift; sourceTree = "<group>"; };
 		200000000000000000000041 /* Floor8ExplorationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Floor8ExplorationView.swift; sourceTree = "<group>"; };
+		200000000000000000000042 /* Floor8DescentDoorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Floor8DescentDoorView.swift; sourceTree = "<group>"; };
+		200000000000000000000043 /* DemoCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoCompleteView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -258,6 +262,8 @@
 				200000000000000000000040 /* Floor9DescentDoorView.swift */,
 				200000000000000000000039 /* RewardSelectionView.swift */,
 				200000000000000000000041 /* Floor8ExplorationView.swift */,
+				200000000000000000000042 /* Floor8DescentDoorView.swift */,
+				200000000000000000000043 /* DemoCompleteView.swift */,
 			);
 			path = Progression;
 			sourceTree = "<group>";
@@ -391,6 +397,8 @@
 				100000000000000000000039 /* RewardSelectionView.swift in Sources */,
 				100000000000000000000040 /* Floor9DescentDoorView.swift in Sources */,
 				100000000000000000000041 /* Floor8ExplorationView.swift in Sources */,
+				100000000000000000000042 /* Floor8DescentDoorView.swift in Sources */,
+				100000000000000000000043 /* DemoCompleteView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

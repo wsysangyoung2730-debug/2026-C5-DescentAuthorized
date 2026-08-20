@@ -72,24 +72,14 @@ struct DemoFlowView: View {
              .floor8SealedDoor:
             Floor8ExplorationView()
 
-        default:
-            unavailableScene
-        }
-    }
+        case .floor8Reward:
+            RewardSelectionView(floor: .floor8)
 
-    private var unavailableScene: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            VStack(spacing: 12) {
-                Image(systemName: "hammer.fill")
-                    .font(.largeTitle)
-                    .foregroundStyle(.purple)
-                Text("다음 하강 절차 준비 중")
-                    .font(.title2.weight(.semibold))
-                Text(gameSession.progress.currentScene.rawValue)
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.secondary)
-            }
+        case .floor8DescentDoor:
+            Floor8DescentDoorView()
+
+        case .demoComplete:
+            DemoCompleteView(onReturnToTitle: onExit)
         }
     }
 }
