@@ -193,11 +193,9 @@ struct StrokeCaptureSession: Sendable {
     var lastCompletedMethod: DrawingInputMethod? { completedInputMethods.last }
 
     mutating func updateInputPreference(_ preference: DrawingInputPreference) {
+        guard preference != inputPreference else { return }
         inputPreference = preference
-        if let method = activeStroke?.method,
-           !DrawingInputPolicy(preference: preference).accepts(method) {
-            activeStroke = nil
-        }
+        activeStroke = nil
     }
 
     mutating func beginStroke(
