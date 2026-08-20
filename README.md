@@ -52,6 +52,7 @@ docs/
 - [층별 진행 및 튜토리얼](./docs/LEVEL_FLOW.md): 10층부터 8층까지의 플레이 흐름
 - [UI/UX](./docs/UI_UX_SPEC.md): 화면, 입력, 상태와 접근성
 - [스토리 및 대사](./docs/NARRATIVE.md): 정보 공개 순서, 기록과 실제 대사
+- [비UI 프로토타입 구현 계획](./docs/IMPLEMENTATION_PLAN.md): 코어 아키텍처와 단계별 완료 조건
 
 ## Git 전략
 
