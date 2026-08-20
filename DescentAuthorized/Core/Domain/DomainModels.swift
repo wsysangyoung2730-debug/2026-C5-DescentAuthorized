@@ -74,6 +74,7 @@ struct GlyphStrokeSpec: Codable, Equatable, Sendable {
     let referencePath: [NormalizedPoint]
     let nodeRadius: Double
     let pathRadius: Double
+    let optionalNodeGradeCap: CastingGrade?
 
     init(
         start: NormalizedPoint,
@@ -82,7 +83,8 @@ struct GlyphStrokeSpec: Codable, Equatable, Sendable {
         optionalNodes: [NormalizedPoint] = [],
         referencePath: [NormalizedPoint],
         nodeRadius: Double,
-        pathRadius: Double
+        pathRadius: Double,
+        optionalNodeGradeCap: CastingGrade? = nil
     ) {
         precondition(referencePath.count >= 2)
         self.start = start
@@ -92,6 +94,7 @@ struct GlyphStrokeSpec: Codable, Equatable, Sendable {
         self.referencePath = referencePath
         self.nodeRadius = nodeRadius
         self.pathRadius = pathRadius
+        self.optionalNodeGradeCap = optionalNodeGradeCap
     }
 }
 
@@ -427,4 +430,3 @@ struct GameProgress: Codable, Equatable, Sendable {
         isDemoComplete: false
     )
 }
-
