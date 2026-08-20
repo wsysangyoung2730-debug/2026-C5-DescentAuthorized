@@ -143,11 +143,14 @@ struct DemoGameSession: Sendable {
             throw DemoSessionError.noActiveEncounter
         }
 
-        let battleEvents = try activeEncounter.submitSpell(
+        var battleEvents = try activeEncounter.submitSpell(
             spell,
             strokes: strokes,
             inputMethod: inputMethod
         )
+        if activeEncounter.state.phase == .resolvingEnemyAction {
+            battleEvents.append(contentsOf: try activeEncounter.finishTurnAndAdvance())
+        }
         encounter = activeEncounter
 
         var events = wrap(battleEvents)
@@ -159,7 +162,11 @@ struct DemoGameSession: Sendable {
            ) {
             events.append(.progression(masteryEvent))
         }
-        events.append(contentsOf: try finalizeEncounterIfNeeded())
+        if activeEncounter.state.phase == .defeat {
+            events.append(.encounterLost(activeEncounter.enemyDefinition.id))
+        } else {
+            events.append(contentsOf: try finalizeEncounterIfNeeded())
+        }
         return events
     }
 
