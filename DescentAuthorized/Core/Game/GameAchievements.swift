@@ -63,7 +63,10 @@ struct GameAchievementLedger: Codable, Equatable, Sendable {
 }
 
 struct GameAchievementTracker: Sendable {
-    func updates(for progress: GameProgress) -> [GameAchievementUpdate] {
+    func updates(
+        for progress: GameProgress,
+        events: [DemoSessionEvent] = []
+    ) -> [GameAchievementUpdate] {
         let updates = [
             binary(
                 .firstGlyph,
@@ -83,7 +86,7 @@ struct GameAchievementTracker: Sendable {
             ),
             binary(
                 .absoluteBarrierDispelled,
-                earned: (progress.spellMastery[.sealRelease]?.successfulCasts ?? 0) > 0
+                earned: containsSuccessfulAbsoluteBarrierDispel(in: events)
             ),
             binary(
                 .observationCleared,
@@ -112,5 +115,23 @@ struct GameAchievementTracker: Sendable {
         case .floor8: 67
         case .floor7: 100
         }
+    }
+
+    private func containsSuccessfulAbsoluteBarrierDispel(
+        in events: [DemoSessionEvent]
+    ) -> Bool {
+        var resolvedSealRelease = false
+        for event in events {
+            guard case let .combat(battleEvent) = event else { continue }
+            switch battleEvent {
+            case .spellResolved(spell: .sealRelease, grade: _):
+                resolvedSealRelease = true
+            case .absoluteBarrierChanged(target: .enemy(_), charges: _):
+                if resolvedSealRelease { return true }
+            default:
+                break
+            }
+        }
+        return false
     }
 }

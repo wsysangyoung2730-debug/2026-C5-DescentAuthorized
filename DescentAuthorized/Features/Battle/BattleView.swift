@@ -665,11 +665,9 @@ struct BattleView: View {
     }
 
     private func isSpellPermitted(_ spell: SpellDefinition, battle: BattleState) -> Bool {
-        if isObservationBattle,
-           spell.id == .sealRelease,
-           battle.enemy.absoluteBarrierCharges > 0,
-           !didExperienceAbsoluteBarrier {
-            return false
+        if isObservationBattle, spell.id == .sealRelease {
+            return battle.enemy.absoluteBarrierCharges > 0
+                && didExperienceAbsoluteBarrier
         }
         return true
     }

@@ -181,7 +181,7 @@ UI는 `DemoCommand`를 전달하고 `DemoSessionEvent`를 받아 화면과 연�
 
 ## 4. 검증 현황
 
-- Swift Package 자동 테스트: 96개 통과
+- Swift Package 자동 테스트: 97개 통과
 - 주문 및 적 카탈로그 일치 검사
 - 모든 주문의 기준 획 완벽 판정 검사
 - 잘못된 획 수, 노드 누락, 말소 구역 마나 가중치 검사

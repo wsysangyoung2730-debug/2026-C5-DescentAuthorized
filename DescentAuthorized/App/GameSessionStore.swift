@@ -48,7 +48,7 @@ final class GameSessionStore: ObservableObject {
             session = coordinator.session
             latestEvents = events
             eventSequence &+= 1
-            reportAchievementSnapshot()
+            reportAchievementSnapshot(events: events)
             return events
         } catch {
             presentedError = PresentedGameError(
@@ -79,8 +79,10 @@ final class GameSessionStore: ObservableObject {
         eventSequence &+= 1
     }
 
-    private func reportAchievementSnapshot() {
-        achievementReporter?.submit(achievementTracker.updates(for: session.progress))
+    private func reportAchievementSnapshot(events: [DemoSessionEvent] = []) {
+        achievementReporter?.submit(
+            achievementTracker.updates(for: session.progress, events: events)
+        )
     }
 
     func saveForLifecycleTransition() {

@@ -18,10 +18,6 @@ final class GameAchievementTests: XCTestCase {
             bestGrade: .perfect,
             successfulCasts: 1
         )
-        progress.spellMastery[.sealRelease] = SpellMastery(
-            bestGrade: .approved,
-            successfulCasts: 1
-        )
 
         let updates = Dictionary(
             uniqueKeysWithValues: tracker.updates(for: progress).map {
@@ -33,10 +29,33 @@ final class GameAchievementTests: XCTestCase {
         XCTAssertEqual(updates[.perfectCast], 100)
         XCTAssertEqual(updates[.recordsCleared], 100)
         XCTAssertEqual(updates[.spellArchive], 100)
-        XCTAssertEqual(updates[.absoluteBarrierDispelled], 100)
+        XCTAssertNil(updates[.absoluteBarrierDispelled])
         XCTAssertEqual(updates[.descentProcedure], 67)
         XCTAssertNil(updates[.observationCleared])
         XCTAssertNil(updates[.demoCompleted])
+    }
+
+    func testAbsoluteBarrierAchievementRequiresActualBarrierChange() {
+        let progress = GameProgress.newGame
+        let noEffect = tracker.updates(
+            for: progress,
+            events: [.combat(.spellResolved(spell: .sealRelease, grade: .perfect))]
+        )
+        XCTAssertFalse(noEffect.contains { $0.id == .absoluteBarrierDispelled })
+
+        let successfulDispel = tracker.updates(
+            for: progress,
+            events: [
+                .combat(.spellResolved(spell: .sealRelease, grade: .perfect)),
+                .combat(.absoluteBarrierChanged(
+                    target: .enemy(.observationAdministrator),
+                    charges: 0
+                ))
+            ]
+        )
+        XCTAssertTrue(successfulDispel.contains(
+            GameAchievementUpdate(id: .absoluteBarrierDispelled, percentComplete: 100)
+        ))
     }
 
     func testLedgerKeepsHighestProgressForEachPlayer() {
