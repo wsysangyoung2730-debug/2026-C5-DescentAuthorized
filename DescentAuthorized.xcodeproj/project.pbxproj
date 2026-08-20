@@ -54,6 +54,7 @@
 		100000000000000000000050 /* GameFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000050 /* GameFeedback.swift */; };
 		100000000000000000000051 /* GameFeedbackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000051 /* GameFeedbackManager.swift */; };
 		100000000000000000000052 /* AVFAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 200000000000000000000052 /* AVFAudio.framework */; };
+		100000000000000000000053 /* PauseMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000053 /* PauseMenuView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -106,6 +107,7 @@
 		200000000000000000000050 /* GameFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFeedback.swift; sourceTree = "<group>"; };
 		200000000000000000000051 /* GameFeedbackManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFeedbackManager.swift; sourceTree = "<group>"; };
 		200000000000000000000052 /* AVFAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFAudio.framework; path = System/Library/Frameworks/AVFAudio.framework; sourceTree = SDKROOT; };
+		200000000000000000000053 /* PauseMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PauseMenuView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -297,6 +299,7 @@
 			isa = PBXGroup;
 			children = (
 				200000000000000000000047 /* GameCenterViews.swift */,
+				200000000000000000000053 /* PauseMenuView.swift */,
 				200000000000000000000029 /* SettingsView.swift */,
 			);
 			path = Settings;
@@ -446,6 +449,7 @@
 				100000000000000000000047 /* GameCenterViews.swift in Sources */,
 				100000000000000000000050 /* GameFeedback.swift in Sources */,
 				100000000000000000000051 /* GameFeedbackManager.swift in Sources */,
+				100000000000000000000053 /* PauseMenuView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -500,6 +504,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.wsysangyoung.DescentAuthorized;
@@ -526,6 +531,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.wsysangyoung.DescentAuthorized;
