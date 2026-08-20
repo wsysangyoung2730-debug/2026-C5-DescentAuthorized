@@ -19,6 +19,7 @@ enum DemoCommand: Sendable {
     )
     case finishTurn
     case restartEncounter
+    case restartEncounterFromCheckpoint
 }
 
 enum DemoSessionEvent: Equatable, Sendable {
@@ -101,7 +102,10 @@ struct DemoGameSession: Sendable {
             return try finishTurn()
 
         case .restartEncounter:
-            return try restartEncounter()
+            return try restartDefeatedEncounter()
+
+        case .restartEncounterFromCheckpoint:
+            return try restartActiveEncounterFromCheckpoint()
         }
     }
 
@@ -176,7 +180,7 @@ struct DemoGameSession: Sendable {
         return events
     }
 
-    private mutating func restartEncounter() throws -> [DemoSessionEvent] {
+    private mutating func restartDefeatedEncounter() throws -> [DemoSessionEvent] {
         guard let activeEncounter = encounter else {
             throw DemoSessionError.noActiveEncounter
         }
@@ -188,6 +192,15 @@ struct DemoGameSession: Sendable {
         var events = wrap(try progression.restartCurrentEncounter())
         events.append(contentsOf: try startEncounter())
         return events
+    }
+
+    private mutating func restartActiveEncounterFromCheckpoint() throws -> [DemoSessionEvent] {
+        guard encounter != nil else {
+            throw DemoSessionError.noActiveEncounter
+        }
+
+        encounter = nil
+        return try startEncounter()
     }
 
     private mutating func finalizeEncounterIfNeeded() throws -> [DemoSessionEvent] {

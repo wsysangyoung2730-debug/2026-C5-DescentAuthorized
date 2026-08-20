@@ -6,6 +6,11 @@ final class InputSettingsTests: XCTestCase {
     func testDefaultSettingsUseAutomaticInput() {
         XCTAssertEqual(GameSettings.defaults.inputPreference, .automatic)
         XCTAssertEqual(GameSettings.defaults.saveVersion, GameSettings.currentVersion)
+        XCTAssertTrue(GameSettings.defaults.soundEffectsEnabled)
+        XCTAssertTrue(GameSettings.defaults.musicEnabled)
+        XCTAssertTrue(GameSettings.defaults.hapticsEnabled)
+        XCTAssertFalse(GameSettings.defaults.reducedFlashes)
+        XCTAssertFalse(GameSettings.defaults.reducedMotion)
     }
 
     func testAutomaticPolicyAcceptsPencilAndFinger() {
@@ -80,6 +85,41 @@ final class InputSettingsTests: XCTestCase {
         XCTAssertEqual(store.load(), .defaults)
     }
 
+    func testVersionOneSettingsMigrateWithFeedbackDefaults() throws {
+        let data = try XCTUnwrap(
+            """
+            {"saveVersion":1,"inputPreference":"fingerOnly"}
+            """.data(using: .utf8)
+        )
+        let decoded = try JSONDecoder().decode(GameSettings.self, from: data)
+
+        XCTAssertEqual(decoded.saveVersion, 1)
+        XCTAssertEqual(decoded.inputPreference, .fingerOnly)
+        XCTAssertTrue(decoded.soundEffectsEnabled)
+        XCTAssertTrue(decoded.musicEnabled)
+        XCTAssertTrue(decoded.hapticsEnabled)
+        XCTAssertFalse(decoded.reducedFlashes)
+        XCTAssertFalse(decoded.reducedMotion)
+    }
+
+    func testSettingsStoreReturnsMigratedCurrentVersion() throws {
+        let suiteName = "InputSettingsTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = UserDefaultsGameSettingsStore(defaults: defaults)
+        let oldData = try XCTUnwrap(
+            """
+            {"saveVersion":1,"inputPreference":"pencilOnly"}
+            """.data(using: .utf8)
+        )
+        defaults.set(oldData, forKey: UserDefaultsGameSettingsStore.defaultKey)
+
+        let settings = store.load()
+
+        XCTAssertEqual(settings.saveVersion, GameSettings.currentVersion)
+        XCTAssertEqual(settings.inputPreference, .pencilOnly)
+    }
+
     func testSettingsManagerPersistsInputPreferenceBeforePublishingIt() throws {
         let store = InMemoryGameSettingsStore()
         var manager = GameSettingsManager(store: store)
@@ -88,6 +128,24 @@ final class InputSettingsTests: XCTestCase {
 
         XCTAssertEqual(manager.settings.inputPreference, .fingerOnly)
         XCTAssertEqual(store.load().inputPreference, .fingerOnly)
+    }
+
+    func testSettingsManagerPersistsFeedbackAndAccessibilityOptions() throws {
+        let store = InMemoryGameSettingsStore()
+        var manager = GameSettingsManager(store: store)
+
+        try manager.setSoundEffectsEnabled(false)
+        try manager.setMusicEnabled(false)
+        try manager.setHapticsEnabled(false)
+        try manager.setReducedFlashes(true)
+        try manager.setReducedMotion(true)
+
+        XCTAssertEqual(store.load(), manager.settings)
+        XCTAssertFalse(manager.settings.soundEffectsEnabled)
+        XCTAssertFalse(manager.settings.musicEnabled)
+        XCTAssertFalse(manager.settings.hapticsEnabled)
+        XCTAssertTrue(manager.settings.reducedFlashes)
+        XCTAssertTrue(manager.settings.reducedMotion)
     }
 
     func testSettingsManagerKeepsPreviousValueWhenSaveFails() {

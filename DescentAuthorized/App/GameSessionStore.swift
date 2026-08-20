@@ -5,11 +5,18 @@ import SwiftUI
 final class GameSessionStore: ObservableObject {
     @Published private(set) var session: DemoGameSession
     @Published private(set) var latestEvents: [DemoSessionEvent] = []
+    @Published private(set) var eventSequence: UInt64 = 0
     @Published var presentedError: PresentedGameError?
 
     private var coordinator: GameSessionCoordinator
+    private weak var achievementReporter: (any GameAchievementReporting)?
+    private let achievementTracker = GameAchievementTracker()
 
-    init(saveStore: (any GameSaveStore)? = nil) {
+    init(
+        saveStore: (any GameSaveStore)? = nil,
+        achievementReporter: (any GameAchievementReporting)? = nil
+    ) {
+        self.achievementReporter = achievementReporter
         let store = saveStore ?? FileGameSaveStore(fileURL: Self.defaultSaveURL)
         do {
             let coordinator = try GameSessionCoordinator(saveStore: store)
@@ -27,6 +34,7 @@ final class GameSessionStore: ObservableObject {
                 message: "새 게임 상태로 시작합니다."
             )
         }
+        reportAchievementSnapshot()
     }
 
     var progress: GameProgress { session.progress }
@@ -39,6 +47,8 @@ final class GameSessionStore: ObservableObject {
             let events = try coordinator.execute(command)
             session = coordinator.session
             latestEvents = events
+            eventSequence &+= 1
+            reportAchievementSnapshot(events: events)
             return events
         } catch {
             presentedError = PresentedGameError(
@@ -54,6 +64,8 @@ final class GameSessionStore: ObservableObject {
             try coordinator.replaceWithNewGame()
             session = coordinator.session
             latestEvents = []
+            eventSequence &+= 1
+            reportAchievementSnapshot()
         } catch {
             presentedError = PresentedGameError(
                 title: "새 게임을 시작하지 못했습니다",
@@ -64,6 +76,25 @@ final class GameSessionStore: ObservableObject {
 
     func clearEvents() {
         latestEvents = []
+        eventSequence &+= 1
+    }
+
+    private func reportAchievementSnapshot(events: [DemoSessionEvent] = []) {
+        achievementReporter?.submit(
+            achievementTracker.updates(for: session.progress, events: events)
+        )
+    }
+
+    func saveForLifecycleTransition() {
+        guard hasSavedProgress else { return }
+        do {
+            try coordinator.saveCurrentProgress()
+        } catch {
+            presentedError = PresentedGameError(
+                title: "진행 상황을 저장하지 못했습니다",
+                message: "앱으로 돌아온 뒤 저장 공간을 확인해 주세요."
+            )
+        }
     }
 
     private static var defaultSaveURL: URL {

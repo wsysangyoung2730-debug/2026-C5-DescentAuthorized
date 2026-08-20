@@ -5,6 +5,7 @@ struct DemoFlowView: View {
 
     let onExit: () -> Void
 
+    @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
 
     var body: some View {
@@ -12,11 +13,13 @@ struct DemoFlowView: View {
             sceneView
 
             HStack {
-                Button(action: onExit) {
-                    Image(systemName: "house")
+                Button {
+                    isShowingPauseMenu = true
+                } label: {
+                    Image(systemName: "pause.fill")
                 }
-                .help("타이틀로 돌아가기")
-                .accessibilityLabel("타이틀로 돌아가기")
+                .help("일시정지")
+                .accessibilityLabel("일시정지")
 
                 Spacer()
 
@@ -37,6 +40,9 @@ struct DemoFlowView: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
             .background(.black.opacity(0.55))
+        }
+        .sheet(isPresented: $isShowingPauseMenu) {
+            PauseMenuView(onExitToTitle: onExit)
         }
         .sheet(isPresented: $isShowingSettings) {
             SettingsView()

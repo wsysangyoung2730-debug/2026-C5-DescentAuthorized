@@ -76,6 +76,46 @@ final class DemoGameSessionTests: XCTestCase {
         XCTAssertTrue(restartEvents.contains(.encounterStarted(.recordsAdministrator)))
     }
 
+    func testActiveEncounterRestartsAtCheckpointHPAndResetsEnemy() throws {
+        var progress = GameProgress.newGame
+        progress.currentFloor = .floor9
+        progress.currentScene = .floor9RecordsBattle
+        progress.checkpoint = .recordsBattle
+        progress.playerHP = 63
+        progress.learnedSpells = [.afterglowErasure, .riftSeverance]
+        progress.completedTrainingSpells = [.afterglowErasure, .riftSeverance]
+        var session = DemoGameSession(progress: progress)
+        _ = try session.handle(.startEncounter)
+        let spell = SpellCatalog.spell(.afterglowErasure)
+        _ = try session.handle(.castSpell(
+            spell: spell.id,
+            strokes: referenceStrokes(for: spell),
+            inputMethod: .pencil
+        ))
+        XCTAssertLessThan(
+            session.battleState?.enemy.hp ?? Int.max,
+            EnemyCatalog.recordsAdministrator.maxHP
+        )
+
+        let events = try session.handle(.restartEncounterFromCheckpoint)
+
+        XCTAssertEqual(session.progress.playerHP, 63)
+        XCTAssertEqual(session.battleState?.player.hp, 63)
+        XCTAssertEqual(
+            session.battleState?.enemy.hp,
+            EnemyCatalog.recordsAdministrator.maxHP
+        )
+        XCTAssertTrue(events.contains(.encounterStarted(.recordsAdministrator)))
+    }
+
+    func testCheckpointRestartRequiresActiveEncounter() throws {
+        var session = try makeRecordsBattleSession()
+
+        XCTAssertThrowsError(try session.handle(.restartEncounterFromCheckpoint)) { error in
+            XCTAssertEqual(error as? DemoSessionError, .noActiveEncounter)
+        }
+    }
+
     func testSessionRejectsCombatCommandsWithoutEncounter() throws {
         var session = DemoGameSession()
 

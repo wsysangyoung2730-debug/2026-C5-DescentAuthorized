@@ -1,9 +1,5 @@
 import Foundation
 
-enum GameSaveError: Error, Equatable {
-    case unsupportedVersion(Int)
-}
-
 protocol GameSaveStore {
     func load() throws -> GameProgress?
     func save(_ progress: GameProgress) throws
@@ -71,9 +67,7 @@ extension GameProgressionController {
         guard let progress = try store.load() else {
             return GameProgressionController()
         }
-        guard progress.saveVersion <= GameProgress.newGame.saveVersion else {
-            throw GameSaveError.unsupportedVersion(progress.saveVersion)
-        }
+        try GameProgressValidator().validate(progress)
         return GameProgressionController(progress: progress)
     }
 }

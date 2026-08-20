@@ -12,6 +12,9 @@ struct BattleView: View {
     @State private var feedbackColor = Color.white
     @State private var showsFirstTurnBriefing = false
     @State private var didExperienceAbsoluteBarrier = false
+    @State private var enemyPulseTask: Task<Void, Never>?
+    @State private var playerPulseTask: Task<Void, Never>?
+    @State private var feedbackTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
@@ -24,11 +27,11 @@ struct BattleView: View {
             }
 
             Color.red
-                .opacity(playerHitFlash ? 0.24 : 0)
+                .opacity(playerHitFlash ? (appSettings.reducedFlashes ? 0.08 : 0.24) : 0)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
-            if strongAttackFlash {
+            if strongAttackFlash && !appSettings.reducedFlashes {
                 Rectangle()
                     .stroke(Color.red.opacity(0.85), lineWidth: 8)
                     .ignoresSafeArea()
@@ -58,9 +61,14 @@ struct BattleView: View {
                 showsFirstTurnBriefing = true
             }
         }
-        .onChange(of: gameSession.latestEvents) { _, events in
-            present(events)
+        .onChange(of: gameSession.eventSequence) { _, _ in
+            present(gameSession.latestEvents)
             selectAvailableSpell()
+        }
+        .onDisappear {
+            enemyPulseTask?.cancel()
+            playerPulseTask?.cancel()
+            feedbackTask?.cancel()
         }
         .preferredColorScheme(.dark)
     }
@@ -429,21 +437,25 @@ struct BattleView: View {
     }
 
     private func pulseEnemy() {
-        withAnimation(.easeOut(duration: 0.12)) { enemyHitFlash = true }
-        Task { @MainActor in
+        enemyPulseTask?.cancel()
+        animate(.easeOut(duration: 0.12)) { enemyHitFlash = true }
+        enemyPulseTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(260))
-            withAnimation(.easeIn(duration: 0.2)) { enemyHitFlash = false }
+            guard !Task.isCancelled else { return }
+            animate(.easeIn(duration: 0.2)) { enemyHitFlash = false }
         }
     }
 
     private func pulsePlayer(strong: Bool) {
-        withAnimation(.easeOut(duration: 0.08)) {
+        playerPulseTask?.cancel()
+        animate(.easeOut(duration: 0.08)) {
             playerHitFlash = true
             strongAttackFlash = strong
         }
-        Task { @MainActor in
+        playerPulseTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(strong ? 420 : 260))
-            withAnimation(.easeIn(duration: 0.2)) {
+            guard !Task.isCancelled else { return }
+            animate(.easeIn(duration: 0.2)) {
                 playerHitFlash = false
                 strongAttackFlash = false
             }
@@ -451,13 +463,26 @@ struct BattleView: View {
     }
 
     private func showFeedback(_ text: String, color: Color) {
-        withAnimation(.spring(response: 0.24)) {
+        feedbackTask?.cancel()
+        animate(.spring(response: 0.24)) {
             feedbackText = text
             feedbackColor = color
         }
-        Task { @MainActor in
+        feedbackTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(900))
-            withAnimation(.easeOut(duration: 0.2)) { feedbackText = nil }
+            guard !Task.isCancelled else { return }
+            animate(.easeOut(duration: 0.2)) { feedbackText = nil }
+        }
+    }
+
+    private func animate(
+        _ animation: Animation,
+        changes: () -> Void
+    ) {
+        if appSettings.reducedMotion {
+            changes()
+        } else {
+            withAnimation(animation, changes)
         }
     }
 
@@ -640,11 +665,9 @@ struct BattleView: View {
     }
 
     private func isSpellPermitted(_ spell: SpellDefinition, battle: BattleState) -> Bool {
-        if isObservationBattle,
-           spell.id == .sealRelease,
-           battle.enemy.absoluteBarrierCharges > 0,
-           !didExperienceAbsoluteBarrier {
-            return false
+        if isObservationBattle, spell.id == .sealRelease {
+            return battle.enemy.absoluteBarrierCharges > 0
+                && didExperienceAbsoluteBarrier
         }
         return true
     }
