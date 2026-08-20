@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct BattleView: View {
+<<<<<<< HEAD
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
 
@@ -64,15 +65,75 @@ struct BattleView: View {
         .onChange(of: gameSession.eventSequence) { _, _ in
             present(gameSession.latestEvents)
             selectAvailableSpell()
+            autoFinishPlayerTurnIfNeeded()
         }
         .onDisappear {
             enemyPulseTask?.cancel()
             playerPulseTask?.cancel()
             feedbackTask?.cancel()
+=======
+    @State private var playerHP = 100
+    @State private var enemyHP = 120
+    @State private var availableStrikes = 2
+    @State private var statusMessage = "관리자 차례"
+    @State private var isPlayerTurn = true
+
+    private let spellCards = [
+        ("잔광 말소", 1),
+        ("균열 절단", 1)
+    ]
+
+    private var canCastAnySpell: Bool {
+        isPlayerTurn && availableStrikes > 0 && !spellCards.isEmpty
+    }
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 20) {
+                header
+
+                Spacer()
+
+                Text(statusMessage)
+                    .font(.title3.weight(.medium))
+                    .foregroundStyle(.white.opacity(0.85))
+
+                Spacer()
+
+                spellBar
+
+                HStack {
+                    Button("턴 종료") {
+                        endPlayerTurn()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.gray)
+                    .disabled(!isPlayerTurn)
+
+                    Spacer()
+
+                    Button("보스 턴 진행") {
+                        enemyAction()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(isPlayerTurn)
+                }
+            }
+            .padding()
+        }
+        .onChange(of: availableStrikes) { _, _ in
+            autoEndTurnIfNeeded()
+        }
+        .onAppear {
+            autoEndTurnIfNeeded()
+>>>>>>> bdc0cfd ([fix] 2획 소진 시 자동 턴 종료 처리)
         }
         .preferredColorScheme(.dark)
     }
 
+<<<<<<< HEAD
     private func battleContent(_ battle: BattleState) -> some View {
         GeometryReader { proxy in
             VStack(spacing: 10) {
@@ -130,10 +191,20 @@ struct BattleView: View {
                     .foregroundStyle(.secondary)
                 Text(phaseTitle(battle.phase))
                     .font(.subheadline.weight(.semibold))
+=======
+    private var header: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text("플레이어 HP \(playerHP)")
+                Text("남은 획수 \(availableStrikes)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+>>>>>>> bdc0cfd ([fix] 2획 소진 시 자동 턴 종료 처리)
             }
 
             Spacer()
 
+<<<<<<< HEAD
             vitalityBlock(
                 name: battle.enemy.name,
                 combatant: battle.enemy,
@@ -380,6 +451,16 @@ struct BattleView: View {
         })?.id
     }
 
+    private func autoFinishPlayerTurnIfNeeded() {
+        guard let battle = gameSession.battleState else { return }
+        guard battle.phase == .playerTurn else { return }
+        guard availableSpells(in: battle).contains(where: {
+            $0.requiredStrokes <= battle.resources.remainingStrokes
+                && isSpellPermitted($0, battle: battle)
+        }) == false else { return }
+        gameSession.send(.finishTurn)
+    }
+
     private func selectedSpell(in battle: BattleState) -> SpellDefinition? {
         guard let selectedSpellID, battle.learnedSpells.contains(selectedSpellID) else {
             return nil
@@ -577,10 +658,16 @@ struct BattleView: View {
                 Text(title)
                     .font(.subheadline.weight(.semibold))
                 Text(detail)
+=======
+            VStack(alignment: .trailing) {
+                Text("적 HP \(enemyHP)")
+                Text(isPlayerTurn ? "플레이어 턴" : "적 턴")
+>>>>>>> bdc0cfd ([fix] 2획 소진 시 자동 턴 종료 처리)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
+<<<<<<< HEAD
     }
 
     private var defeatOverlay: some View {
@@ -660,10 +747,30 @@ struct BattleView: View {
             .overlay {
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(accent.opacity(0.35), lineWidth: 1)
+=======
+        .foregroundStyle(.white)
+    }
+
+    private var spellBar: some View {
+        VStack(spacing: 12) {
+            if canCastAnySpell {
+                HStack {
+                    ForEach(spellCards, id: \.0) { spell in
+                        Button(spell.0) {
+                            castSpell(cost: spell.1)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+            } else {
+                Text("시전할 수 있는 주문이 없습니다")
+                    .foregroundStyle(.secondary)
+>>>>>>> bdc0cfd ([fix] 2획 소진 시 자동 턴 종료 처리)
             }
         }
     }
 
+<<<<<<< HEAD
     private func isSpellPermitted(_ spell: SpellDefinition, battle: BattleState) -> Bool {
         if isObservationBattle, spell.id == .sealRelease {
             return battle.enemy.absoluteBarrierCharges > 0
@@ -779,5 +886,36 @@ struct BattleView: View {
         case .manaDepleted: "마나 고갈"
         case .incompleteGlyph: "문양 불완전"
         }
+=======
+    private func castSpell(cost: Int) {
+        guard isPlayerTurn, availableStrikes >= cost else { return }
+
+        availableStrikes -= cost
+        enemyHP = max(0, enemyHP - 14)
+        statusMessage = enemyHP == 0 ? "승리" : "주문 시전 완료"
+
+        autoEndTurnIfNeeded()
+    }
+
+    private func endPlayerTurn() {
+        guard isPlayerTurn else { return }
+        isPlayerTurn = false
+        statusMessage = "관리자 차례"
+    }
+
+    private func enemyAction() {
+        guard !isPlayerTurn else { return }
+
+        playerHP = max(0, playerHP - 12)
+        availableStrikes = 2
+        isPlayerTurn = true
+        statusMessage = "플레이어 차례"
+    }
+
+    private func autoEndTurnIfNeeded() {
+        guard isPlayerTurn else { return }
+        guard availableStrikes == 0 || !canCastAnySpell else { return }
+        endPlayerTurn()
+>>>>>>> bdc0cfd ([fix] 2획 소진 시 자동 턴 종료 처리)
     }
 }
