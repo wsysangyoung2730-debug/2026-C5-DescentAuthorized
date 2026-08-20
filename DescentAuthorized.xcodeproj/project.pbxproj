@@ -29,6 +29,9 @@
 		100000000000000000000024 /* StrokeProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000024 /* StrokeProcessor.swift */; };
 		100000000000000000000025 /* RuneDrawingCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000025 /* RuneDrawingCanvasView.swift */; };
 		100000000000000000000026 /* RuneDrawingCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000026 /* RuneDrawingCanvas.swift */; };
+		100000000000000000000027 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000027 /* AppSettings.swift */; };
+		100000000000000000000028 /* GameSettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000028 /* GameSettingsManager.swift */; };
+		100000000000000000000029 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000029 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -55,6 +58,9 @@
 		200000000000000000000024 /* StrokeProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeProcessor.swift; sourceTree = "<group>"; };
 		200000000000000000000025 /* RuneDrawingCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuneDrawingCanvasView.swift; sourceTree = "<group>"; };
 		200000000000000000000026 /* RuneDrawingCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuneDrawingCanvas.swift; sourceTree = "<group>"; };
+		200000000000000000000027 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		200000000000000000000028 /* GameSettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSettingsManager.swift; sourceTree = "<group>"; };
+		200000000000000000000029 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +96,7 @@
 		400000000000000000000003 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				200000000000000000000027 /* AppSettings.swift */,
 				200000000000000000000001 /* DescentAuthorizedApp.swift */,
 			);
 			path = App;
@@ -168,6 +175,7 @@
 		400000000000000000000010 /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
+				200000000000000000000028 /* GameSettingsManager.swift */,
 				200000000000000000000023 /* GameSettingsStore.swift */,
 				200000000000000000000019 /* GameSaveStore.swift */,
 			);
@@ -179,6 +187,7 @@
 			children = (
 				400000000000000000000007 /* Home */,
 				40000000000000000000000A /* Battle */,
+				400000000000000000000012 /* Settings */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -207,6 +216,14 @@
 				200000000000000000000026 /* RuneDrawingCanvas.swift */,
 			);
 			path = Input;
+			sourceTree = "<group>";
+		};
+		400000000000000000000012 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000029 /* SettingsView.swift */,
+			);
+			path = Settings;
 			sourceTree = "<group>";
 		};
 		400000000000000000000008 /* Resources */ = {
@@ -315,6 +332,9 @@
 				100000000000000000000024 /* StrokeProcessor.swift in Sources */,
 				100000000000000000000025 /* RuneDrawingCanvasView.swift in Sources */,
 				100000000000000000000026 /* RuneDrawingCanvas.swift in Sources */,
+				100000000000000000000027 /* AppSettings.swift in Sources */,
+				100000000000000000000028 /* GameSettingsManager.swift in Sources */,
+				100000000000000000000029 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
