@@ -64,6 +64,7 @@ struct BattleView: View {
         .onChange(of: gameSession.eventSequence) { _, _ in
             present(gameSession.latestEvents)
             selectAvailableSpell()
+            autoFinishPlayerTurnIfNeeded()
         }
         .onDisappear {
             enemyPulseTask?.cancel()
@@ -378,6 +379,16 @@ struct BattleView: View {
             $0.requiredStrokes <= battle.resources.remainingStrokes
                 && isSpellPermitted($0, battle: battle)
         })?.id
+    }
+
+    private func autoFinishPlayerTurnIfNeeded() {
+        guard let battle = gameSession.battleState else { return }
+        guard battle.phase == .playerTurn else { return }
+        guard availableSpells(in: battle).contains(where: {
+            $0.requiredStrokes <= battle.resources.remainingStrokes
+                && isSpellPermitted($0, battle: battle)
+        }) == false else { return }
+        gameSession.send(.finishTurn)
     }
 
     private func selectedSpell(in battle: BattleState) -> SpellDefinition? {
