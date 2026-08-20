@@ -12,6 +12,17 @@
 		100000000000000000000003 /* BattleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000003 /* BattleView.swift */; };
 		100000000000000000000004 /* GamePhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000004 /* GamePhase.swift */; };
 		100000000000000000000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000005 /* Assets.xcassets */; };
+		100000000000000000000010 /* DomainModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000010 /* DomainModels.swift */; };
+		100000000000000000000011 /* SpellCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000011 /* SpellCatalog.swift */; };
+		100000000000000000000012 /* EnemyCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000012 /* EnemyCatalog.swift */; };
+		100000000000000000000013 /* RewardCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000013 /* RewardCatalog.swift */; };
+		100000000000000000000014 /* GlyphGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000014 /* GlyphGeometry.swift */; };
+		100000000000000000000015 /* GlyphEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000015 /* GlyphEvaluator.swift */; };
+		100000000000000000000016 /* CombatEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000016 /* CombatEngine.swift */; };
+		100000000000000000000017 /* EncounterController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000017 /* EncounterController.swift */; };
+		100000000000000000000018 /* GameProgressionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000018 /* GameProgressionController.swift */; };
+		100000000000000000000019 /* GameSaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000019 /* GameSaveStore.swift */; };
+		100000000000000000000020 /* DemoGameSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000020 /* DemoGameSession.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,6 +32,17 @@
 		200000000000000000000004 /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
 		200000000000000000000005 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		200000000000000000000006 /* DescentAuthorized.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DescentAuthorized.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		200000000000000000000010 /* DomainModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainModels.swift; sourceTree = "<group>"; };
+		200000000000000000000011 /* SpellCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpellCatalog.swift; sourceTree = "<group>"; };
+		200000000000000000000012 /* EnemyCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnemyCatalog.swift; sourceTree = "<group>"; };
+		200000000000000000000013 /* RewardCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardCatalog.swift; sourceTree = "<group>"; };
+		200000000000000000000014 /* GlyphGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphGeometry.swift; sourceTree = "<group>"; };
+		200000000000000000000015 /* GlyphEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphEvaluator.swift; sourceTree = "<group>"; };
+		200000000000000000000016 /* CombatEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombatEngine.swift; sourceTree = "<group>"; };
+		200000000000000000000017 /* EncounterController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncounterController.swift; sourceTree = "<group>"; };
+		200000000000000000000018 /* GameProgressionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameProgressionController.swift; sourceTree = "<group>"; };
+		200000000000000000000019 /* GameSaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSaveStore.swift; sourceTree = "<group>"; };
+		200000000000000000000020 /* DemoGameSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoGameSession.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +87,12 @@
 			isa = PBXGroup;
 			children = (
 				400000000000000000000005 /* Game */,
+				40000000000000000000000B /* Domain */,
+				40000000000000000000000C /* Content */,
+				40000000000000000000000D /* GlyphEngine */,
+				40000000000000000000000E /* CombatEngine */,
+				40000000000000000000000F /* Progression */,
+				400000000000000000000010 /* Persistence */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -72,9 +100,62 @@
 		400000000000000000000005 /* Game */ = {
 			isa = PBXGroup;
 			children = (
+				200000000000000000000020 /* DemoGameSession.swift */,
 				200000000000000000000004 /* GamePhase.swift */,
 			);
 			path = Game;
+			sourceTree = "<group>";
+		};
+		40000000000000000000000B /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000010 /* DomainModels.swift */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		40000000000000000000000C /* Content */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000011 /* SpellCatalog.swift */,
+				200000000000000000000012 /* EnemyCatalog.swift */,
+				200000000000000000000013 /* RewardCatalog.swift */,
+			);
+			path = Content;
+			sourceTree = "<group>";
+		};
+		40000000000000000000000D /* GlyphEngine */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000014 /* GlyphGeometry.swift */,
+				200000000000000000000015 /* GlyphEvaluator.swift */,
+			);
+			path = GlyphEngine;
+			sourceTree = "<group>";
+		};
+		40000000000000000000000E /* CombatEngine */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000016 /* CombatEngine.swift */,
+				200000000000000000000017 /* EncounterController.swift */,
+			);
+			path = CombatEngine;
+			sourceTree = "<group>";
+		};
+		40000000000000000000000F /* Progression */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000018 /* GameProgressionController.swift */,
+			);
+			path = Progression;
+			sourceTree = "<group>";
+		};
+		400000000000000000000010 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000019 /* GameSaveStore.swift */,
+			);
+			path = Persistence;
 			sourceTree = "<group>";
 		};
 		400000000000000000000006 /* Features */ = {
@@ -191,6 +272,17 @@
 				100000000000000000000002 /* HomeView.swift in Sources */,
 				100000000000000000000003 /* BattleView.swift in Sources */,
 				100000000000000000000004 /* GamePhase.swift in Sources */,
+				100000000000000000000010 /* DomainModels.swift in Sources */,
+				100000000000000000000011 /* SpellCatalog.swift in Sources */,
+				100000000000000000000012 /* EnemyCatalog.swift in Sources */,
+				100000000000000000000013 /* RewardCatalog.swift in Sources */,
+				100000000000000000000014 /* GlyphGeometry.swift in Sources */,
+				100000000000000000000015 /* GlyphEvaluator.swift in Sources */,
+				100000000000000000000016 /* CombatEngine.swift in Sources */,
+				100000000000000000000017 /* EncounterController.swift in Sources */,
+				100000000000000000000018 /* GameProgressionController.swift in Sources */,
+				100000000000000000000019 /* GameSaveStore.swift in Sources */,
+				100000000000000000000020 /* DemoGameSession.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

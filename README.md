@@ -27,7 +27,7 @@ DescentAuthorized.xcodeproj
 - Apple Pencil 및 손가락 드로잉 입력
 - 순수 Swift 턴 상태 관리
 
-현재 저장소에는 개발을 시작하기 위한 iPadOS 프로젝트 골격과 기획 문서만 포함합니다.
+현재 저장소에는 기획 문서와 함께 마법진 판정, 턴제 전투, 적 패턴, 데모 진행, 보상 및 저장을 실행할 수 있는 비 UI 코어가 포함되어 있습니다.
 
 ## 폴더 구조
 
@@ -35,13 +35,19 @@ DescentAuthorized.xcodeproj
 DescentAuthorized/
 ├── App/                 # 앱 진입점
 ├── Core/
-│   └── Game/            # 전투 상태와 공통 게임 규칙
+│   ├── Content/         # 주문, 적, 보상 데이터
+│   ├── Domain/          # 공통 데이터 모델
+│   ├── GlyphEngine/     # 마법진 경로 및 마나 판정
+│   ├── CombatEngine/    # 턴 전투와 적 패턴
+│   ├── Progression/     # 10층부터 8층까지의 진행 규칙
+│   ├── Persistence/     # 체크포인트 저장 및 복원
+│   └── Game/            # 통합 데모 세션
 ├── Features/
 │   ├── Home/            # 시작 화면
 │   └── Battle/          # 전투 기능
 └── Resources/           # 이미지, 사운드, 에셋
-docs/
-└── PRD.md               # 게임 기획 기준 문서
+DescentAuthorizedCoreTests/ # 비 UI 코어 자동 테스트
+docs/                        # 기획 및 구현 문서
 ```
 
 ## 문서
@@ -53,6 +59,15 @@ docs/
 - [UI/UX](./docs/UI_UX_SPEC.md): 화면, 입력, 상태와 접근성
 - [스토리 및 대사](./docs/NARRATIVE.md): 정보 공개 순서, 기록과 실제 대사
 - [비UI 프로토타입 구현 계획](./docs/IMPLEMENTATION_PLAN.md): 코어 아키텍처와 단계별 완료 조건
+- [비UI 코어 구현 현황](./docs/CORE_IMPLEMENTATION_STATUS.md): 현재 동작 범위, 검증 결과와 다음 작업
+
+## 코어 검증
+
+```bash
+swift test
+```
+
+Xcode 프로젝트의 iPad 앱 타깃도 동일한 코어 소스를 직접 포함하므로 별도의 코드 복사 없이 UI에서 `DemoGameSession`을 연결할 수 있습니다.
 
 ## Git 전략
 

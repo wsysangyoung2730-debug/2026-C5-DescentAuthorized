@@ -181,6 +181,29 @@ struct GameProgressionController: Sendable {
         ]
     }
 
+    mutating func restartCurrentEncounter() throws -> [ProgressionEvent] {
+        let battleScenes: [SceneID] = [
+            .floor9RecordsBattle,
+            .floor8ResidualBattle,
+            .floor8AdministratorBattle
+        ]
+        guard battleScenes.contains(progress.currentScene) else {
+            throw ProgressionError.invalidScene(
+                expected: battleScenes,
+                actual: progress.currentScene
+            )
+        }
+
+        let previousHP = progress.playerHP
+        progress.playerHP = Self.maximumPlayerHP
+        return [
+            .hpRestored(
+                amount: Self.maximumPlayerHP - previousHP,
+                currentHP: Self.maximumPlayerHP
+            )
+        ]
+    }
+
     mutating func completeEncounter(
         enemy: EnemyID,
         remainingPlayerHP: Int
