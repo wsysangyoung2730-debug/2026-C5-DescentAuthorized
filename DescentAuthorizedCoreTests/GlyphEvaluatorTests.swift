@@ -18,6 +18,57 @@ final class GlyphEvaluatorTests: XCTestCase {
         }
     }
 
+    func testFingerReferencePathsCanAlsoProducePerfectCast() {
+        for spell in SpellCatalog.all.values {
+            let result = evaluator.evaluate(
+                spell: spell,
+                strokes: referenceStrokes(for: spell),
+                inputMethod: .finger
+            )
+
+            XCTAssertEqual(result.grade, .perfect, "Expected finger perfect cast for \(spell.name)")
+            XCTAssertNil(result.failure)
+        }
+    }
+
+    func testFingerReceivesSmallStartPointTolerance() {
+        let spell = SpellCatalog.afterglowErasure
+        var points = spell.glyph.strokes[0].referencePath
+        points[0] = NormalizedPoint(x: points[0].x + 6.5, y: points[0].y)
+
+        let pencil = evaluator.evaluate(
+            spell: spell,
+            strokes: [DrawnStroke(points: points)],
+            inputMethod: .pencil
+        )
+        let finger = evaluator.evaluate(
+            spell: spell,
+            strokes: [DrawnStroke(points: points)],
+            inputMethod: .finger
+        )
+
+        XCTAssertEqual(pencil.failure, .invalidStart)
+        XCTAssertNotEqual(finger.failure, .invalidStart)
+    }
+
+    func testFingerStillRejectsMissingRequiredNodes() {
+        let spell = SpellCatalog.riftSeverance
+        let result = evaluator.evaluate(
+            spell: spell,
+            strokes: [
+                DrawnStroke(points: [
+                    spell.glyph.strokes[0].start,
+                    NormalizedPoint(x: 20, y: 50),
+                    spell.glyph.strokes[0].end
+                ])
+            ],
+            inputMethod: .finger
+        )
+
+        XCTAssertEqual(result.grade, .rejected)
+        XCTAssertEqual(result.failure, .missingRequiredNode)
+    }
+
     func testWrongStrokeCountIsRejected() {
         let spell = SpellCatalog.barrierPiercing
         let result = evaluator.evaluate(
