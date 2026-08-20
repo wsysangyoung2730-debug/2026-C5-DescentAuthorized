@@ -25,6 +25,7 @@ DescentAuthorized.xcodeproj
 - SwiftUI
 - RealityKit 기반 2.5D 전투 무대
 - Apple Pencil 및 손가락 드로잉 입력
+- 자동, Apple Pencil 전용, 손가락 전용 입력 설정
 - 순수 Swift 턴 상태 관리
 
 현재 저장소에는 기획 문서와 함께 마법진 판정, 턴제 전투, 적 패턴, 데모 진행, 보상 및 저장을 실행할 수 있는 비 UI 코어가 포함되어 있습니다.
@@ -44,7 +45,8 @@ DescentAuthorized/
 │   └── Game/            # 통합 데모 세션
 ├── Features/
 │   ├── Home/            # 시작 화면
-│   └── Battle/          # 전투 기능
+│   ├── Battle/          # 전투 및 드로잉 입력
+│   └── Settings/        # 입력 방식 설정과 입력 확인
 └── Resources/           # 이미지, 사운드, 에셋
 DescentAuthorizedCoreTests/ # 비 UI 코어 자동 테스트
 docs/                        # 기획 및 구현 문서

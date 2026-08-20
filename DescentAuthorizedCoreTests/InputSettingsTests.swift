@@ -79,4 +79,42 @@ final class InputSettingsTests: XCTestCase {
 
         XCTAssertEqual(store.load(), .defaults)
     }
+
+    func testSettingsManagerPersistsInputPreferenceBeforePublishingIt() throws {
+        let store = InMemoryGameSettingsStore()
+        var manager = GameSettingsManager(store: store)
+
+        try manager.setInputPreference(.fingerOnly)
+
+        XCTAssertEqual(manager.settings.inputPreference, .fingerOnly)
+        XCTAssertEqual(store.load().inputPreference, .fingerOnly)
+    }
+
+    func testSettingsManagerKeepsPreviousValueWhenSaveFails() {
+        let store = FailingGameSettingsStore()
+        var manager = GameSettingsManager(store: store)
+
+        XCTAssertThrowsError(try manager.setInputPreference(.pencilOnly))
+        XCTAssertEqual(manager.settings, .defaults)
+    }
+
+    func testSettingsManagerResetRestoresAutomaticMode() throws {
+        let store = InMemoryGameSettingsStore(
+            settings: GameSettings(inputPreference: .fingerOnly)
+        )
+        var manager = GameSettingsManager(store: store)
+
+        manager.reset()
+
+        XCTAssertEqual(manager.settings, .defaults)
+        XCTAssertEqual(store.load(), .defaults)
+    }
+}
+
+private final class FailingGameSettingsStore: GameSettingsStore {
+    struct SaveFailure: Error {}
+
+    func load() -> GameSettings { .defaults }
+    func save(_ settings: GameSettings) throws { throw SaveFailure() }
+    func reset() {}
 }

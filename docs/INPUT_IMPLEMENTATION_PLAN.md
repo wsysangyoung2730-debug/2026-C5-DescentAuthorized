@@ -228,3 +228,15 @@ DescentAuthorized/
 - 손가락과 Pencil 모두 동일한 주문과 최고 등급을 사용할 수 있다.
 - 1획 및 2획 주문 데이터가 기존 판정 엔진에 정상 제출된다.
 - 모든 자동 테스트와 iPad 앱 타깃 빌드가 통과한다.
+
+## 13. 구현 결과
+
+- `docs/#7-inputImplementationPlan`: 완료
+- `feat/#8-inputSettings`: 완료
+- `feat/#9-strokeProcessing`: 완료
+- `feat/#10-drawingCanvas`: 완료
+- `feat/#11-inputSettingsUI`: 완료
+- Swift Package 자동 테스트: 64개 통과
+- iPad Simulator Debug 앱 타깃 빌드: 성공
+
+남은 실기기 검증 항목은 손가락 보정 배율, 손바닥 접촉 패턴과 Apple Pencil 지연 체감이다. 이 값은 자동 테스트로 추정하지 않고 실제 iPad 플레이 테스트에서 최종 조정한다.
