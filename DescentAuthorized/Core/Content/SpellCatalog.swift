@@ -31,7 +31,8 @@ enum SpellCatalog {
                     requiredNodeIndices: [1, 2],
                     optionalNodeIndices: [3],
                     nodeRadius: 6,
-                    pathRadius: 7
+                    pathRadius: 7,
+                    optionalNodeGradeCap: .incomplete
                 )
             ],
             crossings: []
@@ -86,7 +87,7 @@ enum SpellCatalog {
                 GlyphCrossingRequirement(
                     firstStrokeIndex: 0,
                     secondStrokeIndex: 1,
-                    center: point(50, 52),
+                    center: point(62, 34),
                     radius: 6
                 )
             ]
@@ -141,7 +142,8 @@ enum SpellCatalog {
         requiredNodeIndices: [Int],
         optionalNodeIndices: [Int] = [],
         nodeRadius: Double,
-        pathRadius: Double
+        pathRadius: Double,
+        optionalNodeGradeCap: CastingGrade? = nil
     ) -> GlyphStrokeSpec {
         let points = values.map(point)
         return GlyphStrokeSpec(
@@ -151,7 +153,8 @@ enum SpellCatalog {
             optionalNodes: optionalNodeIndices.map { points[$0] },
             referencePath: points,
             nodeRadius: nodeRadius,
-            pathRadius: pathRadius
+            pathRadius: pathRadius,
+            optionalNodeGradeCap: optionalNodeGradeCap
         )
     }
 
@@ -159,4 +162,3 @@ enum SpellCatalog {
         NormalizedPoint(x: x, y: y)
     }
 }
-
