@@ -790,6 +790,5 @@ struct BattleView: View {
         case .manaDepleted: "마나 고갈"
         case .incompleteGlyph: "문양 불완전"
         }
-
     }
 }
