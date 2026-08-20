@@ -36,6 +36,10 @@
 		100000000000000000000031 /* GameSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000031 /* GameSessionStore.swift */; };
 		100000000000000000000032 /* GlyphManaEstimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000032 /* GlyphManaEstimator.swift */; };
 		100000000000000000000033 /* GlyphCastingPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000033 /* GlyphCastingPanel.swift */; };
+		100000000000000000000034 /* DescentDoorGlyphCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000034 /* DescentDoorGlyphCatalog.swift */; };
+		100000000000000000000035 /* DoorGlyphPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000035 /* DoorGlyphPanel.swift */; };
+		100000000000000000000036 /* Floor10TutorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000036 /* Floor10TutorialView.swift */; };
+		100000000000000000000037 /* DemoFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000037 /* DemoFlowView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -69,6 +73,10 @@
 		200000000000000000000031 /* GameSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSessionStore.swift; sourceTree = "<group>"; };
 		200000000000000000000032 /* GlyphManaEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphManaEstimator.swift; sourceTree = "<group>"; };
 		200000000000000000000033 /* GlyphCastingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphCastingPanel.swift; sourceTree = "<group>"; };
+		200000000000000000000034 /* DescentDoorGlyphCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DescentDoorGlyphCatalog.swift; sourceTree = "<group>"; };
+		200000000000000000000035 /* DoorGlyphPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoorGlyphPanel.swift; sourceTree = "<group>"; };
+		200000000000000000000036 /* Floor10TutorialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Floor10TutorialView.swift; sourceTree = "<group>"; };
+		200000000000000000000037 /* DemoFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoFlowView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -148,6 +156,7 @@
 			isa = PBXGroup;
 			children = (
 				200000000000000000000011 /* SpellCatalog.swift */,
+				200000000000000000000034 /* DescentDoorGlyphCatalog.swift */,
 				200000000000000000000012 /* EnemyCatalog.swift */,
 				200000000000000000000013 /* RewardCatalog.swift */,
 			);
@@ -198,6 +207,7 @@
 			children = (
 				400000000000000000000007 /* Home */,
 				40000000000000000000000A /* Battle */,
+				400000000000000000000013 /* Progression */,
 				400000000000000000000012 /* Settings */,
 			);
 			path = Features;
@@ -228,6 +238,16 @@
 				200000000000000000000026 /* RuneDrawingCanvas.swift */,
 			);
 			path = Input;
+			sourceTree = "<group>";
+		};
+		400000000000000000000013 /* Progression */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000037 /* DemoFlowView.swift */,
+				200000000000000000000035 /* DoorGlyphPanel.swift */,
+				200000000000000000000036 /* Floor10TutorialView.swift */,
+			);
+			path = Progression;
 			sourceTree = "<group>";
 		};
 		400000000000000000000012 /* Settings */ = {
@@ -351,6 +371,10 @@
 				100000000000000000000031 /* GameSessionStore.swift in Sources */,
 				100000000000000000000032 /* GlyphManaEstimator.swift in Sources */,
 				100000000000000000000033 /* GlyphCastingPanel.swift in Sources */,
+				100000000000000000000034 /* DescentDoorGlyphCatalog.swift in Sources */,
+				100000000000000000000035 /* DoorGlyphPanel.swift in Sources */,
+				100000000000000000000036 /* Floor10TutorialView.swift in Sources */,
+				100000000000000000000037 /* DemoFlowView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
