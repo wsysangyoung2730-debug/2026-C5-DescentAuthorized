@@ -30,6 +30,8 @@ struct GlyphCastingPanel: View {
             actionBar
         }
         .onChange(of: spell.id) { _, _ in resetDrawing() }
+        .onChange(of: availableMana) { _, _ in resetDrawing() }
+        .onChange(of: availableStrokes) { _, _ in resetDrawing() }
     }
 
     private var resourceHeader: some View {
