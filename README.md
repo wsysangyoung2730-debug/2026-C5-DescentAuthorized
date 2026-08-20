@@ -60,6 +60,7 @@ docs/                        # 기획 및 구현 문서
 - [스토리 및 대사](./docs/NARRATIVE.md): 정보 공개 순서, 기록과 실제 대사
 - [비UI 프로토타입 구현 계획](./docs/IMPLEMENTATION_PLAN.md): 코어 아키텍처와 단계별 완료 조건
 - [비UI 코어 구현 현황](./docs/CORE_IMPLEMENTATION_STATUS.md): 현재 동작 범위, 검증 결과와 다음 작업
+- [Pencil 및 손가락 입력 구현 계획](./docs/INPUT_IMPLEMENTATION_PLAN.md): 입력 정책, 설정 저장과 단계별 검증 기준
 
 ## 코어 검증
 
