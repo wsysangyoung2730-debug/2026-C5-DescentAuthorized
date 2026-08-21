@@ -3,6 +3,7 @@
 > DESCENT AUTHORIZED: Rift Zero
 
 Apple Pencil 또는 손가락으로 마법진을 그려 층 관리자와 싸우는 iPadOS용 턴제 전략 배틀 어드벤처입니다.
+3D 그래픽이 적용되어 생동감 넘치게 즐길 수 있습니다.
 
 ## 프로젝트 열기
 
