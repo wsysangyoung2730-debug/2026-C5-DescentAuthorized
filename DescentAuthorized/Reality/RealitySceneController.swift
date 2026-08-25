@@ -24,7 +24,11 @@ final class RealitySceneController: ObservableObject {
     private var requestedSceneID: FloorSceneID?
     private var requestedCameraPreset: RealityCameraPreset = .main
     private var requestedErasureZones: [ErasureZone] = []
+    private var requestedBattleState: BattleState?
+    private var requestedReducedMotion = false
+    private var pendingCombatCues: [RealityCombatCue] = []
     private let erasureZoneRenderer = RealityErasureZoneRenderer()
+    private let combatVFXRenderer = RealityCombatVFXRenderer()
 
     func attach(to arView: ARView) {
         self.arView = arView
@@ -86,6 +90,36 @@ final class RealitySceneController: ObservableObject {
         erasureZoneRenderer.render(zones: zones, on: board)
     }
 
+    func presentCombat(
+        events: [DemoSessionEvent],
+        battleState: BattleState?,
+        reducedMotion: Bool
+    ) {
+        requestedBattleState = battleState
+        requestedReducedMotion = reducedMotion
+        let cues = RealityCombatPresentationMapper.cues(for: events, battleState: battleState)
+        guard registry.root != nil else {
+            pendingCombatCues.append(contentsOf: cues)
+            return
+        }
+        combatVFXRenderer.present(
+            cues,
+            registry: registry,
+            reducedMotion: reducedMotion
+        )
+    }
+
+    func synchronizeCombatState(_ battleState: BattleState?, reducedMotion: Bool) {
+        requestedBattleState = battleState
+        requestedReducedMotion = reducedMotion
+        guard let battleState, registry.root != nil else { return }
+        combatVFXRenderer.present(
+            RealityCombatPresentationMapper.cues(for: [], battleState: battleState),
+            registry: registry,
+            reducedMotion: reducedMotion
+        )
+    }
+
     func normalizedMagicBoardPoint(for screenPoint: CGPoint) -> NormalizedPoint? {
         projectedMagicBoard?.normalizedPoint(for: screenPoint)
     }
@@ -101,6 +135,7 @@ final class RealitySceneController: ObservableObject {
         registry.reset()
         missingEntityRoles = []
         projectedMagicBoard = nil
+        combatVFXRenderer.reset()
         requestedSceneID = nil
         loadState = .idle
     }
@@ -123,6 +158,17 @@ final class RealitySceneController: ObservableObject {
         registry.setEnabled(false, for: .absoluteShield)
         applyCameraPreset(requestedCameraPreset)
         setErasureZones(requestedErasureZones)
+        combatVFXRenderer.attach(to: registry)
+        let restoredCues = pendingCombatCues + RealityCombatPresentationMapper.cues(
+            for: [],
+            battleState: requestedBattleState
+        )
+        pendingCombatCues.removeAll()
+        combatVFXRenderer.present(
+            restoredCues,
+            registry: registry,
+            reducedMotion: requestedReducedMotion
+        )
         missingEntityRoles = registry.missingRequiredRoles
         loadState = .ready(descriptor.sceneID)
         scheduleBoardProjectionRefresh()

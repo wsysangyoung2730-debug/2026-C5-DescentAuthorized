@@ -3,6 +3,7 @@ import SwiftUI
 struct BattleView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
+    @StateObject private var realityController = RealitySceneController()
 
     @State private var selectedSpellID: SpellID?
     @State private var enemyHitFlash = false
@@ -18,7 +19,17 @@ struct BattleView: View {
 
     var body: some View {
         ZStack {
-            battleBackground
+            if let battle = gameSession.battleState, let realitySceneID {
+                RealityStageView(
+                    sceneID: realitySceneID,
+                    cameraPreset: .battle,
+                    erasureZones: battle.activeErasureZones,
+                    controller: realityController
+                )
+                .overlay(Color.black.opacity(0.2))
+            } else {
+                battleBackground
+            }
 
             if let battle = gameSession.battleState {
                 battleContent(battle)
@@ -60,6 +71,10 @@ struct BattleView: View {
                gameSession.battleState?.turnNumber == 1 {
                 showsFirstTurnBriefing = true
             }
+            realityController.synchronizeCombatState(
+                gameSession.battleState,
+                reducedMotion: appSettings.reducedMotion
+            )
         }
         .onChange(of: gameSession.eventSequence) { _, _ in
             present(gameSession.latestEvents)
@@ -70,6 +85,7 @@ struct BattleView: View {
             enemyPulseTask?.cancel()
             playerPulseTask?.cancel()
             feedbackTask?.cancel()
+            realityController.unload()
         }
         .preferredColorScheme(.dark)
     }
@@ -193,19 +209,25 @@ struct BattleView: View {
 
     private func enemyStage(_ battle: BattleState) -> some View {
         ZStack {
-            stageGrid
+            if realitySceneID == nil {
+                stageGrid
+            }
 
             VStack(spacing: 8) {
-                ZStack {
-                    Image(systemName: enemySymbol)
-                        .font(.system(size: 104, weight: .thin))
-                        .foregroundStyle(Color.purple.opacity(0.18))
-                        .offset(x: -7, y: 4)
-                    Image(systemName: enemySymbol)
-                        .font(.system(size: 104, weight: .thin))
-                        .foregroundStyle(.white.opacity(0.82))
-                        .shadow(color: .purple.opacity(0.85), radius: enemyHitFlash ? 28 : 12)
-                        .scaleEffect(enemyHitFlash ? 1.08 : 1)
+                if realitySceneID == nil {
+                    ZStack {
+                        Image(systemName: enemySymbol)
+                            .font(.system(size: 104, weight: .thin))
+                            .foregroundStyle(Color.purple.opacity(0.18))
+                            .offset(x: -7, y: 4)
+                        Image(systemName: enemySymbol)
+                            .font(.system(size: 104, weight: .thin))
+                            .foregroundStyle(.white.opacity(0.82))
+                            .shadow(color: .purple.opacity(0.85), radius: enemyHitFlash ? 28 : 12)
+                            .scaleEffect(enemyHitFlash ? 1.08 : 1)
+                    }
+                } else {
+                    Spacer(minLength: 74)
                 }
 
                 if let intent = battle.currentEnemyIntent {
@@ -219,11 +241,7 @@ struct BattleView: View {
                 .foregroundStyle(.secondary)
                 .padding(10)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .overlay {
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        }
+        .background(realitySceneID == nil ? Color.black.opacity(0.28) : Color.clear)
     }
 
     private func intentLabel(_ intent: EnemyAction) -> some View {
@@ -414,6 +432,11 @@ struct BattleView: View {
     }
 
     private func present(_ events: [DemoSessionEvent]) {
+        realityController.presentCombat(
+            events: events,
+            battleState: gameSession.battleState,
+            reducedMotion: appSettings.reducedMotion
+        )
         var enemyWasHit = false
         var playerWasHit = false
         var strongAttack = false
@@ -512,6 +535,19 @@ struct BattleView: View {
             true
         default:
             false
+        }
+    }
+
+    private var realitySceneID: FloorSceneID? {
+        switch gameSession.progress.currentScene {
+        case .floor9RecordsBattle:
+            .floor09ArchiveRedesign
+        case .floor8ResidualBattle:
+            .floor08ResidueIsolation
+        case .floor8AdministratorBattle:
+            .floor08AdministratorObservatory
+        default:
+            nil
         }
     }
 
