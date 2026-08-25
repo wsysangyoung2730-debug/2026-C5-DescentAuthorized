@@ -78,7 +78,7 @@ struct BattleView: View {
         GeometryReader { proxy in
             VStack(spacing: 10) {
                 combatHeader(battle)
-                    .frame(height: 54)
+                    .frame(height: 68)
 
                 enemyStage(battle)
                     .frame(height: max(150, proxy.size.height * 0.24))
@@ -115,12 +115,19 @@ struct BattleView: View {
     }
 
     private func combatHeader(_ battle: BattleState) -> some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 14) {
             vitalityBlock(
                 name: battle.player.name,
                 combatant: battle.player,
                 accent: .cyan,
                 alignment: .leading
+            )
+
+            Spacer()
+
+            BattleResourceReadout(
+                mana: battle.resources.remainingMana,
+                strokes: battle.resources.remainingStrokes
             )
 
             Spacer()
@@ -142,6 +149,7 @@ struct BattleView: View {
                 alignment: .trailing
             )
         }
+        .foregroundStyle(DAColor.body)
     }
 
     private func vitalityBlock(
@@ -160,11 +168,12 @@ struct BattleView: View {
             }
             ProgressView(value: Double(combatant.hp), total: Double(combatant.maxHP))
                 .tint(accent)
-                .frame(width: 260)
+                .frame(width: 220)
             Text("\(combatant.hp) / \(combatant.maxHP)")
                 .font(.caption2.monospacedDigit())
                 .foregroundStyle(.secondary)
         }
+        .daStatusPanel(accent: accent.opacity(0.65))
         .accessibilityElement(children: .combine)
     }
 
@@ -230,7 +239,7 @@ struct BattleView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(.black.opacity(0.7))
+        .background(DAColor.panel.opacity(0.94))
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .foregroundStyle(intentColor(intent))
         .accessibilityElement(children: .combine)
@@ -286,7 +295,7 @@ struct BattleView: View {
             }
             .padding(8)
             .frame(width: 126, height: 64, alignment: .leading)
-            .background(isSelected ? spellColor(spell.category).opacity(0.22) : Color.white.opacity(0.05))
+            .background(isSelected ? spellColor(spell.category).opacity(0.22) : DAColor.card.opacity(0.94))
             .overlay {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(
@@ -317,8 +326,8 @@ struct BattleView: View {
     private var battleBackground: some View {
         LinearGradient(
             colors: [
-                Color(red: 0.025, green: 0.03, blue: 0.04),
-                Color(red: 0.07, green: 0.035, blue: 0.075),
+                DAColor.background,
+                DAColor.panel,
                 Color.black
             ],
             startPoint: .top,
@@ -745,9 +754,9 @@ struct BattleView: View {
 
     private func spellColor(_ category: SpellCategory) -> Color {
         switch category {
-        case .attack: Color(red: 0.86, green: 0.2, blue: 0.38)
-        case .defense: Color(red: 0.2, green: 0.72, blue: 0.92)
-        case .dispel: Color(red: 0.94, green: 0.68, blue: 0.18)
+        case .attack: DAColor.attack
+        case .defense: DAColor.defense
+        case .dispel: DAColor.dispel
         }
     }
 

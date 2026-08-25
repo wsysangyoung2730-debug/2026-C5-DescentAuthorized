@@ -17,6 +17,7 @@
 		100000000000000000000001 /* DescentAuthorizedApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000001 /* DescentAuthorizedApp.swift */; };
 		100000000000000000000002 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000002 /* HomeView.swift */; };
 		100000000000000000000003 /* BattleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000003 /* BattleView.swift */; };
+		100000000000000000000061 /* BattlePresentationStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000061 /* BattlePresentationStyle.swift */; };
 		100000000000000000000004 /* GamePhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000004 /* GamePhase.swift */; };
 		100000000000000000000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000005 /* Assets.xcassets */; };
 		100000000000000000000010 /* DomainModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000010 /* DomainModels.swift */; };
@@ -75,6 +76,7 @@
 		200000000000000000000001 /* DescentAuthorizedApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DescentAuthorizedApp.swift; sourceTree = "<group>"; };
 		200000000000000000000002 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		200000000000000000000003 /* BattleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleView.swift; sourceTree = "<group>"; };
+		200000000000000000000061 /* BattlePresentationStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattlePresentationStyle.swift; sourceTree = "<group>"; };
 		200000000000000000000004 /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
 		200000000000000000000005 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		200000000000000000000006 /* DescentAuthorized.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DescentAuthorized.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -239,6 +241,7 @@
 			isa = PBXGroup;
 			children = (
 				200000000000000000000003 /* BattleView.swift */,
+				200000000000000000000061 /* BattlePresentationStyle.swift */,
 				200000000000000000000033 /* GlyphCastingPanel.swift */,
 				400000000000000000000011 /* Input */,
 			);
@@ -452,6 +455,7 @@
 				100000000000000000000060 /* RealityStageView.swift in Sources */,
 				100000000000000000000002 /* HomeView.swift in Sources */,
 				100000000000000000000003 /* BattleView.swift in Sources */,
+				100000000000000000000061 /* BattlePresentationStyle.swift in Sources */,
 				100000000000000000000004 /* GamePhase.swift in Sources */,
 				100000000000000000000010 /* DomainModels.swift in Sources */,
 				100000000000000000000011 /* SpellCatalog.swift in Sources */,
