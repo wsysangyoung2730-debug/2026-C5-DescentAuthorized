@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		100000000000000000000054 /* RealityAssetIDs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000054 /* RealityAssetIDs.swift */; };
+		100000000000000000000055 /* AssetManifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000055 /* AssetManifest.json */; };
+		100000000000000000000056 /* Reality in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000056 /* Reality */; };
 		100000000000000000000001 /* DescentAuthorizedApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000001 /* DescentAuthorizedApp.swift */; };
 		100000000000000000000002 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000002 /* HomeView.swift */; };
 		100000000000000000000003 /* BattleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000003 /* BattleView.swift */; };
@@ -58,6 +61,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		200000000000000000000054 /* RealityAssetIDs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityAssetIDs.swift; sourceTree = "<group>"; };
+		200000000000000000000055 /* AssetManifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = AssetManifest.json; sourceTree = "<group>"; };
+		200000000000000000000056 /* Reality */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Reality; sourceTree = "<group>"; };
 		200000000000000000000001 /* DescentAuthorizedApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DescentAuthorizedApp.swift; sourceTree = "<group>"; };
 		200000000000000000000002 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		200000000000000000000003 /* BattleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleView.swift; sourceTree = "<group>"; };
@@ -138,6 +144,7 @@
 				400000000000000000000003 /* App */,
 				400000000000000000000004 /* Core */,
 				400000000000000000000006 /* Features */,
+				400000000000000000000015 /* Generated */,
 				400000000000000000000008 /* Resources */,
 			);
 			path = DescentAuthorized;
@@ -179,6 +186,54 @@
 				200000000000000000000004 /* GamePhase.swift */,
 			);
 			path = Game;
+			sourceTree = "<group>";
+		};
+		400000000000000000000006 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				400000000000000000000007 /* Home */,
+				40000000000000000000000A /* Battle */,
+				400000000000000000000013 /* Progression */,
+				400000000000000000000012 /* Settings */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		400000000000000000000007 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000002 /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		400000000000000000000008 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000055 /* AssetManifest.json */,
+				200000000000000000000056 /* Reality */,
+				200000000000000000000005 /* Assets.xcassets */,
+				200000000000000000000049 /* DescentAuthorized.entitlements */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		400000000000000000000009 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000006 /* DescentAuthorized.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		40000000000000000000000A /* Battle */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000003 /* BattleView.swift */,
+				200000000000000000000033 /* GlyphCastingPanel.swift */,
+				400000000000000000000011 /* Input */,
+			);
+			path = Battle;
 			sourceTree = "<group>";
 		};
 		40000000000000000000000B /* Domain */ = {
@@ -241,35 +296,6 @@
 			path = Persistence;
 			sourceTree = "<group>";
 		};
-		400000000000000000000006 /* Features */ = {
-			isa = PBXGroup;
-			children = (
-				400000000000000000000007 /* Home */,
-				40000000000000000000000A /* Battle */,
-				400000000000000000000013 /* Progression */,
-				400000000000000000000012 /* Settings */,
-			);
-			path = Features;
-			sourceTree = "<group>";
-		};
-		400000000000000000000007 /* Home */ = {
-			isa = PBXGroup;
-			children = (
-				200000000000000000000002 /* HomeView.swift */,
-			);
-			path = Home;
-			sourceTree = "<group>";
-		};
-		40000000000000000000000A /* Battle */ = {
-			isa = PBXGroup;
-			children = (
-				200000000000000000000003 /* BattleView.swift */,
-				200000000000000000000033 /* GlyphCastingPanel.swift */,
-				400000000000000000000011 /* Input */,
-			);
-			path = Battle;
-			sourceTree = "<group>";
-		};
 		400000000000000000000011 /* Input */ = {
 			isa = PBXGroup;
 			children = (
@@ -277,6 +303,16 @@
 				200000000000000000000026 /* RuneDrawingCanvas.swift */,
 			);
 			path = Input;
+			sourceTree = "<group>";
+		};
+		400000000000000000000012 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000047 /* GameCenterViews.swift */,
+				200000000000000000000053 /* PauseMenuView.swift */,
+				200000000000000000000029 /* SettingsView.swift */,
+			);
+			path = Settings;
 			sourceTree = "<group>";
 		};
 		400000000000000000000013 /* Progression */ = {
@@ -295,31 +331,12 @@
 			path = Progression;
 			sourceTree = "<group>";
 		};
-		400000000000000000000012 /* Settings */ = {
+		400000000000000000000015 /* Generated */ = {
 			isa = PBXGroup;
 			children = (
-				200000000000000000000047 /* GameCenterViews.swift */,
-				200000000000000000000053 /* PauseMenuView.swift */,
-				200000000000000000000029 /* SettingsView.swift */,
+				200000000000000000000054 /* RealityAssetIDs.swift */,
 			);
-			path = Settings;
-			sourceTree = "<group>";
-		};
-		400000000000000000000008 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				200000000000000000000005 /* Assets.xcassets */,
-				200000000000000000000049 /* DescentAuthorized.entitlements */,
-			);
-			path = Resources;
-			sourceTree = "<group>";
-		};
-		400000000000000000000009 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				200000000000000000000006 /* DescentAuthorized.app */,
-			);
-			name = Products;
+			path = Generated;
 			sourceTree = "<group>";
 		};
 		400000000000000000000014 /* Frameworks */ = {
@@ -395,6 +412,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				100000000000000000000005 /* Assets.xcassets in Resources */,
+				100000000000000000000055 /* AssetManifest.json in Resources */,
+				100000000000000000000056 /* Reality in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -406,6 +425,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				100000000000000000000001 /* DescentAuthorizedApp.swift in Sources */,
+				100000000000000000000054 /* RealityAssetIDs.swift in Sources */,
 				100000000000000000000002 /* HomeView.swift in Sources */,
 				100000000000000000000003 /* BattleView.swift in Sources */,
 				100000000000000000000004 /* GamePhase.swift in Sources */,
@@ -498,6 +518,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = 36545XSWN8;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "하강 승인: 제0균열";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -525,6 +546,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = 36545XSWN8;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "하강 승인: 제0균열";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
