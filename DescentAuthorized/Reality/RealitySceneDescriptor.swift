@@ -64,7 +64,7 @@ struct RealitySceneDescriptor: Sendable {
             cameraNames: [
                 .main: "F09_iPad_MainCamera",
                 .battle: "F09_iPad_MainCamera",
-                .rewardSelection: "CAM_F09_RewardSelection",
+                .rewardSelection: "CAM_ANCHOR_F09_RewardSelection",
                 .descentInput: "CAM_F09_DescentDoor"
             ],
             entityNames: [

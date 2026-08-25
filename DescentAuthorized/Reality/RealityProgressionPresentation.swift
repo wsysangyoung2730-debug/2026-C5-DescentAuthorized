@@ -10,6 +10,14 @@ enum RealityDescentPresentationState: Equatable, Sendable {
     case open
 }
 
+enum RealityDescentTransitionTiming {
+    static func approvalAnimationDelay(reducedMotion: Bool) -> Duration {
+        .milliseconds(reducedMotion ? 20 : 560)
+    }
+
+    static let openStateHold: Duration = .milliseconds(1_200)
+}
+
 enum RealityRewardPresentationState: Equatable, Sendable {
     case inactive
     case appearing

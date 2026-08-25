@@ -113,10 +113,14 @@ struct Floor9DescentDoorView: View {
         setDescentState(.approved)
         transitionTask?.cancel()
         transitionTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 560))
+            try? await Task.sleep(
+                for: RealityDescentTransitionTiming.approvalAnimationDelay(
+                    reducedMotion: appSettings.reducedMotion
+                )
+            )
             guard !Task.isCancelled else { return }
             setDescentState(.open)
-            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 420))
+            try? await Task.sleep(for: RealityDescentTransitionTiming.openStateHold)
             guard !Task.isCancelled else { return }
             gameSession.send(.approveDescentDoor)
         }
