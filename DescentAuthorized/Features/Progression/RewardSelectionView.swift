@@ -1,12 +1,16 @@
 import SwiftUI
 
 struct RewardSelectionView: View {
+    @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let floor: FloorID
 
     @State private var selectedCandidateID: String?
     @State private var isResolving = false
+    @State private var rewardState: RealityRewardPresentationState = .appearing
+    @State private var transitionTask: Task<Void, Never>?
+    @StateObject private var sceneController = RealitySceneController()
 
     private var candidates: [RewardCandidate] {
         RewardCatalog.candidates(for: floor)
@@ -14,7 +18,17 @@ struct RewardSelectionView: View {
 
     var body: some View {
         ZStack {
-            rewardBackground
+            RealityStageView(
+                sceneID: gameSession.presentation.floorSceneID ?? .floor09ArchiveRedesign,
+                cameraPreset: gameSession.presentation.cameraPreset,
+                rewardState: rewardState,
+                reducedMotion: appSettings.reducedMotion,
+                controller: sceneController
+            )
+
+            Color.black.opacity(0.18)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
 
             VStack(spacing: 22) {
                 VStack(spacing: 6) {
@@ -27,13 +41,23 @@ struct RewardSelectionView: View {
                         .font(.subheadline)
                         .foregroundStyle(.red.opacity(0.72))
                 }
+                .padding(.horizontal, 22)
+                .padding(.vertical, 14)
+                .background(DAColor.panel.opacity(0.9))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(DAColor.divider, lineWidth: 1)
+                }
+
+                Spacer(minLength: 100)
 
                 HStack(spacing: 26) {
                     ForEach(candidates) { candidate in
                         rewardScroll(candidate)
                     }
                 }
-                .frame(maxHeight: 390)
+                .frame(maxHeight: 190)
 
                 if isResolving {
                     Label("선택 기록 복원 중", systemImage: "text.viewfinder")
@@ -53,6 +77,18 @@ struct RewardSelectionView: View {
             }
             .padding(32)
         }
+        .onAppear {
+            rewardState = .appearing
+            transitionTask?.cancel()
+            transitionTask = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 520))
+                guard !Task.isCancelled else { return }
+                rewardState = .choosing
+            }
+        }
+        .onDisappear {
+            transitionTask?.cancel()
+        }
     }
 
     private func rewardScroll(_ candidate: RewardCandidate) -> some View {
@@ -65,7 +101,7 @@ struct RewardSelectionView: View {
                 selectedCandidateID = candidate.id
             }
         } label: {
-            VStack(spacing: 16) {
+            VStack(spacing: 8) {
                 HStack {
                     Image(systemName: tierSymbol(candidate.tier))
                     Spacer()
@@ -74,10 +110,8 @@ struct RewardSelectionView: View {
                 }
                 .foregroundStyle(tierColor(candidate.tier))
 
-                Spacer()
-
                 Image(systemName: "scroll.fill")
-                    .font(.system(size: 70, weight: .thin))
+                    .font(.system(size: 34, weight: .thin))
                     .foregroundStyle(tierColor(candidate.tier))
                     .shadow(color: tierColor(candidate.tier).opacity(0.72), radius: 16)
 
@@ -89,8 +123,6 @@ struct RewardSelectionView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                Spacer()
-
                 Label(
                     isSelected ? "선택됨" : "미복원",
                     systemImage: isSelected ? "checkmark.circle.fill" : "questionmark.diamond"
@@ -98,9 +130,9 @@ struct RewardSelectionView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(isSelected ? tierColor(candidate.tier) : .secondary)
             }
-            .padding(18)
-            .frame(width: 210, height: 330)
-            .background(Color.black.opacity(0.48))
+            .padding(12)
+            .frame(width: 190, height: 160)
+            .background(DAColor.panel.opacity(0.92))
             .overlay {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(
@@ -122,29 +154,22 @@ struct RewardSelectionView: View {
 
     private func confirmSelection() {
         guard let selectedCandidateID, !isResolving else { return }
+        guard let selectedIndex = candidates.firstIndex(where: { $0.id == selectedCandidateID }) else {
+            return
+        }
         withAnimation(.easeInOut(duration: 0.45)) {
             isResolving = true
         }
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(850))
+        rewardState = .resolving(selectedIndex: selectedIndex)
+        transitionTask?.cancel()
+        transitionTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 460))
+            guard !Task.isCancelled else { return }
+            rewardState = .resolved(selectedIndex: selectedIndex)
+            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 390))
+            guard !Task.isCancelled else { return }
             gameSession.send(.selectReward(selectedCandidateID))
         }
-    }
-
-    private var rewardBackground: some View {
-        ZStack {
-            Color(red: 0.015, green: 0.02, blue: 0.03)
-            Canvas { context, size in
-                var path = Path()
-                for column in 0...10 {
-                    let x = size.width * CGFloat(column) / 10
-                    path.move(to: CGPoint(x: x, y: 0))
-                    path.addLine(to: CGPoint(x: x, y: size.height))
-                }
-                context.stroke(path, with: .color(.white.opacity(0.025)), lineWidth: 1)
-            }
-        }
-        .ignoresSafeArea()
     }
 
     private func tierColor(_ tier: ScrollTier) -> Color {

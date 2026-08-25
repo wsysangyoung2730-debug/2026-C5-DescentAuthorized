@@ -1,8 +1,16 @@
 import SwiftUI
 
+enum DoorGlyphPresentationState: Equatable {
+    case ready
+    case drawing
+    case failed
+    case approved
+}
+
 struct DoorGlyphPanel: View {
     let definition: DescentDoorGlyphDefinition
     let inputPreference: DrawingInputPreference
+    var onStateChanged: ((DoorGlyphPresentationState) -> Void)? = nil
     let onApproved: (CastingEvaluation) -> Void
 
     @State private var drawingState = RuneDrawingState.empty
@@ -42,6 +50,7 @@ struct DoorGlyphPanel: View {
                     onDrawingChanged: { state in
                         drawingState = state
                         evaluation = nil
+                        onStateChanged?(state.previewStrokes.isEmpty ? .ready : .drawing)
                     }
                 )
 
@@ -81,6 +90,7 @@ struct DoorGlyphPanel: View {
                     drawingState = .empty
                     evaluation = nil
                     isApproved = false
+                    onStateChanged?(.ready)
                 } label: {
                     Image(systemName: "trash")
                 }
@@ -101,6 +111,7 @@ struct DoorGlyphPanel: View {
                 )
             }
         }
+        .onAppear { onStateChanged?(.ready) }
     }
 
     private var approvalGrid: some View {
@@ -138,8 +149,12 @@ struct DoorGlyphPanel: View {
             inputMethod: lastInputMethod
         )
         evaluation = result
-        guard result.succeeded else { return }
+        guard result.succeeded else {
+            onStateChanged?(.failed)
+            return
+        }
         isApproved = true
+        onStateChanged?(.approved)
         onApproved(result)
     }
 

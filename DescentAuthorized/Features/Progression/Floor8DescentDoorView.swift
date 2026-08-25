@@ -3,18 +3,26 @@ import SwiftUI
 struct Floor8DescentDoorView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
+    @State private var descentState: RealityDescentPresentationState = .ready
+    @State private var transitionTask: Task<Void, Never>?
+    @StateObject private var sceneController = RealitySceneController()
 
     var body: some View {
         ZStack {
-            Color(red: 0.012, green: 0.018, blue: 0.024)
+            RealityStageView(
+                sceneID: gameSession.presentation.floorSceneID ?? .floor08AdministratorObservatory,
+                cameraPreset: gameSession.presentation.cameraPreset,
+                descentState: descentState,
+                reducedMotion: appSettings.reducedMotion,
+                controller: sceneController
+            )
+
+            Color.black.opacity(0.2)
                 .ignoresSafeArea()
+                .allowsHitTesting(false)
 
-            HStack(spacing: 0) {
-                descentPreview
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                Divider()
-
+            HStack {
+                Spacer(minLength: 320)
                 VStack(alignment: .leading, spacing: 14) {
                     Text("8-F / 제7층 하강문")
                         .font(.caption.monospaced().weight(.bold))
@@ -29,47 +37,46 @@ struct Floor8DescentDoorView: View {
                     DoorGlyphPanel(
                         definition: DescentDoorGlyphCatalog.floor8,
                         inputPreference: appSettings.inputPreference,
+                        onStateChanged: updateDescentState,
                         onApproved: { _ in
-                            gameSession.send(.approveDescentDoor)
+                            completeDescent()
                         }
                     )
-                    .frame(maxWidth: 680)
+                    .frame(width: 590, height: 410)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(30)
+                .padding(20)
+                .background(DAColor.panel.opacity(0.92))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(DAColor.divider, lineWidth: 1)
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+            .padding(26)
+        }
+        .onDisappear { transitionTask?.cancel() }
+    }
+
+    private func updateDescentState(_ state: DoorGlyphPresentationState) {
+        switch state {
+        case .ready: descentState = .ready
+        case .drawing: descentState = .drawing
+        case .failed: descentState = .failed
+        case .approved: descentState = .approved
         }
     }
 
-    private var descentPreview: some View {
-        ZStack {
-            Canvas { context, size in
-                let door = CGRect(
-                    x: size.width * 0.25,
-                    y: size.height * 0.12,
-                    width: size.width * 0.5,
-                    height: size.height * 0.78
-                )
-                context.fill(Path(door), with: .color(.black.opacity(0.72)))
-                context.stroke(Path(door), with: .color(.cyan.opacity(0.28)), lineWidth: 3)
-
-                var center = Path()
-                center.move(to: CGPoint(x: door.midX, y: door.minY))
-                center.addLine(to: CGPoint(x: door.midX, y: door.maxY))
-                context.stroke(center, with: .color(.white.opacity(0.1)), lineWidth: 1)
-            }
-
-            VStack(spacing: 16) {
-                Image(systemName: "arrow.down.to.line.compact")
-                    .font(.system(size: 88, weight: .ultraLight))
-                    .foregroundStyle(.cyan.opacity(0.82))
-                    .shadow(color: .cyan.opacity(0.55), radius: 20)
-                Text("하부 공간에서 복수의 비상 신호 감지")
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.red.opacity(0.7))
-            }
+    private func completeDescent() {
+        descentState = .approved
+        transitionTask?.cancel()
+        transitionTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 560))
+            guard !Task.isCancelled else { return }
+            descentState = .open
+            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 420))
+            guard !Task.isCancelled else { return }
+            gameSession.send(.approveDescentDoor)
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("아래층의 여러 비상 신호가 감지되는 닫힌 제7층 하강문")
     }
 }
