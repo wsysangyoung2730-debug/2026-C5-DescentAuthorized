@@ -5,6 +5,9 @@ struct RealityStageView: View {
     let sceneID: FloorSceneID
     var cameraPreset: RealityCameraPreset = .main
     var erasureZones: [ErasureZone] = []
+    var descentState: RealityDescentPresentationState = .inactive
+    var rewardState: RealityRewardPresentationState = .inactive
+    var reducedMotion = false
     @ObservedObject var controller: RealitySceneController
 
     var body: some View {
@@ -29,12 +32,24 @@ struct RealityStageView: View {
         .onAppear {
             controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
             controller.setErasureZones(erasureZones)
+            controller.setDescentPresentation(descentState, reducedMotion: reducedMotion)
+            controller.setRewardPresentation(rewardState, reducedMotion: reducedMotion)
         }
         .onChange(of: sceneID) { _, value in
             controller.load(sceneID: value, cameraPreset: cameraPreset)
         }
         .onChange(of: cameraPreset) { _, value in controller.applyCameraPreset(value) }
         .onChange(of: erasureZones) { _, value in controller.setErasureZones(value) }
+        .onChange(of: descentState) { _, value in
+            controller.setDescentPresentation(value, reducedMotion: reducedMotion)
+        }
+        .onChange(of: rewardState) { _, value in
+            controller.setRewardPresentation(value, reducedMotion: reducedMotion)
+        }
+        .onChange(of: reducedMotion) { _, value in
+            controller.setDescentPresentation(descentState, reducedMotion: value)
+            controller.setRewardPresentation(rewardState, reducedMotion: value)
+        }
     }
 
     private func statusOverlay(icon: String?, title: String, detail: String?) -> some View {

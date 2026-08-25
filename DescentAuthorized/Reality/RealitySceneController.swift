@@ -26,9 +26,12 @@ final class RealitySceneController: ObservableObject {
     private var requestedErasureZones: [ErasureZone] = []
     private var requestedBattleState: BattleState?
     private var requestedReducedMotion = false
+    private var requestedDescentState: RealityDescentPresentationState = .inactive
+    private var requestedRewardState: RealityRewardPresentationState = .inactive
     private var pendingCombatCues: [RealityCombatCue] = []
     private let erasureZoneRenderer = RealityErasureZoneRenderer()
     private let combatVFXRenderer = RealityCombatVFXRenderer()
+    private let progressionVFXRenderer = RealityProgressionVFXRenderer()
 
     func attach(to arView: ARView) {
         self.arView = arView
@@ -120,6 +123,32 @@ final class RealitySceneController: ObservableObject {
         )
     }
 
+    func setDescentPresentation(
+        _ state: RealityDescentPresentationState,
+        reducedMotion: Bool
+    ) {
+        requestedDescentState = state
+        requestedReducedMotion = reducedMotion
+        progressionVFXRenderer.presentDescent(
+            state,
+            registry: registry,
+            reducedMotion: reducedMotion
+        )
+    }
+
+    func setRewardPresentation(
+        _ state: RealityRewardPresentationState,
+        reducedMotion: Bool
+    ) {
+        requestedRewardState = state
+        requestedReducedMotion = reducedMotion
+        progressionVFXRenderer.presentReward(
+            state,
+            registry: registry,
+            reducedMotion: reducedMotion
+        )
+    }
+
     func normalizedMagicBoardPoint(for screenPoint: CGPoint) -> NormalizedPoint? {
         projectedMagicBoard?.normalizedPoint(for: screenPoint)
     }
@@ -136,6 +165,7 @@ final class RealitySceneController: ObservableObject {
         missingEntityRoles = []
         projectedMagicBoard = nil
         combatVFXRenderer.reset()
+        progressionVFXRenderer.reset()
         requestedSceneID = nil
         loadState = .idle
     }
@@ -156,6 +186,7 @@ final class RealitySceneController: ObservableObject {
         registry.setDoorOpen(false)
         registry.setEnabled(false, for: .generalShield)
         registry.setEnabled(false, for: .absoluteShield)
+        progressionVFXRenderer.attach(to: registry)
         applyCameraPreset(requestedCameraPreset)
         setErasureZones(requestedErasureZones)
         combatVFXRenderer.attach(to: registry)
@@ -166,6 +197,16 @@ final class RealitySceneController: ObservableObject {
         pendingCombatCues.removeAll()
         combatVFXRenderer.present(
             restoredCues,
+            registry: registry,
+            reducedMotion: requestedReducedMotion
+        )
+        progressionVFXRenderer.presentDescent(
+            requestedDescentState,
+            registry: registry,
+            reducedMotion: requestedReducedMotion
+        )
+        progressionVFXRenderer.presentReward(
+            requestedRewardState,
             registry: registry,
             reducedMotion: requestedReducedMotion
         )

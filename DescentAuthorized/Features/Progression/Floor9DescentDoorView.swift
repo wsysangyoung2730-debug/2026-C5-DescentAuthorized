@@ -5,18 +5,27 @@ struct Floor9DescentDoorView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     private let spell = SpellCatalog.barrierPiercing
+    @State private var descentState: RealityDescentPresentationState = .ready
+    @State private var transitionTask: Task<Void, Never>?
+    @StateObject private var sceneController = RealitySceneController()
 
     var body: some View {
         ZStack {
-            Color(red: 0.018, green: 0.022, blue: 0.03)
+            RealityStageView(
+                sceneID: .floor09ArchiveRedesign,
+                cameraPreset: .descentInput,
+                descentState: descentState,
+                reducedMotion: appSettings.reducedMotion,
+                controller: sceneController
+            )
+
+            Color.black.opacity(0.2)
                 .ignoresSafeArea()
+                .allowsHitTesting(false)
 
-            HStack(spacing: 0) {
+            HStack(alignment: .bottom, spacing: 18) {
                 learnedSpell
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(30)
-
-                Divider()
+                    .frame(width: 310)
 
                 VStack(alignment: .leading, spacing: 14) {
                     Text("9-D / 제8층 하강문")
@@ -32,16 +41,25 @@ struct Floor9DescentDoorView: View {
                     DoorGlyphPanel(
                         definition: DescentDoorGlyphCatalog.floor9,
                         inputPreference: appSettings.inputPreference,
+                        onStateChanged: updateDescentState,
                         onApproved: { _ in
-                            gameSession.send(.approveDescentDoor)
+                            completeDescent()
                         }
                     )
-                    .frame(maxWidth: 650)
+                    .frame(width: 560, height: 390)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(30)
+                .padding(20)
+                .background(DAColor.panel.opacity(0.92))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(DAColor.divider, lineWidth: 1)
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+            .padding(26)
         }
+        .onDisappear { transitionTask?.cancel() }
     }
 
     private var learnedSpell: some View {
@@ -69,7 +87,7 @@ struct Floor9DescentDoorView: View {
                     )
                 }
             }
-            .frame(maxHeight: 310)
+            .frame(height: 150)
             .background(Color.black.opacity(0.42))
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .overlay {
@@ -80,6 +98,28 @@ struct Floor9DescentDoorView: View {
             Label("필요 획 2 · 강한 주문일수록 문양이 복잡해진다", systemImage: "pencil.and.outline")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    private func updateDescentState(_ state: DoorGlyphPresentationState) {
+        switch state {
+        case .ready: descentState = .ready
+        case .drawing: descentState = .drawing
+        case .failed: descentState = .failed
+        case .approved: descentState = .approved
+        }
+    }
+
+    private func completeDescent() {
+        descentState = .approved
+        transitionTask?.cancel()
+        transitionTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 560))
+            guard !Task.isCancelled else { return }
+            descentState = .open
+            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 420))
+            guard !Task.isCancelled else { return }
+            gameSession.send(.approveDescentDoor)
         }
     }
 
