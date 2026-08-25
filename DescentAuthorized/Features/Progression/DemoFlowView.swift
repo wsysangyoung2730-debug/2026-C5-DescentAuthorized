@@ -39,7 +39,11 @@ struct DemoFlowView: View {
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
-            .background(.black.opacity(0.55))
+            .foregroundStyle(DAColor.body)
+            .background(DAColor.panel.opacity(0.78))
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(DAColor.divider.opacity(0.8)).frame(height: 1)
+            }
         }
         .sheet(isPresented: $isShowingPauseMenu) {
             PauseMenuView(onExitToTitle: onExit)

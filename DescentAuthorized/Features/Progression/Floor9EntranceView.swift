@@ -1,22 +1,30 @@
 import SwiftUI
 
 struct Floor9EntranceView: View {
+    @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
 
     @State private var inspectedRecord = false
+    @StateObject private var sceneController = RealitySceneController()
 
     var body: some View {
         ZStack {
-            Color(red: 0.018, green: 0.023, blue: 0.03)
-                .ignoresSafeArea()
+            RealityStageView(
+                sceneID: .floor09ArchiveRedesign,
+                cameraPreset: .main,
+                reducedMotion: appSettings.reducedMotion,
+                controller: sceneController
+            )
 
-            HStack(spacing: 0) {
-                recordsHall
-                    .frame(maxWidth: .infinity)
+            LinearGradient(
+                colors: [.clear, DAColor.background.opacity(0.18), DAColor.background.opacity(0.86)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
-                Divider()
-
-                VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 18) {
                     Text("9-A / 중앙 기록실 입구")
                         .font(.caption.monospaced().weight(.bold))
                         .foregroundStyle(.purple)
@@ -56,10 +64,15 @@ struct Floor9EntranceView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.purple)
-                }
-                .frame(maxWidth: 540)
-                .padding(30)
             }
+            .frame(width: 500)
+            .frame(maxHeight: .infinity, alignment: .leading)
+            .padding(24)
+            .background(DAColor.panel.opacity(0.91))
+            .overlay(alignment: .leading) {
+                Rectangle().fill(DAColor.magic.opacity(0.6)).frame(width: 1)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
         }
     }
 
@@ -100,42 +113,4 @@ struct Floor9EntranceView: View {
         .overlay(alignment: .bottom) { Divider() }
     }
 
-    private var recordsHall: some View {
-        ZStack {
-            Canvas { context, size in
-                var shelves = Path()
-                for column in 1..<7 {
-                    let x = size.width * CGFloat(column) / 7
-                    shelves.move(to: CGPoint(x: x, y: size.height * 0.12))
-                    shelves.addLine(to: CGPoint(x: x, y: size.height * 0.88))
-                }
-                for row in 1..<6 {
-                    let y = size.height * CGFloat(row) / 6
-                    shelves.move(to: CGPoint(x: size.width * 0.08, y: y))
-                    shelves.addLine(to: CGPoint(x: size.width * 0.92, y: y))
-                }
-                context.stroke(shelves, with: .color(.white.opacity(0.055)), lineWidth: 2)
-            }
-
-            VStack(spacing: 18) {
-                Image(systemName: "books.vertical.fill")
-                    .font(.system(size: 112, weight: .thin))
-                    .foregroundStyle(.white.opacity(0.68))
-                    .shadow(color: .purple.opacity(0.45), radius: 16)
-                Text("기록이 사라지는 서가")
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
-            }
-
-            VStack {
-                Spacer()
-                Text("맞은편 건물의 모든 층 표시는 9F로 고정되어 있다")
-                    .font(.caption)
-                    .foregroundStyle(.red.opacity(0.65))
-                    .padding(.bottom, 34)
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("이름이 지워진 기록 서가와 9층으로 반복 표시된 창밖 건물")
-    }
 }

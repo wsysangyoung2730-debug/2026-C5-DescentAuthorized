@@ -4,23 +4,41 @@ struct Floor10TutorialView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
 
+    @State private var descentState: RealityDescentPresentationState = .inactive
+    @State private var transitionTask: Task<Void, Never>?
+    @StateObject private var sceneController = RealitySceneController()
+
     var body: some View {
-        GeometryReader { proxy in
-            ZStack {
-                floorBackground
+        ZStack {
+            RealityStageView(
+                sceneID: .floor10ClosedOffice,
+                cameraPreset: cameraPreset,
+                descentState: descentState,
+                reducedMotion: appSettings.reducedMotion,
+                controller: sceneController
+            )
 
-                HStack(spacing: 0) {
-                    environmentStage
-                        .frame(width: proxy.size.width * 0.46)
+            LinearGradient(
+                colors: [.clear, DAColor.background.opacity(0.2), DAColor.background.opacity(0.82)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
-                    Divider()
-
-                    sceneContent
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(28)
+            sceneContent
+                .frame(width: contentWidth)
+                .frame(maxHeight: .infinity)
+                .padding(22)
+                .background(DAColor.panel.opacity(0.9))
+                .overlay(alignment: .leading) {
+                    Rectangle().fill(DAColor.magic.opacity(0.65)).frame(width: 1)
                 }
-            }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
         }
+        .onAppear { synchronizeDescentState() }
+        .onChange(of: gameSession.progress.currentScene) { _, _ in synchronizeDescentState() }
+        .onDisappear { transitionTask?.cancel() }
     }
 
     @ViewBuilder
@@ -171,8 +189,9 @@ struct Floor10TutorialView: View {
             DoorGlyphPanel(
                 definition: DescentDoorGlyphCatalog.floor10,
                 inputPreference: appSettings.inputPreference,
+                onStateChanged: updateDescentState,
                 onApproved: { _ in
-                    gameSession.send(.approveDescentDoor)
+                    completeDescent()
                 }
             )
             .frame(maxWidth: 720)
@@ -224,73 +243,44 @@ struct Floor10TutorialView: View {
             .foregroundStyle(.purple)
     }
 
-    private var environmentStage: some View {
-        ZStack {
-            Color(red: 0.035, green: 0.04, blue: 0.05)
-
-            VStack(spacing: 22) {
-                Spacer()
-                Image(systemName: environmentSymbol)
-                    .font(.system(size: 118, weight: .ultraLight))
-                    .foregroundStyle(.white.opacity(0.72))
-                    .shadow(color: .purple.opacity(0.5), radius: 18)
-                Text(environmentTitle)
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-
-            officeLines
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(environmentTitle)
-    }
-
-    private var officeLines: some View {
-        Canvas { context, size in
-            var path = Path()
-            for row in 1..<7 {
-                let y = size.height * CGFloat(row) / 7
-                path.move(to: CGPoint(x: 0, y: y))
-                path.addLine(to: CGPoint(x: size.width, y: y))
-            }
-            context.stroke(path, with: .color(.white.opacity(0.035)), lineWidth: 1)
-
-            let window = CGRect(
-                x: size.width * 0.16,
-                y: size.height * 0.12,
-                width: size.width * 0.68,
-                height: size.height * 0.25
-            )
-            context.stroke(Path(window), with: .color(.red.opacity(0.16)), lineWidth: 2)
-        }
-        .allowsHitTesting(false)
-    }
-
-    private var environmentSymbol: String {
+    private var cameraPreset: RealityCameraPreset {
         switch gameSession.progress.currentScene {
-        case .floor10MeetingRoom: "rectangle.and.pencil.and.ellipsis"
-        case .floor10Office: "doc.text.magnifyingglass"
-        case .floor10GlyphArchive: "archivebox.fill"
-        case .floor10TrainingWall: "scope"
-        case .floor10DescentDoor: "door.left.hand.closed"
-        default: "building.2"
+        case .floor10TrainingWall: .battle
+        case .floor10DescentDoor: .descentInput
+        default: .tutorial
         }
     }
 
-    private var environmentTitle: String {
+    private var contentWidth: CGFloat {
         switch gameSession.progress.currentScene {
-        case .floor10MeetingRoom: "불이 꺼진 회의실"
-        case .floor10Office: "기억침식 비상 사무실"
-        case .floor10GlyphArchive: "훼손된 문양 자료실"
-        case .floor10TrainingWall: "봉인 시험 벽면"
-        case .floor10DescentDoor: "제9층 하강문"
-        default: "제10층"
+        case .floor10TrainingWall, .floor10DescentDoor: 760
+        default: 500
         }
     }
 
-    private var floorBackground: some View {
-        Color(red: 0.018, green: 0.021, blue: 0.028)
-            .ignoresSafeArea()
+    private func synchronizeDescentState() {
+        descentState = gameSession.progress.currentScene == .floor10DescentDoor ? .ready : .inactive
+    }
+
+    private func updateDescentState(_ state: DoorGlyphPresentationState) {
+        switch state {
+        case .ready: descentState = .ready
+        case .drawing: descentState = .drawing
+        case .failed: descentState = .failed
+        case .approved: descentState = .approved
+        }
+    }
+
+    private func completeDescent() {
+        descentState = .approved
+        transitionTask?.cancel()
+        transitionTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 560))
+            guard !Task.isCancelled else { return }
+            descentState = .open
+            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 420))
+            guard !Task.isCancelled else { return }
+            gameSession.send(.approveDescentDoor)
+        }
     }
 }
