@@ -6,18 +6,10 @@ struct Floor10TutorialView: View {
 
     @State private var descentState: RealityDescentPresentationState = .inactive
     @State private var transitionTask: Task<Void, Never>?
-    @StateObject private var sceneController = RealitySceneController()
+    let sceneController: RealitySceneController
 
     var body: some View {
         ZStack {
-            RealityStageView(
-                sceneID: gameSession.presentation.floorSceneID ?? .floor10ClosedOffice,
-                cameraPreset: gameSession.presentation.cameraPreset,
-                descentState: descentState,
-                reducedMotion: appSettings.reducedMotion,
-                controller: sceneController
-            )
-
             LinearGradient(
                 colors: [.clear, DAColor.background.opacity(0.2), DAColor.background.opacity(0.82)],
                 startPoint: .leading,
@@ -38,6 +30,9 @@ struct Floor10TutorialView: View {
         }
         .onAppear { synchronizeDescentState() }
         .onChange(of: gameSession.progress.currentScene) { _, _ in synchronizeDescentState() }
+        .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
+            sceneController.setDescentPresentation(descentState, reducedMotion: reducedMotion)
+        }
         .onDisappear { transitionTask?.cancel() }
     }
 
@@ -251,28 +246,34 @@ struct Floor10TutorialView: View {
     }
 
     private func synchronizeDescentState() {
-        descentState = gameSession.progress.currentScene == .floor10DescentDoor ? .ready : .inactive
+        sceneController.setRewardPresentation(.inactive, reducedMotion: appSettings.reducedMotion)
+        setDescentState(gameSession.progress.currentScene == .floor10DescentDoor ? .ready : .inactive)
     }
 
     private func updateDescentState(_ state: DoorGlyphPresentationState) {
         switch state {
-        case .ready: descentState = .ready
-        case .drawing: descentState = .drawing
-        case .failed: descentState = .failed
-        case .approved: descentState = .approved
+        case .ready: setDescentState(.ready)
+        case .drawing: setDescentState(.drawing)
+        case .failed: setDescentState(.failed)
+        case .approved: setDescentState(.approved)
         }
     }
 
     private func completeDescent() {
-        descentState = .approved
+        setDescentState(.approved)
         transitionTask?.cancel()
         transitionTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 560))
             guard !Task.isCancelled else { return }
-            descentState = .open
+            setDescentState(.open)
             try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 420))
             guard !Task.isCancelled else { return }
             gameSession.send(.approveDescentDoor)
         }
+    }
+
+    private func setDescentState(_ state: RealityDescentPresentationState) {
+        descentState = state
+        sceneController.setDescentPresentation(state, reducedMotion: appSettings.reducedMotion)
     }
 }

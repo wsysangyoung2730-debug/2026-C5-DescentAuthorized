@@ -5,12 +5,12 @@ struct RewardSelectionView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let floor: FloorID
+    let sceneController: RealitySceneController
 
     @State private var selectedCandidateID: String?
     @State private var isResolving = false
     @State private var rewardState: RealityRewardPresentationState = .appearing
     @State private var transitionTask: Task<Void, Never>?
-    @StateObject private var sceneController = RealitySceneController()
 
     private var candidates: [RewardCandidate] {
         RewardCatalog.candidates(for: floor)
@@ -18,14 +18,6 @@ struct RewardSelectionView: View {
 
     var body: some View {
         ZStack {
-            RealityStageView(
-                sceneID: gameSession.presentation.floorSceneID ?? .floor09ArchiveRedesign,
-                cameraPreset: gameSession.presentation.cameraPreset,
-                rewardState: rewardState,
-                reducedMotion: appSettings.reducedMotion,
-                controller: sceneController
-            )
-
             Color.black.opacity(0.18)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
@@ -78,16 +70,20 @@ struct RewardSelectionView: View {
             .padding(32)
         }
         .onAppear {
-            rewardState = .appearing
+            sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+            setRewardState(.appearing)
             transitionTask?.cancel()
             transitionTask = Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 520))
                 guard !Task.isCancelled else { return }
-                rewardState = .choosing
+                setRewardState(.choosing)
             }
         }
         .onDisappear {
             transitionTask?.cancel()
+        }
+        .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
+            sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion)
         }
     }
 
@@ -160,16 +156,21 @@ struct RewardSelectionView: View {
         withAnimation(.easeInOut(duration: 0.45)) {
             isResolving = true
         }
-        rewardState = .resolving(selectedIndex: selectedIndex)
+        setRewardState(.resolving(selectedIndex: selectedIndex))
         transitionTask?.cancel()
         transitionTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 460))
             guard !Task.isCancelled else { return }
-            rewardState = .resolved(selectedIndex: selectedIndex)
+            setRewardState(.resolved(selectedIndex: selectedIndex))
             try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 390))
             guard !Task.isCancelled else { return }
             gameSession.send(.selectReward(selectedCandidateID))
         }
+    }
+
+    private func setRewardState(_ state: RealityRewardPresentationState) {
+        rewardState = state
+        sceneController.setRewardPresentation(state, reducedMotion: appSettings.reducedMotion)
     }
 
     private func tierColor(_ tier: ScrollTier) -> Color {

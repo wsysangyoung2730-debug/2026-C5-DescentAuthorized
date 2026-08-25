@@ -3,20 +3,12 @@ import SwiftUI
 struct Floor8DescentDoorView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
+    let sceneController: RealitySceneController
     @State private var descentState: RealityDescentPresentationState = .ready
     @State private var transitionTask: Task<Void, Never>?
-    @StateObject private var sceneController = RealitySceneController()
 
     var body: some View {
         ZStack {
-            RealityStageView(
-                sceneID: gameSession.presentation.floorSceneID ?? .floor08AdministratorObservatory,
-                cameraPreset: gameSession.presentation.cameraPreset,
-                descentState: descentState,
-                reducedMotion: appSettings.reducedMotion,
-                controller: sceneController
-            )
-
             Color.black.opacity(0.2)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
@@ -55,28 +47,40 @@ struct Floor8DescentDoorView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             .padding(26)
         }
+        .onAppear {
+            sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+            setDescentState(.ready)
+        }
+        .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
+            sceneController.setDescentPresentation(descentState, reducedMotion: reducedMotion)
+        }
         .onDisappear { transitionTask?.cancel() }
     }
 
     private func updateDescentState(_ state: DoorGlyphPresentationState) {
         switch state {
-        case .ready: descentState = .ready
-        case .drawing: descentState = .drawing
-        case .failed: descentState = .failed
-        case .approved: descentState = .approved
+        case .ready: setDescentState(.ready)
+        case .drawing: setDescentState(.drawing)
+        case .failed: setDescentState(.failed)
+        case .approved: setDescentState(.approved)
         }
     }
 
     private func completeDescent() {
-        descentState = .approved
+        setDescentState(.approved)
         transitionTask?.cancel()
         transitionTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 560))
             guard !Task.isCancelled else { return }
-            descentState = .open
+            setDescentState(.open)
             try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 420))
             guard !Task.isCancelled else { return }
             gameSession.send(.approveDescentDoor)
         }
+    }
+
+    private func setDescentState(_ state: RealityDescentPresentationState) {
+        descentState = state
+        sceneController.setDescentPresentation(state, reducedMotion: appSettings.reducedMotion)
     }
 }

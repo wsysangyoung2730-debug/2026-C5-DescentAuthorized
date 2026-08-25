@@ -26,6 +26,19 @@ enum GameAssetID: String, CaseIterable {
     case erasureInkSmall = "erasure_ink_small"
 }
 
+enum SceneCameraID: String, CaseIterable {
+    case floor10Combat = "F10_iPad_MainCamera"
+    case floor10Reward = "CAM_F10_RewardSelection"
+    case floor10DescentDoor = "CAM_F10_DescentDoor"
+    case floor09Combat = "F09_iPad_MainCamera"
+    case floor09Reward = "CAM_F09_RewardSelection"
+    case floor09DescentDoor = "CAM_F09_DescentDoor"
+    case floor08ResidueCombat = "F08A_iPadCamera"
+    case floor08AdministratorCombat = "F08_iPad_MainCamera"
+    case floor08AdministratorReward = "CAM_F08_RewardSelection"
+    case floor08AdministratorDescentDoor = "CAM_F08_DescentDoor"
+}
+
 struct DoorStateTransition {
     let closedEntityName: String
     let openEntityName: String

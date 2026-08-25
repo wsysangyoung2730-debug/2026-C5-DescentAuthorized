@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "packageID": "com.descentauthorized.reality-assets",
-  "packageVersion": "v012",
-  "generatedAt": "2026-08-25T10:33:14.978178+00:00",
-  "sourceBlend": "DA_F08_F09_F10_Combined_v012.blend",
+  "packageVersion": "v013",
+  "generatedAt": "2026-08-25T19:29:13.634286+00:00",
+  "sourceBlend": "DA_F08_F09_F10_Combined_v013.blend",
   "units": "meters",
   "upAxis": "Y",
   "assetCount": 19,
@@ -29,7 +29,10 @@
         "anchor_player_input": "F10_MagicInputBoard",
         "anchor_descent_door": "F10_DescentDoor",
         "anchor_descent_stele": "F10_DescentStele",
-        "anchor_descent_pad": "F10_DescentPedestal"
+        "anchor_descent_pad": "F10_DescentPedestal",
+        "camera_combat": "F10_iPad_MainCamera",
+        "camera_reward_selection": "CAM_F10_RewardSelection",
+        "camera_descent_door": "CAM_F10_DescentDoor"
       },
       "missingAliasTargets": [],
       "rootEntities": [
@@ -37,6 +40,8 @@
         "BeginnerSpellBoard",
         "BeginnerSpellCabinet",
         "BrokenMonitor_R",
+        "CAM_F10_DescentDoor",
+        "CAM_F10_RewardSelection",
         "CablePowerBox_L",
         "CablePowerBox_R",
         "Ceiling.003",
@@ -117,8 +122,8 @@
         "WarningSiren_01",
         "WarningSiren_02"
       ],
-      "bytes": 3586654,
-      "sha256": "ba9cab0bbf8c88c0b9e3fd12eef3c536ef5cb5efc4e71a9d0a7bf859cfac7403"
+      "bytes": 3587734,
+      "sha256": "70337cbbae397d6e84e30d438a1484499b645d4fc5adbd3b25f0c07ccd80f8bf"
     },
     {
       "id": "floor09_archive_redesign",
@@ -148,8 +153,9 @@
         "anchor_scroll_slot_2": "F09_RewardScroll_Center_HoleAnchor",
         "anchor_scroll_slot_3": "F09_RewardScroll_Right_HoleAnchor",
         "anchor_shield_normal": "F09_GeneralShield",
-        "camera_reward_selection": "CAM_ANCHOR_F09_RewardSelection",
-        "camera_descent_input": "CAM_ANCHOR_F09_DescentInput"
+        "camera_combat": "F09_iPad_MainCamera",
+        "camera_reward_selection": "CAM_F09_RewardSelection",
+        "camera_descent_door": "CAM_F09_DescentDoor"
       },
       "missingAliasTargets": [],
       "rootEntities": [
@@ -204,6 +210,8 @@
         "BrokenGlassDebris",
         "CAM_ANCHOR_F09_DescentInput",
         "CAM_ANCHOR_F09_RewardSelection",
+        "CAM_F09_DescentDoor",
+        "CAM_F09_RewardSelection",
         "Ceiling.002",
         "CeilingBeam_-11",
         "CeilingBeam_-5.5",
@@ -265,8 +273,8 @@
         "WallRib_R_5.5",
         "WarningSignSet"
       ],
-      "bytes": 2188780,
-      "sha256": "7f1cb6f00283770c2a267217979a27630bab5e05cd03df7bea8b96bd4afe4770"
+      "bytes": 2189462,
+      "sha256": "d66938b7a976e3d97dff397029b1fa509f347636d85da3dac9327dadc125300a"
     },
     {
       "id": "floor08_residue_isolation",
@@ -281,7 +289,8 @@
       "entityAliases": {
         "anchor_magic_board": "F08A_MagicInputBoard",
         "anchor_player_input": "F08A_MagicInputBoard",
-        "anchor_boss": "SPAWN_ObservationResidue"
+        "anchor_boss": "SPAWN_ObservationResidue",
+        "camera_combat": "F08A_iPadCamera"
       },
       "missingAliasTargets": [],
       "rootEntities": [
@@ -321,8 +330,8 @@
         "SampleCrate",
         "SampleVials"
       ],
-      "bytes": 812208,
-      "sha256": "d1b840fb7f7c67ee8eadd70bd582639df3786e3ea02d9c71b38a5a3e0ced67e5"
+      "bytes": 812552,
+      "sha256": "126031bcb4ad99704a04166dc6f2b934b5f55cfaae19dc4f6b54e8e232b29d47"
     },
     {
       "id": "floor08_administrator_observatory",
@@ -351,7 +360,10 @@
         "anchor_scroll_slot_1": "F08B_RewardScroll_Left_HoleAnchor",
         "anchor_scroll_slot_2": "F08B_RewardScroll_Center_HoleAnchor",
         "anchor_scroll_slot_3": "F08B_RewardScroll_Right_HoleAnchor",
-        "anchor_shield_absolute": "F08B_AbsoluteShield"
+        "anchor_shield_absolute": "F08B_AbsoluteShield",
+        "camera_combat": "F08_iPad_MainCamera",
+        "camera_reward_selection": "CAM_F08_RewardSelection",
+        "camera_descent_door": "CAM_F08_DescentDoor"
       },
       "missingAliasTargets": [],
       "rootEntities": [
@@ -360,6 +372,8 @@
         "BackWall.001",
         "BossStage_F08",
         "BossThreshold.001",
+        "CAM_F08_DescentDoor",
+        "CAM_F08_RewardSelection",
         "CalibrationRing_Backdrop",
         "Ceiling.001",
         "CeilingBeam_-11.001",
@@ -430,8 +444,8 @@
         "WallRib_R_16.001",
         "WallRib_R_5.001"
       ],
-      "bytes": 2004153,
-      "sha256": "060a3dbff245a387fab71a18465a9f4528d5db9415bac0c10e44a0149f85c427"
+      "bytes": 2004937,
+      "sha256": "3e7ef0f321e8d09a72c927bb65f782ef849cbdde7b4c382137ada9cd8138a038"
     },
     {
       "id": "record_administrator",
@@ -445,8 +459,8 @@
       "rootEntities": [
         "ACTOR_RecordAdministrator"
       ],
-      "bytes": 1288163,
-      "sha256": "6ba5a03100c84e3eecf03a4c8d4b09af41f0280882bed07a408b6c9f5cc2283d"
+      "bytes": 1288129,
+      "sha256": "2782d5a4b63348d75abcb860c18ff7c2da65c0755a47ebb5feed6c74dabb99fd"
     },
     {
       "id": "observation_residue",
@@ -460,8 +474,8 @@
       "rootEntities": [
         "ACTOR_ObservationResidue"
       ],
-      "bytes": 1341622,
-      "sha256": "764ce41d60d27351354eb1262409326b10e009c0c3dc24296822631f10fa4845"
+      "bytes": 1341673,
+      "sha256": "c1495e4f99d28c9740fea39d329b50953e3d8ae6d69fff05573b46e8bff2579b"
     },
     {
       "id": "observation_administrator",
@@ -475,8 +489,8 @@
       "rootEntities": [
         "ACTOR_ObservationAdministrator"
       ],
-      "bytes": 1578932,
-      "sha256": "5fb28eee2be011fff738c318f6418e9ecd8bc7a13e5b08ac9d8483d23fc73078"
+      "bytes": 1578909,
+      "sha256": "9f282dd84933ff245105bc2b2b73b612ef4c1bd0d613adc26878ae08eb7836b4"
     },
     {
       "id": "hit_normal",

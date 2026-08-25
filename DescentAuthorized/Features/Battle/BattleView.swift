@@ -3,7 +3,7 @@ import SwiftUI
 struct BattleView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
-    @StateObject private var realityController = RealitySceneController()
+    let realityController: RealitySceneController
 
     @State private var selectedSpellID: SpellID?
     @State private var enemyHitFlash = false
@@ -19,14 +19,10 @@ struct BattleView: View {
 
     var body: some View {
         ZStack {
-            if let battle = gameSession.battleState, let realitySceneID {
-                RealityStageView(
-                    sceneID: realitySceneID,
-                    cameraPreset: gameSession.presentation.cameraPreset,
-                    erasureZones: battle.activeErasureZones,
-                    controller: realityController
-                )
-                .overlay(Color.black.opacity(0.2))
+            if realitySceneID != nil {
+                Color.black.opacity(0.2)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
             } else {
                 battleBackground
             }
@@ -75,6 +71,7 @@ struct BattleView: View {
                 gameSession.battleState,
                 reducedMotion: appSettings.reducedMotion
             )
+            realityController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
         }
         .onChange(of: gameSession.eventSequence) { _, _ in
             present(gameSession.latestEvents)
@@ -85,7 +82,6 @@ struct BattleView: View {
             enemyPulseTask?.cancel()
             playerPulseTask?.cancel()
             feedbackTask?.cancel()
-            realityController.unload()
         }
         .preferredColorScheme(.dark)
     }

@@ -46,7 +46,9 @@ struct RealitySceneDescriptor: Sendable {
             cameraNames: [
                 .main: "F10_iPad_MainCamera",
                 .tutorial: "F10_iPad_MainCamera",
-                .battle: "F10_iPad_MainCamera"
+                .battle: "F10_iPad_MainCamera",
+                .rewardSelection: "CAM_F10_RewardSelection",
+                .descentInput: "CAM_F10_DescentDoor"
             ],
             entityNames: [
                 .magicInputBoard: "F10_MagicInputBoard",
@@ -62,8 +64,8 @@ struct RealitySceneDescriptor: Sendable {
             cameraNames: [
                 .main: "F09_iPad_MainCamera",
                 .battle: "F09_iPad_MainCamera",
-                .rewardSelection: "CAM_ANCHOR_F09_RewardSelection",
-                .descentInput: "CAM_ANCHOR_F09_DescentInput"
+                .rewardSelection: "CAM_F09_RewardSelection",
+                .descentInput: "CAM_F09_DescentDoor"
             ],
             entityNames: [
                 .magicInputBoard: "F09_MagicInputBoard",
@@ -97,8 +99,8 @@ struct RealitySceneDescriptor: Sendable {
             cameraNames: [
                 .main: "F08_iPad_MainCamera",
                 .battle: "F08_iPad_MainCamera",
-                .rewardSelection: "CAM_ANCHOR_F08B_RewardSelection",
-                .descentInput: "CAM_ANCHOR_F08B_DescentInput"
+                .rewardSelection: "CAM_F08_RewardSelection",
+                .descentInput: "CAM_F08_DescentDoor"
             ],
             entityNames: [
                 .magicInputBoard: "F08B_MagicInputBoard",

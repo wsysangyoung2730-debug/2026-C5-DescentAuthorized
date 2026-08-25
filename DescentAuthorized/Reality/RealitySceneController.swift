@@ -14,6 +14,7 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var loadState: LoadState = .idle
     @Published private(set) var missingEntityRoles: [RealityEntityRole] = []
     @Published private(set) var projectedMagicBoard: RealityProjectedBoard?
+    @Published private(set) var cameraFadeOpacity: Double = 0
 
     let registry = RealityEntityRegistry()
 
@@ -21,8 +22,10 @@ final class RealitySceneController: ObservableObject {
     private var sceneAnchor: AnchorEntity?
     private var cameraEntity: PerspectiveCamera?
     private var loadCancellable: AnyCancellable?
+    private var cameraTransitionTask: Task<Void, Never>?
     private var requestedSceneID: FloorSceneID?
     private var requestedCameraPreset: RealityCameraPreset = .main
+    private var activeCameraName: String?
     private var requestedErasureZones: [ErasureZone] = []
     private var requestedBattleState: BattleState?
     private var requestedReducedMotion = false
@@ -34,15 +37,31 @@ final class RealitySceneController: ObservableObject {
     private let progressionVFXRenderer = RealityProgressionVFXRenderer()
 
     func attach(to arView: ARView) {
+        guard self.arView !== arView else {
+            scheduleBoardProjectionRefresh()
+            return
+        }
+
+        if let sceneAnchor {
+            self.arView?.scene.removeAnchor(sceneAnchor)
+            arView.scene.addAnchor(sceneAnchor)
+        }
         self.arView = arView
         scheduleBoardProjectionRefresh()
     }
 
     func load(sceneID: FloorSceneID, cameraPreset: RealityCameraPreset, bundle: Bundle = .main) {
         requestedCameraPreset = cameraPreset
-        if requestedSceneID == sceneID, case .ready(sceneID) = loadState {
-            applyCameraPreset(cameraPreset)
-            return
+        if requestedSceneID == sceneID {
+            switch loadState {
+            case .loading:
+                return
+            case .ready:
+                transitionCamera(to: cameraPreset)
+                return
+            default:
+                break
+            }
         }
 
         guard let arView else { return }
@@ -67,8 +86,12 @@ final class RealitySceneController: ObservableObject {
                         self?.fail(sceneID: sceneID, message: error.localizedDescription)
                     }
                 },
-                receiveValue: { [weak self, weak arView] root in
-                    guard let self, let arView, self.requestedSceneID == sceneID else { return }
+                receiveValue: { [weak self] root in
+                    guard
+                        let self,
+                        let arView = self.arView,
+                        self.requestedSceneID == sceneID
+                    else { return }
                     self.install(root: root, descriptor: descriptor, in: arView)
                 }
             )
@@ -76,14 +99,36 @@ final class RealitySceneController: ObservableObject {
 
     func applyCameraPreset(_ preset: RealityCameraPreset) {
         requestedCameraPreset = preset
+        transitionCamera(to: preset)
+    }
+
+    private func transitionCamera(to preset: RealityCameraPreset) {
+        guard
+            let descriptor = registry.descriptor,
+            let cameraName = descriptor.cameraName(for: preset)
+        else { return }
+        guard cameraName != activeCameraName else { return }
+
+        cameraTransitionTask?.cancel()
+        cameraTransitionTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            cameraFadeOpacity = 1
+            try? await Task.sleep(for: .milliseconds(180))
+            guard !Task.isCancelled else { return }
+            applyCamera(named: cameraName)
+            cameraFadeOpacity = 0
+            cameraTransitionTask = nil
+        }
+    }
+
+    private func applyCamera(named cameraName: String) {
         guard
             let root = registry.root,
-            let descriptor = registry.descriptor,
-            let cameraName = descriptor.cameraName(for: preset),
             let authoredCamera = root.findEntity(named: cameraName),
             let cameraEntity
         else { return }
         cameraEntity.transform = Transform(matrix: authoredCamera.transformMatrix(relativeTo: nil))
+        activeCameraName = cameraName
         scheduleBoardProjectionRefresh()
     }
 
@@ -149,6 +194,11 @@ final class RealitySceneController: ObservableObject {
         )
     }
 
+    func resetProgressionPresentation(reducedMotion: Bool) {
+        setDescentPresentation(.inactive, reducedMotion: reducedMotion)
+        setRewardPresentation(.inactive, reducedMotion: reducedMotion)
+    }
+
     func normalizedMagicBoardPoint(for screenPoint: CGPoint) -> NormalizedPoint? {
         projectedMagicBoard?.normalizedPoint(for: screenPoint)
     }
@@ -156,11 +206,15 @@ final class RealitySceneController: ObservableObject {
     func unload() {
         loadCancellable?.cancel()
         loadCancellable = nil
+        cameraTransitionTask?.cancel()
+        cameraTransitionTask = nil
         if let sceneAnchor, let arView {
             arView.scene.removeAnchor(sceneAnchor)
         }
         sceneAnchor = nil
         cameraEntity = nil
+        activeCameraName = nil
+        cameraFadeOpacity = 0
         registry.reset()
         missingEntityRoles = []
         projectedMagicBoard = nil
@@ -187,7 +241,9 @@ final class RealitySceneController: ObservableObject {
         registry.setEnabled(false, for: .generalShield)
         registry.setEnabled(false, for: .absoluteShield)
         progressionVFXRenderer.attach(to: registry)
-        applyCameraPreset(requestedCameraPreset)
+        if let cameraName = descriptor.cameraName(for: requestedCameraPreset) {
+            applyCamera(named: cameraName)
+        }
         setErasureZones(requestedErasureZones)
         combatVFXRenderer.attach(to: registry)
         let restoredCues = pendingCombatCues + RealityCombatPresentationMapper.cues(

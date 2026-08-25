@@ -5,17 +5,10 @@ struct Floor9EntranceView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     @State private var inspectedRecord = false
-    @StateObject private var sceneController = RealitySceneController()
+    let sceneController: RealitySceneController
 
     var body: some View {
         ZStack {
-            RealityStageView(
-                sceneID: gameSession.presentation.floorSceneID ?? .floor09ArchiveRedesign,
-                cameraPreset: gameSession.presentation.cameraPreset,
-                reducedMotion: appSettings.reducedMotion,
-                controller: sceneController
-            )
-
             LinearGradient(
                 colors: [.clear, DAColor.background.opacity(0.18), DAColor.background.opacity(0.86)],
                 startPoint: .leading,
@@ -73,6 +66,9 @@ struct Floor9EntranceView: View {
                 Rectangle().fill(DAColor.magic.opacity(0.6)).frame(width: 1)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+        }
+        .onAppear {
+            sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
         }
     }
 

@@ -3,17 +3,10 @@ import SwiftUI
 struct Floor8ExplorationView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
-    @StateObject private var sceneController = RealitySceneController()
+    let sceneController: RealitySceneController
 
     var body: some View {
         ZStack {
-            RealityStageView(
-                sceneID: gameSession.presentation.floorSceneID ?? .floor08ResidueIsolation,
-                cameraPreset: gameSession.presentation.cameraPreset,
-                reducedMotion: appSettings.reducedMotion,
-                controller: sceneController
-            )
-
             LinearGradient(
                 colors: [.clear, DAColor.background.opacity(0.18), DAColor.background.opacity(0.86)],
                 startPoint: .leading,
@@ -31,8 +24,11 @@ struct Floor8ExplorationView: View {
                     Rectangle().fill(stageColor.opacity(0.65)).frame(width: 1)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-            }
         }
+        .onAppear {
+            sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+        }
+    }
 
     @ViewBuilder
     private var sceneContent: some View {
