@@ -4,6 +4,7 @@ import SwiftUI
 struct RealityStageView: View {
     let sceneID: FloorSceneID
     var cameraPreset: RealityCameraPreset = .main
+    var erasureZones: [ErasureZone] = []
     @ObservedObject var controller: RealitySceneController
 
     var body: some View {
@@ -25,11 +26,15 @@ struct RealityStageView: View {
             }
         }
         .background(Color.black)
-        .onAppear { controller.load(sceneID: sceneID, cameraPreset: cameraPreset) }
+        .onAppear {
+            controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
+            controller.setErasureZones(erasureZones)
+        }
         .onChange(of: sceneID) { _, value in
             controller.load(sceneID: value, cameraPreset: cameraPreset)
         }
         .onChange(of: cameraPreset) { _, value in controller.applyCameraPreset(value) }
+        .onChange(of: erasureZones) { _, value in controller.setErasureZones(value) }
     }
 
     private func statusOverlay(icon: String?, title: String, detail: String?) -> some View {

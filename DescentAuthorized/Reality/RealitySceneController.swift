@@ -13,6 +13,7 @@ final class RealitySceneController: ObservableObject {
 
     @Published private(set) var loadState: LoadState = .idle
     @Published private(set) var missingEntityRoles: [RealityEntityRole] = []
+    @Published private(set) var projectedMagicBoard: RealityProjectedBoard?
 
     let registry = RealityEntityRegistry()
 
@@ -22,9 +23,12 @@ final class RealitySceneController: ObservableObject {
     private var loadCancellable: AnyCancellable?
     private var requestedSceneID: FloorSceneID?
     private var requestedCameraPreset: RealityCameraPreset = .main
+    private var requestedErasureZones: [ErasureZone] = []
+    private let erasureZoneRenderer = RealityErasureZoneRenderer()
 
     func attach(to arView: ARView) {
         self.arView = arView
+        scheduleBoardProjectionRefresh()
     }
 
     func load(sceneID: FloorSceneID, cameraPreset: RealityCameraPreset, bundle: Bundle = .main) {
@@ -73,6 +77,17 @@ final class RealitySceneController: ObservableObject {
             let cameraEntity
         else { return }
         cameraEntity.transform = Transform(matrix: authoredCamera.transformMatrix(relativeTo: nil))
+        scheduleBoardProjectionRefresh()
+    }
+
+    func setErasureZones(_ zones: [ErasureZone]) {
+        requestedErasureZones = zones
+        guard let board = registry.entity(for: .magicInputBoard) else { return }
+        erasureZoneRenderer.render(zones: zones, on: board)
+    }
+
+    func normalizedMagicBoardPoint(for screenPoint: CGPoint) -> NormalizedPoint? {
+        projectedMagicBoard?.normalizedPoint(for: screenPoint)
     }
 
     func unload() {
@@ -85,6 +100,7 @@ final class RealitySceneController: ObservableObject {
         cameraEntity = nil
         registry.reset()
         missingEntityRoles = []
+        projectedMagicBoard = nil
         requestedSceneID = nil
         loadState = .idle
     }
@@ -106,8 +122,54 @@ final class RealitySceneController: ObservableObject {
         registry.setEnabled(false, for: .generalShield)
         registry.setEnabled(false, for: .absoluteShield)
         applyCameraPreset(requestedCameraPreset)
+        setErasureZones(requestedErasureZones)
         missingEntityRoles = registry.missingRequiredRoles
         loadState = .ready(descriptor.sceneID)
+        scheduleBoardProjectionRefresh()
+    }
+
+    private func scheduleBoardProjectionRefresh() {
+        DispatchQueue.main.async { [weak self] in self?.refreshBoardProjection() }
+    }
+
+    private func refreshBoardProjection() {
+        guard let arView, let board = registry.entity(for: .magicInputBoard) else {
+            projectedMagicBoard = nil
+            return
+        }
+
+        let bounds = board.visualBounds(relativeTo: nil)
+        let corners = [
+            SIMD3(bounds.min.x, bounds.min.y, bounds.min.z),
+            SIMD3(bounds.min.x, bounds.min.y, bounds.max.z),
+            SIMD3(bounds.min.x, bounds.max.y, bounds.min.z),
+            SIMD3(bounds.min.x, bounds.max.y, bounds.max.z),
+            SIMD3(bounds.max.x, bounds.min.y, bounds.min.z),
+            SIMD3(bounds.max.x, bounds.min.y, bounds.max.z),
+            SIMD3(bounds.max.x, bounds.max.y, bounds.min.z),
+            SIMD3(bounds.max.x, bounds.max.y, bounds.max.z)
+        ]
+        let projected = corners.compactMap(arView.project)
+        guard projected.count >= 4 else {
+            projectedMagicBoard = nil
+            return
+        }
+
+        let minX = projected.map(\.x).min() ?? 0
+        let maxX = projected.map(\.x).max() ?? 0
+        let minY = projected.map(\.y).min() ?? 0
+        let maxY = projected.map(\.y).max() ?? 0
+        let frame = CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+            .intersection(arView.bounds)
+        guard frame.width >= 44, frame.height >= 44 else {
+            projectedMagicBoard = nil
+            return
+        }
+
+        let nextProjection = RealityProjectedBoard(frame: frame)
+        if projectedMagicBoard != nextProjection {
+            projectedMagicBoard = nextProjection
+        }
     }
 
     private func fail(sceneID: FloorSceneID, message: String) {

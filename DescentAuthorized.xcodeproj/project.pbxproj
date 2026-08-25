@@ -14,6 +14,8 @@
 		100000000000000000000058 /* RealityEntityRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000058 /* RealityEntityRegistry.swift */; };
 		100000000000000000000059 /* RealitySceneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000059 /* RealitySceneController.swift */; };
 		100000000000000000000060 /* RealityStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000060 /* RealityStageView.swift */; };
+		100000000000000000000062 /* RealityBoardProjection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000062 /* RealityBoardProjection.swift */; };
+		100000000000000000000063 /* RealityErasureZoneRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000063 /* RealityErasureZoneRenderer.swift */; };
 		100000000000000000000001 /* DescentAuthorizedApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000001 /* DescentAuthorizedApp.swift */; };
 		100000000000000000000002 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000002 /* HomeView.swift */; };
 		100000000000000000000003 /* BattleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000003 /* BattleView.swift */; };
@@ -73,6 +75,8 @@
 		200000000000000000000058 /* RealityEntityRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityEntityRegistry.swift; sourceTree = "<group>"; };
 		200000000000000000000059 /* RealitySceneController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealitySceneController.swift; sourceTree = "<group>"; };
 		200000000000000000000060 /* RealityStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityStageView.swift; sourceTree = "<group>"; };
+		200000000000000000000062 /* RealityBoardProjection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityBoardProjection.swift; sourceTree = "<group>"; };
+		200000000000000000000063 /* RealityErasureZoneRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityErasureZoneRenderer.swift; sourceTree = "<group>"; };
 		200000000000000000000001 /* DescentAuthorizedApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DescentAuthorizedApp.swift; sourceTree = "<group>"; };
 		200000000000000000000002 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		200000000000000000000003 /* BattleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleView.swift; sourceTree = "<group>"; };
@@ -354,7 +358,9 @@
 		400000000000000000000016 /* Reality */ = {
 			isa = PBXGroup;
 			children = (
+				200000000000000000000062 /* RealityBoardProjection.swift */,
 				200000000000000000000058 /* RealityEntityRegistry.swift */,
+				200000000000000000000063 /* RealityErasureZoneRenderer.swift */,
 				200000000000000000000059 /* RealitySceneController.swift */,
 				200000000000000000000057 /* RealitySceneDescriptor.swift */,
 				200000000000000000000060 /* RealityStageView.swift */,
@@ -453,6 +459,8 @@
 				100000000000000000000058 /* RealityEntityRegistry.swift in Sources */,
 				100000000000000000000059 /* RealitySceneController.swift in Sources */,
 				100000000000000000000060 /* RealityStageView.swift in Sources */,
+				100000000000000000000062 /* RealityBoardProjection.swift in Sources */,
+				100000000000000000000063 /* RealityErasureZoneRenderer.swift in Sources */,
 				100000000000000000000002 /* HomeView.swift in Sources */,
 				100000000000000000000003 /* BattleView.swift in Sources */,
 				100000000000000000000061 /* BattlePresentationStyle.swift in Sources */,
