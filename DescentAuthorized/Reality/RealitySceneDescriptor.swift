@@ -116,3 +116,123 @@ struct RealitySceneDescriptor: Sendable {
         )
     ]
 }
+
+enum DemoSceneExperience: Equatable, Sendable {
+    case floor10Tutorial
+    case floor9Entrance
+    case battle
+    case reward(FloorID)
+    case floor8Exploration
+    case descent(FloorID)
+    case completion
+}
+
+struct DemoScenePresentation: Equatable, Sendable {
+    let progressSceneID: SceneID
+    let floorSceneID: FloorSceneID?
+    let cameraPreset: RealityCameraPreset
+    let experience: DemoSceneExperience
+
+    static func presentation(for sceneID: SceneID) -> DemoScenePresentation {
+        switch sceneID {
+        case .floor10MeetingRoom, .floor10Office, .floor10GlyphArchive:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor10ClosedOffice,
+                cameraPreset: .tutorial,
+                experience: .floor10Tutorial
+            )
+        case .floor10TrainingWall:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor10ClosedOffice,
+                cameraPreset: .battle,
+                experience: .floor10Tutorial
+            )
+        case .floor10DescentDoor:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor10ClosedOffice,
+                cameraPreset: .descentInput,
+                experience: .floor10Tutorial
+            )
+        case .floor9Entrance:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor09ArchiveRedesign,
+                cameraPreset: .main,
+                experience: .floor9Entrance
+            )
+        case .floor9RecordsBattle:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor09ArchiveRedesign,
+                cameraPreset: .battle,
+                experience: .battle
+            )
+        case .floor9RewardVault:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor09ArchiveRedesign,
+                cameraPreset: .rewardSelection,
+                experience: .reward(.floor9)
+            )
+        case .floor9DescentDoor:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor09ArchiveRedesign,
+                cameraPreset: .descentInput,
+                experience: .descent(.floor9)
+            )
+        case .floor8Antechamber, .floor8ProtectionRoom:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor08ResidueIsolation,
+                cameraPreset: .tutorial,
+                experience: .floor8Exploration
+            )
+        case .floor8ResidualBattle:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor08ResidueIsolation,
+                cameraPreset: .battle,
+                experience: .battle
+            )
+        case .floor8SealedDoor:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor08AdministratorObservatory,
+                cameraPreset: .descentInput,
+                experience: .floor8Exploration
+            )
+        case .floor8AdministratorBattle:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor08AdministratorObservatory,
+                cameraPreset: .battle,
+                experience: .battle
+            )
+        case .floor8Reward:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor08AdministratorObservatory,
+                cameraPreset: .rewardSelection,
+                experience: .reward(.floor8)
+            )
+        case .floor8DescentDoor:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor08AdministratorObservatory,
+                cameraPreset: .descentInput,
+                experience: .descent(.floor8)
+            )
+        case .demoComplete:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: nil,
+                cameraPreset: .main,
+                experience: .completion
+            )
+        }
+    }
+}

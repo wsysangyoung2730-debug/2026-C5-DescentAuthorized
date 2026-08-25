@@ -10,8 +10,8 @@ struct Floor8DescentDoorView: View {
     var body: some View {
         ZStack {
             RealityStageView(
-                sceneID: .floor08AdministratorObservatory,
-                cameraPreset: .descentInput,
+                sceneID: gameSession.presentation.floorSceneID ?? .floor08AdministratorObservatory,
+                cameraPreset: gameSession.presentation.cameraPreset,
                 descentState: descentState,
                 reducedMotion: appSettings.reducedMotion,
                 controller: sceneController

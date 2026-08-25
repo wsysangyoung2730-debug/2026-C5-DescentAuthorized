@@ -10,8 +10,8 @@ struct Floor9EntranceView: View {
     var body: some View {
         ZStack {
             RealityStageView(
-                sceneID: .floor09ArchiveRedesign,
-                cameraPreset: .main,
+                sceneID: gameSession.presentation.floorSceneID ?? .floor09ArchiveRedesign,
+                cameraPreset: gameSession.presentation.cameraPreset,
                 reducedMotion: appSettings.reducedMotion,
                 controller: sceneController
             )

@@ -11,6 +11,7 @@ struct DemoFlowView: View {
     var body: some View {
         ZStack(alignment: .top) {
             sceneView
+                .id(gameSession.presentation.progressSceneID)
 
             HStack {
                 Button {
@@ -55,40 +56,24 @@ struct DemoFlowView: View {
 
     @ViewBuilder
     private var sceneView: some View {
-        switch gameSession.progress.currentScene {
-        case .floor10MeetingRoom,
-             .floor10Office,
-             .floor10GlyphArchive,
-             .floor10TrainingWall,
-             .floor10DescentDoor:
+        switch gameSession.presentation.experience {
+        case .floor10Tutorial:
             Floor10TutorialView()
-
-        case .floor9RecordsBattle,
-             .floor8ResidualBattle,
-             .floor8AdministratorBattle:
-            BattleView()
-
         case .floor9Entrance:
             Floor9EntranceView()
-
-        case .floor9RewardVault:
-            RewardSelectionView(floor: .floor9)
-
-        case .floor9DescentDoor:
-            Floor9DescentDoorView()
-
-        case .floor8Antechamber,
-             .floor8ProtectionRoom,
-             .floor8SealedDoor:
+        case .battle:
+            BattleView()
+        case let .reward(floor):
+            RewardSelectionView(floor: floor)
+        case .floor8Exploration:
             Floor8ExplorationView()
-
-        case .floor8Reward:
-            RewardSelectionView(floor: .floor8)
-
-        case .floor8DescentDoor:
-            Floor8DescentDoorView()
-
-        case .demoComplete:
+        case let .descent(floor):
+            if floor == .floor9 {
+                Floor9DescentDoorView()
+            } else {
+                Floor8DescentDoorView()
+            }
+        case .completion:
             DemoCompleteView(onReturnToTitle: onExit)
         }
     }

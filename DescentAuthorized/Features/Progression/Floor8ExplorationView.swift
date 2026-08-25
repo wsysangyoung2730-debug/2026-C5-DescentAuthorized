@@ -8,8 +8,8 @@ struct Floor8ExplorationView: View {
     var body: some View {
         ZStack {
             RealityStageView(
-                sceneID: sceneID,
-                cameraPreset: cameraPreset,
+                sceneID: gameSession.presentation.floorSceneID ?? .floor08ResidueIsolation,
+                cameraPreset: gameSession.presentation.cameraPreset,
                 reducedMotion: appSettings.reducedMotion,
                 controller: sceneController
             )
@@ -170,16 +170,6 @@ struct Floor8ExplorationView: View {
 
     private var stageColor: Color {
         gameSession.progress.currentScene == .floor8SealedDoor ? .yellow : .cyan
-    }
-
-    private var sceneID: FloorSceneID {
-        gameSession.progress.currentScene == .floor8SealedDoor
-            ? .floor08AdministratorObservatory
-            : .floor08ResidueIsolation
-    }
-
-    private var cameraPreset: RealityCameraPreset {
-        gameSession.progress.currentScene == .floor8SealedDoor ? .descentInput : .tutorial
     }
 
     private var contentWidth: CGFloat {

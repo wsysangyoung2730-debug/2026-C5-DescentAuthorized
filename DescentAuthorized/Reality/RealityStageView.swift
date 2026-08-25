@@ -30,13 +30,10 @@ struct RealityStageView: View {
         }
         .background(Color.black)
         .onAppear {
-            controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
-            controller.setErasureZones(erasureZones)
-            controller.setDescentPresentation(descentState, reducedMotion: reducedMotion)
-            controller.setRewardPresentation(rewardState, reducedMotion: reducedMotion)
+            synchronizePresentation(sceneID: sceneID, cameraPreset: cameraPreset)
         }
         .onChange(of: sceneID) { _, value in
-            controller.load(sceneID: value, cameraPreset: cameraPreset)
+            synchronizePresentation(sceneID: value, cameraPreset: cameraPreset)
         }
         .onChange(of: cameraPreset) { _, value in controller.applyCameraPreset(value) }
         .onChange(of: erasureZones) { _, value in controller.setErasureZones(value) }
@@ -50,6 +47,16 @@ struct RealityStageView: View {
             controller.setDescentPresentation(descentState, reducedMotion: value)
             controller.setRewardPresentation(rewardState, reducedMotion: value)
         }
+    }
+
+    private func synchronizePresentation(
+        sceneID: FloorSceneID,
+        cameraPreset: RealityCameraPreset
+    ) {
+        controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
+        controller.setErasureZones(erasureZones)
+        controller.setDescentPresentation(descentState, reducedMotion: reducedMotion)
+        controller.setRewardPresentation(rewardState, reducedMotion: reducedMotion)
     }
 
     private func statusOverlay(icon: String?, title: String, detail: String?) -> some View {

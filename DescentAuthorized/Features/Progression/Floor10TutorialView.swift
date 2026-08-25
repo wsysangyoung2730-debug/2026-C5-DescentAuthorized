@@ -11,8 +11,8 @@ struct Floor10TutorialView: View {
     var body: some View {
         ZStack {
             RealityStageView(
-                sceneID: .floor10ClosedOffice,
-                cameraPreset: cameraPreset,
+                sceneID: gameSession.presentation.floorSceneID ?? .floor10ClosedOffice,
+                cameraPreset: gameSession.presentation.cameraPreset,
                 descentState: descentState,
                 reducedMotion: appSettings.reducedMotion,
                 controller: sceneController
@@ -241,14 +241,6 @@ struct Floor10TutorialView: View {
         Text(text)
             .font(.caption.monospaced().weight(.bold))
             .foregroundStyle(.purple)
-    }
-
-    private var cameraPreset: RealityCameraPreset {
-        switch gameSession.progress.currentScene {
-        case .floor10TrainingWall: .battle
-        case .floor10DescentDoor: .descentInput
-        default: .tutorial
-        }
     }
 
     private var contentWidth: CGFloat {

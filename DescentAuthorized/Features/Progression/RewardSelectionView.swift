@@ -19,8 +19,8 @@ struct RewardSelectionView: View {
     var body: some View {
         ZStack {
             RealityStageView(
-                sceneID: realitySceneID,
-                cameraPreset: .rewardSelection,
+                sceneID: gameSession.presentation.floorSceneID ?? .floor09ArchiveRedesign,
+                cameraPreset: gameSession.presentation.cameraPreset,
                 rewardState: rewardState,
                 reducedMotion: appSettings.reducedMotion,
                 controller: sceneController
@@ -169,17 +169,6 @@ struct RewardSelectionView: View {
             try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 390))
             guard !Task.isCancelled else { return }
             gameSession.send(.selectReward(selectedCandidateID))
-        }
-    }
-
-    private var realitySceneID: FloorSceneID {
-        switch floor {
-        case .floor9:
-            .floor09ArchiveRedesign
-        case .floor8:
-            .floor08AdministratorObservatory
-        case .floor10, .floor7:
-            .floor09ArchiveRedesign
         }
     }
 

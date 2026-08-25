@@ -22,7 +22,7 @@ struct BattleView: View {
             if let battle = gameSession.battleState, let realitySceneID {
                 RealityStageView(
                     sceneID: realitySceneID,
-                    cameraPreset: .battle,
+                    cameraPreset: gameSession.presentation.cameraPreset,
                     erasureZones: battle.activeErasureZones,
                     controller: realityController
                 )
@@ -539,16 +539,7 @@ struct BattleView: View {
     }
 
     private var realitySceneID: FloorSceneID? {
-        switch gameSession.progress.currentScene {
-        case .floor9RecordsBattle:
-            .floor09ArchiveRedesign
-        case .floor8ResidualBattle:
-            .floor08ResidueIsolation
-        case .floor8AdministratorBattle:
-            .floor08AdministratorObservatory
-        default:
-            nil
-        }
+        gameSession.presentation.floorSceneID
     }
 
     private var isRecordsBattle: Bool {

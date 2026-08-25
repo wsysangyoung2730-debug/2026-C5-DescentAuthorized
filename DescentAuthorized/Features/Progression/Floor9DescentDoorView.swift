@@ -12,8 +12,8 @@ struct Floor9DescentDoorView: View {
     var body: some View {
         ZStack {
             RealityStageView(
-                sceneID: .floor09ArchiveRedesign,
-                cameraPreset: .descentInput,
+                sceneID: gameSession.presentation.floorSceneID ?? .floor09ArchiveRedesign,
+                cameraPreset: gameSession.presentation.cameraPreset,
                 descentState: descentState,
                 reducedMotion: appSettings.reducedMotion,
                 controller: sceneController
