@@ -27,12 +27,17 @@ struct RealitySceneDescriptor: Sendable {
     let sceneID: FloorSceneID
     let resourceSubdirectory: String
     let cameraNames: [RealityCameraPreset: String]
+    let cameraLookAtPoints: [RealityCameraPreset: SIMD3<Float>]
     let entityNames: [RealityEntityRole: String]
 
     var resourceName: String { sceneID.rawValue }
 
     func cameraName(for preset: RealityCameraPreset) -> String? {
         cameraNames[preset] ?? cameraNames[.main] ?? cameraNames[.battle]
+    }
+
+    func cameraLookAtPoint(for preset: RealityCameraPreset) -> SIMD3<Float>? {
+        cameraLookAtPoints[preset] ?? cameraLookAtPoints[.main] ?? cameraLookAtPoints[.battle]
     }
 
     static func descriptor(for sceneID: FloorSceneID) -> RealitySceneDescriptor {
@@ -50,6 +55,13 @@ struct RealitySceneDescriptor: Sendable {
                 .rewardSelection: "CAM_F10_RewardSelection",
                 .descentInput: "CAM_F10_DescentDoor"
             ],
+            cameraLookAtPoints: [
+                .main: [0, 9.2, 2.05],
+                .tutorial: [0, 9.2, 2.05],
+                .battle: [0, 9.2, 2.05],
+                .rewardSelection: [-8, 11.7, 1.05],
+                .descentInput: [8.15, 15.9, 2.15]
+            ],
             entityNames: [
                 .magicInputBoard: "F10_MagicInputBoard",
                 .descentDoor: "F10_DescentDoor",
@@ -66,6 +78,12 @@ struct RealitySceneDescriptor: Sendable {
                 .battle: "F09_iPad_MainCamera",
                 .rewardSelection: "CAM_ANCHOR_F09_RewardSelection",
                 .descentInput: "CAM_F09_DescentDoor"
+            ],
+            cameraLookAtPoints: [
+                .main: [0, 10.4, 2.15],
+                .battle: [0, 10.4, 2.15],
+                .rewardSelection: [-8, 11.7, 1.05],
+                .descentInput: [8.15, 15.9, 2.15]
             ],
             entityNames: [
                 .magicInputBoard: "F09_MagicInputBoard",
@@ -88,6 +106,10 @@ struct RealitySceneDescriptor: Sendable {
                 .main: "F08A_iPadCamera",
                 .battle: "F08A_iPadCamera"
             ],
+            cameraLookAtPoints: [
+                .main: [0, 4, 1.55],
+                .battle: [0, 4, 1.55]
+            ],
             entityNames: [
                 .magicInputBoard: "F08A_MagicInputBoard",
                 .enemySpawn: "SPAWN_ObservationResidue"
@@ -101,6 +123,12 @@ struct RealitySceneDescriptor: Sendable {
                 .battle: "F08_iPad_MainCamera",
                 .rewardSelection: "CAM_F08_RewardSelection",
                 .descentInput: "CAM_F08_DescentDoor"
+            ],
+            cameraLookAtPoints: [
+                .main: [0, 10.4, 2.15],
+                .battle: [0, 10.4, 2.15],
+                .rewardSelection: [-8.1, 12, 1.05],
+                .descentInput: [8.2, 15.9, 2.15]
             ],
             entityNames: [
                 .magicInputBoard: "F08B_MagicInputBoard",

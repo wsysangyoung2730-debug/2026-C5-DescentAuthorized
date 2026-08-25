@@ -113,23 +113,52 @@ final class RealitySceneController: ObservableObject {
         cameraTransitionTask = Task { @MainActor [weak self] in
             guard let self else { return }
             cameraFadeOpacity = 1
-            try? await Task.sleep(for: .milliseconds(180))
-            guard !Task.isCancelled else { return }
-            applyCamera(named: cameraName)
-            cameraFadeOpacity = 0
-            cameraTransitionTask = nil
+            defer {
+                cameraFadeOpacity = 0
+                cameraTransitionTask = nil
+            }
+            do {
+                try await Task.sleep(for: .milliseconds(180))
+            } catch {
+                return
+            }
+            applyCamera(named: cameraName, preset: preset)
         }
     }
 
-    private func applyCamera(named cameraName: String) {
+    private func applyCamera(named cameraName: String, preset: RealityCameraPreset) {
         guard
             let root = registry.root,
             let authoredCamera = root.findEntity(named: cameraName),
             let cameraEntity
         else { return }
-        cameraEntity.transform = Transform(matrix: authoredCamera.transformMatrix(relativeTo: nil))
+
+        let authoredTransform = Transform(matrix: authoredCamera.transformMatrix(relativeTo: nil))
+        cameraEntity.transform = authoredTransform
+        if let authoredPerspectiveCamera = perspectiveCamera(in: authoredCamera) {
+            cameraEntity.camera = authoredPerspectiveCamera.camera
+        }
+        if let lookAtPoint = registry.descriptor?.cameraLookAtPoint(for: preset) {
+            cameraEntity.look(
+                at: lookAtPoint,
+                from: authoredTransform.translation,
+                relativeTo: nil
+            )
+        }
         activeCameraName = cameraName
         scheduleBoardProjectionRefresh()
+    }
+
+    private func perspectiveCamera(in entity: Entity) -> PerspectiveCamera? {
+        if let camera = entity as? PerspectiveCamera {
+            return camera
+        }
+        for child in entity.children {
+            if let camera = perspectiveCamera(in: child) {
+                return camera
+            }
+        }
+        return nil
     }
 
     func setErasureZones(_ zones: [ErasureZone]) {
@@ -242,7 +271,7 @@ final class RealitySceneController: ObservableObject {
         registry.setEnabled(false, for: .absoluteShield)
         progressionVFXRenderer.attach(to: registry)
         if let cameraName = descriptor.cameraName(for: requestedCameraPreset) {
-            applyCamera(named: cameraName)
+            applyCamera(named: cameraName, preset: requestedCameraPreset)
         }
         setErasureZones(requestedErasureZones)
         combatVFXRenderer.attach(to: registry)
