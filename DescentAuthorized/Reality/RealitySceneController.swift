@@ -122,28 +122,25 @@ final class RealitySceneController: ObservableObject {
             } catch {
                 return
             }
-            applyCamera(named: cameraName, preset: preset)
+            applyCamera(named: cameraName)
         }
     }
 
-    private func applyCamera(named cameraName: String, preset: RealityCameraPreset) {
+    private func applyCamera(named cameraName: String) {
         guard
             let root = registry.root,
-            let authoredCamera = root.findEntity(named: cameraName),
+            let authoredCameraContainer = root.findEntity(named: cameraName),
             let cameraEntity
         else { return }
 
-        let authoredTransform = Transform(matrix: authoredCamera.transformMatrix(relativeTo: nil))
-        cameraEntity.transform = authoredTransform
-        if let authoredPerspectiveCamera = perspectiveCamera(in: authoredCamera) {
+        let authoredPerspectiveCamera = perspectiveCamera(in: authoredCameraContainer)
+        let authoredCamera = authoredPerspectiveCamera ?? authoredCameraContainer
+        cameraEntity.setTransformMatrix(
+            authoredCamera.transformMatrix(relativeTo: nil),
+            relativeTo: nil
+        )
+        if let authoredPerspectiveCamera {
             cameraEntity.camera = authoredPerspectiveCamera.camera
-        }
-        if let lookAtPoint = registry.descriptor?.cameraLookAtPoint(for: preset) {
-            cameraEntity.look(
-                at: lookAtPoint,
-                from: authoredTransform.translation,
-                relativeTo: nil
-            )
         }
         activeCameraName = cameraName
         scheduleBoardProjectionRefresh()
@@ -271,7 +268,7 @@ final class RealitySceneController: ObservableObject {
         registry.setEnabled(false, for: .absoluteShield)
         progressionVFXRenderer.attach(to: registry)
         if let cameraName = descriptor.cameraName(for: requestedCameraPreset) {
-            applyCamera(named: cameraName, preset: requestedCameraPreset)
+            applyCamera(named: cameraName)
         }
         setErasureZones(requestedErasureZones)
         combatVFXRenderer.attach(to: registry)
