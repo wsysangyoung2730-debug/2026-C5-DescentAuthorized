@@ -288,29 +288,37 @@ struct BattleView: View {
     @ViewBuilder
     private func glyphInputPanel(_ presentation: BattleUIPresentation) -> some View {
         if let spell = presentation.selectedSpell {
-            GlyphCastingPanel(
-                spell: spell,
-                inputPreference: appSettings.inputPreference,
-                availableMana: presentation.resources.mana,
-                availableStrokes: presentation.resources.strokes,
-                erasureZones: presentation.activeErasureZones,
-                showsResourceHeader: false,
-                surfaceOpacity: 0.76,
-                drawingSurfaceFrameAssetName: "Floor9BrassFrame",
-                onResourcePreviewChanged: { mana, strokes in
-                    previewMana = mana
-                    previewStrokes = strokes
-                },
-                onCast: { submission in
-                    gameSession.send(.castSpell(
-                        spell: spell.id,
-                        strokes: submission.strokes,
-                        inputMethod: submission.inputMethod
-                    ))
-                }
-            )
-            .padding(.horizontal, 4)
-            .padding(.vertical, 8)
+            ZStack {
+                Image("Floor9BrassFrame")
+                    .resizable()
+                    .scaledToFill()
+                    .blendMode(.screen)
+                    .opacity(0.82)
+                    .allowsHitTesting(false)
+
+                GlyphCastingPanel(
+                    spell: spell,
+                    inputPreference: appSettings.inputPreference,
+                    availableMana: presentation.resources.mana,
+                    availableStrokes: presentation.resources.strokes,
+                    erasureZones: presentation.activeErasureZones,
+                    showsResourceHeader: false,
+                    surfaceOpacity: 0.76,
+                    onResourcePreviewChanged: { mana, strokes in
+                        previewMana = mana
+                        previewStrokes = strokes
+                    },
+                    onCast: { submission in
+                        gameSession.send(.castSpell(
+                            spell: spell.id,
+                            strokes: submission.strokes,
+                            inputMethod: submission.inputMethod
+                        ))
+                    }
+                )
+                .padding(.horizontal, 26)
+                .padding(.vertical, 14)
+            }
             .background(DAColor.background.opacity(0.58))
             .clipShape(RoundedRectangle(cornerRadius: 8))
         } else {
