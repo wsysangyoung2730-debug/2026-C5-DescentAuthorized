@@ -3,80 +3,53 @@ import SwiftUI
 struct Floor8ExplorationView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
-    @StateObject private var sceneController = RealitySceneController()
+    let sceneController: RealitySceneController
 
     var body: some View {
-        ZStack {
-            RealityStageView(
-                sceneID: gameSession.presentation.floorSceneID ?? .floor08ResidueIsolation,
-                cameraPreset: gameSession.presentation.cameraPreset,
-                reducedMotion: appSettings.reducedMotion,
-                controller: sceneController
-            )
+        Group {
+            if gameSession.progress.currentScene == .floor8Antechamber {
+                FloorEntrancePanel(
+                    configuration: .floor8,
+                    action: { gameSession.send(.enterProtectionRoom) }
+                )
+            } else {
+                ZStack {
+                    LinearGradient(
+                        colors: [.clear, DAColor.background.opacity(0.18), DAColor.background.opacity(0.86)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
 
-            LinearGradient(
-                colors: [.clear, DAColor.background.opacity(0.18), DAColor.background.opacity(0.86)],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
-
-            sceneContent
-                .frame(width: contentWidth)
-                .frame(maxHeight: .infinity)
-                .padding(24)
-                .background(DAColor.panel.opacity(0.91))
-                .overlay(alignment: .leading) {
-                    Rectangle().fill(stageColor.opacity(0.65)).frame(width: 1)
+                    sceneContent
+                        .frame(width: contentWidth)
+                        .frame(maxHeight: .infinity)
+                        .padding(24)
+                        .background(DAColor.panel.opacity(0.91))
+                        .overlay(alignment: .leading) {
+                            Rectangle().fill(stageColor.opacity(0.65)).frame(width: 1)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
             }
         }
+        .onAppear {
+            sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+        }
+    }
 
     @ViewBuilder
     private var sceneContent: some View {
         switch gameSession.progress.currentScene {
         case .floor8Antechamber:
-            antechamber
+            EmptyView()
         case .floor8ProtectionRoom:
             protectionRoom
         case .floor8SealedDoor:
             sealedDoor
         default:
             EmptyView()
-        }
-    }
-
-    private var antechamber: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            sceneCode("8-A / 균열 관측실 전초")
-            Text("제0균열 관측 구역")
-                .font(.system(size: 30, weight: .semibold))
-            Text("깨진 모니터마다 기억침식 수치가 다른 값으로 반복된다. 관측 본실은 금색 봉인문 뒤에 있고, 보호 절차실의 비상등만 켜져 있다.")
-                .foregroundStyle(.secondary)
-                .lineSpacing(4)
-
-            VStack(alignment: .leading, spacing: 9) {
-                Label("본실 봉인: 유지", systemImage: "lock.fill")
-                    .foregroundStyle(.yellow)
-                Label("관측 장비: 83% 손실", systemImage: "waveform.path.ecg.rectangle")
-                    .foregroundStyle(.red)
-                Label("보호 절차: 사용 가능", systemImage: "shield.fill")
-                    .foregroundStyle(.cyan)
-            }
-            .font(.subheadline.monospaced())
-
-            Spacer()
-
-            Button {
-                gameSession.send(.enterProtectionRoom)
-            } label: {
-                Label("보호 절차실 진입", systemImage: "shield.lefthalf.filled")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.cyan)
         }
     }
 

@@ -46,7 +46,9 @@ struct RealitySceneDescriptor: Sendable {
             cameraNames: [
                 .main: "F10_iPad_MainCamera",
                 .tutorial: "F10_iPad_MainCamera",
-                .battle: "F10_iPad_MainCamera"
+                .battle: "F10_iPad_MainCamera",
+                .rewardSelection: "CAM_F10_RewardSelection",
+                .descentInput: "CAM_F10_DescentDoor"
             ],
             entityNames: [
                 .magicInputBoard: "F10_MagicInputBoard",
@@ -62,8 +64,8 @@ struct RealitySceneDescriptor: Sendable {
             cameraNames: [
                 .main: "F09_iPad_MainCamera",
                 .battle: "F09_iPad_MainCamera",
-                .rewardSelection: "CAM_ANCHOR_F09_RewardSelection",
-                .descentInput: "CAM_ANCHOR_F09_DescentInput"
+                .rewardSelection: "CAM_F09_RewardSelection",
+                .descentInput: "CAM_F09_DescentDoor"
             ],
             entityNames: [
                 .magicInputBoard: "F09_MagicInputBoard",
@@ -97,8 +99,8 @@ struct RealitySceneDescriptor: Sendable {
             cameraNames: [
                 .main: "F08_iPad_MainCamera",
                 .battle: "F08_iPad_MainCamera",
-                .rewardSelection: "CAM_ANCHOR_F08B_RewardSelection",
-                .descentInput: "CAM_ANCHOR_F08B_DescentInput"
+                .rewardSelection: "CAM_F08_RewardSelection",
+                .descentInput: "CAM_F08_DescentDoor"
             ],
             entityNames: [
                 .magicInputBoard: "F08B_MagicInputBoard",
@@ -120,11 +122,21 @@ struct RealitySceneDescriptor: Sendable {
 enum DemoSceneExperience: Equatable, Sendable {
     case floor10Tutorial
     case floor9Entrance
+    case narrative(BossNarrativeSequence)
     case battle
     case reward(FloorID)
     case floor8Exploration
     case descent(FloorID)
     case completion
+}
+
+enum BossNarrativeSequence: Equatable, Sendable {
+    case floor9Encounter
+    case floor9Defeated
+    case floor8ResidualEncounter
+    case floor8ResidualDefeated
+    case floor8AdministratorEncounter
+    case floor8AdministratorDefeated
 }
 
 struct DemoScenePresentation: Equatable, Sendable {
@@ -163,12 +175,26 @@ struct DemoScenePresentation: Equatable, Sendable {
                 cameraPreset: .main,
                 experience: .floor9Entrance
             )
+        case .floor9RecordsEncounter:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor09ArchiveRedesign,
+                cameraPreset: .battle,
+                experience: .narrative(.floor9Encounter)
+            )
         case .floor9RecordsBattle:
             .init(
                 progressSceneID: sceneID,
                 floorSceneID: .floor09ArchiveRedesign,
                 cameraPreset: .battle,
                 experience: .battle
+            )
+        case .floor9RecordsDefeated:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor09ArchiveRedesign,
+                cameraPreset: .battle,
+                experience: .narrative(.floor9Defeated)
             )
         case .floor9RewardVault:
             .init(
@@ -191,12 +217,26 @@ struct DemoScenePresentation: Equatable, Sendable {
                 cameraPreset: .tutorial,
                 experience: .floor8Exploration
             )
+        case .floor8ResidualEncounter:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor08ResidueIsolation,
+                cameraPreset: .battle,
+                experience: .narrative(.floor8ResidualEncounter)
+            )
         case .floor8ResidualBattle:
             .init(
                 progressSceneID: sceneID,
                 floorSceneID: .floor08ResidueIsolation,
                 cameraPreset: .battle,
                 experience: .battle
+            )
+        case .floor8ResidualDefeated:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor08ResidueIsolation,
+                cameraPreset: .battle,
+                experience: .narrative(.floor8ResidualDefeated)
             )
         case .floor8SealedDoor:
             .init(
@@ -205,12 +245,26 @@ struct DemoScenePresentation: Equatable, Sendable {
                 cameraPreset: .descentInput,
                 experience: .floor8Exploration
             )
+        case .floor8AdministratorEncounter:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor08AdministratorObservatory,
+                cameraPreset: .battle,
+                experience: .narrative(.floor8AdministratorEncounter)
+            )
         case .floor8AdministratorBattle:
             .init(
                 progressSceneID: sceneID,
                 floorSceneID: .floor08AdministratorObservatory,
                 cameraPreset: .battle,
                 experience: .battle
+            )
+        case .floor8AdministratorDefeated:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor08AdministratorObservatory,
+                cameraPreset: .battle,
+                experience: .narrative(.floor8AdministratorDefeated)
             )
         case .floor8Reward:
             .init(

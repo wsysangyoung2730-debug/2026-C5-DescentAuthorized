@@ -122,13 +122,18 @@ struct GameProgressValidator: Sendable {
         }
 
         if [
+            SceneID.floor9RecordsDefeated,
             SceneID.floor9RewardVault,
             .floor9DescentDoor,
             .floor8Antechamber,
             .floor8ProtectionRoom,
+            .floor8ResidualEncounter,
             .floor8ResidualBattle,
+            .floor8ResidualDefeated,
             .floor8SealedDoor,
+            .floor8AdministratorEncounter,
             .floor8AdministratorBattle,
+            .floor8AdministratorDefeated,
             .floor8Reward,
             .floor8DescentDoor,
             .demoComplete
@@ -148,7 +153,9 @@ struct GameProgressValidator: Sendable {
         }
 
         if [
-            SceneID.floor8ResidualBattle,
+            SceneID.floor8ResidualEncounter,
+            .floor8ResidualBattle,
+            .floor8ResidualDefeated,
             .floor8SealedDoor,
             .floor8AdministratorBattle,
             .floor8Reward,
@@ -163,8 +170,11 @@ struct GameProgressValidator: Sendable {
         }
 
         if [
-            SceneID.floor8SealedDoor,
+            SceneID.floor8ResidualDefeated,
+            .floor8SealedDoor,
+            .floor8AdministratorEncounter,
             .floor8AdministratorBattle,
+            .floor8AdministratorDefeated,
             .floor8Reward,
             .floor8DescentDoor,
             .demoComplete
@@ -176,7 +186,12 @@ struct GameProgressValidator: Sendable {
             )
         }
 
-        if [SceneID.floor8Reward, .floor8DescentDoor, .demoComplete].contains(scene) {
+        if [
+            SceneID.floor8AdministratorDefeated,
+            .floor8Reward,
+            .floor8DescentDoor,
+            .demoComplete
+        ].contains(scene) {
             try require(
                 progress.defeatedEnemies.contains(.observationAdministrator),
                 "관측 관리자 처치"
@@ -222,15 +237,21 @@ struct GameProgressValidator: Sendable {
              .floor10DescentDoor:
             .floor10
         case .floor9Entrance,
+             .floor9RecordsEncounter,
              .floor9RecordsBattle,
+             .floor9RecordsDefeated,
              .floor9RewardVault,
              .floor9DescentDoor:
             .floor9
         case .floor8Antechamber,
              .floor8ProtectionRoom,
+             .floor8ResidualEncounter,
              .floor8ResidualBattle,
+             .floor8ResidualDefeated,
              .floor8SealedDoor,
+             .floor8AdministratorEncounter,
              .floor8AdministratorBattle,
+             .floor8AdministratorDefeated,
              .floor8Reward,
              .floor8DescentDoor:
             .floor8
@@ -249,19 +270,19 @@ struct GameProgressValidator: Sendable {
             [.floor10Start]
         case .floor9Entrance:
             [.floor10Complete]
-        case .floor9RecordsBattle:
+        case .floor9RecordsEncounter, .floor9RecordsBattle:
             [.recordsBattle]
-        case .floor9RewardVault, .floor9DescentDoor:
+        case .floor9RecordsDefeated, .floor9RewardVault, .floor9DescentDoor:
             [.recordsDefeated]
         case .floor8Antechamber, .floor8ProtectionRoom:
             [.floor8Start]
-        case .floor8ResidualBattle:
+        case .floor8ResidualEncounter, .floor8ResidualBattle:
             [.residualBattle]
-        case .floor8SealedDoor:
+        case .floor8ResidualDefeated, .floor8SealedDoor:
             [.residualDefeated]
-        case .floor8AdministratorBattle:
+        case .floor8AdministratorEncounter, .floor8AdministratorBattle:
             [.observationBattle]
-        case .floor8Reward, .floor8DescentDoor:
+        case .floor8AdministratorDefeated, .floor8Reward, .floor8DescentDoor:
             [.observationDefeated]
         case .demoComplete:
             [.demoComplete]

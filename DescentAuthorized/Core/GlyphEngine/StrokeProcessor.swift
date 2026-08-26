@@ -263,10 +263,21 @@ struct StrokeCaptureSession: Sendable {
 
         activeStroke.samples.append(contentsOf: finalSamples)
         self.activeStroke = nil
-        let stroke = try processor.process(
+        let processedStroke = try processor.process(
             samples: activeStroke.samples,
             canvasSize: canvasSize,
             method: activeStroke.method
+        )
+        let firstTimestamp = activeStroke.samples.first?.timestamp
+        let lastTimestamp = activeStroke.samples.last?.timestamp
+        let duration: TimeInterval? = if let firstTimestamp, let lastTimestamp {
+            max(0, lastTimestamp - firstTimestamp)
+        } else {
+            nil
+        }
+        let stroke = DrawnStroke(
+            points: processedStroke.points,
+            duration: duration
         )
         completedStrokes.append(stroke)
         completedInputMethods.append(activeStroke.method)
