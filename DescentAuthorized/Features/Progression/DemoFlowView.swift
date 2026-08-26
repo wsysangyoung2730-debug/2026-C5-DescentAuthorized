@@ -81,10 +81,12 @@ struct DemoFlowView: View {
     }
 
     private var isNarrativePresentation: Bool {
-        if case .narrative = gameSession.presentation.experience {
+        switch gameSession.presentation.experience {
+        case .narrative, .reward:
             return true
+        default:
+            return false
         }
-        return false
     }
 
     private var topBar: some View {
