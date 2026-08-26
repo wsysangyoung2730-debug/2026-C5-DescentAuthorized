@@ -233,8 +233,10 @@ struct BattleView: View {
     private func battleContent(_ presentation: BattleUIPresentation) -> some View {
         GeometryReader { proxy in
             let bottomBarHeight: CGFloat = 242
-            let inputPanelWidth = min(620, max(420, proxy.size.width * 0.38))
-            let inputPanelHeight = min(430, max(300, proxy.size.height * 0.46))
+            let horizontalContentInset: CGFloat = 18
+            let contentWidth = max(0, proxy.size.width - (horizontalContentInset * 2))
+            let inputPanelWidth = min(480, max(360, contentWidth * 0.34))
+            let inputPanelHeight = min(360, max(280, inputPanelWidth * 0.76))
             let stageHeight = proxy.size.height - bottomBarHeight
             let inputPanelCenterY = min(
                 stageHeight * 0.55,
@@ -262,7 +264,7 @@ struct BattleView: View {
                     .frame(width: inputPanelWidth, height: inputPanelHeight)
                     .position(
                         x: inputPanelX(
-                            availableWidth: proxy.size.width,
+                            availableWidth: contentWidth,
                             panelWidth: inputPanelWidth
                         ),
                         y: inputPanelCenterY
@@ -278,7 +280,7 @@ struct BattleView: View {
                     .stroke(DAColor.gold.opacity(0.28), lineWidth: 1)
                     .allowsHitTesting(false)
             }
-            .padding(.horizontal, 18)
+            .padding(.horizontal, horizontalContentInset)
             .padding(.vertical, 10)
         }
     }
@@ -314,8 +316,8 @@ struct BattleView: View {
                         ))
                     }
                 )
-                .padding(.horizontal, 18)
-                .padding(.vertical, 16)
+                .padding(.horizontal, 26)
+                .padding(.vertical, 14)
             }
             .background(DAColor.background.opacity(0.58))
             .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -332,7 +334,7 @@ struct BattleView: View {
         availableWidth: CGFloat,
         panelWidth: CGFloat
     ) -> CGFloat {
-        let edgeInset: CGFloat = 24
+        let edgeInset: CGFloat = 16
         switch appSettings.drawingPadPosition {
         case .left:
             return (panelWidth / 2) + edgeInset
