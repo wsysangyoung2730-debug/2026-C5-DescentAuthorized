@@ -14,6 +14,7 @@ struct GlyphCastingPanel: View {
     let erasureZones: [ErasureZone]
     let showsResourceHeader: Bool
     let surfaceOpacity: Double
+    let drawingSurfaceFrameAssetName: String?
     let onResourcePreviewChanged: ((Double, Int) -> Void)?
     let onCast: (GlyphCastSubmission) -> Void
 
@@ -34,6 +35,7 @@ struct GlyphCastingPanel: View {
         erasureZones: [ErasureZone],
         showsResourceHeader: Bool = true,
         surfaceOpacity: Double = 1,
+        drawingSurfaceFrameAssetName: String? = nil,
         onResourcePreviewChanged: ((Double, Int) -> Void)? = nil,
         onCast: @escaping (GlyphCastSubmission) -> Void
     ) {
@@ -44,6 +46,7 @@ struct GlyphCastingPanel: View {
         self.erasureZones = erasureZones
         self.showsResourceHeader = showsResourceHeader
         self.surfaceOpacity = surfaceOpacity
+        self.drawingSurfaceFrameAssetName = drawingSurfaceFrameAssetName
         self.onResourcePreviewChanged = onResourcePreviewChanged
         self.onCast = onCast
     }
@@ -91,6 +94,31 @@ struct GlyphCastingPanel: View {
     }
 
     private var drawingSurface: some View {
+        Group {
+            if let frameAssetName = drawingSurfaceFrameAssetName {
+                ZStack {
+                    Image(frameAssetName)
+                        .resizable()
+                        .scaledToFill()
+                        .blendMode(.screen)
+                        .opacity(0.82)
+                        .allowsHitTesting(false)
+
+                    drawingCanvas
+                        .padding(.horizontal, 36)
+                        .padding(.vertical, 32)
+                }
+                .aspectRatio(1.5, contentMode: .fit)
+                .clipped()
+            } else {
+                drawingCanvas
+                    .aspectRatio(1.62, contentMode: .fit)
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private var drawingCanvas: some View {
         ZStack {
             Color(red: 0.025, green: 0.03, blue: 0.045)
                 .opacity(surfaceOpacity)
@@ -123,13 +151,11 @@ struct GlyphCastingPanel: View {
                     .allowsHitTesting(false)
             }
         }
-        .aspectRatio(1.62, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .overlay {
             RoundedRectangle(cornerRadius: 6)
                 .stroke(categoryColor.opacity(0.35), lineWidth: 1)
         }
-        .accessibilityElement(children: .contain)
     }
 
     private var actionBar: some View {
