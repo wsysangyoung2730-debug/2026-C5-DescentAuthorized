@@ -351,11 +351,11 @@ struct BattleView: View {
     }
 
     private func spellBar(_ presentation: BattleUIPresentation) -> some View {
-        HStack(alignment: .bottom, spacing: 10) {
+        HStack(alignment: .bottom, spacing: 28) {
             battleLogPanel(presentation)
                 .frame(width: 248, height: 176)
 
-            VStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 8) {
                 battleResourceBar(presentation)
                     .frame(height: 42)
 
