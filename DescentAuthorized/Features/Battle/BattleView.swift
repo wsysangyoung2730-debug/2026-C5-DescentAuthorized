@@ -138,14 +138,31 @@ struct BattleView: View {
 
     private func battleContent(_ presentation: BattleUIPresentation) -> some View {
         GeometryReader { proxy in
-            let commandRegionHeight = min(390, max(300, proxy.size.height * 0.42))
+            let bottomBarHeight: CGFloat = 100
+            let inputPanelWidth = min(620, max(420, proxy.size.width * 0.38))
+            let inputPanelHeight = min(430, max(300, proxy.size.height * 0.46))
+            let stageHeight = proxy.size.height - bottomBarHeight
+            let inputPanelCenterY = min(
+                stageHeight * 0.55,
+                stageHeight - (inputPanelHeight / 2) - 12
+            )
 
-            VStack(spacing: 0) {
+            ZStack(alignment: .bottom) {
                 enemyStage(presentation)
-                    .frame(maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.bottom, bottomBarHeight)
 
-                battleCommandRegion(presentation)
-                    .frame(height: commandRegionHeight)
+                glyphInputPanel(presentation)
+                    .frame(width: inputPanelWidth, height: inputPanelHeight)
+                    .position(
+                        x: (inputPanelWidth / 2) + 24,
+                        y: inputPanelCenterY
+                    )
+
+                spellBar(presentation)
+                    .frame(height: 76)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
                     .background(DAColor.background.opacity(0.96))
             }
             .overlay {
@@ -159,35 +176,35 @@ struct BattleView: View {
     }
 
     @ViewBuilder
-    private func battleCommandRegion(_ presentation: BattleUIPresentation) -> some View {
-        VStack(spacing: 8) {
-            if let spell = presentation.selectedSpell {
-                GlyphCastingPanel(
-                    spell: spell,
-                    inputPreference: appSettings.inputPreference,
-                    availableMana: presentation.resources.mana,
-                    availableStrokes: presentation.resources.strokes,
-                    erasureZones: presentation.activeErasureZones,
-                    onCast: { submission in
-                        gameSession.send(.castSpell(
-                            spell: spell.id,
-                            strokes: submission.strokes,
-                            inputMethod: submission.inputMethod
-                        ))
-                    }
-                )
-                .frame(maxWidth: 760, maxHeight: .infinity)
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
-            } else {
-                Text("시전할 수 있는 주문이 없습니다")
-                    .foregroundStyle(.secondary)
-                    .frame(maxHeight: .infinity)
+    private func glyphInputPanel(_ presentation: BattleUIPresentation) -> some View {
+        if let spell = presentation.selectedSpell {
+            GlyphCastingPanel(
+                spell: spell,
+                inputPreference: appSettings.inputPreference,
+                availableMana: presentation.resources.mana,
+                availableStrokes: presentation.resources.strokes,
+                erasureZones: presentation.activeErasureZones,
+                onCast: { submission in
+                    gameSession.send(.castSpell(
+                        spell: spell.id,
+                        strokes: submission.strokes,
+                        inputMethod: submission.inputMethod
+                    ))
+                }
+            )
+            .padding(14)
+            .background(DAColor.background.opacity(0.94))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(DAColor.magic.opacity(0.42), lineWidth: 1)
             }
-
-            spellBar(presentation)
-                .frame(height: 76)
-                .padding(.horizontal, 12)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        } else {
+            Text("시전할 수 있는 주문이 없습니다")
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(DAColor.background.opacity(0.94))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
         }
     }
 
