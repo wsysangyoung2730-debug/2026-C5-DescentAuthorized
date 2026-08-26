@@ -118,6 +118,61 @@ private extension SpellDefinition {
         case .dispel: return "해제 \(range.lowerBound)~\(range.upperBound)"
         }
     }
+
+    var battleCategoryTitle: String {
+        switch category {
+        case .attack: return "공격"
+        case .defense: return "방어"
+        case .dispel: return "해제"
+        }
+    }
+
+    var battleDetailEffectTitle: String {
+        switch category {
+        case .attack: return "피해"
+        case .defense: return "방벽"
+        case .dispel: return "해제 횟수"
+        }
+    }
+
+    var battleDifficultyTitle: String {
+        switch glyph.difficulty {
+        case .easy: return "하"
+        case .normal: return "중"
+        case .hard: return "상"
+        }
+    }
+
+    var battleRequiredPointTitle: String {
+        glyph.strokes.enumerated().map { strokeIndex, stroke in
+            let nodes = stroke.requiredNodes.indices.map { "N\($0 + 1)" }
+            let route = (["S"] + nodes + ["E"]).joined(separator: " · ")
+            return glyph.requiredStrokeCount > 1 ? "\(strokeIndex + 1)획 \(route)" : route
+        }
+        .joined(separator: " / ")
+    }
+
+    var battleToleranceTitle: String {
+        let tolerance = glyph.strokes
+            .map { max($0.nodeRadius, $0.pathRadius) }
+            .max() ?? 0
+        return "±\(Int(tolerance.rounded()))%"
+    }
+
+    var battleDetailDescription: String {
+        switch id {
+        case .afterglowErasure:
+            return "잔류 관측광을 지워 대상에게 피해를 줍니다."
+        case .riftSeverance:
+            return "균열을 절단해 대상에게 강한 피해를 줍니다."
+        case .barrierPiercing:
+            return "일반 방벽을 관통하고 제거한 뒤 대상에게 피해를 줍니다."
+        case .basicBarrier:
+            return "봉인관에게 피해를 흡수하는 일반 방벽을 부여합니다."
+        case .sealRelease:
+            return "대상에게 적용된 절대 방벽의 충전을 해제합니다."
+        }
+    }
 }
 
 private struct BattleUIPresentation {
@@ -157,6 +212,7 @@ struct BattleView: View {
     @State private var lastLoggedEventSequence: UInt64?
     @State private var previewMana: Double?
     @State private var previewStrokes: Int?
+    @State private var detailedSpell: SpellDefinition?
 
     var body: some View {
         ZStack {
@@ -192,6 +248,12 @@ struct BattleView: View {
                     .allowsHitTesting(false)
             }
 
+            if let detailedSpell {
+                spellDetailOverlay(detailedSpell)
+                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                    .zIndex(20)
+            }
+
             if showsFirstTurnBriefing {
                 battleBriefing
                     .transition(.opacity)
@@ -206,6 +268,7 @@ struct BattleView: View {
             lastLoggedEventSequence = nil
             previewMana = nil
             previewStrokes = nil
+            detailedSpell = nil
             startEncounterIfNeeded()
             appendBattleLog(
                 gameSession.latestEvents,
@@ -596,7 +659,9 @@ struct BattleView: View {
         let spell = state.spell
 
         return Button {
-            selectedSpellID = spell.id
+            if state.canInteract {
+                selectedSpellID = spell.id
+            }
         } label: {
             ZStack {
                 Image(spell.battleCardFrameAssetName)
@@ -656,11 +721,131 @@ struct BattleView: View {
             .clipped()
         }
         .buttonStyle(.plain)
-        .disabled(!state.canInteract)
+        .onLongPressGesture(
+            minimumDuration: 0.45,
+            maximumDistance: 24,
+            pressing: { isPressing in
+                guard !isPressing, detailedSpell?.id == spell.id else { return }
+                withAnimation(.easeOut(duration: 0.14)) {
+                    detailedSpell = nil
+                }
+            },
+            perform: {
+                withAnimation(.easeOut(duration: 0.16)) {
+                    detailedSpell = spell
+                }
+            }
+        )
         .accessibilityLabel(
             "\(spell.name), \(spell.battleScrollTierTitle), "
                 + "\(spell.battleEffectRangeTitle), \(spell.requiredStrokes)획"
         )
+        .accessibilityHint("길게 누르면 주문 상세 정보를 표시합니다")
+    }
+
+    private func spellDetailOverlay(_ spell: SpellDefinition) -> some View {
+        GeometryReader { proxy in
+            let panelWidth = min(760, proxy.size.width * 0.58)
+            let panelHeight = panelWidth * 0.75
+            let effectRange = spell.effect.range
+
+            ZStack {
+                Color.black.opacity(0.42)
+                    .ignoresSafeArea()
+
+                ZStack {
+                    Image("BattleSpellDetailPanel")
+                        .resizable()
+                        .scaledToFit()
+
+                    VStack(spacing: 0) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(spell.name)
+                                .font(.system(size: 28, weight: .semibold, design: .serif))
+                                .foregroundStyle(DAColor.body)
+
+                            Text("\(spell.battleCategoryTitle) 주문 · \(spell.battleScrollTierTitle) · \(spell.requiredStrokes)획")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(DAColor.secondary)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                        .frame(height: panelHeight * 0.20)
+
+                        HStack(spacing: panelWidth * 0.045) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.black.opacity(0.34))
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(DAColor.magic.opacity(0.72), lineWidth: 1.5)
+                                    }
+
+                                Image(spell.battleGlyphAssetName)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .blendMode(.screen)
+                                    .padding(24)
+                            }
+                            .frame(width: panelWidth * 0.31, height: panelHeight * 0.36)
+
+                            VStack(spacing: 0) {
+                                spellDetailRow(
+                                    spell.battleDetailEffectTitle,
+                                    "\(effectRange.lowerBound)~\(effectRange.upperBound)"
+                                )
+                                spellDetailRow("소모 마나", "\(Int(spell.recommendedMana.rounded()))%")
+                                spellDetailRow("필요 획", "\(spell.requiredStrokes)")
+                                spellDetailRow("구현 난이도", spell.battleDifficultyTitle)
+                                spellDetailRow("필수 핵심점", spell.battleRequiredPointTitle)
+                                spellDetailRow("허용 오차", spell.battleToleranceTitle)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .frame(height: panelHeight * 0.50)
+
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(spell.battleDetailDescription)
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(DAColor.body.opacity(0.9))
+
+                            Spacer(minLength: 0)
+
+                            Text("누르는 동안 상세 표시 · 손을 떼면 닫힘")
+                                .font(.caption)
+                                .foregroundStyle(DAColor.secondary.opacity(0.86))
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .padding(.top, 16)
+                    }
+                    .padding(.horizontal, panelWidth * 0.075)
+                    .padding(.vertical, panelHeight * 0.045)
+                }
+                .frame(width: panelWidth, height: panelHeight)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(spell.name) 주문 상세 정보")
+    }
+
+    private func spellDetailRow(_ title: String, _ value: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(title)
+                .foregroundStyle(DAColor.secondary)
+            Spacer(minLength: 8)
+            Text(value)
+                .foregroundStyle(DAColor.body)
+                .multilineTextAlignment(.trailing)
+                .lineLimit(2)
+                .minimumScaleFactor(0.72)
+        }
+        .font(.system(size: 15, weight: .medium).monospacedDigit())
+        .frame(maxWidth: .infinity, minHeight: 30)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(DAColor.gold.opacity(0.2))
+                .frame(height: 1)
+        }
     }
 
     private var encounterStandby: some View {
