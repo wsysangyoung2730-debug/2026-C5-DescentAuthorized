@@ -1,5 +1,55 @@
 import SwiftUI
 
+private struct BattleUICombatantState {
+    let name: String
+    let hp: Int
+    let maxHP: Int
+    let normalBarrier: Int
+    let absoluteBarrierCharges: Int
+
+    init(_ combatant: CombatantState) {
+        name = combatant.name
+        hp = combatant.hp
+        maxHP = combatant.maxHP
+        normalBarrier = combatant.normalBarrier
+        absoluteBarrierCharges = combatant.absoluteBarrierCharges
+    }
+}
+
+private struct BattleUIResourceState {
+    let mana: Double
+    let maximumMana: Double
+    let strokes: Int
+    let maximumStrokes: Int
+}
+
+private struct BattleUISpellState: Identifiable {
+    let spell: SpellDefinition
+    let isSelected: Bool
+    let isAffordable: Bool
+    let isPermitted: Bool
+    let canInteract: Bool
+
+    var id: SpellID { spell.id }
+}
+
+private struct BattleUIPresentation {
+    let phase: BattlePhase
+    let turnNumber: Int
+    let player: BattleUICombatantState
+    let enemy: BattleUICombatantState
+    let resources: BattleUIResourceState
+    let currentEnemyIntent: EnemyAction?
+    let activeErasureZones: [ErasureZone]
+    let castsThisTurn: [SpellID]
+    let spells: [BattleUISpellState]
+    let recentLogEntries: [String]
+
+    var selectedSpell: SpellDefinition? {
+        spells.first(where: \.isSelected)?.spell
+    }
+}
+
 struct BattleView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
@@ -28,7 +78,7 @@ struct BattleView: View {
             }
 
             if let battle = gameSession.battleState {
-                battleContent(battle)
+                battleContent(presentation(for: battle))
             } else {
                 encounterStandby
             }
@@ -86,22 +136,22 @@ struct BattleView: View {
         .preferredColorScheme(.dark)
     }
 
-    private func battleContent(_ battle: BattleState) -> some View {
+    private func battleContent(_ presentation: BattleUIPresentation) -> some View {
         GeometryReader { proxy in
             VStack(spacing: 10) {
-                combatHeader(battle)
+                combatHeader(presentation)
                     .frame(height: 68)
 
-                enemyStage(battle)
+                enemyStage(presentation)
                     .frame(height: max(150, proxy.size.height * 0.24))
 
-                if let spell = selectedSpell(in: battle) {
+                if let spell = presentation.selectedSpell {
                     GlyphCastingPanel(
                         spell: spell,
                         inputPreference: appSettings.inputPreference,
-                        availableMana: battle.resources.remainingMana,
-                        availableStrokes: battle.resources.remainingStrokes,
-                        erasureZones: battle.activeErasureZones,
+                        availableMana: presentation.resources.mana,
+                        availableStrokes: presentation.resources.strokes,
+                        erasureZones: presentation.activeErasureZones,
                         onCast: { submission in
                             gameSession.send(.castSpell(
                                 spell: spell.id,
@@ -118,7 +168,7 @@ struct BattleView: View {
                         .frame(maxHeight: .infinity)
                 }
 
-                spellBar(battle)
+                spellBar(presentation)
                     .frame(height: 76)
             }
             .padding(.horizontal, 18)
@@ -126,11 +176,10 @@ struct BattleView: View {
         }
     }
 
-    private func combatHeader(_ battle: BattleState) -> some View {
+    private func combatHeader(_ presentation: BattleUIPresentation) -> some View {
         HStack(spacing: 14) {
             vitalityBlock(
-                name: battle.player.name,
-                combatant: battle.player,
+                combatant: presentation.player,
                 accent: .cyan,
                 alignment: .leading
             )
@@ -138,25 +187,24 @@ struct BattleView: View {
             Spacer()
 
             BattleResourceReadout(
-                mana: battle.resources.remainingMana,
-                strokes: battle.resources.remainingStrokes
+                mana: presentation.resources.mana,
+                strokes: presentation.resources.strokes
             )
 
             Spacer()
 
             VStack(spacing: 3) {
-                Text("TURN \(battle.turnNumber)")
+                Text("TURN \(presentation.turnNumber)")
                     .font(.caption.monospacedDigit().weight(.bold))
                     .foregroundStyle(.secondary)
-                Text(phaseTitle(battle.phase))
+                Text(phaseTitle(presentation.phase))
                     .font(.subheadline.weight(.semibold))
             }
 
             Spacer()
 
             vitalityBlock(
-                name: battle.enemy.name,
-                combatant: battle.enemy,
+                combatant: presentation.enemy,
                 accent: .red,
                 alignment: .trailing
             )
@@ -165,15 +213,14 @@ struct BattleView: View {
     }
 
     private func vitalityBlock(
-        name: String,
-        combatant: CombatantState,
+        combatant: BattleUICombatantState,
         accent: Color,
         alignment: HorizontalAlignment
     ) -> some View {
         VStack(alignment: alignment, spacing: 4) {
             HStack(spacing: 8) {
                 if alignment == .trailing { barrierBadges(combatant) }
-                Text(name)
+                Text(combatant.name)
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
                 if alignment == .leading { barrierBadges(combatant) }
@@ -190,7 +237,7 @@ struct BattleView: View {
     }
 
     @ViewBuilder
-    private func barrierBadges(_ combatant: CombatantState) -> some View {
+    private func barrierBadges(_ combatant: BattleUICombatantState) -> some View {
         if combatant.normalBarrier > 0 {
             Label("\(combatant.normalBarrier)", systemImage: "shield.fill")
                 .font(.caption2.monospacedDigit().weight(.bold))
@@ -203,7 +250,7 @@ struct BattleView: View {
         }
     }
 
-    private func enemyStage(_ battle: BattleState) -> some View {
+    private func enemyStage(_ presentation: BattleUIPresentation) -> some View {
         ZStack {
             if realitySceneID == nil {
                 stageGrid
@@ -226,7 +273,7 @@ struct BattleView: View {
                     Spacer(minLength: 74)
                 }
 
-                if let intent = battle.currentEnemyIntent {
+                if let intent = presentation.currentEnemyIntent {
                     intentLabel(intent)
                 }
             }
@@ -260,12 +307,12 @@ struct BattleView: View {
         .accessibilityLabel("적 의도 \(intent.name), \(intentDetail(intent))")
     }
 
-    private func spellBar(_ battle: BattleState) -> some View {
+    private func spellBar(_ presentation: BattleUIPresentation) -> some View {
         HStack(spacing: 10) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    ForEach(availableSpells(in: battle), id: \.id) { spell in
-                        spellCard(spell, battle: battle)
+                    ForEach(presentation.spells) { spellState in
+                        spellCard(spellState)
                     }
                 }
             }
@@ -281,14 +328,12 @@ struct BattleView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.gray.opacity(0.7))
-            .disabled(battle.phase != .playerTurn)
+            .disabled(presentation.phase != .playerTurn)
         }
     }
 
-    private func spellCard(_ spell: SpellDefinition, battle: BattleState) -> some View {
-        let isSelected = selectedSpellID == spell.id
-        let isAffordable = spell.requiredStrokes <= battle.resources.remainingStrokes
-        let isPermitted = isSpellPermitted(spell, battle: battle)
+    private func spellCard(_ state: BattleUISpellState) -> some View {
+        let spell = state.spell
 
         return Button {
             selectedSpellID = spell.id
@@ -309,19 +354,19 @@ struct BattleView: View {
             }
             .padding(8)
             .frame(width: 126, height: 64, alignment: .leading)
-            .background(isSelected ? spellColor(spell.category).opacity(0.22) : DAColor.card.opacity(0.94))
+            .background(state.isSelected ? spellColor(spell.category).opacity(0.22) : DAColor.card.opacity(0.94))
             .overlay {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(
-                        isSelected ? spellColor(spell.category) : Color.white.opacity(0.1),
-                        lineWidth: isSelected ? 2 : 1
+                        state.isSelected ? spellColor(spell.category) : Color.white.opacity(0.1),
+                        lineWidth: state.isSelected ? 2 : 1
                     )
             }
             .clipShape(RoundedRectangle(cornerRadius: 6))
         }
         .buttonStyle(.plain)
-        .disabled(!isAffordable || !isPermitted || battle.phase != .playerTurn)
-        .opacity(isAffordable && isPermitted ? 1 : 0.4)
+        .disabled(!state.canInteract)
+        .opacity(state.isAffordable && state.isPermitted ? 1 : 0.4)
         .accessibilityLabel("\(spell.name), \(categoryTitle(spell.category)), \(spell.requiredStrokes)획")
     }
 
@@ -348,6 +393,74 @@ struct BattleView: View {
             endPoint: .bottom
         )
         .ignoresSafeArea()
+    }
+
+    private func presentation(for battle: BattleState) -> BattleUIPresentation {
+        let spellStates = availableSpells(in: battle).map { spell in
+            let isAffordable = spell.requiredStrokes <= battle.resources.remainingStrokes
+            let isPermitted = isSpellPermitted(spell, battle: battle)
+            return BattleUISpellState(
+                spell: spell,
+                isSelected: selectedSpellID == spell.id,
+                isAffordable: isAffordable,
+                isPermitted: isPermitted,
+                canInteract: battle.phase == .playerTurn && isAffordable && isPermitted
+            )
+        }
+
+        return BattleUIPresentation(
+            phase: battle.phase,
+            turnNumber: battle.turnNumber,
+            player: BattleUICombatantState(battle.player),
+            enemy: BattleUICombatantState(battle.enemy),
+            resources: BattleUIResourceState(
+                mana: battle.resources.remainingMana,
+                maximumMana: battle.resources.maximumMana,
+                strokes: battle.resources.remainingStrokes,
+                maximumStrokes: battle.resources.maximumStrokes
+            ),
+            currentEnemyIntent: battle.currentEnemyIntent,
+            activeErasureZones: battle.activeErasureZones,
+            castsThisTurn: battle.castsThisTurn,
+            spells: spellStates,
+            recentLogEntries: Array(
+                gameSession.latestEvents.compactMap(combatLogEntry).suffix(3)
+            )
+        )
+    }
+
+    private func combatLogEntry(for event: DemoSessionEvent) -> String? {
+        guard case let .combat(event) = event else { return nil }
+        switch event {
+        case let .turnStarted(number, intent):
+            "TURN \(number) · \(intent.name) 예고"
+        case let .spellResolved(spell, grade):
+            "\(SpellCatalog.spell(spell).name) · \(gradeTitle(grade))"
+        case let .spellRejected(spell, reason):
+            "\(SpellCatalog.spell(spell).name) · \(failureTitle(reason))"
+        case let .resourcesChanged(mana, strokes):
+            "마나 \(Int(mana.rounded())) · 남은 획 \(strokes)"
+        case let .damageApplied(target, amount, _):
+            target == .player ? "플레이어 피해 \(amount)" : "관리자 피해 \(amount)"
+        case let .normalBarrierChanged(target, amount):
+            target == .player ? "플레이어 방벽 \(amount)" : "관리자 방벽 \(amount)"
+        case let .absoluteBarrierChanged(_, charges):
+            "절대 방벽 \(charges)회"
+        case .attackNegatedByAbsoluteBarrier:
+            "절대 방벽으로 공격 무효화"
+        case .erasureZoneAdded:
+            "말소 구역 발생"
+        case let .enemyActionStarted(action):
+            "관리자 행동 · \(action.name)"
+        case .enemyActionCancelled:
+            "관리자 행동 취소"
+        case .battleStarted:
+            "전투 개시"
+        case .victory:
+            "관리자 무력화"
+        case .defeat:
+            "하강 봉인 절차 중단"
+        }
     }
 
     private var stageGrid: some View {
@@ -412,13 +525,6 @@ struct BattleView: View {
                 && isSpellPermitted($0, battle: battle)
         }) == false else { return }
         gameSession.send(.finishTurn)
-    }
-
-    private func selectedSpell(in battle: BattleState) -> SpellDefinition? {
-        guard let selectedSpellID, battle.learnedSpells.contains(selectedSpellID) else {
-            return nil
-        }
-        return SpellCatalog.spell(selectedSpellID)
     }
 
     private func availableSpells(in battle: BattleState) -> [SpellDefinition] {
