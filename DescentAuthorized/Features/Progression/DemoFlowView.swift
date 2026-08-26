@@ -182,6 +182,8 @@ struct DemoFlowView: View {
                     gameSession.send(.beginRecordsBattle)
                 case .floor9Defeated:
                     gameSession.send(.continueAfterRecordsDefeat)
+                case .floor8ResidualEncounter:
+                    gameSession.send(.beginResidualBattle)
                 }
             }
         case .battle:
@@ -324,19 +326,20 @@ private extension BossNarrativeSequence {
         switch self {
         case .floor9Encounter: "Floor9AdministratorEncounter"
         case .floor9Defeated: "Floor9AdministratorDefeated"
+        case .floor8ResidualEncounter: "Floor8ResidualEncounter"
         }
     }
 
     var recordTitle: String {
         switch self {
-        case .floor9Encounter: "조우 기록"
+        case .floor9Encounter, .floor8ResidualEncounter: "조우 기록"
         case .floor9Defeated: "처치 기록"
         }
     }
 
     var finalAccessibilityHint: String {
         switch self {
-        case .floor9Encounter: "전투 시작"
+        case .floor9Encounter, .floor8ResidualEncounter: "전투 시작"
         case .floor9Defeated: "두루마리 선택으로 이동"
         }
     }
@@ -354,6 +357,10 @@ private extension BossNarrativeSequence {
                 .init(speaker: "기록 관리자", text: "“기록 복원 불가. 말소 절차를… 종료합니다.”"),
                 .init(speaker: "기록 관리자", text: "“당신의 필체가 남아 있습니다. 최초 승인자와… 일치…”"),
                 .init(speaker: "주인공", text: "“최초 승인자… 내가 이 절차를 승인했다는 뜻인가.”")
+            ]
+        case .floor8ResidualEncounter:
+            [
+                .init(speaker: "관측 잔류체", text: "“관… 측… 초점… 불일치… 대상… 없음… 그런데… 왜… 보이지…?”")
             ]
         }
     }

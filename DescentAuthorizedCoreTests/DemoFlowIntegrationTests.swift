@@ -28,6 +28,7 @@ final class DemoFlowIntegrationTests: XCTestCase {
         _ = try session.handle(.enterProtectionRoom)
         _ = try session.handle(.learnSpell(.basicBarrier))
         _ = try session.handle(.completeProtectionTraining(grade: .perfect))
+        _ = try session.handle(.beginResidualBattle)
         try winCurrentEncounter(in: &session)
 
         _ = try session.handle(.releaseObservationDoor)

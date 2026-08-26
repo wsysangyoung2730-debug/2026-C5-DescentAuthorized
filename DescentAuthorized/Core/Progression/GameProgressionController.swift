@@ -193,8 +193,13 @@ struct GameProgressionController: Sendable {
             .trainingCompleted(spell: .basicBarrier, grade: grade),
             updateMastery(spell: .basicBarrier, grade: grade),
             .checkpointChanged(.residualBattle),
-            .sceneChanged(setScene(.floor8ResidualBattle))
+            .sceneChanged(setScene(.floor8ResidualEncounter))
         ]
+    }
+
+    mutating func beginResidualBattle() throws -> [ProgressionEvent] {
+        try requireScene(.floor8ResidualEncounter)
+        return [.sceneChanged(setScene(.floor8ResidualBattle))]
     }
 
     mutating func releaseObservationDoor() throws -> [ProgressionEvent] {
