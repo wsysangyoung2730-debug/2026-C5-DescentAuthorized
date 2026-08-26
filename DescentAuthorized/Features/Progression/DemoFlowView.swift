@@ -12,8 +12,8 @@ struct DemoFlowView: View {
     private let leftHUDButtonCenterRatio: CGFloat = 0.0615
     private let rightHUDButtonCenterRatio: CGFloat = 0.9395
     private let hudButtonCenterYRatio: CGFloat = 0.5
-    private let hudIconPlateWidth: CGFloat = 68
-    private let hudTopBarSideGap: CGFloat = 14
+    private let battleTopBarButtonWidth: CGFloat = 68
+    private let battleEdgeToHUDSpacing: CGFloat = 14
     private var topBarCenterYRatio: CGFloat { hudButtonCenterYRatio }
 
     private var topBarHeight: CGFloat {
@@ -169,7 +169,7 @@ struct DemoFlowView: View {
                 BattleTopHUDView(
                     battle: battle,
                     floor: gameSession.progress.currentFloor,
-                    interItemSpacing: hudTopBarSideGap
+                    interItemSpacing: battleEdgeToHUDSpacing
                 )
                 .padding(.horizontal, battleHorizontalPadding)
                 .frame(height: proxy.size.height)
@@ -220,14 +220,14 @@ struct DemoFlowView: View {
                 Image("SharedHUDIconPlate")
                     .resizable()
                     .scaledToFill()
-                    .frame(width: hudIconPlateWidth, height: 58)
+                    .frame(width: 68, height: 58)
                     .clipped()
 
                 Image(systemName: systemImage)
                     .font(.system(size: 22, weight: .medium))
                     .foregroundStyle(SharedHUDPalette.icon)
             }
-            .frame(width: hudIconPlateWidth, height: 58)
+            .frame(width: 68, height: 58)
         }
         .buttonStyle(.plain)
     }
