@@ -801,67 +801,50 @@ struct BattleView: View {
                         .resizable()
                         .scaledToFit()
 
-                    VStack(spacing: 0) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(spell.name)
-                                .font(.system(size: 28, weight: .semibold, design: .serif))
-                                .foregroundStyle(DAColor.body)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(spell.name)
+                            .font(.system(size: 26, weight: .semibold, design: .serif))
+                            .foregroundStyle(DAColor.body)
 
-                            Text("\(spell.battleCategoryTitle) 주문 · \(spell.battleScrollTierTitle) · \(spell.requiredStrokes)획")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(DAColor.secondary)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                        .frame(height: panelHeight * 0.20)
-
-                        HStack(spacing: panelWidth * 0.045) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.black.opacity(0.34))
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(DAColor.magic.opacity(0.72), lineWidth: 1.5)
-                                    }
-
-                                Image(spell.battleGlyphAssetName)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .blendMode(.screen)
-                                    .padding(24)
-                            }
-                            .frame(width: panelWidth * 0.31, height: panelHeight * 0.36)
-
-                            VStack(spacing: 0) {
-                                spellDetailRow(
-                                    spell.battleDetailEffectTitle,
-                                    "\(effectRange.lowerBound)~\(effectRange.upperBound)"
-                                )
-                                spellDetailRow("소모 마나", "\(Int(spell.recommendedMana.rounded()))%")
-                                spellDetailRow("필요 획", "\(spell.requiredStrokes)")
-                                spellDetailRow("구현 난이도", spell.battleDifficultyTitle)
-                                spellDetailRow("필수 핵심점", spell.battleRequiredPointTitle)
-                                spellDetailRow("허용 오차", spell.battleToleranceTitle)
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .frame(height: panelHeight * 0.50)
-
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(spell.battleDetailDescription)
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundStyle(DAColor.body.opacity(0.9))
-
-                            Spacer(minLength: 0)
-
-                            Text("누르는 동안 상세 표시 · 손을 떼면 닫힘")
-                                .font(.caption)
-                                .foregroundStyle(DAColor.secondary.opacity(0.86))
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .padding(.top, 16)
+                        Text("\(spell.battleCategoryTitle) 주문 · \(spell.battleScrollTierTitle) · \(spell.requiredStrokes)획")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(DAColor.secondary)
                     }
-                    .padding(.horizontal, panelWidth * 0.075)
-                    .padding(.vertical, panelHeight * 0.045)
+                    .frame(width: panelWidth * 0.86, height: panelHeight * 0.12, alignment: .leading)
+                    .position(x: panelWidth * 0.50, y: panelHeight * 0.135)
+
+                    Image(spell.battleGlyphAssetName)
+                        .resizable()
+                        .scaledToFit()
+                        .blendMode(.screen)
+                        .frame(width: panelWidth * 0.20, height: panelHeight * 0.25)
+                        .position(x: panelWidth * 0.228, y: panelHeight * 0.46)
+
+                    VStack(spacing: 0) {
+                        spellDetailRow(
+                            spell.battleDetailEffectTitle,
+                            "\(effectRange.lowerBound)~\(effectRange.upperBound)"
+                        )
+                        spellDetailRow("소모 마나", "\(Int(spell.recommendedMana.rounded()))%")
+                        spellDetailRow("필요 획", "\(spell.requiredStrokes)")
+                        spellDetailRow("구현 난이도", spell.battleDifficultyTitle)
+                        spellDetailRow("필수 핵심점", spell.battleRequiredPointTitle)
+                        spellDetailRow("허용 오차", spell.battleToleranceTitle)
+                    }
+                    .frame(width: panelWidth * 0.54, height: panelHeight * 0.35)
+                    .position(x: panelWidth * 0.68, y: panelHeight * 0.465)
+
+                    Text(spell.battleDetailDescription)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(DAColor.body.opacity(0.9))
+                        .frame(width: panelWidth * 0.86, height: panelHeight * 0.08, alignment: .leading)
+                        .position(x: panelWidth * 0.50, y: panelHeight * 0.77)
+
+                    Text("누르는 동안 상세 표시 · 손을 떼면 닫힘")
+                        .font(.caption)
+                        .foregroundStyle(DAColor.secondary.opacity(0.86))
+                        .frame(width: panelWidth * 0.86, alignment: .leading)
+                        .position(x: panelWidth * 0.50, y: panelHeight * 0.875)
                 }
                 .frame(width: panelWidth, height: panelHeight)
             }
@@ -883,12 +866,8 @@ struct BattleView: View {
                 .minimumScaleFactor(0.72)
         }
         .font(.system(size: 15, weight: .medium).monospacedDigit())
-        .frame(maxWidth: .infinity, minHeight: 30)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(DAColor.gold.opacity(0.2))
-                .frame(height: 1)
-        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 4)
     }
 
     private var encounterStandby: some View {
