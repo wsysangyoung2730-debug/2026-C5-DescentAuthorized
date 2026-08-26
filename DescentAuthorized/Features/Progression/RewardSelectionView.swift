@@ -40,7 +40,8 @@ struct RewardSelectionView: View {
     @State private var isResolving = false
     @State private var rewardState: RealityRewardPresentationState = .appearing
     @State private var transitionTask: Task<Void, Never>?
-    @GestureState private var inspectedCandidateID: String?
+    @State private var inspectedCandidateID: String?
+    @State private var detailPressTask: Task<Void, Never>?
 
     private var candidates: [RewardCandidate] {
         RewardCatalog.candidates(for: floor)
@@ -74,7 +75,10 @@ struct RewardSelectionView: View {
                 setRewardState(.choosing)
             }
         }
-        .onDisappear { transitionTask?.cancel() }
+        .onDisappear {
+            transitionTask?.cancel()
+            cancelDetailPress()
+        }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
             sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion)
         }
@@ -244,10 +248,19 @@ struct RewardSelectionView: View {
             }
         }
         .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.32, maximumDistance: 28)
-                .updating($inspectedCandidateID) { isPressed, state, _ in
-                    if isPressed { state = candidate.id }
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    let movement = hypot(
+                        value.location.x - value.startLocation.x,
+                        value.location.y - value.startLocation.y
+                    )
+                    guard movement <= 28 else {
+                        cancelDetailPress()
+                        return
+                    }
+                    beginDetailPress(for: candidate.id)
                 }
+                .onEnded { _ in cancelDetailPress() }
         )
         .allowsHitTesting(!isResolving)
         .accessibilityElement(children: .combine)
@@ -368,6 +381,21 @@ struct RewardSelectionView: View {
         return candidates.first { $0.id == inspectedCandidateID }
     }
 
+    private func beginDetailPress(for candidateID: String) {
+        guard detailPressTask == nil, inspectedCandidateID == nil else { return }
+        detailPressTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(450))
+            guard !Task.isCancelled else { return }
+            inspectedCandidateID = candidateID
+        }
+    }
+
+    private func cancelDetailPress() {
+        detailPressTask?.cancel()
+        detailPressTask = nil
+        inspectedCandidateID = nil
+    }
+
     private func displayedSpell(for candidate: RewardCandidate) -> SpellDefinition {
         if let id = candidate.resolvedSpell { return SpellCatalog.spell(id) }
         switch candidate.category {
@@ -475,10 +503,10 @@ private struct RewardLayoutMetrics {
     var eyebrowSize: CGFloat { 17 * scale }
     var titleSize: CGFloat { 34 * scale }
     var bodySize: CGFloat { 16 * scale }
-    var cardWidth: CGFloat { min(270 * scale, (size.width - 120) / 3.35) }
+    var cardWidth: CGFloat { min(300 * scale, (size.width - 104) / 3.3) }
     var cardHeight: CGFloat { cardWidth * 1.333 }
-    var cardSpacing: CGFloat { max(26, 62 * scale) }
-    var cardsCenterY: CGFloat { size.height * 0.55 }
+    var cardSpacing: CGFloat { max(22, 46 * scale) }
+    var cardsCenterY: CGFloat { size.height * 0.56 }
     var selectedLift: CGFloat { 18 * scale }
     var glyphSize: CGFloat { cardWidth * 0.52 }
     var cardCaptionSize: CGFloat { 15 * scale }
