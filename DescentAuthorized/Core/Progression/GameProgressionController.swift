@@ -225,6 +225,14 @@ struct GameProgressionController: Sendable {
         return [.sceneChanged(setScene(.floor8AdministratorBattle))]
     }
 
+    mutating func continueAfterAdministratorDefeat() throws -> [ProgressionEvent] {
+        try requireScene(.floor8AdministratorDefeated)
+        return [
+            .sceneChanged(setScene(.floor8Reward)),
+            .rewardCandidates(RewardCatalog.candidates(for: .floor8))
+        ]
+    }
+
     mutating func restartCurrentEncounter() throws -> [ProgressionEvent] {
         let battleScenes: [SceneID] = [
             .floor9RecordsBattle,
@@ -307,8 +315,7 @@ struct GameProgressionController: Sendable {
             return [
                 .enemyDefeated(enemy),
                 .checkpointChanged(.observationDefeated),
-                .sceneChanged(setScene(.floor8Reward)),
-                .rewardCandidates(RewardCatalog.candidates(for: .floor8))
+                .sceneChanged(setScene(.floor8AdministratorDefeated))
             ]
         }
     }

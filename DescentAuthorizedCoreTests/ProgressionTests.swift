@@ -38,6 +38,7 @@ final class ProgressionTests: XCTestCase {
             enemy: .observationAdministrator,
             remainingPlayerHP: 18
         )
+        _ = try controller.continueAfterAdministratorDefeat()
         _ = try controller.selectReward(candidateID: "floor8-forbidden")
         let completionEvents = try controller.approveDescentDoor()
 

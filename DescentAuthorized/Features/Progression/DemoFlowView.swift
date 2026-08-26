@@ -188,6 +188,8 @@ struct DemoFlowView: View {
                     gameSession.send(.continueAfterResidualDefeat)
                 case .floor8AdministratorEncounter:
                     gameSession.send(.beginAdministratorBattle)
+                case .floor8AdministratorDefeated:
+                    gameSession.send(.continueAfterAdministratorDefeat)
                 }
             }
         case .battle:
@@ -333,13 +335,14 @@ private extension BossNarrativeSequence {
         case .floor8ResidualEncounter: "Floor8ResidualEncounter"
         case .floor8ResidualDefeated: "Floor8ResidualDefeated"
         case .floor8AdministratorEncounter: "Floor8AdministratorEncounter"
+        case .floor8AdministratorDefeated: "Floor8AdministratorDefeated"
         }
     }
 
     var recordTitle: String {
         switch self {
         case .floor9Encounter, .floor8ResidualEncounter, .floor8AdministratorEncounter: "조우 기록"
-        case .floor9Defeated, .floor8ResidualDefeated: "처치 기록"
+        case .floor9Defeated, .floor8ResidualDefeated, .floor8AdministratorDefeated: "처치 기록"
         }
     }
 
@@ -348,6 +351,7 @@ private extension BossNarrativeSequence {
         case .floor9Encounter, .floor8ResidualEncounter, .floor8AdministratorEncounter: "전투 시작"
         case .floor9Defeated: "두루마리 선택으로 이동"
         case .floor8ResidualDefeated: "관측 본실 봉인문으로 이동"
+        case .floor8AdministratorDefeated: "두루마리 선택으로 이동"
         }
     }
 
@@ -378,6 +382,12 @@ private extension BossNarrativeSequence {
                 .init(speaker: "관측 관리자", text: "“관측 기준점 고정. 미등록 하강자의 진입을 확인했습니다.”"),
                 .init(speaker: "관측 관리자", text: "“대상의 현재 좌표와 관측 기록이 일치하지 않습니다. 오염 변수로 재분류합니다.”"),
                 .init(speaker: "관측 관리자", text: "“관측 차폐막을 전개합니다. 기준에서 벗어난 존재는—시야에서 제거합니다.”")
+            ]
+        case .floor8AdministratorDefeated:
+            [
+                .init(speaker: "관측 관리자", text: "“관측 기준점 붕괴… 차폐 절차를 유지할 수 없습니다.”"),
+                .init(speaker: "관측 관리자", text: "“최초 관측 기록 복원… 관측자 식별값이 당신과… 일치합니다.”"),
+                .init(speaker: "주인공", text: "“최초 관측자… 승인하기 전부터 내가 제0균열을 보고 있었다는 건가.”")
             ]
         }
     }

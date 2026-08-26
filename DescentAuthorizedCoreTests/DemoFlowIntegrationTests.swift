@@ -36,6 +36,7 @@ final class DemoFlowIntegrationTests: XCTestCase {
         _ = try session.handle(.releaseObservationDoor)
         _ = try session.handle(.beginAdministratorBattle)
         try winCurrentEncounter(in: &session)
+        _ = try session.handle(.continueAfterAdministratorDefeat)
         _ = try session.handle(.selectReward("floor8-forbidden"))
         let endingEvents = try session.handle(.approveDescentDoor)
 

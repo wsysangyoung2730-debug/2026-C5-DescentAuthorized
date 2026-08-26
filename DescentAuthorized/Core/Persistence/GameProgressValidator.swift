@@ -133,6 +133,7 @@ struct GameProgressValidator: Sendable {
             .floor8SealedDoor,
             .floor8AdministratorEncounter,
             .floor8AdministratorBattle,
+            .floor8AdministratorDefeated,
             .floor8Reward,
             .floor8DescentDoor,
             .demoComplete
@@ -173,6 +174,7 @@ struct GameProgressValidator: Sendable {
             .floor8SealedDoor,
             .floor8AdministratorEncounter,
             .floor8AdministratorBattle,
+            .floor8AdministratorDefeated,
             .floor8Reward,
             .floor8DescentDoor,
             .demoComplete
@@ -184,7 +186,12 @@ struct GameProgressValidator: Sendable {
             )
         }
 
-        if [SceneID.floor8Reward, .floor8DescentDoor, .demoComplete].contains(scene) {
+        if [
+            SceneID.floor8AdministratorDefeated,
+            .floor8Reward,
+            .floor8DescentDoor,
+            .demoComplete
+        ].contains(scene) {
             try require(
                 progress.defeatedEnemies.contains(.observationAdministrator),
                 "관측 관리자 처치"
@@ -244,6 +251,7 @@ struct GameProgressValidator: Sendable {
              .floor8SealedDoor,
              .floor8AdministratorEncounter,
              .floor8AdministratorBattle,
+             .floor8AdministratorDefeated,
              .floor8Reward,
              .floor8DescentDoor:
             .floor8
@@ -274,7 +282,7 @@ struct GameProgressValidator: Sendable {
             [.residualDefeated]
         case .floor8AdministratorEncounter, .floor8AdministratorBattle:
             [.observationBattle]
-        case .floor8Reward, .floor8DescentDoor:
+        case .floor8AdministratorDefeated, .floor8Reward, .floor8DescentDoor:
             [.observationDefeated]
         case .demoComplete:
             [.demoComplete]
