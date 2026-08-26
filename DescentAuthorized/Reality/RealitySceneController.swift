@@ -21,6 +21,7 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var projectedMagicBoard: RealityProjectedBoard?
     @Published private(set) var cameraFadeOpacity: Double = 0
     @Published private(set) var isCameraTransitioning = false
+    @Published private(set) var loadingProgress: Double = 0
 
     let registry = RealityEntityRegistry()
 
@@ -89,7 +90,9 @@ final class RealitySceneController: ObservableObject {
         requestedSceneID = sceneID
         requestedCameraPreset = cameraPreset
         loadState = .loading(sceneID)
+        loadingProgress = 0.12
         let loadGeneration = sceneLoadGeneration
+        loadingProgress = 0.2
         loadCancellable = Entity.loadAsync(contentsOf: url)
             .receive(on: DispatchQueue.main)
             .sink(
@@ -109,6 +112,7 @@ final class RealitySceneController: ObservableObject {
                         self.sceneLoadGeneration == loadGeneration,
                         self.requestedSceneID == sceneID
                     else { return }
+                    self.loadingProgress = 0.72
                     self.install(root: root, descriptor: descriptor, in: arView)
                 }
             )
@@ -297,6 +301,7 @@ final class RealitySceneController: ObservableObject {
         requestedDescentState = .inactive
         requestedRewardState = .inactive
         pendingCombatCues.removeAll()
+        loadingProgress = 0
         loadState = .idle
     }
 
@@ -307,6 +312,7 @@ final class RealitySceneController: ObservableObject {
 
         authoredCameraSnapshots = captureAuthoredCameras(in: root, descriptor: descriptor)
         removeAuthoredCameras(from: root)
+        loadingProgress = 0.82
 
         let camera = PerspectiveCamera()
         camera.name = "DA_RUNTIME_CAMERA"
@@ -316,6 +322,7 @@ final class RealitySceneController: ObservableObject {
         sceneAnchor = anchor
         cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
+        loadingProgress = 0.9
         registry.setDoorOpen(false)
         registry.setEnabled(false, for: .generalShield)
         registry.setEnabled(false, for: .absoluteShield)
@@ -345,9 +352,27 @@ final class RealitySceneController: ObservableObject {
             registry: registry,
             reducedMotion: requestedReducedMotion
         )
+        loadingProgress = 0.97
         missingEntityRoles = registry.missingRequiredRoles
-        loadState = .ready(descriptor.sceneID)
+        guard
+            let expectedCameraName = descriptor.cameraName(for: requestedCameraPreset),
+            activeCameraName == expectedCameraName
+        else {
+            fail(sceneID: descriptor.sceneID, message: "지정된 카메라를 준비하지 못했습니다.")
+            return
+        }
+        loadingProgress = 1
         scheduleBoardProjectionRefresh()
+
+        let readyGeneration = sceneLoadGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+            guard
+                let self,
+                self.sceneLoadGeneration == readyGeneration,
+                self.requestedSceneID == descriptor.sceneID
+            else { return }
+            self.loadState = .ready(descriptor.sceneID)
+        }
     }
 
     private func captureAuthoredCameras(
@@ -423,6 +448,7 @@ final class RealitySceneController: ObservableObject {
 
     private func fail(sceneID: FloorSceneID, message: String) {
         loadCancellable = nil
+        loadingProgress = 0
         loadState = .failed(sceneID, message)
     }
 }
