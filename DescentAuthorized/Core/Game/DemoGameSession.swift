@@ -7,6 +7,8 @@ enum DemoCommand: Sendable {
     case completeProtectionTraining(grade: CastingGrade)
     case approveDescentDoor
     case enterRecordsBattle
+    case beginRecordsBattle
+    case continueAfterRecordsDefeat
     case enterProtectionRoom
     case releaseObservationDoor
     case selectReward(String)
@@ -78,6 +80,12 @@ struct DemoGameSession: Sendable {
 
         case .enterRecordsBattle:
             return wrap(try progression.enterRecordsBattle())
+
+        case .beginRecordsBattle:
+            return wrap(try progression.beginRecordsBattle())
+
+        case .continueAfterRecordsDefeat:
+            return wrap(try progression.continueAfterRecordsDefeat())
 
         case .enterProtectionRoom:
             return wrap(try progression.enterProtectionRoom())

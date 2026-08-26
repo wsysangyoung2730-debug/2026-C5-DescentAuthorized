@@ -122,6 +122,7 @@ struct GameProgressValidator: Sendable {
         }
 
         if [
+            SceneID.floor9RecordsDefeated,
             SceneID.floor9RewardVault,
             .floor9DescentDoor,
             .floor8Antechamber,
@@ -222,7 +223,9 @@ struct GameProgressValidator: Sendable {
              .floor10DescentDoor:
             .floor10
         case .floor9Entrance,
+             .floor9RecordsEncounter,
              .floor9RecordsBattle,
+             .floor9RecordsDefeated,
              .floor9RewardVault,
              .floor9DescentDoor:
             .floor9
@@ -249,9 +252,9 @@ struct GameProgressValidator: Sendable {
             [.floor10Start]
         case .floor9Entrance:
             [.floor10Complete]
-        case .floor9RecordsBattle:
+        case .floor9RecordsEncounter, .floor9RecordsBattle:
             [.recordsBattle]
-        case .floor9RewardVault, .floor9DescentDoor:
+        case .floor9RecordsDefeated, .floor9RewardVault, .floor9DescentDoor:
             [.recordsDefeated]
         case .floor8Antechamber, .floor8ProtectionRoom:
             [.floor8Start]

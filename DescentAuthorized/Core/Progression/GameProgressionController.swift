@@ -147,7 +147,20 @@ struct GameProgressionController: Sendable {
         progress.tutorials.formUnion([.mana, .strokeCount, .enemyIntent, .hp])
         return [
             .checkpointChanged(.recordsBattle),
-            .sceneChanged(setScene(.floor9RecordsBattle))
+            .sceneChanged(setScene(.floor9RecordsEncounter))
+        ]
+    }
+
+    mutating func beginRecordsBattle() throws -> [ProgressionEvent] {
+        try requireScene(.floor9RecordsEncounter)
+        return [.sceneChanged(setScene(.floor9RecordsBattle))]
+    }
+
+    mutating func continueAfterRecordsDefeat() throws -> [ProgressionEvent] {
+        try requireScene(.floor9RecordsDefeated)
+        return [
+            .sceneChanged(setScene(.floor9RewardVault)),
+            .rewardCandidates(RewardCatalog.candidates(for: .floor9))
         ]
     }
 
@@ -259,8 +272,7 @@ struct GameProgressionController: Sendable {
             return [
                 .enemyDefeated(enemy),
                 .checkpointChanged(.recordsDefeated),
-                .sceneChanged(setScene(.floor9RewardVault)),
-                .rewardCandidates(RewardCatalog.candidates(for: .floor9))
+                .sceneChanged(setScene(.floor9RecordsDefeated))
             ]
 
         case .observationResidual:

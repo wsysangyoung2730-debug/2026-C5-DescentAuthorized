@@ -363,7 +363,9 @@ enum SceneID: String, Codable, Sendable {
     case floor10TrainingWall
     case floor10DescentDoor
     case floor9Entrance
+    case floor9RecordsEncounter
     case floor9RecordsBattle
+    case floor9RecordsDefeated
     case floor9RewardVault
     case floor9DescentDoor
     case floor8Antechamber

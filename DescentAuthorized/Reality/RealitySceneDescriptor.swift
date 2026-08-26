@@ -122,11 +122,17 @@ struct RealitySceneDescriptor: Sendable {
 enum DemoSceneExperience: Equatable, Sendable {
     case floor10Tutorial
     case floor9Entrance
+    case narrative(BossNarrativeSequence)
     case battle
     case reward(FloorID)
     case floor8Exploration
     case descent(FloorID)
     case completion
+}
+
+enum BossNarrativeSequence: Equatable, Sendable {
+    case floor9Encounter
+    case floor9Defeated
 }
 
 struct DemoScenePresentation: Equatable, Sendable {
@@ -165,12 +171,26 @@ struct DemoScenePresentation: Equatable, Sendable {
                 cameraPreset: .main,
                 experience: .floor9Entrance
             )
+        case .floor9RecordsEncounter:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor09ArchiveRedesign,
+                cameraPreset: .battle,
+                experience: .narrative(.floor9Encounter)
+            )
         case .floor9RecordsBattle:
             .init(
                 progressSceneID: sceneID,
                 floorSceneID: .floor09ArchiveRedesign,
                 cameraPreset: .battle,
                 experience: .battle
+            )
+        case .floor9RecordsDefeated:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor09ArchiveRedesign,
+                cameraPreset: .battle,
+                experience: .narrative(.floor9Defeated)
             )
         case .floor9RewardVault:
             .init(

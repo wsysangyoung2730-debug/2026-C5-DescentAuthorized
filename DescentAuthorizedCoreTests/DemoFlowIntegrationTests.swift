@@ -19,7 +19,9 @@ final class DemoFlowIntegrationTests: XCTestCase {
         _ = try session.handle(.approveDescentDoor)
 
         _ = try session.handle(.enterRecordsBattle)
+        _ = try session.handle(.beginRecordsBattle)
         try winCurrentEncounter(in: &session)
+        _ = try session.handle(.continueAfterRecordsDefeat)
         _ = try session.handle(.selectReward("floor9-worn-a"))
         _ = try session.handle(.approveDescentDoor)
 
