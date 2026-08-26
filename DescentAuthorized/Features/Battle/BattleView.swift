@@ -292,6 +292,7 @@ struct BattleView: View {
                 Image("Floor9BrassFrame")
                     .resizable()
                     .scaledToFill()
+                    .scaleEffect(1.04)
                     .blendMode(.screen)
                     .opacity(0.82)
                     .allowsHitTesting(false)
