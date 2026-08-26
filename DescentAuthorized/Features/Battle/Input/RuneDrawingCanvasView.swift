@@ -336,8 +336,11 @@ final class RuneDrawingCanvasView: UIView {
         }
         context.restoreGState()
 
+        let endpoints = Set(guidePaths.flatMap { path in
+            [path.first, path.last].compactMap { $0 }
+        })
         context.setFillColor(guideColor.withAlphaComponent(0.8).cgColor)
-        for node in guideNodes {
+        for node in guideNodes where !endpoints.contains(node) {
             let point = canvasPoint(for: node)
             context.fillEllipse(in: CGRect(
                 x: point.x - 4,
@@ -346,6 +349,124 @@ final class RuneDrawingCanvasView: UIView {
                 height: 8
             ))
         }
+
+        for guidePath in guidePaths where guidePath.count > 1 {
+            let points = guidePath.map(canvasPoint(for:))
+            guard let start = points.first, let end = points.last else { continue }
+            drawStartMarker(at: start, in: context)
+            drawEndMarker(at: end, in: context)
+            drawDirectionArrow(from: start, along: points, in: context)
+        }
+    }
+
+    private func drawStartMarker(at point: CGPoint, in context: CGContext) {
+        context.saveGState()
+        context.setFillColor(strokeColor.withAlphaComponent(0.32).cgColor)
+        context.fillEllipse(in: CGRect(
+            x: point.x - 7,
+            y: point.y - 7,
+            width: 14,
+            height: 14
+        ))
+        context.setStrokeColor(UIColor.white.withAlphaComponent(0.92).cgColor)
+        context.setLineWidth(2)
+        context.strokeEllipse(in: CGRect(
+            x: point.x - 6,
+            y: point.y - 6,
+            width: 12,
+            height: 12
+        ))
+        context.setFillColor(UIColor.white.withAlphaComponent(0.95).cgColor)
+        context.fillEllipse(in: CGRect(
+            x: point.x - 2.5,
+            y: point.y - 2.5,
+            width: 5,
+            height: 5
+        ))
+        context.restoreGState()
+    }
+
+    private func drawEndMarker(at point: CGPoint, in context: CGContext) {
+        let radius: CGFloat = 7
+        let diamond = CGMutablePath()
+        diamond.move(to: CGPoint(x: point.x, y: point.y - radius))
+        diamond.addLine(to: CGPoint(x: point.x + radius, y: point.y))
+        diamond.addLine(to: CGPoint(x: point.x, y: point.y + radius))
+        diamond.addLine(to: CGPoint(x: point.x - radius, y: point.y))
+        diamond.closeSubpath()
+
+        context.saveGState()
+        context.setFillColor(guideColor.withAlphaComponent(0.28).cgColor)
+        context.setStrokeColor(UIColor.white.withAlphaComponent(0.9).cgColor)
+        context.setLineWidth(2)
+        context.addPath(diamond)
+        context.drawPath(using: .fillStroke)
+        context.restoreGState()
+    }
+
+    private func drawDirectionArrow(
+        from start: CGPoint,
+        along points: [CGPoint],
+        in context: CGContext
+    ) {
+        guard let next = points.dropFirst().first(where: {
+            hypot($0.x - start.x, $0.y - start.y) > 3
+        }) else { return }
+
+        let deltaX = next.x - start.x
+        let deltaY = next.y - start.y
+        let segmentLength = hypot(deltaX, deltaY)
+        guard segmentLength > 0 else { return }
+
+        let unitX = deltaX / segmentLength
+        let unitY = deltaY / segmentLength
+        let tipDistance = min(20, segmentLength * 0.72)
+        guard tipDistance >= 5 else { return }
+        let tailDistance = min(8, tipDistance * 0.35)
+        let tail = CGPoint(
+            x: start.x + (unitX * tailDistance),
+            y: start.y + (unitY * tailDistance)
+        )
+        let tip = CGPoint(
+            x: start.x + (unitX * tipDistance),
+            y: start.y + (unitY * tipDistance)
+        )
+        let headLength = min(6, tipDistance * 0.3)
+        let headWidth = headLength * 0.67
+        let headBase = CGPoint(
+            x: tip.x - (unitX * headLength),
+            y: tip.y - (unitY * headLength)
+        )
+        let perpendicularX = -unitY
+        let perpendicularY = unitX
+
+        let arrow = CGMutablePath()
+        arrow.move(to: tail)
+        arrow.addLine(to: tip)
+        arrow.move(to: tip)
+        arrow.addLine(to: CGPoint(
+            x: headBase.x + (perpendicularX * headWidth),
+            y: headBase.y + (perpendicularY * headWidth)
+        ))
+        arrow.move(to: tip)
+        arrow.addLine(to: CGPoint(
+            x: headBase.x - (perpendicularX * headWidth),
+            y: headBase.y - (perpendicularY * headWidth)
+        ))
+
+        context.saveGState()
+        context.setStrokeColor(strokeColor.withAlphaComponent(0.95).cgColor)
+        context.setLineWidth(2)
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+        context.setShadow(
+            offset: .zero,
+            blur: 4,
+            color: strokeColor.withAlphaComponent(0.6).cgColor
+        )
+        context.addPath(arrow)
+        context.strokePath()
+        context.restoreGState()
     }
 
     private func drawStroke(
