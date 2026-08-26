@@ -66,6 +66,18 @@ struct DemoFlowView: View {
 
     private var topBar: some View {
         ZStack {
+            DAColor.background.opacity(0.96)
+
+            GeometryReader { proxy in
+                Image("SharedTopHUDRail")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .clipped()
+                    .opacity(0.9)
+                    .allowsHitTesting(false)
+            }
+
             HStack(spacing: 18) {
                 topBarButton(systemImage: "pause.fill") {
                     isShowingPauseMenu = true
@@ -95,12 +107,19 @@ struct DemoFlowView: View {
                 .help("설정")
                 .accessibilityLabel("설정")
             }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 12)
-            .padding(.top, 10)
+            .padding(.horizontal, 54)
         }
         .frame(height: topBarHeight)
         .clipped()
+        .background {
+            DAColor.background
+                .ignoresSafeArea(edges: .top)
+        }
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(SharedHUDPalette.brass.opacity(0.45))
+                .frame(height: 1)
+        }
     }
 
     private var floorOrnament: some View {
