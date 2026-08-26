@@ -376,6 +376,7 @@ struct RewardSelectionView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.trailing, 28)
         }
         .frame(maxWidth: .infinity)
     }
