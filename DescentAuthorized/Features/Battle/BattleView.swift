@@ -798,14 +798,19 @@ struct BattleView: View {
                         .resizable()
                         .scaledToFit()
 
-                    VStack(alignment: .leading, spacing: 3) {
+                    HStack(alignment: .firstTextBaseline, spacing: 16) {
                         Text(spell.name)
                             .font(.system(size: 26, weight: .semibold, design: .serif))
                             .foregroundStyle(DAColor.body)
+                            .fixedSize(horizontal: true, vertical: false)
 
                         Text("\(spell.battleCategoryTitle) 주문 · \(spell.battleScrollTierTitle) · \(spell.requiredStrokes)획")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(DAColor.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+
+                        Spacer(minLength: 0)
                     }
                     .frame(width: panelWidth * 0.86, height: panelHeight * 0.12, alignment: .leading)
                     .position(x: panelWidth * 0.50, y: panelHeight * 0.135)
@@ -840,8 +845,8 @@ struct BattleView: View {
                     Text("누르는 동안 상세 표시 · 손을 떼면 닫힘")
                         .font(.caption)
                         .foregroundStyle(DAColor.secondary.opacity(0.86))
-                        .frame(width: panelWidth * 0.86, alignment: .leading)
-                        .position(x: panelWidth * 0.50, y: panelHeight * 0.875)
+                        .frame(width: panelWidth * 0.82, alignment: .trailing)
+                        .position(x: panelWidth * 0.50, y: panelHeight * 0.85)
                 }
                 .frame(width: panelWidth, height: panelHeight)
             }
