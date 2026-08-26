@@ -324,7 +324,8 @@ private struct Floor10DescentSealView: View {
                         selectedNodes: Floor10SealLayout.targetSequence,
                         lineColor: Floor10SealPalette.ink,
                         nodeColor: Floor10SealPalette.ink,
-                        showsActiveEndpoint: false
+                        showsActiveEndpoint: false,
+                        highlightsStartNode: true
                     )
                     .padding(.horizontal, proxy.size.width * 0.08)
 
@@ -361,7 +362,8 @@ private struct Floor10DescentSealView: View {
                     dragLocation: dragLocation,
                     lineColor: phase.lineColor,
                     nodeColor: phase.nodeColor,
-                    showsActiveEndpoint: true
+                    showsActiveEndpoint: true,
+                    highlightsStartNode: false
                 )
                 .contentShape(Rectangle())
                 .gesture(inputGesture(in: padProxy.size))
@@ -507,6 +509,7 @@ struct SealPatternDiagram: View {
     let lineColor: Color
     let nodeColor: Color
     let showsActiveEndpoint: Bool
+    let highlightsStartNode: Bool
 
     var body: some View {
         Canvas { context, size in
@@ -532,7 +535,22 @@ struct SealPatternDiagram: View {
             for index in Floor10SealLayout.nodes.indices {
                 let center = Floor10SealLayout.point(index, in: size)
                 let isSelected = selectedNodes.contains(index)
+                let isStartNode = highlightsStartNode && selectedNodes.first == index
                 let radius = isSelected ? 10.0 : 8.0
+
+                if isStartNode {
+                    let markerRadius = radius + 8
+                    var marker = Path()
+                    marker.move(to: CGPoint(x: center.x, y: center.y - markerRadius))
+                    marker.addLine(to: CGPoint(x: center.x + markerRadius, y: center.y))
+                    marker.addLine(to: CGPoint(x: center.x, y: center.y + markerRadius))
+                    marker.addLine(to: CGPoint(x: center.x - markerRadius, y: center.y))
+                    marker.closeSubpath()
+                    context.fill(marker, with: .color(nodeColor.opacity(0.18)))
+                    context.stroke(marker, with: .color(nodeColor.opacity(0.95)), lineWidth: 2)
+                    continue
+                }
+
                 let outer = Path(ellipseIn: CGRect(
                     x: center.x - radius - 5,
                     y: center.y - radius - 5,

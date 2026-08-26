@@ -120,16 +120,32 @@ private struct Floor9DescentSealView: View {
                 .scaledToFit()
 
             GeometryReader { proxy in
-                VStack(spacing: 5) {
+                VStack(spacing: 7) {
                     Text("해제 기록")
                         .font(.system(size: 23, weight: .semibold, design: .serif))
                     Text("제9층 이중 봉인 검수 기록")
                         .font(.caption.weight(.medium))
 
-                    recordPattern(stage: 0, title: "제1기록 · 관리 서명")
-                    recordPattern(stage: 1, title: "제2기록 · 관측 좌표")
+                    Group {
+                        if completedStages == 0 {
+                            recordPattern(stage: 0, title: "1단계 · 관리 서명")
 
-                    Text("두 기록을 표시된 순서대로 각각 연결하십시오.")
+                            Label("2단계 · 미확인", systemImage: "circle")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(Floor10SealPalette.ink.opacity(0.48))
+                        } else {
+                            Label("1단계 · 대조 완료", systemImage: "checkmark.circle.fill")
+                                .font(.caption2.weight(.semibold))
+
+                            recordPattern(stage: 1, title: "2단계 · 관측 좌표")
+                        }
+                    }
+                    .id(completedStages)
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+
+                    Text(completedStages == 0
+                         ? "1단계 기록을 먼저 연결하십시오."
+                         : "공개된 2단계 기록을 연결하십시오.")
                         .font(.caption2)
                         .multilineTextAlignment(.center)
                 }
@@ -140,6 +156,7 @@ private struct Floor9DescentSealView: View {
             }
         }
         .aspectRatio(CGFloat(1086) / 1448, contentMode: .fit)
+        .animation(.easeInOut(duration: 0.28), value: completedStages)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("제9층 이중 봉인 해제 정답 기록")
     }
@@ -156,9 +173,10 @@ private struct Floor9DescentSealView: View {
                 selectedNodes: Floor9SealPattern.targetSequences[stage],
                 lineColor: Floor10SealPalette.ink,
                 nodeColor: Floor10SealPalette.ink,
-                showsActiveEndpoint: false
+                showsActiveEndpoint: false,
+                highlightsStartNode: true
             )
-            .frame(height: 112)
+            .frame(height: 190)
         }
     }
 
@@ -179,7 +197,8 @@ private struct Floor9DescentSealView: View {
                     dragLocation: dragLocation,
                     lineColor: phase.lineColor,
                     nodeColor: phase.statusColor,
-                    showsActiveEndpoint: true
+                    showsActiveEndpoint: true,
+                    highlightsStartNode: false
                 )
                 .contentShape(Rectangle())
                 .gesture(inputGesture(in: padProxy.size))
