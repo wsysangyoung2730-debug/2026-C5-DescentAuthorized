@@ -71,14 +71,20 @@ enum SpellCatalog {
             difficulty: .hard,
             strokes: [
                 stroke(
-                    points: [(24, 70), (17, 43), (35, 22), (59, 26), (82, 45), (76, 69)],
-                    requiredNodeIndices: [1, 2, 3, 4],
+                    points: [
+                        (50, 20), (61, 22), (70, 30), (78, 40),
+                        (80, 50), (78, 61), (70, 70), (60, 78),
+                        (50, 80), (39, 78), (30, 70), (22, 60),
+                        (20, 50), (22, 39), (30, 30), (40, 22),
+                        (50, 20)
+                    ],
+                    requiredNodeIndices: [4, 8, 12],
                     nodeRadius: 4,
                     pathRadius: 4.5
                 ),
                 stroke(
-                    points: [(37, 82), (50, 52), (62, 34), (73, 18)],
-                    requiredNodeIndices: [1, 2],
+                    points: [(18, 82), (50, 50), (82, 18)],
+                    requiredNodeIndices: [1],
                     nodeRadius: 4,
                     pathRadius: 4.5
                 )
@@ -87,7 +93,7 @@ enum SpellCatalog {
                 GlyphCrossingRequirement(
                     firstStrokeIndex: 0,
                     secondStrokeIndex: 1,
-                    center: point(62, 34),
+                    center: point(50, 50),
                     radius: 6
                 )
             ]
