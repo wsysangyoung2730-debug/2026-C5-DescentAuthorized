@@ -106,7 +106,7 @@ final class CombatEngineTests: XCTestCase {
         _ = try engine.resolveEnemyIntent()
 
         XCTAssertEqual(engine.state.player.normalBarrier, 0)
-        XCTAssertEqual(engine.state.player.hp, 78)
+        XCTAssertEqual(engine.state.player.hp, 88)
     }
 
     func testTwoStrokeSpellConsumesWholeTurn() throws {

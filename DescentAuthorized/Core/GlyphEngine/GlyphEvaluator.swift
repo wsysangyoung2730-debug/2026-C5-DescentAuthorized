@@ -165,6 +165,7 @@ struct GlyphEvaluator: Sendable {
         let path = average(pathScores)
         let structure = average(structureScores)
         let manaEfficiency = manaEfficiencyScore(used: mana.total, recommended: recommendedMana)
+        let speed = speedScore(strokes: strokes, glyph: glyph)
         let score = nodes * 0.4 + path * 0.35 + structure * 0.15 + manaEfficiency * 0.1
         var grade = grade(for: score)
         if let gradeCap, grade > gradeCap {
@@ -182,10 +183,14 @@ struct GlyphEvaluator: Sendable {
                     nodes: nodes,
                     path: path,
                     structure: structure,
-                    manaEfficiency: manaEfficiency
+                    manaEfficiency: manaEfficiency,
+                    speed: speed
                 )
             )
         }
+
+        let accuracyStrength = min(max((score - 38) / 62, 0), 1)
+        let effectStrength = accuracyStrength * (0.75 + (speed / 100 * 0.25))
 
         return CastingEvaluation(
             score: score,
@@ -199,8 +204,10 @@ struct GlyphEvaluator: Sendable {
                 nodes: nodes,
                 path: path,
                 structure: structure,
-                manaEfficiency: manaEfficiency
-            )
+                manaEfficiency: manaEfficiency,
+                speed: speed
+            ),
+            effectStrength: effectStrength
         )
     }
 
@@ -269,12 +276,27 @@ struct GlyphEvaluator: Sendable {
         return max(0, 100 - ((used / recommended) - 1) * 100)
     }
 
+    private func speedScore(strokes: [DrawnStroke], glyph: GlyphDefinition) -> Double {
+        let durations = strokes.compactMap(\.duration)
+        guard durations.count == strokes.count else { return 100 }
+
+        let totalDuration = durations.reduce(0, +)
+        guard totalDuration > 0 else { return 100 }
+
+        let referenceLength = glyph.strokes.reduce(0) {
+            $0 + GlyphGeometry.length(of: $1.referencePath)
+        }
+        let idealDuration = max(Double(strokes.count) * 0.8, referenceLength / 90)
+        guard totalDuration > idealDuration else { return 100 }
+        return max(25, idealDuration / totalDuration * 100)
+    }
+
     private func grade(for score: Double) -> CastingGrade {
         switch score {
-        case 95...: .perfect
-        case 85..<95: .precise
-        case 70..<85: .approved
-        case 50..<70: .incomplete
+        case 92...: .perfect
+        case 78..<92: .precise
+        case 58..<78: .approved
+        case 38..<58: .incomplete
         default: .rejected
         }
     }
@@ -294,7 +316,8 @@ struct GlyphEvaluator: Sendable {
             nodes: 0,
             path: 0,
             structure: 0,
-            manaEfficiency: 0
+            manaEfficiency: 0,
+            speed: 0
         )
     ) -> CastingEvaluation {
         CastingEvaluation(
@@ -305,7 +328,8 @@ struct GlyphEvaluator: Sendable {
             manaUsedInErasureZones: mana.inZones,
             passedRequiredNodeCount: passedNodes,
             requiredNodeCount: requiredNodes ?? glyph.strokes.reduce(0) { $0 + $1.requiredNodes.count },
-            breakdown: breakdown
+            breakdown: breakdown,
+            effectStrength: 0
         )
     }
 }

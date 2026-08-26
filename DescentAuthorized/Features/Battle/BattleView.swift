@@ -109,6 +109,15 @@ private extension SpellDefinition {
         case .forbidden: "금서"
         }
     }
+
+    var battleEffectRangeTitle: String {
+        let range = effect.range
+        switch category {
+        case .attack: "공격 \(range.lowerBound)~\(range.upperBound)"
+        case .defense: "방벽 \(range.lowerBound)~\(range.upperBound)"
+        case .dispel: "해제 \(range.lowerBound)~\(range.upperBound)"
+        }
+    }
 }
 
 private struct BattleUIPresentation {
@@ -616,7 +625,7 @@ struct BattleView: View {
                         .foregroundStyle(DAColor.body)
                         .lineLimit(1)
 
-                    Text("\(categoryTitle(spell.category)) · \(spell.requiredStrokes)획")
+                    Text("\(spell.battleEffectRangeTitle) · \(spell.requiredStrokes)획")
                         .font(.caption2.monospacedDigit())
                         .foregroundStyle(DAColor.body.opacity(0.82))
                         .lineLimit(1)
@@ -650,7 +659,7 @@ struct BattleView: View {
         .disabled(!state.canInteract)
         .accessibilityLabel(
             "\(spell.name), \(spell.battleScrollTierTitle), "
-                + "\(categoryTitle(spell.category)), \(spell.requiredStrokes)획"
+                + "\(spell.battleEffectRangeTitle), \(spell.requiredStrokes)획"
         )
     }
 

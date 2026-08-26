@@ -31,7 +31,7 @@ final class GlyphEvaluatorTests: XCTestCase {
         }
     }
 
-    func testFingerReceivesSmallStartPointTolerance() {
+    func testRelaxedStartPointToleranceAcceptsPencilAndFinger() {
         let spell = SpellCatalog.afterglowErasure
         var points = spell.glyph.strokes[0].referencePath
         points[0] = NormalizedPoint(x: points[0].x + 6.5, y: points[0].y)
@@ -47,7 +47,7 @@ final class GlyphEvaluatorTests: XCTestCase {
             inputMethod: .finger
         )
 
-        XCTAssertEqual(pencil.failure, .invalidStart)
+        XCTAssertNotEqual(pencil.failure, .invalidStart)
         XCTAssertNotEqual(finger.failure, .invalidStart)
     }
 
@@ -96,6 +96,40 @@ final class GlyphEvaluatorTests: XCTestCase {
 
         XCTAssertTrue(result.succeeded)
         XCTAssertNil(result.failure)
+    }
+
+    func testFasterCastProducesStrongerEffectAtSameAccuracy() {
+        let spell = SpellCatalog.barrierPiercing
+        let fast = evaluator.evaluate(
+            spell: spell,
+            strokes: referenceStrokes(for: spell, duration: 0.7),
+            inputMethod: .pencil
+        )
+        let slow = evaluator.evaluate(
+            spell: spell,
+            strokes: referenceStrokes(for: spell, duration: 4),
+            inputMethod: .pencil
+        )
+
+        XCTAssertTrue(fast.succeeded)
+        XCTAssertTrue(slow.succeeded)
+        XCTAssertGreaterThan(fast.breakdown.speed, slow.breakdown.speed)
+        XCTAssertGreaterThan(fast.effectStrength, slow.effectStrength)
+    }
+
+    func testRelaxedToleranceAcceptsImperfectGlyphWithReducedEffect() {
+        let spell = SpellCatalog.afterglowErasure
+        let imperfect = DrawnStroke(points: spell.glyph.strokes[0].referencePath.map {
+            NormalizedPoint(x: $0.x + 6, y: $0.y + 4)
+        }, duration: 1)
+        let result = evaluator.evaluate(
+            spell: spell,
+            strokes: [imperfect],
+            inputMethod: .pencil
+        )
+
+        XCTAssertTrue(result.succeeded)
+        XCTAssertLessThan(result.effectStrength, 1)
     }
 
     func testMissingRequiredNodeIsRejected() {
@@ -167,7 +201,12 @@ final class GlyphEvaluatorTests: XCTestCase {
         XCTAssertLessThanOrEqual(result.grade, .incomplete)
     }
 
-    private func referenceStrokes(for spell: SpellDefinition) -> [DrawnStroke] {
-        spell.glyph.strokes.map { DrawnStroke(points: $0.referencePath) }
+    private func referenceStrokes(
+        for spell: SpellDefinition,
+        duration: TimeInterval? = nil
+    ) -> [DrawnStroke] {
+        spell.glyph.strokes.map {
+            DrawnStroke(points: $0.referencePath, duration: duration)
+        }
     }
 }

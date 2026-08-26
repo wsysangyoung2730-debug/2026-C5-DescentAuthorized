@@ -161,6 +161,7 @@ final class StrokeProcessorTests: XCTestCase {
         )
 
         XCTAssertEqual(session.completedStrokes.count, 1)
+        XCTAssertEqual(session.completedStrokes[0].duration ?? -1, 1, accuracy: 0.001)
         XCTAssertEqual(session.remainingStrokeCount, 0)
         XCTAssertThrowsError(try session.beginStroke(
             contactID: 3,

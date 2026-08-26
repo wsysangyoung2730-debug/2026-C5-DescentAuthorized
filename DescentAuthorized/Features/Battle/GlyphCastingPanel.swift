@@ -142,7 +142,7 @@ struct GlyphCastingPanel: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(spell.name)
                     .font(.headline)
-                Text("\(categoryTitle) · \(spell.requiredStrokes)획")
+                Text("\(effectRangeTitle) · \(spell.requiredStrokes)획")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -246,6 +246,11 @@ struct GlyphCastingPanel: View {
         case .defense: "방어"
         case .dispel: "해제"
         }
+    }
+
+    private var effectRangeTitle: String {
+        let range = spell.effect.range
+        return "\(categoryTitle) \(range.lowerBound)~\(range.upperBound)"
     }
 
     private func updateDrawing(_ state: RuneDrawingState) {

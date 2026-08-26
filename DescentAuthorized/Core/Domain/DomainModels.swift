@@ -42,9 +42,11 @@ enum DrawingInputMethod: String, Codable, Sendable {
 
 struct DrawnStroke: Codable, Equatable, Sendable {
     let points: [NormalizedPoint]
+    let duration: TimeInterval?
 
-    init(points: [NormalizedPoint]) {
+    init(points: [NormalizedPoint], duration: TimeInterval? = nil) {
         self.points = points
+        self.duration = duration
     }
 }
 
@@ -120,16 +122,6 @@ enum CastingGrade: String, Codable, CaseIterable, Comparable, Sendable {
     case precise
     case perfect
 
-    var damageMultiplier: Double {
-        switch self {
-        case .rejected: 0
-        case .incomplete: 0.7
-        case .approved: 1.0
-        case .precise: 1.2
-        case .perfect: 1.4
-        }
-    }
-
     static func < (lhs: CastingGrade, rhs: CastingGrade) -> Bool {
         let order = Self.allCases
         return order.firstIndex(of: lhs)! < order.firstIndex(of: rhs)!
@@ -152,6 +144,7 @@ struct CastingScoreBreakdown: Codable, Equatable, Sendable {
     let path: Double
     let structure: Double
     let manaEfficiency: Double
+    let speed: Double
 }
 
 struct CastingEvaluation: Codable, Equatable, Sendable {
@@ -163,6 +156,7 @@ struct CastingEvaluation: Codable, Equatable, Sendable {
     let passedRequiredNodeCount: Int
     let requiredNodeCount: Int
     let breakdown: CastingScoreBreakdown
+    let effectStrength: Double
 
     var succeeded: Bool { grade != .rejected }
 }
@@ -191,9 +185,19 @@ enum ScrollTier: String, Codable, Sendable {
 }
 
 enum SpellEffect: Codable, Equatable, Sendable {
-    case damage(base: Int, piercesNormalBarrier: Bool)
-    case fixedBarrier(amount: Int, maxStack: Int)
-    case dispelAbsoluteBarrier(charges: Int)
+    case damage(minimum: Int, maximum: Int, piercesNormalBarrier: Bool)
+    case fixedBarrier(minimum: Int, maximum: Int, maxStack: Int)
+    case dispelAbsoluteBarrier(minimumCharges: Int, maximumCharges: Int)
+
+    var range: ClosedRange<Int> {
+        switch self {
+        case let .damage(minimum, maximum, _),
+             let .fixedBarrier(minimum, maximum, _):
+            minimum...maximum
+        case let .dispelAbsoluteBarrier(minimumCharges, maximumCharges):
+            minimumCharges...maximumCharges
+        }
+    }
 }
 
 struct SpellDefinition: Codable, Equatable, Sendable {
