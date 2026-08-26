@@ -216,7 +216,7 @@ struct BattleView: View {
 
     private func battleContent(_ presentation: BattleUIPresentation) -> some View {
         GeometryReader { proxy in
-            let bottomBarHeight: CGFloat = 214
+            let bottomBarHeight: CGFloat = 242
             let inputPanelWidth = min(620, max(420, proxy.size.width * 0.38))
             let inputPanelHeight = min(430, max(300, proxy.size.height * 0.46))
             let stageHeight = proxy.size.height - bottomBarHeight
@@ -238,7 +238,7 @@ struct BattleView: View {
                     )
 
                 spellBar(presentation)
-                    .frame(height: 190)
+                    .frame(height: 218)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
                     .background(DAColor.background.opacity(0.96))
@@ -319,34 +319,89 @@ struct BattleView: View {
     }
 
     private func spellBar(_ presentation: BattleUIPresentation) -> some View {
-        HStack(spacing: 10) {
+        HStack(alignment: .bottom, spacing: 10) {
             battleLogPanel(presentation)
                 .frame(width: 248, height: 176)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(presentation.spells) { spellState in
-                        spellCard(spellState)
+            VStack(spacing: 8) {
+                battleResourceBar(presentation)
+                    .frame(height: 34)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(presentation.spells) { spellState in
+                            spellCard(spellState)
+                        }
                     }
                 }
+                .frame(height: 176)
             }
 
-            VStack(alignment: .trailing, spacing: 8) {
-                Text("손패 \(presentation.spells.count) · 남은 획 \(presentation.resources.strokes)")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(DAColor.secondary)
+            turnEndControl(presentation)
+                .frame(width: 184, height: 94, alignment: .bottomTrailing)
+        }
+    }
 
-                Button {
-                    gameSession.send(.finishTurn)
-                } label: {
-                    Text("턴 종료")
-                        .font(.system(size: 18, weight: .semibold, design: .serif))
-                        .frame(width: 176, height: 60)
+    private func battleResourceBar(_ presentation: BattleUIPresentation) -> some View {
+        let maximumMana = max(presentation.resources.maximumMana, 1)
+        let manaRatio = min(max(presentation.resources.mana / maximumMana, 0), 1)
+
+        return HStack(spacing: 10) {
+            Text("마나 \(Int((manaRatio * 100).rounded()))%")
+                .font(.caption.monospacedDigit().weight(.semibold))
+                .foregroundStyle(DAColor.magicGlow)
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.08))
+
+                    Capsule()
+                        .fill(DAColor.magic)
+                        .frame(width: proxy.size.width * manaRatio)
+
+                    Capsule()
+                        .stroke(SharedHUDPalette.brass.opacity(0.32), lineWidth: 1)
                 }
-                .buttonStyle(BattleTurnEndButtonStyle())
-                .disabled(presentation.phase != .playerTurn)
-                .accessibilityHint("현재 봉인관 차례를 종료합니다")
             }
+            .frame(height: 10)
+
+            Text(resourceSummary(presentation))
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(DAColor.body.opacity(0.84))
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 12)
+        .background(DAColor.card.opacity(0.9))
+        .overlay {
+            Rectangle()
+                .stroke(SharedHUDPalette.brass.opacity(0.28), lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func resourceSummary(_ presentation: BattleUIPresentation) -> String {
+        let strokeSummary = "잔여 획 \(presentation.resources.strokes) / \(presentation.resources.maximumStrokes)"
+        guard let selectedSpell = presentation.selectedSpell else { return strokeSummary }
+        return "\(strokeSummary) · \(selectedSpell.name)"
+    }
+
+    private func turnEndControl(_ presentation: BattleUIPresentation) -> some View {
+        VStack(alignment: .trailing, spacing: 8) {
+            Text("손패 \(presentation.spells.count) · 남은 획 \(presentation.resources.strokes)")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(DAColor.secondary)
+
+            Button {
+                gameSession.send(.finishTurn)
+            } label: {
+                Text("턴 종료")
+                    .font(.system(size: 18, weight: .semibold, design: .serif))
+                    .frame(width: 176, height: 60)
+            }
+            .buttonStyle(BattleTurnEndButtonStyle())
+            .disabled(presentation.phase != .playerTurn)
+            .accessibilityHint("현재 봉인관 차례를 종료합니다")
         }
     }
 
