@@ -11,6 +11,7 @@ struct DemoFlowView: View {
 
     private let leftHUDButtonCenterRatio: CGFloat = 0.0615
     private let rightHUDButtonCenterRatio: CGFloat = 0.9395
+    private let hudButtonCenterYRatio: CGFloat = 0.5
 
     private var topBarHeight: CGFloat {
         gameSession.battleState == nil ? 96 : 112
@@ -139,7 +140,7 @@ struct DemoFlowView: View {
                 .accessibilityLabel("일시정지")
                 .position(
                     x: proxy.size.width * leftHUDButtonCenterRatio,
-                    y: proxy.size.height * 0.5
+                    y: proxy.size.height * hudButtonCenterYRatio
                 )
 
                 topBarButton(systemImage: "gearshape") {
@@ -149,7 +150,7 @@ struct DemoFlowView: View {
                 .accessibilityLabel("설정")
                 .position(
                     x: proxy.size.width * rightHUDButtonCenterRatio,
-                    y: proxy.size.height * 0.5
+                    y: proxy.size.height * hudButtonCenterYRatio
                 )
             }
         }
@@ -171,7 +172,7 @@ struct DemoFlowView: View {
                 .accessibilityLabel("일시정지")
                 .position(
                     x: proxy.size.width * leftHUDButtonCenterRatio,
-                    y: proxy.size.height * 0.5
+                    y: proxy.size.height * hudButtonCenterYRatio
                 )
 
                 topBarButton(systemImage: "gearshape") {
@@ -181,7 +182,7 @@ struct DemoFlowView: View {
                 .accessibilityLabel("설정")
                 .position(
                     x: proxy.size.width * rightHUDButtonCenterRatio,
-                    y: proxy.size.height * 0.5
+                    y: proxy.size.height * hudButtonCenterYRatio
                 )
             }
         }
