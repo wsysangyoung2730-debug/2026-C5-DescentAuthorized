@@ -23,12 +23,6 @@ struct DemoFlowView: View {
 
                 Spacer()
 
-                Text("제\(gameSession.progress.currentFloor.rawValue)층")
-                    .font(.caption.monospaced().weight(.bold))
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-
                 Button {
                     isShowingSettings = true
                 } label: {
@@ -37,9 +31,9 @@ struct DemoFlowView: View {
                 .help("설정")
                 .accessibilityLabel("설정")
             }
+            .font(.system(size: 22, weight: .semibold, design: .rounded))
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
-            .background(.black.opacity(0.55))
         }
         .sheet(isPresented: $isShowingPauseMenu) {
             PauseMenuView(onExitToTitle: onExit)
