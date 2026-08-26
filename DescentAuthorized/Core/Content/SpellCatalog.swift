@@ -72,35 +72,35 @@ enum SpellCatalog {
             strokes: [
                 stroke(
                     points: [
-                        (8, 72), (18, 63), (29, 54),
-                        (28, 43), (29, 30), (33, 18),
-                        (41, 10), (52, 6), (61, 8),
-                        (64, 14), (62, 25), (57, 37),
-                        (50, 47), (41, 56), (32, 62),
-                        (38, 69), (48, 74), (59, 78),
-                        (70, 79), (81, 77), (92, 72)
+                        (24, 72), (30, 63), (37, 54),
+                        (36, 43), (37, 30), (40, 18),
+                        (44, 10), (51, 6), (57, 8),
+                        (59, 14), (57, 25), (54, 37),
+                        (50, 47), (44, 56), (39, 62),
+                        (43, 69), (49, 74), (56, 78),
+                        (62, 79), (69, 77), (76, 72)
                     ],
-                    requiredNodeIndices: [2, 6, 9, 13, 17],
-                    nodeRadius: 4,
-                    pathRadius: 4.5
+                    requiredNodeIndices: [2, 7, 13, 18],
+                    nodeRadius: 7,
+                    pathRadius: 7
                 ),
                 stroke(
                     points: [
-                        (92, 8), (86, 20), (82, 32),
-                        (78, 45), (74, 58), (70, 70),
-                        (66, 79), (60, 87), (52, 92), (44, 94)
+                        (76, 8), (72, 20), (70, 32),
+                        (67, 45), (65, 58), (62, 70),
+                        (60, 79), (56, 87), (51, 92), (46, 94)
                     ],
-                    requiredNodeIndices: [2, 5, 7],
-                    nodeRadius: 4,
-                    pathRadius: 4.5
+                    requiredNodeIndices: [3, 6],
+                    nodeRadius: 7,
+                    pathRadius: 7
                 )
             ],
             crossings: [
                 GlyphCrossingRequirement(
                     firstStrokeIndex: 0,
                     secondStrokeIndex: 1,
-                    center: point(67, 78),
-                    radius: 6
+                    center: point(60, 78),
+                    radius: 8
                 )
             ]
         )

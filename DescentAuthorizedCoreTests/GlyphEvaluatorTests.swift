@@ -81,6 +81,23 @@ final class GlyphEvaluatorTests: XCTestCase {
         XCTAssertEqual(result.failure, .wrongStrokeCount)
     }
 
+    func testBarrierPiercingAcceptsSmallDrawingDeviation() {
+        let spell = SpellCatalog.barrierPiercing
+        let strokes = referenceStrokes(for: spell).map { stroke in
+            DrawnStroke(points: stroke.points.map {
+                NormalizedPoint(x: $0.x + 2.5, y: $0.y + 2)
+            })
+        }
+        let result = evaluator.evaluate(
+            spell: spell,
+            strokes: strokes,
+            inputMethod: .pencil
+        )
+
+        XCTAssertTrue(result.succeeded)
+        XCTAssertNil(result.failure)
+    }
+
     func testMissingRequiredNodeIsRejected() {
         let spell = SpellCatalog.riftSeverance
         let result = evaluator.evaluate(
