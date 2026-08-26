@@ -172,10 +172,10 @@ struct DemoFlowView: View {
                     enemyToNextActionSpacing: battlePlateToStatusSpacing
                 )
                 .padding(.horizontal, battleHorizontalPadding)
-                .frame(height: proxy.size.height)
-                .position(
-                    x: proxy.size.width * 0.5,
-                    y: proxy.size.height * topBarCenterYRatio
+                .frame(
+                    width: proxy.size.width,
+                    height: proxy.size.height,
+                    alignment: .center
                 )
 
                 topBarButton(systemImage: "pause.fill") {

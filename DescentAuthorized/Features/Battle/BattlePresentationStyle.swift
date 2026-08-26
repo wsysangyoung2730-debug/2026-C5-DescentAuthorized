@@ -21,12 +21,13 @@ struct BattleTopHUDView: View {
     let enemyToNextActionSpacing: CGFloat
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(alignment: .center, spacing: 14) {
             combatantBlock(
                 battle.player,
                 barrierAccent: DAColor.defense,
                 alignment: .leading
             )
+            .frame(maxHeight: .infinity, alignment: .center)
 
             Spacer(minLength: 8)
 
@@ -42,21 +43,25 @@ struct BattleTopHUDView: View {
                     .foregroundStyle(DAColor.secondary)
             }
             .frame(width: 112)
+            .frame(maxHeight: .infinity, alignment: .center)
 
             Spacer(minLength: 8)
 
-            HStack(spacing: enemyToNextActionSpacing) {
+            HStack(alignment: .center, spacing: enemyToNextActionSpacing) {
                 combatantBlock(
                     battle.enemy,
                     barrierAccent: DAColor.magic,
                     alignment: .trailing
                 )
+                .frame(maxHeight: .infinity, alignment: .center)
 
                 nextActionBlock
                     .frame(width: 142)
+                    .frame(maxHeight: .infinity, alignment: .center)
             }
+            .frame(maxHeight: .infinity, alignment: .center)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
     private func combatantBlock(
