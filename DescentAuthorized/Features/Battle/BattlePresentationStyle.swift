@@ -12,6 +12,7 @@ enum DAColor {
     static let attack = Color(red: 196 / 255, green: 69 / 255, blue: 63 / 255)
     static let defense = Color(red: 111 / 255, green: 182 / 255, blue: 217 / 255)
     static let dispel = Color(red: 201 / 255, green: 162 / 255, blue: 39 / 255)
+    static let gold = Color(red: 213 / 255, green: 174 / 255, blue: 67 / 255)
 }
 
 struct DAStatusPanel: ViewModifier {

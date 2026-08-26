@@ -138,41 +138,60 @@ struct BattleView: View {
 
     private func battleContent(_ presentation: BattleUIPresentation) -> some View {
         GeometryReader { proxy in
-            VStack(spacing: 10) {
+            let commandRegionHeight = min(390, max(300, proxy.size.height * 0.42))
+
+            VStack(spacing: 0) {
                 combatHeader(presentation)
-                    .frame(height: 68)
+                    .frame(height: 88)
+                    .background(DAColor.panel.opacity(0.94))
 
                 enemyStage(presentation)
-                    .frame(height: max(150, proxy.size.height * 0.24))
+                    .frame(maxHeight: .infinity)
 
-                if let spell = presentation.selectedSpell {
-                    GlyphCastingPanel(
-                        spell: spell,
-                        inputPreference: appSettings.inputPreference,
-                        availableMana: presentation.resources.mana,
-                        availableStrokes: presentation.resources.strokes,
-                        erasureZones: presentation.activeErasureZones,
-                        onCast: { submission in
-                            gameSession.send(.castSpell(
-                                spell: spell.id,
-                                strokes: submission.strokes,
-                                inputMethod: submission.inputMethod
-                            ))
-                        }
-                    )
-                    .frame(maxWidth: 760, maxHeight: 380)
-                    .padding(.horizontal, 20)
-                } else {
-                    Text("시전할 수 있는 주문이 없습니다")
-                        .foregroundStyle(.secondary)
-                        .frame(maxHeight: .infinity)
-                }
-
-                spellBar(presentation)
-                    .frame(height: 76)
+                battleCommandRegion(presentation)
+                    .frame(height: commandRegionHeight)
+                    .background(DAColor.background.opacity(0.96))
+            }
+            .overlay {
+                Rectangle()
+                    .stroke(DAColor.gold.opacity(0.28), lineWidth: 1)
+                    .allowsHitTesting(false)
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
+        }
+    }
+
+    @ViewBuilder
+    private func battleCommandRegion(_ presentation: BattleUIPresentation) -> some View {
+        VStack(spacing: 8) {
+            if let spell = presentation.selectedSpell {
+                GlyphCastingPanel(
+                    spell: spell,
+                    inputPreference: appSettings.inputPreference,
+                    availableMana: presentation.resources.mana,
+                    availableStrokes: presentation.resources.strokes,
+                    erasureZones: presentation.activeErasureZones,
+                    onCast: { submission in
+                        gameSession.send(.castSpell(
+                            spell: spell.id,
+                            strokes: submission.strokes,
+                            inputMethod: submission.inputMethod
+                        ))
+                    }
+                )
+                .frame(maxWidth: 760, maxHeight: .infinity)
+                .padding(.horizontal, 20)
+                .padding(.top, 10)
+            } else {
+                Text("시전할 수 있는 주문이 없습니다")
+                    .foregroundStyle(.secondary)
+                    .frame(maxHeight: .infinity)
+            }
+
+            spellBar(presentation)
+                .frame(height: 76)
+                .padding(.horizontal, 12)
         }
     }
 
@@ -180,20 +199,17 @@ struct BattleView: View {
         HStack(spacing: 14) {
             vitalityBlock(
                 combatant: presentation.player,
-                accent: .cyan,
+                healthAccent: Color(red: 0.82, green: 0.24, blue: 0.22),
+                barrierAccent: .cyan,
                 alignment: .leading
             )
 
             Spacer()
 
-            BattleResourceReadout(
-                mana: presentation.resources.mana,
-                strokes: presentation.resources.strokes
-            )
-
-            Spacer()
-
-            VStack(spacing: 3) {
+            VStack(spacing: 4) {
+                Text(floorLabel)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(DAColor.gold)
                 Text("TURN \(presentation.turnNumber)")
                     .font(.caption.monospacedDigit().weight(.bold))
                     .foregroundStyle(.secondary)
@@ -205,49 +221,99 @@ struct BattleView: View {
 
             vitalityBlock(
                 combatant: presentation.enemy,
-                accent: .red,
+                healthAccent: Color(red: 0.82, green: 0.24, blue: 0.22),
+                barrierAccent: .purple,
                 alignment: .trailing
             )
         }
+        .padding(.horizontal, 14)
         .foregroundStyle(DAColor.body)
     }
 
     private func vitalityBlock(
         combatant: BattleUICombatantState,
-        accent: Color,
+        healthAccent: Color,
+        barrierAccent: Color,
         alignment: HorizontalAlignment
     ) -> some View {
         VStack(alignment: alignment, spacing: 4) {
             HStack(spacing: 8) {
-                if alignment == .trailing { barrierBadges(combatant) }
                 Text(combatant.name)
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
-                if alignment == .leading { barrierBadges(combatant) }
+                if combatant.absoluteBarrierCharges > 0 {
+                    absoluteBarrierBadge(combatant.absoluteBarrierCharges)
+                }
             }
-            ProgressView(value: Double(combatant.hp), total: Double(combatant.maxHP))
-                .tint(accent)
-                .frame(width: 220)
-            Text("\(combatant.hp) / \(combatant.maxHP)")
+
+            layeredVitalityBar(
+                combatant: combatant,
+                healthAccent: healthAccent,
+                barrierAccent: barrierAccent
+            )
+            .frame(width: 240, height: 10)
+
+            Text(vitalityCaption(combatant))
                 .font(.caption2.monospacedDigit())
                 .foregroundStyle(.secondary)
         }
-        .daStatusPanel(accent: accent.opacity(0.65))
         .accessibilityElement(children: .combine)
     }
 
-    @ViewBuilder
-    private func barrierBadges(_ combatant: BattleUICombatantState) -> some View {
-        if combatant.normalBarrier > 0 {
-            Label("\(combatant.normalBarrier)", systemImage: "shield.fill")
-                .font(.caption2.monospacedDigit().weight(.bold))
-                .foregroundStyle(.cyan)
+    private func layeredVitalityBar(
+        combatant: BattleUICombatantState,
+        healthAccent: Color,
+        barrierAccent: Color
+    ) -> some View {
+        GeometryReader { proxy in
+            let healthFraction = min(max(Double(combatant.hp) / Double(combatant.maxHP), 0), 1)
+            let barrierFraction = min(
+                max(Double(combatant.normalBarrier) / Double(combatant.maxHP), 0),
+                healthFraction
+            )
+            let healthWidth = proxy.size.width * healthFraction
+            let barrierWidth = proxy.size.width * barrierFraction
+
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.white.opacity(0.1))
+
+                if combatant.absoluteBarrierCharges > 0 {
+                    Capsule()
+                        .fill(DAColor.gold)
+                        .frame(width: proxy.size.width)
+                } else {
+                    Capsule()
+                        .fill(healthAccent)
+                        .frame(width: healthWidth)
+
+                    if barrierWidth > 0 {
+                        Capsule()
+                            .fill(barrierAccent)
+                            .frame(width: barrierWidth)
+                            .offset(x: max(0, healthWidth - barrierWidth))
+                    }
+                }
+
+                Capsule()
+                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+            }
         }
+    }
+
+    private func vitalityCaption(_ combatant: BattleUICombatantState) -> String {
+        let hp = "\(combatant.hp) / \(combatant.maxHP)"
         if combatant.absoluteBarrierCharges > 0 {
-            Label("\(combatant.absoluteBarrierCharges)", systemImage: "shield.checkered")
-                .font(.caption2.monospacedDigit().weight(.bold))
-                .foregroundStyle(.yellow)
+            return "\(hp) · 절대 방벽 \(combatant.absoluteBarrierCharges)"
         }
+        guard combatant.normalBarrier > 0 else { return hp }
+        return "\(hp) · 방벽 \(combatant.normalBarrier)"
+    }
+
+    private func absoluteBarrierBadge(_ charges: Int) -> some View {
+        Label("\(charges)", systemImage: "shield.checkered")
+            .font(.caption2.monospacedDigit().weight(.bold))
+            .foregroundStyle(DAColor.gold)
     }
 
     private func enemyStage(_ presentation: BattleUIPresentation) -> some View {
@@ -278,13 +344,12 @@ struct BattleView: View {
                 }
             }
         }
-        .overlay(alignment: .topLeading) {
-            Text(floorLabel)
-                .font(.caption.monospaced().weight(.bold))
-                .foregroundStyle(.secondary)
-                .padding(10)
-        }
         .background(realitySceneID == nil ? Color.black.opacity(0.28) : Color.clear)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(DAColor.gold.opacity(0.22))
+                .frame(height: 1)
+        }
     }
 
     private func intentLabel(_ intent: EnemyAction) -> some View {
@@ -433,33 +498,33 @@ struct BattleView: View {
         guard case let .combat(event) = event else { return nil }
         switch event {
         case let .turnStarted(number, intent):
-            "TURN \(number) · \(intent.name) 예고"
+            return "TURN \(number) · \(intent.name) 예고"
         case let .spellResolved(spell, grade):
-            "\(SpellCatalog.spell(spell).name) · \(gradeTitle(grade))"
+            return "\(SpellCatalog.spell(spell).name) · \(gradeTitle(grade))"
         case let .spellRejected(spell, reason):
-            "\(SpellCatalog.spell(spell).name) · \(failureTitle(reason))"
+            return "\(SpellCatalog.spell(spell).name) · \(failureTitle(reason))"
         case let .resourcesChanged(mana, strokes):
-            "마나 \(Int(mana.rounded())) · 남은 획 \(strokes)"
+            return "마나 \(Int(mana.rounded())) · 남은 획 \(strokes)"
         case let .damageApplied(target, amount, _):
-            target == .player ? "플레이어 피해 \(amount)" : "관리자 피해 \(amount)"
+            return target == .player ? "플레이어 피해 \(amount)" : "관리자 피해 \(amount)"
         case let .normalBarrierChanged(target, amount):
-            target == .player ? "플레이어 방벽 \(amount)" : "관리자 방벽 \(amount)"
+            return target == .player ? "플레이어 방벽 \(amount)" : "관리자 방벽 \(amount)"
         case let .absoluteBarrierChanged(_, charges):
-            "절대 방벽 \(charges)회"
+            return "절대 방벽 \(charges)회"
         case .attackNegatedByAbsoluteBarrier:
-            "절대 방벽으로 공격 무효화"
+            return "절대 방벽으로 공격 무효화"
         case .erasureZoneAdded:
-            "말소 구역 발생"
+            return "말소 구역 발생"
         case let .enemyActionStarted(action):
-            "관리자 행동 · \(action.name)"
+            return "관리자 행동 · \(action.name)"
         case .enemyActionCancelled:
-            "관리자 행동 취소"
+            return "관리자 행동 취소"
         case .battleStarted:
-            "전투 개시"
+            return "전투 개시"
         case .victory:
-            "관리자 무력화"
+            return "관리자 무력화"
         case .defeat:
-            "하강 봉인 절차 중단"
+            return "하강 봉인 절차 중단"
         }
     }
 
