@@ -52,6 +52,27 @@ private enum BattleSpellCardVisualState {
     }
 }
 
+private struct BattleTurnEndButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        ZStack {
+            Image(backgroundAssetName(isPressed: configuration.isPressed))
+                .resizable()
+                .scaledToFill()
+
+            configuration.label
+                .foregroundStyle(isEnabled ? SharedHUDPalette.title : DAColor.secondary)
+        }
+        .contentShape(Rectangle())
+    }
+
+    private func backgroundAssetName(isPressed: Bool) -> String {
+        guard isEnabled else { return "BattleTurnEndDisabled" }
+        return isPressed ? "BattleTurnEndPressed" : "BattleTurnEndDefault"
+    }
+}
+
 private extension SpellDefinition {
     var battleCardFrameAssetName: String {
         switch category {
@@ -307,18 +328,22 @@ struct BattleView: View {
                 }
             }
 
-            Divider()
-                .frame(height: 48)
+            VStack(alignment: .trailing, spacing: 8) {
+                Text("손패 \(presentation.spells.count) · 남은 획 \(presentation.resources.strokes)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(DAColor.secondary)
 
-            Button {
-                gameSession.send(.finishTurn)
-            } label: {
-                Label("턴 종료", systemImage: "forward.end.fill")
-                    .frame(minWidth: 88)
+                Button {
+                    gameSession.send(.finishTurn)
+                } label: {
+                    Text("턴 종료")
+                        .font(.system(size: 18, weight: .semibold, design: .serif))
+                        .frame(width: 176, height: 60)
+                }
+                .buttonStyle(BattleTurnEndButtonStyle())
+                .disabled(presentation.phase != .playerTurn)
+                .accessibilityHint("현재 봉인관 차례를 종료합니다")
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.gray.opacity(0.7))
-            .disabled(presentation.phase != .playerTurn)
         }
     }
 
