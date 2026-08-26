@@ -144,6 +144,8 @@ struct BattleView: View {
     @State private var enemyPulseTask: Task<Void, Never>?
     @State private var playerPulseTask: Task<Void, Never>?
     @State private var feedbackTask: Task<Void, Never>?
+    @State private var battleLogEntries: [String] = []
+    @State private var lastLoggedEventSequence: UInt64?
 
     var body: some View {
         ZStack {
@@ -189,7 +191,13 @@ struct BattleView: View {
             }
         }
         .task(id: gameSession.progress.currentScene) {
+            battleLogEntries = []
+            lastLoggedEventSequence = nil
             startEncounterIfNeeded()
+            appendBattleLog(
+                gameSession.latestEvents,
+                sequence: gameSession.eventSequence
+            )
             selectAvailableSpell()
             if shouldShowFirstTurnBriefing,
                gameSession.battleState?.turnNumber == 1 {
@@ -202,6 +210,10 @@ struct BattleView: View {
             realityController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
         }
         .onChange(of: gameSession.eventSequence) { _, _ in
+            appendBattleLog(
+                gameSession.latestEvents,
+                sequence: gameSession.eventSequence
+            )
             present(gameSession.latestEvents)
             selectAvailableSpell()
             autoFinishPlayerTurnIfNeeded()
@@ -420,18 +432,47 @@ struct BattleView: View {
                     .fill(DAColor.gold.opacity(0.32))
                     .frame(height: 1)
 
-                if presentation.recentLogEntries.isEmpty {
-                    Text("· 전투 기록 대기")
-                        .foregroundStyle(DAColor.secondary)
-                } else {
-                    ForEach(Array(presentation.recentLogEntries.enumerated()), id: \.offset) { _, entry in
-                        Text("· \(entry)")
-                            .foregroundStyle(logColor(for: entry))
-                            .lineLimit(1)
+                ScrollViewReader { proxy in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(alignment: .leading, spacing: 6) {
+                            if presentation.recentLogEntries.isEmpty {
+                                Text("· 전투 기록 대기")
+                                    .foregroundStyle(DAColor.secondary)
+                            } else {
+                                ForEach(
+                                    Array(presentation.recentLogEntries.enumerated()),
+                                    id: \.offset
+                                ) { index, entry in
+                                    Text("· \(entry)")
+                                        .foregroundStyle(logColor(for: entry))
+                                        .lineLimit(1)
+                                        .id(index)
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .mask(alignment: .top) {
+                        VStack(spacing: 0) {
+                            LinearGradient(
+                                colors: presentation.recentLogEntries.count > 5
+                                    ? [.clear, .black]
+                                    : [.black, .black],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(height: 14)
+
+                            Color.black
+                        }
+                    }
+                    .onAppear {
+                        scrollBattleLogToLatest(presentation.recentLogEntries, proxy: proxy)
+                    }
+                    .onChange(of: presentation.recentLogEntries.count) { _, _ in
+                        scrollBattleLogToLatest(presentation.recentLogEntries, proxy: proxy)
                     }
                 }
-
-                Spacer(minLength: 0)
             }
             .font(.caption)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -576,10 +617,31 @@ struct BattleView: View {
             activeErasureZones: battle.activeErasureZones,
             castsThisTurn: battle.castsThisTurn,
             spells: spellStates,
-            recentLogEntries: Array(
-                gameSession.latestEvents.compactMap(combatLogEntry).suffix(3)
-            )
+            recentLogEntries: battleLogEntries
         )
+    }
+
+    private func appendBattleLog(_ events: [DemoSessionEvent], sequence: UInt64) {
+        guard lastLoggedEventSequence != sequence else { return }
+        lastLoggedEventSequence = sequence
+
+        let newEntries = events.compactMap(combatLogEntry)
+        guard !newEntries.isEmpty else { return }
+
+        battleLogEntries.append(contentsOf: newEntries)
+        if battleLogEntries.count > 50 {
+            battleLogEntries.removeFirst(battleLogEntries.count - 50)
+        }
+    }
+
+    private func scrollBattleLogToLatest(
+        _ entries: [String],
+        proxy: ScrollViewProxy
+    ) {
+        guard let lastIndex = entries.indices.last else { return }
+        withAnimation(.easeOut(duration: 0.2)) {
+            proxy.scrollTo(lastIndex, anchor: .bottom)
+        }
     }
 
     private func combatLogEntry(for event: DemoSessionEvent) -> String? {
