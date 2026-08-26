@@ -143,13 +143,6 @@ struct Floor9EntranceView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                Image("Floor9MagicGlyph")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 30, height: 30)
-                    .clipped()
-                    .accessibilityHidden(true)
-
                 Text("9-A / 중앙 기록실 입구")
                     .font(.caption.monospaced().weight(.bold))
                     .foregroundStyle(DAColor.magicGlow)
@@ -369,16 +362,14 @@ struct Floor9EntranceView: View {
 
     private var entryWarning: some View {
         HStack(alignment: .top, spacing: 10) {
-            Image("Floor9WarningMark")
-                .resizable()
-                .scaledToFill()
-                .frame(width: 28, height: 28)
-                .clipped()
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+                .font(.system(size: 22, weight: .semibold))
                 .accessibilityHidden(true)
 
             Text("진입하면 제9층 기록 관리자와의 전투가 시작됩니다.")
                 .font(.caption)
-                .foregroundStyle(DAColor.secondary)
+                .foregroundStyle(.red)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .combine)
