@@ -134,6 +134,7 @@ enum BossNarrativeSequence: Equatable, Sendable {
     case floor9Encounter
     case floor9Defeated
     case floor8ResidualEncounter
+    case floor8ResidualDefeated
 }
 
 struct DemoScenePresentation: Equatable, Sendable {
@@ -227,6 +228,13 @@ struct DemoScenePresentation: Equatable, Sendable {
                 floorSceneID: .floor08ResidueIsolation,
                 cameraPreset: .battle,
                 experience: .battle
+            )
+        case .floor8ResidualDefeated:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor08ResidueIsolation,
+                cameraPreset: .battle,
+                experience: .narrative(.floor8ResidualDefeated)
             )
         case .floor8SealedDoor:
             .init(

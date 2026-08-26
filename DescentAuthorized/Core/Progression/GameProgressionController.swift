@@ -202,6 +202,11 @@ struct GameProgressionController: Sendable {
         return [.sceneChanged(setScene(.floor8ResidualBattle))]
     }
 
+    mutating func continueAfterResidualDefeat() throws -> [ProgressionEvent] {
+        try requireScene(.floor8ResidualDefeated)
+        return [.sceneChanged(setScene(.floor8SealedDoor))]
+    }
+
     mutating func releaseObservationDoor() throws -> [ProgressionEvent] {
         try requireScene(.floor8SealedDoor)
         guard progress.learnedSpells.contains(.sealRelease) else {
@@ -289,7 +294,7 @@ struct GameProgressionController: Sendable {
                 .spellLearned(.sealRelease),
                 recovery,
                 .checkpointChanged(.residualDefeated),
-                .sceneChanged(setScene(.floor8SealedDoor))
+                .sceneChanged(setScene(.floor8ResidualDefeated))
             ]
 
         case .observationAdministrator:

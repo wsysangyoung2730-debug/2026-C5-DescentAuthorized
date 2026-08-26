@@ -11,6 +11,7 @@ enum DemoCommand: Sendable {
     case continueAfterRecordsDefeat
     case enterProtectionRoom
     case beginResidualBattle
+    case continueAfterResidualDefeat
     case releaseObservationDoor
     case selectReward(String)
     case readRecord(String)
@@ -93,6 +94,9 @@ struct DemoGameSession: Sendable {
 
         case .beginResidualBattle:
             return wrap(try progression.beginResidualBattle())
+
+        case .continueAfterResidualDefeat:
+            return wrap(try progression.continueAfterResidualDefeat())
 
         case .releaseObservationDoor:
             return wrap(try progression.releaseObservationDoor())

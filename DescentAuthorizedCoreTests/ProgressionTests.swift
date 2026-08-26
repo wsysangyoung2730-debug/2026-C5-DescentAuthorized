@@ -31,6 +31,7 @@ final class ProgressionTests: XCTestCase {
             enemy: .observationResidual,
             remainingPlayerHP: 25
         )
+        _ = try controller.continueAfterResidualDefeat()
         _ = try controller.releaseObservationDoor()
         _ = try controller.completeEncounter(
             enemy: .observationAdministrator,

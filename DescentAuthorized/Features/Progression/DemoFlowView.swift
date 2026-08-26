@@ -184,6 +184,8 @@ struct DemoFlowView: View {
                     gameSession.send(.continueAfterRecordsDefeat)
                 case .floor8ResidualEncounter:
                     gameSession.send(.beginResidualBattle)
+                case .floor8ResidualDefeated:
+                    gameSession.send(.continueAfterResidualDefeat)
                 }
             }
         case .battle:
@@ -327,13 +329,14 @@ private extension BossNarrativeSequence {
         case .floor9Encounter: "Floor9AdministratorEncounter"
         case .floor9Defeated: "Floor9AdministratorDefeated"
         case .floor8ResidualEncounter: "Floor8ResidualEncounter"
+        case .floor8ResidualDefeated: "Floor8ResidualDefeated"
         }
     }
 
     var recordTitle: String {
         switch self {
         case .floor9Encounter, .floor8ResidualEncounter: "조우 기록"
-        case .floor9Defeated: "처치 기록"
+        case .floor9Defeated, .floor8ResidualDefeated: "처치 기록"
         }
     }
 
@@ -341,6 +344,7 @@ private extension BossNarrativeSequence {
         switch self {
         case .floor9Encounter, .floor8ResidualEncounter: "전투 시작"
         case .floor9Defeated: "두루마리 선택으로 이동"
+        case .floor8ResidualDefeated: "관측 본실 봉인문으로 이동"
         }
     }
 
@@ -361,6 +365,10 @@ private extension BossNarrativeSequence {
         case .floor8ResidualEncounter:
             [
                 .init(speaker: "관측 잔류체", text: "“관… 측… 초점… 불일치… 대상… 없음… 그런데… 왜… 보이지…?”")
+            ]
+        case .floor8ResidualDefeated:
+            [
+                .init(speaker: "관측 잔류체", text: "“초점… 붕괴… 관측… 실패… 좌표… 전송… 불가…”")
             ]
         }
     }

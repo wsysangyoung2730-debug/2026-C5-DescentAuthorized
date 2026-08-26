@@ -46,6 +46,8 @@ final class GameProgressValidatorTests: XCTestCase {
         try assertValid(controller.progress)
         _ = try controller.completeEncounter(enemy: .observationResidual, remainingPlayerHP: 45)
         try assertValid(controller.progress)
+        _ = try controller.continueAfterResidualDefeat()
+        try assertValid(controller.progress)
         _ = try controller.releaseObservationDoor()
         try assertValid(controller.progress)
         _ = try controller.completeEncounter(enemy: .observationAdministrator, remainingPlayerHP: 35)
