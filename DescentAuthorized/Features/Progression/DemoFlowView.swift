@@ -148,8 +148,6 @@ struct DemoFlowView: View {
             .scaledToFill()
             .frame(width: 96, height: 26)
             .clipped()
-            .blendMode(.screen)
-            .compositingGroup()
             .allowsHitTesting(false)
             .accessibilityHidden(true)
     }
@@ -165,8 +163,6 @@ struct DemoFlowView: View {
                     .scaledToFill()
                     .frame(width: 68, height: 58)
                     .clipped()
-                    .blendMode(.screen)
-                    .compositingGroup()
 
                 Image(systemName: systemImage)
                     .font(.system(size: 22, weight: .medium))
