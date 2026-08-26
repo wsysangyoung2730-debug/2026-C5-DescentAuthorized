@@ -12,6 +12,7 @@ struct DemoFlowView: View {
     private let leftHUDButtonCenterRatio: CGFloat = 0.0615
     private let rightHUDButtonCenterRatio: CGFloat = 0.9395
     private let hudButtonCenterYRatio: CGFloat = 0.5
+    private var topBarCenterYRatio: CGFloat { hudButtonCenterYRatio }
 
     private var topBarHeight: CGFloat {
         gameSession.battleState == nil ? 96 : 112
@@ -131,7 +132,7 @@ struct DemoFlowView: View {
                         .scaleEffect(x: -1, y: 1)
                 }
                 .frame(height: 58)
-                .position(x: proxy.size.width * 0.5, y: proxy.size.height * 0.5)
+                .position(x: proxy.size.width * 0.5, y: proxy.size.height * topBarCenterYRatio)
 
                 topBarButton(systemImage: "pause.fill") {
                     isShowingPauseMenu = true
@@ -164,6 +165,11 @@ struct DemoFlowView: View {
                     floor: gameSession.progress.currentFloor
                 )
                 .padding(.horizontal, proxy.size.width * 0.105)
+                .frame(height: proxy.size.height)
+                .position(
+                    x: proxy.size.width * 0.5,
+                    y: proxy.size.height * topBarCenterYRatio
+                )
 
                 topBarButton(systemImage: "pause.fill") {
                     isShowingPauseMenu = true
