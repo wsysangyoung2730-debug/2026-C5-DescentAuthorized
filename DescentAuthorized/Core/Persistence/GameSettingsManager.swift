@@ -15,6 +15,10 @@ struct GameSettingsManager {
         try update(\.inputPreference, to: preference)
     }
 
+    mutating func setDrawingPadPosition(_ position: DrawingPadPosition) throws {
+        try update(\.drawingPadPosition, to: position)
+    }
+
     mutating func setSoundEffectsEnabled(_ isEnabled: Bool) throws {
         try update(\.soundEffectsEnabled, to: isEnabled)
     }

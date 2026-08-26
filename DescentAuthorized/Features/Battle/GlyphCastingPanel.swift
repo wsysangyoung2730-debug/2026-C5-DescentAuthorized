@@ -13,6 +13,7 @@ struct GlyphCastingPanel: View {
     let availableStrokes: Int
     let erasureZones: [ErasureZone]
     let showsResourceHeader: Bool
+    let surfaceOpacity: Double
     let onResourcePreviewChanged: ((Double, Int) -> Void)?
     let onCast: (GlyphCastSubmission) -> Void
 
@@ -32,6 +33,7 @@ struct GlyphCastingPanel: View {
         availableStrokes: Int,
         erasureZones: [ErasureZone],
         showsResourceHeader: Bool = true,
+        surfaceOpacity: Double = 1,
         onResourcePreviewChanged: ((Double, Int) -> Void)? = nil,
         onCast: @escaping (GlyphCastSubmission) -> Void
     ) {
@@ -41,6 +43,7 @@ struct GlyphCastingPanel: View {
         self.availableStrokes = availableStrokes
         self.erasureZones = erasureZones
         self.showsResourceHeader = showsResourceHeader
+        self.surfaceOpacity = surfaceOpacity
         self.onResourcePreviewChanged = onResourcePreviewChanged
         self.onCast = onCast
     }
@@ -90,6 +93,7 @@ struct GlyphCastingPanel: View {
     private var drawingSurface: some View {
         ZStack {
             Color(red: 0.025, green: 0.03, blue: 0.045)
+                .opacity(surfaceOpacity)
             grid
 
             RuneDrawingCanvas(
@@ -150,16 +154,6 @@ struct GlyphCastingPanel: View {
             .help("마지막 획 취소")
             .accessibilityLabel("마지막 획 취소")
             .disabled(completedStrokes.isEmpty)
-
-            Button {
-                resetDrawing()
-            } label: {
-                Image(systemName: "trash")
-            }
-            .buttonStyle(.bordered)
-            .help("마법진 지우기")
-            .accessibilityLabel("마법진 지우기")
-            .disabled(drawingState.previewStrokes.isEmpty)
 
             Button("시전") {
                 cast()

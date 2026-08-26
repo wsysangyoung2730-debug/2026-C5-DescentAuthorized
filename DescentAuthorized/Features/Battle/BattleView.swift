@@ -261,7 +261,10 @@ struct BattleView: View {
                 glyphInputPanel(presentation)
                     .frame(width: inputPanelWidth, height: inputPanelHeight)
                     .position(
-                        x: (inputPanelWidth / 2) + 24,
+                        x: inputPanelX(
+                            availableWidth: proxy.size.width,
+                            panelWidth: inputPanelWidth
+                        ),
                         y: inputPanelCenterY
                     )
 
@@ -283,31 +286,38 @@ struct BattleView: View {
     @ViewBuilder
     private func glyphInputPanel(_ presentation: BattleUIPresentation) -> some View {
         if let spell = presentation.selectedSpell {
-            GlyphCastingPanel(
-                spell: spell,
-                inputPreference: appSettings.inputPreference,
-                availableMana: presentation.resources.mana,
-                availableStrokes: presentation.resources.strokes,
-                erasureZones: presentation.activeErasureZones,
-                showsResourceHeader: false,
-                onResourcePreviewChanged: { mana, strokes in
-                    previewMana = mana
-                    previewStrokes = strokes
-                },
-                onCast: { submission in
-                    gameSession.send(.castSpell(
-                        spell: spell.id,
-                        strokes: submission.strokes,
-                        inputMethod: submission.inputMethod
-                    ))
-                }
-            )
-            .padding(14)
-            .background(DAColor.background.opacity(0.94))
-            .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(DAColor.magic.opacity(0.42), lineWidth: 1)
+            ZStack {
+                Image("Floor9BrassFrame")
+                    .resizable()
+                    .scaledToFill()
+                    .blendMode(.screen)
+                    .opacity(0.82)
+                    .allowsHitTesting(false)
+
+                GlyphCastingPanel(
+                    spell: spell,
+                    inputPreference: appSettings.inputPreference,
+                    availableMana: presentation.resources.mana,
+                    availableStrokes: presentation.resources.strokes,
+                    erasureZones: presentation.activeErasureZones,
+                    showsResourceHeader: false,
+                    surfaceOpacity: 0.76,
+                    onResourcePreviewChanged: { mana, strokes in
+                        previewMana = mana
+                        previewStrokes = strokes
+                    },
+                    onCast: { submission in
+                        gameSession.send(.castSpell(
+                            spell: spell.id,
+                            strokes: submission.strokes,
+                            inputMethod: submission.inputMethod
+                        ))
+                    }
+                )
+                .padding(.horizontal, 18)
+                .padding(.vertical, 16)
             }
+            .background(DAColor.background.opacity(0.58))
             .clipShape(RoundedRectangle(cornerRadius: 8))
         } else {
             Text("시전할 수 있는 주문이 없습니다")
@@ -315,6 +325,19 @@ struct BattleView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(DAColor.background.opacity(0.94))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+    }
+
+    private func inputPanelX(
+        availableWidth: CGFloat,
+        panelWidth: CGFloat
+    ) -> CGFloat {
+        let edgeInset: CGFloat = 24
+        switch appSettings.drawingPadPosition {
+        case .left:
+            return (panelWidth / 2) + edgeInset
+        case .right:
+            return availableWidth - (panelWidth / 2) - edgeInset
         }
     }
 

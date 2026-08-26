@@ -24,6 +24,13 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     .accessibilityLabel("마법진 입력 방식")
+
+                    Picker("전투 입력 패드 위치", selection: drawingPadPositionBinding) {
+                        Text("왼쪽").tag(DrawingPadPosition.left)
+                        Text("오른쪽").tag(DrawingPadPosition.right)
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityLabel("전투 입력 패드 위치")
                 }
 
                 Section("입력 확인") {
@@ -49,15 +56,6 @@ struct SettingsView: View {
                         .help("마지막 획 되돌리기")
                         .accessibilityLabel("마지막 획 되돌리기")
 
-                        Button(role: .destructive) {
-                            canvasController.clear()
-                        } label: {
-                            Image(systemName: "trash")
-                        }
-                        .buttonStyle(.borderless)
-                        .disabled(testStrokes.isEmpty)
-                        .help("모든 획 지우기")
-                        .accessibilityLabel("모든 획 지우기")
                     }
                     .frame(minHeight: 44)
                 }
@@ -203,6 +201,13 @@ struct SettingsView: View {
         Binding(
             get: { appSettings.inputPreference },
             set: { appSettings.setInputPreference($0) }
+        )
+    }
+
+    private var drawingPadPositionBinding: Binding<DrawingPadPosition> {
+        Binding(
+            get: { appSettings.drawingPadPosition },
+            set: { appSettings.setDrawingPadPosition($0) }
         )
     }
 
