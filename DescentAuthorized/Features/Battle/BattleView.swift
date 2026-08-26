@@ -213,6 +213,9 @@ struct BattleView: View {
     @State private var previewMana: Double?
     @State private var previewStrokes: Int?
     @State private var detailedSpell: SpellDefinition?
+    @State private var detailPressTask: Task<Void, Never>?
+    @State private var pressedSpellID: SpellID?
+    @State private var detailPressWasCancelled = false
 
     var body: some View {
         ZStack {
@@ -298,6 +301,7 @@ struct BattleView: View {
             enemyPulseTask?.cancel()
             playerPulseTask?.cancel()
             feedbackTask?.cancel()
+            detailPressTask?.cancel()
         }
         .preferredColorScheme(.dark)
     }
@@ -658,89 +662,128 @@ struct BattleView: View {
     private func spellCard(_ state: BattleUISpellState) -> some View {
         let spell = state.spell
 
-        return Button {
-            if state.canInteract {
-                selectedSpellID = spell.id
-            }
-        } label: {
-            ZStack {
-                Image(spell.battleCardFrameAssetName)
+        return ZStack {
+            Image(spell.battleCardFrameAssetName)
+                .resizable()
+                .scaledToFill()
+
+            if let overlayAssetName = state.visualState.overlayAssetName {
+                Image(overlayAssetName)
                     .resizable()
                     .scaledToFill()
+            }
 
-                if let overlayAssetName = state.visualState.overlayAssetName {
-                    Image(overlayAssetName)
+            VStack(spacing: 5) {
+                Spacer(minLength: 30)
+
+                Image(spell.battleGlyphAssetName)
+                    .resizable()
+                    .scaledToFit()
+                    .blendMode(.screen)
+                    .frame(width: 76, height: 76)
+
+                Spacer(minLength: 2)
+
+                Text(spell.name)
+                    .font(.system(size: 14, weight: .semibold, design: .serif))
+                    .foregroundStyle(DAColor.body)
+                    .lineLimit(1)
+
+                Text("\(spell.battleEffectRangeTitle) · \(spell.requiredStrokes)획")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(DAColor.body.opacity(0.82))
+                    .lineLimit(1)
+
+                Spacer(minLength: 10)
+            }
+            .padding(.horizontal, 12)
+
+            VStack {
+                HStack {
+                    Spacer()
+                    Image(spell.battleScrollBadgeAssetName)
                         .resizable()
                         .scaledToFill()
+                        .frame(width: 34, height: 34)
+                        .clipShape(Circle())
+                        .overlay {
+                            Circle()
+                                .stroke(DAColor.gold.opacity(0.7), lineWidth: 1)
+                        }
+                        .accessibilityLabel(spell.battleScrollTierTitle)
                 }
-
-                VStack(spacing: 5) {
-                    Spacer(minLength: 30)
-
-                    Image(spell.battleGlyphAssetName)
-                        .resizable()
-                        .scaledToFit()
-                        .blendMode(.screen)
-                        .frame(width: 76, height: 76)
-
-                    Spacer(minLength: 2)
-
-                    Text(spell.name)
-                        .font(.system(size: 14, weight: .semibold, design: .serif))
-                        .foregroundStyle(DAColor.body)
-                        .lineLimit(1)
-
-                    Text("\(spell.battleEffectRangeTitle) · \(spell.requiredStrokes)획")
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(DAColor.body.opacity(0.82))
-                        .lineLimit(1)
-
-                    Spacer(minLength: 10)
-                }
-                .padding(.horizontal, 12)
-
-                VStack {
-                    HStack {
-                        Spacer()
-                        Image(spell.battleScrollBadgeAssetName)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 34, height: 34)
-                            .clipShape(Circle())
-                            .overlay {
-                                Circle()
-                                    .stroke(DAColor.gold.opacity(0.7), lineWidth: 1)
-                            }
-                            .accessibilityLabel(spell.battleScrollTierTitle)
-                    }
-                    Spacer()
-                }
-                .padding(10)
+                Spacer()
             }
-            .frame(width: 132, height: 176)
-            .clipped()
+            .padding(10)
         }
-        .buttonStyle(.plain)
-        .onLongPressGesture(
-            minimumDuration: 0.45,
-            maximumDistance: 24,
-            pressing: { isPressing in
-                guard !isPressing, detailedSpell?.id == spell.id else { return }
-                withAnimation(.easeOut(duration: 0.14)) {
-                    detailedSpell = nil
+        .frame(width: 132, height: 176)
+        .clipped()
+        .contentShape(Rectangle())
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    updateSpellCardPress(spell, translation: value.translation)
                 }
-            },
-            perform: {
-                withAnimation(.easeOut(duration: 0.16)) {
-                    detailedSpell = spell
+                .onEnded { _ in
+                    finishSpellCardPress(spell, canSelect: state.canInteract)
                 }
-            }
         )
         .accessibilityLabel(
             "\(spell.name), \(spell.battleScrollTierTitle), "
                 + "\(spell.battleEffectRangeTitle), \(spell.requiredStrokes)획"
         )
         .accessibilityHint("길게 누르면 주문 상세 정보를 표시합니다")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction {
+            if state.canInteract {
+                selectedSpellID = spell.id
+            }
+        }
+    }
+
+    private func updateSpellCardPress(_ spell: SpellDefinition, translation: CGSize) {
+        let distance = hypot(translation.width, translation.height)
+
+        if distance > 24 {
+            detailPressWasCancelled = true
+            detailPressTask?.cancel()
+            if detailedSpell?.id == spell.id {
+                detailedSpell = nil
+            }
+            return
+        }
+
+        guard pressedSpellID == nil else { return }
+        pressedSpellID = spell.id
+        detailPressWasCancelled = false
+        detailPressTask?.cancel()
+        detailPressTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 450_000_000)
+            guard !Task.isCancelled,
+                  pressedSpellID == spell.id,
+                  !detailPressWasCancelled else { return }
+            withAnimation(.easeOut(duration: 0.16)) {
+                detailedSpell = spell
+            }
+        }
+    }
+
+    private func finishSpellCardPress(_ spell: SpellDefinition, canSelect: Bool) {
+        let showedDetails = detailedSpell?.id == spell.id
+        let shouldSelect = !showedDetails && !detailPressWasCancelled && canSelect
+
+        detailPressTask?.cancel()
+        detailPressTask = nil
+        pressedSpellID = nil
+        detailPressWasCancelled = false
+
+        if showedDetails {
+            withAnimation(.easeOut(duration: 0.14)) {
+                detailedSpell = nil
+            }
+        } else if shouldSelect {
+            selectedSpellID = spell.id
+        }
     }
 
     private func spellDetailOverlay(_ spell: SpellDefinition) -> some View {
