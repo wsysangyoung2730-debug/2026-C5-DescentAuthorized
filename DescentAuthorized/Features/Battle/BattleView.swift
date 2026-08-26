@@ -31,6 +31,63 @@ private struct BattleUISpellState: Identifiable {
     let canInteract: Bool
 
     var id: SpellID { spell.id }
+
+    var visualState: BattleSpellCardVisualState {
+        guard canInteract else { return .disabled }
+        return isSelected ? .selected : .available
+    }
+}
+
+private enum BattleSpellCardVisualState {
+    case available
+    case selected
+    case disabled
+
+    var overlayAssetName: String? {
+        switch self {
+        case .available: nil
+        case .selected: "BattleCardFrameSelected"
+        case .disabled: "BattleCardFrameDisabled"
+        }
+    }
+}
+
+private extension SpellDefinition {
+    var battleCardFrameAssetName: String {
+        switch category {
+        case .attack: "BattleCardFrameAttack"
+        case .defense: "BattleCardFrameDefense"
+        case .dispel: "BattleCardFrameSeal"
+        }
+    }
+
+    var battleGlyphAssetName: String {
+        switch id {
+        case .afterglowErasure: "BattleGlyphAfterglowErasure"
+        case .riftSeverance: "BattleGlyphRiftSeverance"
+        case .barrierPiercing: "BattleGlyphBarrierPiercing"
+        case .basicBarrier: "BattleGlyphBasicBarrier"
+        case .sealRelease: "BattleGlyphSealRelease"
+        }
+    }
+
+    var battleScrollBadgeAssetName: String {
+        switch tier {
+        case .worn: "BattleScrollBadgeWorn"
+        case .engraved: "BattleScrollBadgeEngraved"
+        case .sealed: "BattleScrollBadgeSealed"
+        case .forbidden: "BattleScrollBadgeForbidden"
+        }
+    }
+
+    var battleScrollTierTitle: String {
+        switch tier {
+        case .worn: "낡은 주문서"
+        case .engraved: "각인 주문서"
+        case .sealed: "봉인 주문서"
+        case .forbidden: "금서"
+        }
+    }
 }
 
 private struct BattleUIPresentation {
