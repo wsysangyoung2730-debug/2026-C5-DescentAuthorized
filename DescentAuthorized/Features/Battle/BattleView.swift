@@ -141,10 +141,6 @@ struct BattleView: View {
             let commandRegionHeight = min(390, max(300, proxy.size.height * 0.42))
 
             VStack(spacing: 0) {
-                combatHeader(presentation)
-                    .frame(height: 88)
-                    .background(DAColor.panel.opacity(0.94))
-
                 enemyStage(presentation)
                     .frame(maxHeight: .infinity)
 
@@ -195,127 +191,6 @@ struct BattleView: View {
         }
     }
 
-    private func combatHeader(_ presentation: BattleUIPresentation) -> some View {
-        HStack(spacing: 14) {
-            vitalityBlock(
-                combatant: presentation.player,
-                healthAccent: Color(red: 0.82, green: 0.24, blue: 0.22),
-                barrierAccent: .cyan,
-                alignment: .leading
-            )
-
-            Spacer()
-
-            VStack(spacing: 4) {
-                Text(floorLabel)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(DAColor.gold)
-                Text("TURN \(presentation.turnNumber)")
-                    .font(.caption.monospacedDigit().weight(.bold))
-                    .foregroundStyle(.secondary)
-                Text(phaseTitle(presentation.phase))
-                    .font(.subheadline.weight(.semibold))
-            }
-
-            Spacer()
-
-            vitalityBlock(
-                combatant: presentation.enemy,
-                healthAccent: Color(red: 0.82, green: 0.24, blue: 0.22),
-                barrierAccent: .purple,
-                alignment: .trailing
-            )
-        }
-        .padding(.horizontal, 14)
-        .foregroundStyle(DAColor.body)
-    }
-
-    private func vitalityBlock(
-        combatant: BattleUICombatantState,
-        healthAccent: Color,
-        barrierAccent: Color,
-        alignment: HorizontalAlignment
-    ) -> some View {
-        VStack(alignment: alignment, spacing: 4) {
-            HStack(spacing: 8) {
-                Text(combatant.name)
-                    .font(.subheadline.weight(.semibold))
-                    .lineLimit(1)
-                if combatant.absoluteBarrierCharges > 0 {
-                    absoluteBarrierBadge(combatant.absoluteBarrierCharges)
-                }
-            }
-
-            layeredVitalityBar(
-                combatant: combatant,
-                healthAccent: healthAccent,
-                barrierAccent: barrierAccent
-            )
-            .frame(width: 240, height: 10)
-
-            Text(vitalityCaption(combatant))
-                .font(.caption2.monospacedDigit())
-                .foregroundStyle(.secondary)
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private func layeredVitalityBar(
-        combatant: BattleUICombatantState,
-        healthAccent: Color,
-        barrierAccent: Color
-    ) -> some View {
-        GeometryReader { proxy in
-            let healthFraction = min(max(Double(combatant.hp) / Double(combatant.maxHP), 0), 1)
-            let barrierFraction = min(
-                max(Double(combatant.normalBarrier) / Double(combatant.maxHP), 0),
-                healthFraction
-            )
-            let healthWidth = proxy.size.width * healthFraction
-            let barrierWidth = proxy.size.width * barrierFraction
-
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color.white.opacity(0.1))
-
-                if combatant.absoluteBarrierCharges > 0 {
-                    Capsule()
-                        .fill(DAColor.gold)
-                        .frame(width: proxy.size.width)
-                } else {
-                    Capsule()
-                        .fill(healthAccent)
-                        .frame(width: healthWidth)
-
-                    if barrierWidth > 0 {
-                        Capsule()
-                            .fill(barrierAccent)
-                            .frame(width: barrierWidth)
-                            .offset(x: max(0, healthWidth - barrierWidth))
-                    }
-                }
-
-                Capsule()
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-            }
-        }
-    }
-
-    private func vitalityCaption(_ combatant: BattleUICombatantState) -> String {
-        let hp = "\(combatant.hp) / \(combatant.maxHP)"
-        if combatant.absoluteBarrierCharges > 0 {
-            return "\(hp) · 절대 방벽 \(combatant.absoluteBarrierCharges)"
-        }
-        guard combatant.normalBarrier > 0 else { return hp }
-        return "\(hp) · 방벽 \(combatant.normalBarrier)"
-    }
-
-    private func absoluteBarrierBadge(_ charges: Int) -> some View {
-        Label("\(charges)", systemImage: "shield.checkered")
-            .font(.caption2.monospacedDigit().weight(.bold))
-            .foregroundStyle(DAColor.gold)
-    }
-
     private func enemyStage(_ presentation: BattleUIPresentation) -> some View {
         ZStack {
             if realitySceneID == nil {
@@ -338,10 +213,6 @@ struct BattleView: View {
                 } else {
                     Spacer(minLength: 74)
                 }
-
-                if let intent = presentation.currentEnemyIntent {
-                    intentLabel(intent)
-                }
             }
         }
         .background(realitySceneID == nil ? Color.black.opacity(0.28) : Color.clear)
@@ -350,26 +221,6 @@ struct BattleView: View {
                 .fill(DAColor.gold.opacity(0.22))
                 .frame(height: 1)
         }
-    }
-
-    private func intentLabel(_ intent: EnemyAction) -> some View {
-        HStack(spacing: 7) {
-            Image(systemName: intentSymbol(intent))
-            VStack(alignment: .leading, spacing: 1) {
-                Text(intent.name)
-                    .font(.caption.weight(.bold))
-                Text(intentDetail(intent))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(DAColor.panel.opacity(0.94))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .foregroundStyle(intentColor(intent))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("적 의도 \(intent.name), \(intentDetail(intent))")
     }
 
     private func spellBar(_ presentation: BattleUIPresentation) -> some View {
@@ -886,55 +737,11 @@ struct BattleView: View {
         return true
     }
 
-    private var floorLabel: String {
-        "B\(gameSession.progress.currentFloor.rawValue) · 하강 봉인 절차"
-    }
-
     private var enemySymbol: String {
         switch gameSession.progress.currentScene {
         case .floor8ResidualBattle: "eye.trianglebadge.exclamationmark"
         case .floor8AdministratorBattle: "eye.circle.fill"
         default: "person.text.rectangle.fill"
-        }
-    }
-
-    private func phaseTitle(_ phase: BattlePhase) -> String {
-        switch phase {
-        case .preparing: "절차 준비"
-        case .playerTurn: "봉인관 차례"
-        case .resolvingPlayerSpell: "주문 해석"
-        case .resolvingEnemyAction: "관리자 차례"
-        case .victory: "관리자 무력화"
-        case .defeat: "절차 중단"
-        }
-    }
-
-    private func intentSymbol(_ action: EnemyAction) -> String {
-        switch action {
-        case .attack(_, _, true): "exclamationmark.triangle.fill"
-        case .attack: "burst.fill"
-        case .grantNormalBarrier: "shield.fill"
-        case .grantAbsoluteBarrier: "shield.checkered"
-        case .telegraph: "scope"
-        }
-    }
-
-    private func intentDetail(_ action: EnemyAction) -> String {
-        switch action {
-        case let .attack(_, damage, isStrong): isStrong ? "강공격 · 피해 \(damage)" : "공격 · 피해 \(damage)"
-        case let .grantNormalBarrier(_, amount): "일반 방벽 \(amount)"
-        case let .grantAbsoluteBarrier(_, charges): "절대 방벽 \(charges)회"
-        case let .telegraph(_, upcoming): "다음 행동: \(upcoming)"
-        }
-    }
-
-    private func intentColor(_ action: EnemyAction) -> Color {
-        switch action {
-        case .attack(_, _, true): .red
-        case .attack: .orange
-        case .grantNormalBarrier: .cyan
-        case .grantAbsoluteBarrier: .yellow
-        case .telegraph: .purple
         }
     }
 

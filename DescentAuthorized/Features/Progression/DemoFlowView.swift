@@ -9,7 +9,9 @@ struct DemoFlowView: View {
     @State private var isShowingSettings = false
     @StateObject private var sceneController = RealitySceneController()
 
-    private let topBarHeight: CGFloat = 96
+    private var topBarHeight: CGFloat {
+        gameSession.battleState == nil ? 96 : 112
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -91,7 +93,11 @@ struct DemoFlowView: View {
                     .allowsHitTesting(false)
             }
 
-            topBarControls
+            if let battle = gameSession.battleState {
+                battleTopBarControls(battle)
+            } else {
+                defaultTopBarControls
+            }
         }
         .frame(height: topBarHeight)
         .clipped()
@@ -106,7 +112,7 @@ struct DemoFlowView: View {
         }
     }
 
-    private var topBarControls: some View {
+    private var defaultTopBarControls: some View {
         HStack(alignment: .center, spacing: 18) {
             topBarButton(systemImage: "pause.fill") {
                 isShowingPauseMenu = true
@@ -138,6 +144,30 @@ struct DemoFlowView: View {
             .accessibilityLabel("설정")
         }
         .padding(.horizontal, 54)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .offset(y: -3)
+    }
+
+    private func battleTopBarControls(_ battle: BattleState) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            topBarButton(systemImage: "pause.fill") {
+                isShowingPauseMenu = true
+            }
+            .help("일시정지")
+            .accessibilityLabel("일시정지")
+
+            BattleTopHUDView(
+                battle: battle,
+                floor: gameSession.progress.currentFloor
+            )
+
+            topBarButton(systemImage: "gearshape") {
+                isShowingSettings = true
+            }
+            .help("설정")
+            .accessibilityLabel("설정")
+        }
+        .padding(.horizontal, 28)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .offset(y: -3)
     }
