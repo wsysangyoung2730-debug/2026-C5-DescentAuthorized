@@ -320,6 +320,9 @@ struct BattleView: View {
 
     private func spellBar(_ presentation: BattleUIPresentation) -> some View {
         HStack(spacing: 10) {
+            battleLogPanel(presentation)
+                .frame(width: 248, height: 176)
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(presentation.spells) { spellState in
@@ -345,6 +348,53 @@ struct BattleView: View {
                 .accessibilityHint("현재 봉인관 차례를 종료합니다")
             }
         }
+    }
+
+    private func battleLogPanel(_ presentation: BattleUIPresentation) -> some View {
+        ZStack {
+            Image("BattleLogPanelFrame")
+                .resizable()
+                .scaledToFill()
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("전투 기록")
+                    .font(.system(size: 15, weight: .semibold, design: .serif))
+                    .foregroundStyle(SharedHUDPalette.title)
+
+                Rectangle()
+                    .fill(SharedHUDPalette.brass.opacity(0.32))
+                    .frame(height: 1)
+
+                if presentation.recentLogEntries.isEmpty {
+                    Text("· 전투 기록 대기")
+                        .foregroundStyle(DAColor.secondary)
+                } else {
+                    ForEach(Array(presentation.recentLogEntries.enumerated()), id: \.offset) { _, entry in
+                        Text("· \(entry)")
+                            .foregroundStyle(logColor(for: entry))
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer(minLength: 0)
+            }
+            .font(.caption)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 18)
+        }
+        .clipped()
+        .accessibilityElement(children: .combine)
+    }
+
+    private func logColor(for entry: String) -> Color {
+        if entry.contains("피해") || entry.contains("취소") || entry.contains("거부") {
+            return DAColor.attack.opacity(0.95)
+        }
+        if entry.contains("방벽") {
+            return DAColor.defense.opacity(0.95)
+        }
+        return DAColor.body.opacity(0.86)
     }
 
     private func spellCard(_ state: BattleUISpellState) -> some View {
