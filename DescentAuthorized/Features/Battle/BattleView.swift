@@ -144,12 +144,9 @@ private extension SpellDefinition {
     }
 
     var battleRequiredPointTitle: String {
-        glyph.strokes.enumerated().map { strokeIndex, stroke in
-            let nodes = stroke.requiredNodes.indices.map { "N\($0 + 1)" }
-            let route = (["S"] + nodes + ["E"]).joined(separator: " · ")
-            return glyph.requiredStrokeCount > 1 ? "\(strokeIndex + 1)획 \(route)" : route
-        }
-        .joined(separator: " / ")
+        guard let firstStroke = glyph.strokes.first else { return "-" }
+        let nodes = firstStroke.requiredNodes.indices.map { "N\($0 + 1)" }
+        return (["S"] + nodes + ["E"]).joined(separator: " · ")
     }
 
     var battleToleranceTitle: String {
@@ -831,8 +828,8 @@ struct BattleView: View {
                         spellDetailRow("필수 핵심점", spell.battleRequiredPointTitle)
                         spellDetailRow("허용 오차", spell.battleToleranceTitle)
                     }
-                    .frame(width: panelWidth * 0.54, height: panelHeight * 0.35)
-                    .position(x: panelWidth * 0.68, y: panelHeight * 0.465)
+                    .frame(width: panelWidth * 0.50, height: panelHeight * 0.35)
+                    .position(x: panelWidth * 0.66, y: panelHeight * 0.465)
 
                     Text(spell.battleDetailDescription)
                         .font(.system(size: 15, weight: .medium))
@@ -868,7 +865,7 @@ struct BattleView: View {
         .font(.system(size: 15, weight: .medium).monospacedDigit())
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 4)
-        .offset(y: -8)
+        .offset(y: -14)
     }
 
     private var encounterStandby: some View {
