@@ -168,7 +168,8 @@ struct DemoFlowView: View {
             ZStack {
                 BattleTopHUDView(
                     battle: battle,
-                    floor: gameSession.progress.currentFloor
+                    floor: gameSession.progress.currentFloor,
+                    interItemSpacing: battleEdgeToHUDSpacing
                 )
                 .padding(.horizontal, battleHorizontalPadding)
                 .frame(height: proxy.size.height)

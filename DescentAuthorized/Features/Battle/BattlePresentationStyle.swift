@@ -18,9 +18,10 @@ enum DAColor {
 struct BattleTopHUDView: View {
     let battle: BattleState
     let floor: FloorID
+    let interItemSpacing: CGFloat
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: interItemSpacing) {
             combatantBlock(
                 battle.player,
                 barrierAccent: DAColor.defense,
