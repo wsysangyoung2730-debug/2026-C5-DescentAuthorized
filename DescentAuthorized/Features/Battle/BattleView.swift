@@ -62,7 +62,7 @@ private struct BattleTurnEndButtonStyle: ButtonStyle {
                 .scaledToFill()
 
             configuration.label
-                .foregroundStyle(isEnabled ? SharedHUDPalette.title : DAColor.secondary)
+                .foregroundStyle(isEnabled ? DAColor.body : DAColor.secondary)
         }
         .contentShape(Rectangle())
     }
@@ -361,7 +361,7 @@ struct BattleView: View {
                         .frame(width: proxy.size.width * manaRatio)
 
                     Capsule()
-                        .stroke(SharedHUDPalette.brass.opacity(0.32), lineWidth: 1)
+                        .stroke(DAColor.gold.opacity(0.32), lineWidth: 1)
                 }
             }
             .frame(height: 10)
@@ -375,7 +375,7 @@ struct BattleView: View {
         .background(DAColor.card.opacity(0.9))
         .overlay {
             Rectangle()
-                .stroke(SharedHUDPalette.brass.opacity(0.28), lineWidth: 1)
+                .stroke(DAColor.gold.opacity(0.28), lineWidth: 1)
         }
         .accessibilityElement(children: .combine)
     }
@@ -414,10 +414,10 @@ struct BattleView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("전투 기록")
                     .font(.system(size: 15, weight: .semibold, design: .serif))
-                    .foregroundStyle(SharedHUDPalette.title)
+                    .foregroundStyle(DAColor.body)
 
                 Rectangle()
-                    .fill(SharedHUDPalette.brass.opacity(0.32))
+                    .fill(DAColor.gold.opacity(0.32))
                     .frame(height: 1)
 
                 if presentation.recentLogEntries.isEmpty {
@@ -482,7 +482,7 @@ struct BattleView: View {
 
                     Text(spell.name)
                         .font(.system(size: 14, weight: .semibold, design: .serif))
-                        .foregroundStyle(SharedHUDPalette.title)
+                        .foregroundStyle(DAColor.body)
                         .lineLimit(1)
 
                     Text("\(categoryTitle(spell.category)) · \(spell.requiredStrokes)획")
@@ -504,7 +504,7 @@ struct BattleView: View {
                             .clipShape(Circle())
                             .overlay {
                                 Circle()
-                                    .stroke(SharedHUDPalette.brass.opacity(0.7), lineWidth: 1)
+                                    .stroke(DAColor.gold.opacity(0.7), lineWidth: 1)
                             }
                             .accessibilityLabel(spell.battleScrollTierTitle)
                     }
