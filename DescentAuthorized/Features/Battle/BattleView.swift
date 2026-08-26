@@ -337,7 +337,7 @@ struct BattleView: View {
 
             VStack(spacing: 8) {
                 battleResourceBar(presentation)
-                    .frame(height: 34)
+                    .frame(height: 42)
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
@@ -363,20 +363,9 @@ struct BattleView: View {
                 .font(.caption.monospacedDigit().weight(.semibold))
                 .foregroundStyle(DAColor.magicGlow)
 
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.white.opacity(0.08))
-
-                    Capsule()
-                        .fill(DAColor.magic)
-                        .frame(width: proxy.size.width * manaRatio)
-
-                    Capsule()
-                        .stroke(DAColor.gold.opacity(0.32), lineWidth: 1)
-                }
-            }
-            .frame(height: 10)
+            manaMeter(ratio: manaRatio)
+                .frame(minWidth: 280, idealWidth: 460, maxWidth: 560)
+                .frame(height: 18)
 
             Text(resourceSummary(presentation))
                 .font(.caption.monospacedDigit())
@@ -390,6 +379,55 @@ struct BattleView: View {
                 .stroke(DAColor.gold.opacity(0.28), lineWidth: 1)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    private func manaMeter(ratio: Double) -> some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let height = proxy.size.height
+            let markerWidth: CGFloat = 3
+            let fillWidth = width * ratio
+            let markerX = min(
+                max(fillWidth - (markerWidth / 2), 0),
+                max(width - markerWidth, 0)
+            )
+
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.white.opacity(0.07))
+
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [DAColor.magic.opacity(0.72), DAColor.magicGlow],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: fillWidth)
+                    .clipShape(RoundedRectangle(cornerRadius: 2))
+
+                ForEach(1..<4, id: \.self) { division in
+                    Rectangle()
+                        .fill(Color.black.opacity(0.48))
+                        .frame(width: 2, height: height)
+                        .position(
+                            x: width * CGFloat(division) / 4,
+                            y: height / 2
+                        )
+                }
+
+                Rectangle()
+                    .fill(Color.white)
+                    .frame(width: markerWidth, height: height + 6)
+                    .offset(x: markerX, y: -3)
+                    .shadow(color: .white.opacity(0.75), radius: 2)
+
+                RoundedRectangle(cornerRadius: 2)
+                    .stroke(DAColor.gold.opacity(0.38), lineWidth: 1)
+            }
+            .animation(.easeOut(duration: 0.24), value: ratio)
+        }
     }
 
     private func resourceSummary(_ presentation: BattleUIPresentation) -> String {
