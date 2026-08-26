@@ -9,7 +9,12 @@ struct RealityStageView: View {
 
     var body: some View {
         ZStack {
-            RealityARView(controller: controller)
+            RealityARView(
+                sceneID: sceneID,
+                cameraPreset: cameraPreset,
+                erasureZones: erasureZones,
+                controller: controller
+            )
                 .ignoresSafeArea()
 
             switch controller.loadState {
@@ -26,22 +31,6 @@ struct RealityStageView: View {
             }
         }
         .background(Color.black)
-        .onAppear {
-            synchronizePresentation(sceneID: sceneID, cameraPreset: cameraPreset)
-        }
-        .onChange(of: sceneID) { _, value in
-            synchronizePresentation(sceneID: value, cameraPreset: cameraPreset)
-        }
-        .onChange(of: cameraPreset) { _, value in controller.applyCameraPreset(value) }
-        .onChange(of: erasureZones) { _, value in controller.setErasureZones(value) }
-    }
-
-    private func synchronizePresentation(
-        sceneID: FloorSceneID,
-        cameraPreset: RealityCameraPreset
-    ) {
-        controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
-        controller.setErasureZones(erasureZones)
     }
 
     private func statusOverlay(icon: String?, title: String, detail: String?) -> some View {
@@ -73,6 +62,9 @@ struct RealityStageView: View {
 }
 
 private struct RealityARView: UIViewRepresentable {
+    let sceneID: FloorSceneID
+    let cameraPreset: RealityCameraPreset
+    let erasureZones: [ErasureZone]
     let controller: RealitySceneController
 
     func makeUIView(context: Context) -> ARView {
@@ -80,10 +72,17 @@ private struct RealityARView: UIViewRepresentable {
         view.environment.background = .color(.black)
         view.renderOptions.insert(.disableMotionBlur)
         controller.attach(to: view)
+        synchronizePresentation()
         return view
     }
 
     func updateUIView(_ uiView: ARView, context: Context) {
         controller.attach(to: uiView)
+        synchronizePresentation()
+    }
+
+    private func synchronizePresentation() {
+        controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
+        controller.setErasureZones(erasureZones)
     }
 }

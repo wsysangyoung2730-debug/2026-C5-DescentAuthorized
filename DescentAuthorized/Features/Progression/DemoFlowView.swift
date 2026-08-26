@@ -22,40 +22,11 @@ struct DemoFlowView: View {
                 Color.black.ignoresSafeArea()
             }
 
-            sceneView
-                .id(gameSession.presentation.progressSceneID)
+            if isPresentationReady {
+                sceneView
+                    .id(gameSession.presentation.progressSceneID)
 
-            HStack {
-                Button {
-                    isShowingPauseMenu = true
-                } label: {
-                    Image(systemName: "pause.fill")
-                }
-                .help("일시정지")
-                .accessibilityLabel("일시정지")
-
-                Spacer()
-
-                Text("제\(gameSession.progress.currentFloor.rawValue)층")
-                    .font(.caption.monospaced().weight(.bold))
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-
-                Button {
-                    isShowingSettings = true
-                } label: {
-                    Image(systemName: "gearshape")
-                }
-                .help("설정")
-                .accessibilityLabel("설정")
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
-            .foregroundStyle(DAColor.body)
-            .background(DAColor.panel.opacity(0.78))
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(DAColor.divider.opacity(0.8)).frame(height: 1)
+                topBar
             }
 
             Color.black
@@ -74,6 +45,49 @@ struct DemoFlowView: View {
             if floorSceneID == nil {
                 sceneController.unload()
             }
+        }
+    }
+
+    private var isPresentationReady: Bool {
+        guard let floorSceneID = gameSession.presentation.floorSceneID else { return true }
+        return sceneController.isReady(
+            sceneID: floorSceneID,
+            cameraPreset: gameSession.presentation.cameraPreset
+        )
+    }
+
+    private var topBar: some View {
+        HStack {
+            Button {
+                isShowingPauseMenu = true
+            } label: {
+                Image(systemName: "pause.fill")
+            }
+            .help("일시정지")
+            .accessibilityLabel("일시정지")
+
+            Spacer()
+
+            Text("제\(gameSession.progress.currentFloor.rawValue)층")
+                .font(.caption.monospaced().weight(.bold))
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            Button {
+                isShowingSettings = true
+            } label: {
+                Image(systemName: "gearshape")
+            }
+            .help("설정")
+            .accessibilityLabel("설정")
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 10)
+        .foregroundStyle(DAColor.body)
+        .background(DAColor.panel.opacity(0.78))
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(DAColor.divider.opacity(0.8)).frame(height: 1)
         }
     }
 

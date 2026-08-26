@@ -15,6 +15,7 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var missingEntityRoles: [RealityEntityRole] = []
     @Published private(set) var projectedMagicBoard: RealityProjectedBoard?
     @Published private(set) var cameraFadeOpacity: Double = 0
+    @Published private(set) var isCameraTransitioning = false
 
     let registry = RealityEntityRegistry()
 
@@ -23,9 +24,12 @@ final class RealitySceneController: ObservableObject {
     private var cameraEntity: PerspectiveCamera?
     private var loadCancellable: AnyCancellable?
     private var cameraTransitionTask: Task<Void, Never>?
+    private var sceneLoadGeneration: UInt64 = 0
+    private var cameraTransitionGeneration: UInt64 = 0
     private var requestedSceneID: FloorSceneID?
     private var requestedCameraPreset: RealityCameraPreset = .main
     private var activeCameraName: String?
+    private var pendingCameraName: String?
     private var requestedErasureZones: [ErasureZone] = []
     private var requestedBattleState: BattleState?
     private var requestedReducedMotion = false
@@ -77,19 +81,26 @@ final class RealitySceneController: ObservableObject {
 
         unload()
         requestedSceneID = sceneID
+        requestedCameraPreset = cameraPreset
         loadState = .loading(sceneID)
+        let loadGeneration = sceneLoadGeneration
         loadCancellable = Entity.loadAsync(contentsOf: url)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { [weak self] completion in
-                    if case let .failure(error) = completion {
-                        self?.fail(sceneID: sceneID, message: error.localizedDescription)
-                    }
+                    guard
+                        let self,
+                        self.sceneLoadGeneration == loadGeneration,
+                        self.requestedSceneID == sceneID,
+                        case let .failure(error) = completion
+                    else { return }
+                    self.fail(sceneID: sceneID, message: error.localizedDescription)
                 },
                 receiveValue: { [weak self] root in
                     guard
                         let self,
                         let arView = self.arView,
+                        self.sceneLoadGeneration == loadGeneration,
                         self.requestedSceneID == sceneID
                     else { return }
                     self.install(root: root, descriptor: descriptor, in: arView)
@@ -107,23 +118,54 @@ final class RealitySceneController: ObservableObject {
             let descriptor = registry.descriptor,
             let cameraName = descriptor.cameraName(for: preset)
         else { return }
-        guard cameraName != activeCameraName else { return }
+        guard cameraName != pendingCameraName else { return }
+        guard cameraName != activeCameraName else {
+            if pendingCameraName != nil || isCameraTransitioning {
+                cancelCameraTransition()
+            }
+            return
+        }
 
         cameraTransitionTask?.cancel()
+        cameraTransitionGeneration &+= 1
+        let transitionGeneration = cameraTransitionGeneration
+        pendingCameraName = cameraName
+        isCameraTransitioning = true
         cameraTransitionTask = Task { @MainActor [weak self] in
             guard let self else { return }
             cameraFadeOpacity = 1
-            defer {
-                cameraFadeOpacity = 0
-                cameraTransitionTask = nil
-            }
             do {
                 try await Task.sleep(for: .milliseconds(180))
             } catch {
                 return
             }
+            guard cameraTransitionGeneration == transitionGeneration,
+                  pendingCameraName == cameraName else { return }
             applyCamera(named: cameraName)
+            guard cameraTransitionGeneration == transitionGeneration else { return }
+            pendingCameraName = nil
+            cameraFadeOpacity = 0
+            isCameraTransitioning = false
+            cameraTransitionTask = nil
         }
+    }
+
+    private func cancelCameraTransition() {
+        cameraTransitionGeneration &+= 1
+        cameraTransitionTask?.cancel()
+        cameraTransitionTask = nil
+        pendingCameraName = nil
+        cameraFadeOpacity = 0
+        isCameraTransitioning = false
+    }
+
+    func isReady(sceneID: FloorSceneID, cameraPreset: RealityCameraPreset) -> Bool {
+        guard
+            loadState == .ready(sceneID),
+            registry.descriptor?.sceneID == sceneID,
+            let expectedCameraName = registry.descriptor?.cameraName(for: cameraPreset)
+        else { return false }
+        return activeCameraName == expectedCameraName && !isCameraTransitioning
     }
 
     private func applyCamera(named cameraName: String) {
@@ -230,23 +272,29 @@ final class RealitySceneController: ObservableObject {
     }
 
     func unload() {
+        sceneLoadGeneration &+= 1
         loadCancellable?.cancel()
         loadCancellable = nil
-        cameraTransitionTask?.cancel()
-        cameraTransitionTask = nil
+        cancelCameraTransition()
         if let sceneAnchor, let arView {
             arView.scene.removeAnchor(sceneAnchor)
         }
         sceneAnchor = nil
         cameraEntity = nil
         activeCameraName = nil
-        cameraFadeOpacity = 0
         registry.reset()
         missingEntityRoles = []
         projectedMagicBoard = nil
         combatVFXRenderer.reset()
         progressionVFXRenderer.reset()
         requestedSceneID = nil
+        requestedCameraPreset = .main
+        requestedErasureZones = []
+        requestedBattleState = nil
+        requestedReducedMotion = false
+        requestedDescentState = .inactive
+        requestedRewardState = .inactive
+        pendingCombatCues.removeAll()
         loadState = .idle
     }
 
