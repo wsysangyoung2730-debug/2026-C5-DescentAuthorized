@@ -82,6 +82,7 @@ struct DemoFlowView: View {
                 topBarButton(systemImage: "pause.fill") {
                     isShowingPauseMenu = true
                 }
+                .offset(x: 5, y: -3)
                 .help("일시정지")
                 .accessibilityLabel("일시정지")
 
