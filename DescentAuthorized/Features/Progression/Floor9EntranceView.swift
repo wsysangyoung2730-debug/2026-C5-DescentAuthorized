@@ -100,14 +100,33 @@ struct Floor9EntranceView: View {
         .frame(width: width)
         .frame(maxHeight: .infinity)
         .background {
-            LinearGradient(
-                colors: [
-                    Floor9EntrancePalette.panelTop.opacity(0.97),
-                    DAColor.background.opacity(0.985)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Floor9EntrancePalette.panelTop.opacity(0.98),
+                        DAColor.background.opacity(0.99)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+
+                Image("Floor9PanelTexture")
+                    .resizable()
+                    .scaledToFill()
+                    .opacity(0.22)
+                    .blendMode(.softLight)
+
+                Image("Floor9PanelScratches")
+                    .resizable()
+                    .scaledToFill()
+                    .opacity(0.12)
+                    .blendMode(.screen)
+
+                Image("Floor9BrassFrame")
+                    .resizable(resizingMode: .stretch)
+                    .opacity(0.44)
+            }
+            .clipped()
         }
         .overlay(alignment: .leading) {
             Rectangle()
@@ -130,12 +149,18 @@ struct Floor9EntranceView: View {
                 .fill(Floor9EntrancePalette.brass.opacity(0.25))
                 .frame(height: 1)
         }
-        .padding(.top, 45)
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
+                Image("Floor9MagicGlyph")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 30, height: 30)
+                    .clipped()
+                    .accessibilityHidden(true)
+
                 Text("9-A / 중앙 기록실 입구")
                     .font(.caption.monospaced().weight(.bold))
                     .foregroundStyle(DAColor.magicGlow)
@@ -238,41 +263,53 @@ struct Floor9EntranceView: View {
     }
 
     private var clueCard: some View {
-        VStack(alignment: .leading, spacing: 11) {
-            HStack(spacing: 8) {
-                Image(systemName: inspectedRecord ? "checkmark.seal.fill" : "doc.text.magnifyingglass")
-                    .foregroundStyle(inspectedRecord ? Floor9EntrancePalette.success : DAColor.magicGlow)
+        ZStack(alignment: .trailing) {
+            Image("Floor9DocumentStamp")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 86, height: 86)
+                .clipped()
+                .opacity(inspectedRecord ? 0.34 : 0.18)
+                .accessibilityHidden(true)
 
-                Text(inspectedRecord ? "확인된 단서" : "승인 서류")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(inspectedRecord ? Floor9EntrancePalette.success : DAColor.magicGlow)
-            }
+            VStack(alignment: .leading, spacing: 11) {
+                HStack(spacing: 8) {
+                    Image(systemName: inspectedRecord ? "checkmark.seal.fill" : "doc.text.magnifyingglass")
+                        .foregroundStyle(inspectedRecord ? Floor9EntrancePalette.success : DAColor.magicGlow)
 
-            if inspectedRecord {
-                Text("“승인자 서명이 자신의 필체와 닮아 있다.\n이름 칸만 기억침식으로 비어 있다.”")
-                    .font(.callout)
-                    .foregroundStyle(Floor9EntrancePalette.warmText)
-                    .lineSpacing(4)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-            } else {
-                Button {
-                    withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.25)) {
-                        inspectedRecord = true
-                    }
-                    gameSession.send(.readRecord("9-entrance-01"))
-                } label: {
-                    HStack {
-                        Text("바닥의 승인 서류 확인")
-                            .font(.subheadline.weight(.semibold))
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.bold))
-                    }
-                    .foregroundStyle(Floor9EntrancePalette.warmText)
-                    .padding(.vertical, 4)
+                    Text(inspectedRecord ? "확인된 단서" : "승인 서류")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(inspectedRecord ? Floor9EntrancePalette.success : DAColor.magicGlow)
                 }
-                .buttonStyle(.plain)
+
+                if inspectedRecord {
+                    Text("“승인자 서명이 자신의 필체와 닮아 있다.\n이름 칸만 기억침식으로 비어 있다.”")
+                        .font(.callout)
+                        .foregroundStyle(Floor9EntrancePalette.warmText)
+                        .lineSpacing(4)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                } else {
+                    Button {
+                        withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.25)) {
+                            inspectedRecord = true
+                        }
+                        gameSession.send(.readRecord("9-entrance-01"))
+                    } label: {
+                        HStack {
+                            Text("바닥의 승인 서류 확인")
+                                .font(.subheadline.weight(.semibold))
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                        }
+                        .foregroundStyle(Floor9EntrancePalette.warmText)
+                        .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
+            .padding(.trailing, 62)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(15)
@@ -292,8 +329,12 @@ struct Floor9EntranceView: View {
 
     private var entryWarning: some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.circle.fill")
-                .foregroundStyle(DAColor.attack)
+            Image("Floor9WarningMark")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 28, height: 28)
+                .clipped()
+                .accessibilityHidden(true)
 
             Text("진입하면 제9층 기록 관리자와의 전투가 시작됩니다.")
                 .font(.caption)
@@ -319,14 +360,21 @@ struct Floor9EntranceView: View {
             .padding(.horizontal, 18)
             .frame(height: 52)
             .background {
-                LinearGradient(
-                    colors: [
-                        DAColor.magic.opacity(0.82),
-                        Color(red: 0.29, green: 0.17, blue: 0.45)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
+                ZStack {
+                    LinearGradient(
+                        colors: [
+                            DAColor.magic.opacity(0.82),
+                            Color(red: 0.29, green: 0.17, blue: 0.45)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+
+                    Image("Floor9EntryButtonPlate")
+                        .resizable()
+                        .scaledToFill()
+                        .opacity(0.74)
+                }
             }
             .clipShape(RoundedRectangle(cornerRadius: 7))
             .overlay {
@@ -339,15 +387,13 @@ struct Floor9EntranceView: View {
     }
 
     private var sectionDivider: some View {
-        Rectangle()
-            .fill(
-                LinearGradient(
-                    colors: [.clear, Floor9EntrancePalette.brass.opacity(0.42), .clear],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .frame(height: 1)
+        Image("Floor9SectionDivider")
+            .resizable()
+            .scaledToFill()
+            .frame(height: 12)
+            .clipped()
+            .opacity(0.74)
+            .accessibilityHidden(true)
     }
 
     private func sectionTitle(_ title: String, systemImage: String) -> some View {

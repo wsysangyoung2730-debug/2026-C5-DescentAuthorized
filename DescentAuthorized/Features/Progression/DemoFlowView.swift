@@ -9,6 +9,8 @@ struct DemoFlowView: View {
     @State private var isShowingSettings = false
     @StateObject private var sceneController = RealitySceneController()
 
+    private let topBarHeight: CGFloat = 58
+
     var body: some View {
         ZStack(alignment: .top) {
             if let floorSceneID = gameSession.presentation.floorSceneID {
@@ -23,10 +25,14 @@ struct DemoFlowView: View {
             }
 
             if isPresentationReady {
-                sceneView
-                    .id(gameSession.presentation.progressSceneID)
+                VStack(spacing: 0) {
+                    topBar
+                        .frame(height: topBarHeight)
 
-                topBar
+                    sceneView
+                        .id(gameSession.presentation.progressSceneID)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
 
             Color.black
@@ -57,38 +63,83 @@ struct DemoFlowView: View {
     }
 
     private var topBar: some View {
-        HStack {
-            Button {
-                isShowingPauseMenu = true
-            } label: {
-                Image(systemName: "pause.fill")
+        ZStack {
+            DAColor.background.opacity(0.96)
+
+            Image("SharedTopHUDRail")
+                .resizable()
+                .scaledToFill()
+                .opacity(0.9)
+                .allowsHitTesting(false)
+
+            HStack(spacing: 18) {
+                topBarButton(systemImage: "pause.fill") {
+                    isShowingPauseMenu = true
+                }
+                .help("일시정지")
+                .accessibilityLabel("일시정지")
+
+                Spacer(minLength: 20)
+
+                HStack(spacing: 11) {
+                    floorOrnament
+
+                    Text("제\(gameSession.progress.currentFloor.rawValue)층")
+                        .font(.system(size: 19, weight: .medium, design: .serif))
+                        .foregroundStyle(SharedHUDPalette.title)
+                        .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
+
+                    floorOrnament
+                        .scaleEffect(x: -1, y: 1)
+                }
+
+                Spacer(minLength: 20)
+
+                topBarButton(systemImage: "gearshape") {
+                    isShowingSettings = true
+                }
+                .help("설정")
+                .accessibilityLabel("설정")
             }
-            .help("일시정지")
-            .accessibilityLabel("일시정지")
-
-            Spacer()
-
-            Text("제\(gameSession.progress.currentFloor.rawValue)층")
-                .font(.caption.monospaced().weight(.bold))
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            Button {
-                isShowingSettings = true
-            } label: {
-                Image(systemName: "gearshape")
-            }
-            .help("설정")
-            .accessibilityLabel("설정")
+            .padding(.horizontal, 16)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 10)
-        .foregroundStyle(DAColor.body)
-        .background(DAColor.panel.opacity(0.78))
+        .clipped()
         .overlay(alignment: .bottom) {
-            Rectangle().fill(DAColor.divider.opacity(0.8)).frame(height: 1)
+            Rectangle()
+                .fill(SharedHUDPalette.brass.opacity(0.45))
+                .frame(height: 1)
         }
+    }
+
+    private var floorOrnament: some View {
+        Image("SharedFloorOrnament")
+            .resizable()
+            .scaledToFill()
+            .frame(width: 76, height: 20)
+            .clipped()
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+
+    private func topBarButton(
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            ZStack {
+                Image("SharedHUDIconPlate")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 48, height: 44)
+                    .clipped()
+
+                Image(systemName: systemImage)
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(SharedHUDPalette.icon)
+            }
+            .frame(width: 48, height: 44)
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -114,4 +165,10 @@ struct DemoFlowView: View {
             DemoCompleteView(onReturnToTitle: onExit)
         }
     }
+}
+
+private enum SharedHUDPalette {
+    static let brass = Color(red: 184 / 255, green: 139 / 255, blue: 77 / 255)
+    static let title = Color(red: 225 / 255, green: 202 / 255, blue: 164 / 255)
+    static let icon = Color(red: 222 / 255, green: 216 / 255, blue: 202 / 255)
 }
