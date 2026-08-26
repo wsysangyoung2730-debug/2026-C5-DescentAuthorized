@@ -113,9 +113,9 @@ private extension SpellDefinition {
     var battleEffectRangeTitle: String {
         let range = effect.range
         switch category {
-        case .attack: "공격 \(range.lowerBound)~\(range.upperBound)"
-        case .defense: "방벽 \(range.lowerBound)~\(range.upperBound)"
-        case .dispel: "해제 \(range.lowerBound)~\(range.upperBound)"
+        case .attack: return "공격 \(range.lowerBound)~\(range.upperBound)"
+        case .defense: return "방벽 \(range.lowerBound)~\(range.upperBound)"
+        case .dispel: return "해제 \(range.lowerBound)~\(range.upperBound)"
         }
     }
 }
