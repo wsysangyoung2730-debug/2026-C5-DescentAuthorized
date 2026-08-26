@@ -14,6 +14,7 @@ struct DemoFlowView: View {
     private let hudButtonCenterYRatio: CGFloat = 0.5
     private let battleTopBarButtonWidth: CGFloat = 68
     private let battlePlateToStatusSpacing: CGFloat = 14
+    private let battlePlayerStatusLeadingRatio: CGFloat = 0.11
     private var topBarCenterYRatio: CGFloat { hudButtonCenterYRatio }
 
     private var topBarHeight: CGFloat {
@@ -163,7 +164,8 @@ struct DemoFlowView: View {
         GeometryReader { proxy in
             let buttonHalfWidth = battleTopBarButtonWidth / 2
             let leftPauseRightX = (proxy.size.width * leftHUDButtonCenterRatio) + buttonHalfWidth
-            let battleHorizontalPadding = leftPauseRightX + battlePlateToStatusSpacing
+            let battleTrailingPadding = leftPauseRightX + battlePlateToStatusSpacing
+            let playerStatusLeadingX = proxy.size.width * battlePlayerStatusLeadingRatio
 
             ZStack {
                 BattleTopHUDView(
@@ -171,7 +173,8 @@ struct DemoFlowView: View {
                     floor: gameSession.progress.currentFloor,
                     enemyToNextActionSpacing: battlePlateToStatusSpacing
                 )
-                .padding(.horizontal, battleHorizontalPadding)
+                .padding(.leading, playerStatusLeadingX)
+                .padding(.trailing, battleTrailingPadding)
                 .frame(
                     width: proxy.size.width,
                     height: proxy.size.height,
