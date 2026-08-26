@@ -5,7 +5,6 @@ struct Floor10TutorialView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     @State private var descentState: RealityDescentPresentationState = .inactive
-    @State private var transitionTask: Task<Void, Never>?
     let sceneController: RealitySceneController
 
     var body: some View {
@@ -15,6 +14,8 @@ struct Floor10TutorialView: View {
                     configuration: .floor10,
                     action: { gameSession.send(.leaveMeetingRoom) }
                 )
+            } else if gameSession.progress.currentScene == .floor10DescentDoor {
+                descentDoorScene
             } else {
                 ZStack {
                     LinearGradient(
@@ -42,7 +43,6 @@ struct Floor10TutorialView: View {
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
             sceneController.setDescentPresentation(descentState, reducedMotion: reducedMotion)
         }
-        .onDisappear { transitionTask?.cancel() }
     }
 
     @ViewBuilder
@@ -69,7 +69,7 @@ struct Floor10TutorialView: View {
             trainingScene
 
         case .floor10DescentDoor:
-            descentDoorScene
+            EmptyView()
 
         default:
             EmptyView()
@@ -145,25 +145,24 @@ struct Floor10TutorialView: View {
     }
 
     private var descentDoorScene: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sceneCode("10-E / 제9층 하강문")
-            Text("하강 권한을 증명하십시오")
-                .font(.title2.weight(.semibold))
-            Text("문 위의 관리국 표식을 따라 승인 문양을 정확히 그려야 잠금이 해제된다. 문 아래에서는 금속을 긁는 듯한 소리가 들린다.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineSpacing(3)
+        VStack {
+            Spacer()
 
-            DoorGlyphPanel(
-                definition: DescentDoorGlyphCatalog.floor10,
-                inputPreference: appSettings.inputPreference,
-                onStateChanged: updateDescentState,
-                onApproved: { _ in
-                    completeDescent()
-                }
-            )
-            .frame(maxWidth: 720)
+            Button {
+                gameSession.send(.approveDescentDoor)
+            } label: {
+                Label("다음 층으로 이동", systemImage: "arrow.down.circle.fill")
+                    .font(.headline)
+                    .frame(minWidth: 240)
+                    .padding(.vertical, 6)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(DAColor.magic)
+            .padding(12)
+            .background(.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+            .padding(.bottom, 44)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var trainingSpell: SpellDefinition {
@@ -213,7 +212,7 @@ struct Floor10TutorialView: View {
 
     private var contentWidth: CGFloat {
         switch gameSession.progress.currentScene {
-        case .floor10TrainingWall, .floor10DescentDoor: 760
+        case .floor10TrainingWall: 760
         default: 500
         }
     }
@@ -221,32 +220,6 @@ struct Floor10TutorialView: View {
     private func synchronizeDescentState() {
         sceneController.setRewardPresentation(.inactive, reducedMotion: appSettings.reducedMotion)
         setDescentState(gameSession.progress.currentScene == .floor10DescentDoor ? .ready : .inactive)
-    }
-
-    private func updateDescentState(_ state: DoorGlyphPresentationState) {
-        switch state {
-        case .ready: setDescentState(.ready)
-        case .drawing: setDescentState(.drawing)
-        case .failed: setDescentState(.failed)
-        case .approved: setDescentState(.approved)
-        }
-    }
-
-    private func completeDescent() {
-        setDescentState(.approved)
-        transitionTask?.cancel()
-        transitionTask = Task { @MainActor in
-            try? await Task.sleep(
-                for: RealityDescentTransitionTiming.approvalAnimationDelay(
-                    reducedMotion: appSettings.reducedMotion
-                )
-            )
-            guard !Task.isCancelled else { return }
-            setDescentState(.open)
-            try? await Task.sleep(for: RealityDescentTransitionTiming.openStateHold)
-            guard !Task.isCancelled else { return }
-            gameSession.send(.approveDescentDoor)
-        }
     }
 
     private func setDescentState(_ state: RealityDescentPresentationState) {
