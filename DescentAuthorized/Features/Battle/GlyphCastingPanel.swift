@@ -23,6 +23,7 @@ struct GlyphCastingPanel: View {
     @State private var feedback: CastingEvaluation?
     @State private var rejectionMessage: String?
     @State private var canvasController = RuneDrawingCanvasController()
+    @State private var resetAfterCastTask: Task<Void, Never>?
 
     private let manaEstimator = GlyphManaEstimator()
 
@@ -57,7 +58,10 @@ struct GlyphCastingPanel: View {
             actionBar
         }
         .onAppear { publishResourcePreview(for: drawingState) }
-        .onDisappear { onResourcePreviewChanged?(availableMana, availableStrokes) }
+        .onDisappear {
+            resetAfterCastTask?.cancel()
+            onResourcePreviewChanged?(availableMana, availableStrokes)
+        }
         .onChange(of: spell.id) { _, _ in resetDrawing() }
         .onChange(of: availableMana) { _, _ in resetDrawing() }
         .onChange(of: availableStrokes) { _, _ in resetDrawing() }
@@ -109,6 +113,7 @@ struct GlyphCastingPanel: View {
                 onDrawingChanged: updateDrawing,
                 onInputRejected: handleInputRejection
             )
+            .allowsHitTesting(feedback == nil)
 
             if let result = feedback {
                 resultOverlay(result)
@@ -153,14 +158,14 @@ struct GlyphCastingPanel: View {
             .buttonStyle(.bordered)
             .help("마지막 획 취소")
             .accessibilityLabel("마지막 획 취소")
-            .disabled(completedStrokes.isEmpty)
+            .disabled(completedStrokes.isEmpty || feedback != nil)
 
             Button("시전") {
                 cast()
             }
             .buttonStyle(.borderedProminent)
             .tint(categoryColor)
-            .disabled(!canCast)
+            .disabled(!canCast || feedback != nil)
         }
     }
 
@@ -277,9 +282,26 @@ struct GlyphCastingPanel: View {
             inputMethod: method,
             evaluation: evaluation
         ))
+        scheduleResetAfterCast()
+    }
+
+    private func scheduleResetAfterCast() {
+        resetAfterCastTask?.cancel()
+        resetAfterCastTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(900))
+            guard !Task.isCancelled else { return }
+            resetAfterCastTask = nil
+            clearDrawingState()
+        }
     }
 
     private func resetDrawing() {
+        resetAfterCastTask?.cancel()
+        resetAfterCastTask = nil
+        clearDrawingState()
+    }
+
+    private func clearDrawingState() {
         canvasController.clear()
         drawingState = .empty
         completedStrokes = []
