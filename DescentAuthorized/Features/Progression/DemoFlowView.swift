@@ -91,38 +91,7 @@ struct DemoFlowView: View {
                     .allowsHitTesting(false)
             }
 
-            HStack(spacing: 18) {
-                topBarButton(systemImage: "pause.fill") {
-                    isShowingPauseMenu = true
-                }
-                .offset(x: -5, y: -3)
-                .help("일시정지")
-                .accessibilityLabel("일시정지")
-
-                Spacer(minLength: 20)
-
-                HStack(spacing: 11) {
-                    floorOrnament
-
-                    Text("제\(gameSession.progress.currentFloor.rawValue)층")
-                        .font(.system(size: 24, weight: .medium, design: .serif))
-                        .foregroundStyle(SharedHUDPalette.title)
-                        .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
-
-                    floorOrnament
-                        .scaleEffect(x: -1, y: 1)
-                }
-
-                Spacer(minLength: 20)
-
-                topBarButton(systemImage: "gearshape") {
-                    isShowingSettings = true
-                }
-                .offset(x: 3, y: -5)
-                .help("설정")
-                .accessibilityLabel("설정")
-            }
-            .padding(.horizontal, 54)
+            topBarControls
         }
         .frame(height: topBarHeight)
         .clipped()
@@ -137,12 +106,50 @@ struct DemoFlowView: View {
         }
     }
 
+    private var topBarControls: some View {
+        HStack(alignment: .center, spacing: 18) {
+            topBarButton(systemImage: "pause.fill") {
+                isShowingPauseMenu = true
+            }
+            .help("일시정지")
+            .accessibilityLabel("일시정지")
+
+            Spacer(minLength: 20)
+
+            HStack(spacing: 11) {
+                floorOrnament
+
+                Text("제\(gameSession.progress.currentFloor.rawValue)층")
+                    .font(.system(size: 24, weight: .medium, design: .serif))
+                    .foregroundStyle(SharedHUDPalette.title)
+                    .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
+
+                floorOrnament
+                    .scaleEffect(x: -1, y: 1)
+            }
+            .frame(height: 58)
+
+            Spacer(minLength: 20)
+
+            topBarButton(systemImage: "gearshape") {
+                isShowingSettings = true
+            }
+            .help("설정")
+            .accessibilityLabel("설정")
+        }
+        .padding(.horizontal, 54)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .offset(y: -3)
+    }
+
     private var floorOrnament: some View {
         Image("SharedFloorOrnament")
             .resizable()
             .scaledToFill()
             .frame(width: 96, height: 26)
             .clipped()
+            .blendMode(.screen)
+            .compositingGroup()
             .allowsHitTesting(false)
             .accessibilityHidden(true)
     }
@@ -158,6 +165,8 @@ struct DemoFlowView: View {
                     .scaledToFill()
                     .frame(width: 68, height: 58)
                     .clipped()
+                    .blendMode(.screen)
+                    .compositingGroup()
 
                 Image(systemName: systemImage)
                     .font(.system(size: 22, weight: .medium))
