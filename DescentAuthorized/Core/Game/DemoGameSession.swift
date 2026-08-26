@@ -7,8 +7,14 @@ enum DemoCommand: Sendable {
     case completeProtectionTraining(grade: CastingGrade)
     case approveDescentDoor
     case enterRecordsBattle
+    case beginRecordsBattle
+    case continueAfterRecordsDefeat
     case enterProtectionRoom
+    case beginResidualBattle
+    case continueAfterResidualDefeat
     case releaseObservationDoor
+    case beginAdministratorBattle
+    case continueAfterAdministratorDefeat
     case selectReward(String)
     case readRecord(String)
     case startEncounter
@@ -79,11 +85,29 @@ struct DemoGameSession: Sendable {
         case .enterRecordsBattle:
             return wrap(try progression.enterRecordsBattle())
 
+        case .beginRecordsBattle:
+            return wrap(try progression.beginRecordsBattle())
+
+        case .continueAfterRecordsDefeat:
+            return wrap(try progression.continueAfterRecordsDefeat())
+
         case .enterProtectionRoom:
             return wrap(try progression.enterProtectionRoom())
 
+        case .beginResidualBattle:
+            return wrap(try progression.beginResidualBattle())
+
+        case .continueAfterResidualDefeat:
+            return wrap(try progression.continueAfterResidualDefeat())
+
         case .releaseObservationDoor:
             return wrap(try progression.releaseObservationDoor())
+
+        case .beginAdministratorBattle:
+            return wrap(try progression.beginAdministratorBattle())
+
+        case .continueAfterAdministratorDefeat:
+            return wrap(try progression.continueAfterAdministratorDefeat())
 
         case let .selectReward(candidateID):
             return wrap(try progression.selectReward(candidateID: candidateID))

@@ -33,7 +33,7 @@ final class EnemyPatternTests: XCTestCase {
         _ = try encounter.submitSpell(.riftSeverance, strokes: referenceStrokes(for: spell))
         let events = try encounter.submitSpell(.riftSeverance, strokes: referenceStrokes(for: spell))
 
-        XCTAssertEqual(encounter.state.enemy.hp, 42)
+        XCTAssertEqual(encounter.state.enemy.hp, 40)
         XCTAssertEqual(encounter.state.activeErasureZones.count, 1)
         XCTAssertTrue(events.contains { event in
             if case .erasureZoneAdded = event { return true }

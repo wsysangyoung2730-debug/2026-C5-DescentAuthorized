@@ -145,7 +145,10 @@ struct CombatEngine: Sendable {
         var events: [BattleEvent]
         if evaluation.succeeded {
             events = [.spellResolved(spell: spell.id, grade: evaluation.grade)]
-            events.append(contentsOf: apply(spell.effect, grade: evaluation.grade))
+            events.append(contentsOf: apply(
+                spell.effect,
+                effectStrength: evaluation.effectStrength
+            ))
         } else {
             events = [
                 .spellRejected(
@@ -260,21 +263,33 @@ struct CombatEngine: Sendable {
         state.triggeredThresholdRuleIDs.insert(id)
     }
 
-    private mutating func apply(_ effect: SpellEffect, grade: CastingGrade) -> [BattleEvent] {
+    private mutating func apply(
+        _ effect: SpellEffect,
+        effectStrength: Double
+    ) -> [BattleEvent] {
         switch effect {
-        case let .damage(base, piercesNormalBarrier):
+        case let .damage(minimum, maximum, piercesNormalBarrier):
             guard state.enemy.absoluteBarrierCharges == 0 else {
                 return [.attackNegatedByAbsoluteBarrier(target: state.enemy.id)]
             }
 
-            let damage = Int((Double(base) * grade.damageMultiplier).rounded())
+            let damage = scaledEffect(
+                minimum: minimum,
+                maximum: maximum,
+                strength: effectStrength
+            )
             return applyDamage(
                 damage,
                 to: &state.enemy,
                 piercesNormalBarrier: piercesNormalBarrier
             )
 
-        case let .fixedBarrier(amount, maxStack):
+        case let .fixedBarrier(minimum, maximum, maxStack):
+            let amount = scaledEffect(
+                minimum: minimum,
+                maximum: maximum,
+                strength: effectStrength
+            )
             state.player.normalBarrier = min(state.player.normalBarrier + amount, maxStack)
             return [
                 .normalBarrierChanged(
@@ -283,8 +298,13 @@ struct CombatEngine: Sendable {
                 )
             ]
 
-        case let .dispelAbsoluteBarrier(charges):
+        case let .dispelAbsoluteBarrier(minimumCharges, maximumCharges):
             guard state.enemy.absoluteBarrierCharges > 0 else { return [] }
+            let charges = scaledEffect(
+                minimum: minimumCharges,
+                maximum: maximumCharges,
+                strength: effectStrength
+            )
             state.enemy.absoluteBarrierCharges = max(
                 0,
                 state.enemy.absoluteBarrierCharges - charges
@@ -296,6 +316,17 @@ struct CombatEngine: Sendable {
                 )
             ]
         }
+    }
+
+    private func scaledEffect(
+        minimum: Int,
+        maximum: Int,
+        strength: Double
+    ) -> Int {
+        let clampedStrength = min(max(strength, 0), 1)
+        return minimum + Int(
+            (Double(maximum - minimum) * clampedStrength).rounded()
+        )
     }
 
     private func applyDamage(

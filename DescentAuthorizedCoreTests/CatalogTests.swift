@@ -21,6 +21,14 @@ final class CatalogTests: XCTestCase {
         XCTAssertEqual(SpellCatalog.sealRelease.requiredStrokes, 1)
     }
 
+    func testSpellEffectRangesMatchBattleBalance() {
+        XCTAssertEqual(SpellCatalog.afterglowErasure.effect.range, 18...25)
+        XCTAssertEqual(SpellCatalog.riftSeverance.effect.range, 28...40)
+        XCTAssertEqual(SpellCatalog.barrierPiercing.effect.range, 34...48)
+        XCTAssertEqual(SpellCatalog.basicBarrier.effect.range, 20...30)
+        XCTAssertEqual(SpellCatalog.sealRelease.effect.range, 1...2)
+    }
+
     func testEnemyCatalogContainsEveryDemoEnemy() {
         XCTAssertEqual(EnemyCatalog.all.count, EnemyID.allCases.count)
 

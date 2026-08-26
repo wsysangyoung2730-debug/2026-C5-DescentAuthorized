@@ -5,18 +5,19 @@ struct Floor9DescentDoorView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     private let spell = SpellCatalog.barrierPiercing
+    let sceneController: RealitySceneController
+    @State private var descentState: RealityDescentPresentationState = .ready
+    @State private var transitionTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
-            Color(red: 0.018, green: 0.022, blue: 0.03)
+            Color.black.opacity(0.2)
                 .ignoresSafeArea()
+                .allowsHitTesting(false)
 
-            HStack(spacing: 0) {
+            HStack(alignment: .bottom, spacing: 18) {
                 learnedSpell
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(30)
-
-                Divider()
+                    .frame(width: 310)
 
                 VStack(alignment: .leading, spacing: 14) {
                     Text("9-D / 제8층 하강문")
@@ -32,16 +33,32 @@ struct Floor9DescentDoorView: View {
                     DoorGlyphPanel(
                         definition: DescentDoorGlyphCatalog.floor9,
                         inputPreference: appSettings.inputPreference,
+                        onStateChanged: updateDescentState,
                         onApproved: { _ in
-                            gameSession.send(.approveDescentDoor)
+                            completeDescent()
                         }
                     )
-                    .frame(maxWidth: 650)
+                    .frame(width: 560, height: 390)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(30)
+                .padding(20)
+                .background(DAColor.panel.opacity(0.92))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(DAColor.divider, lineWidth: 1)
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+            .padding(26)
         }
+        .onAppear {
+            sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+            setDescentState(.ready)
+        }
+        .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
+            sceneController.setDescentPresentation(descentState, reducedMotion: reducedMotion)
+        }
+        .onDisappear { transitionTask?.cancel() }
     }
 
     private var learnedSpell: some View {
@@ -69,7 +86,7 @@ struct Floor9DescentDoorView: View {
                     )
                 }
             }
-            .frame(maxHeight: 310)
+            .frame(height: 150)
             .background(Color.black.opacity(0.42))
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .overlay {
@@ -81,6 +98,37 @@ struct Floor9DescentDoorView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private func updateDescentState(_ state: DoorGlyphPresentationState) {
+        switch state {
+        case .ready: setDescentState(.ready)
+        case .drawing: setDescentState(.drawing)
+        case .failed: setDescentState(.failed)
+        case .approved: setDescentState(.approved)
+        }
+    }
+
+    private func completeDescent() {
+        setDescentState(.approved)
+        transitionTask?.cancel()
+        transitionTask = Task { @MainActor in
+            try? await Task.sleep(
+                for: RealityDescentTransitionTiming.approvalAnimationDelay(
+                    reducedMotion: appSettings.reducedMotion
+                )
+            )
+            guard !Task.isCancelled else { return }
+            setDescentState(.open)
+            try? await Task.sleep(for: RealityDescentTransitionTiming.openStateHold)
+            guard !Task.isCancelled else { return }
+            gameSession.send(.approveDescentDoor)
+        }
+    }
+
+    private func setDescentState(_ state: RealityDescentPresentationState) {
+        descentState = state
+        sceneController.setDescentPresentation(state, reducedMotion: appSettings.reducedMotion)
     }
 
     private func point(_ point: NormalizedPoint, size: CGSize) -> CGPoint {

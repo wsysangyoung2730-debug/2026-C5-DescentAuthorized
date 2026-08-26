@@ -6,11 +6,17 @@ enum DrawingInputPreference: String, Codable, CaseIterable, Sendable {
     case fingerOnly
 }
 
+enum DrawingPadPosition: String, Codable, CaseIterable, Sendable {
+    case left
+    case right
+}
+
 struct GameSettings: Codable, Equatable, Sendable {
-    static let currentVersion = 2
+    static let currentVersion = 3
     static let defaults = GameSettings(
         saveVersion: currentVersion,
         inputPreference: .automatic,
+        drawingPadPosition: .left,
         soundEffectsEnabled: true,
         musicEnabled: true,
         hapticsEnabled: true,
@@ -20,6 +26,7 @@ struct GameSettings: Codable, Equatable, Sendable {
 
     var saveVersion: Int
     var inputPreference: DrawingInputPreference
+    var drawingPadPosition: DrawingPadPosition
     var soundEffectsEnabled: Bool
     var musicEnabled: Bool
     var hapticsEnabled: Bool
@@ -29,6 +36,7 @@ struct GameSettings: Codable, Equatable, Sendable {
     init(
         saveVersion: Int = currentVersion,
         inputPreference: DrawingInputPreference = .automatic,
+        drawingPadPosition: DrawingPadPosition = .left,
         soundEffectsEnabled: Bool = true,
         musicEnabled: Bool = true,
         hapticsEnabled: Bool = true,
@@ -37,6 +45,7 @@ struct GameSettings: Codable, Equatable, Sendable {
     ) {
         self.saveVersion = saveVersion
         self.inputPreference = inputPreference
+        self.drawingPadPosition = drawingPadPosition
         self.soundEffectsEnabled = soundEffectsEnabled
         self.musicEnabled = musicEnabled
         self.hapticsEnabled = hapticsEnabled
@@ -53,6 +62,7 @@ struct GameSettings: Codable, Equatable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case saveVersion
         case inputPreference
+        case drawingPadPosition
         case soundEffectsEnabled
         case musicEnabled
         case hapticsEnabled
@@ -67,6 +77,10 @@ struct GameSettings: Codable, Equatable, Sendable {
             DrawingInputPreference.self,
             forKey: .inputPreference
         ) ?? .automatic
+        drawingPadPosition = try container.decodeIfPresent(
+            DrawingPadPosition.self,
+            forKey: .drawingPadPosition
+        ) ?? .left
         soundEffectsEnabled = try container.decodeIfPresent(
             Bool.self,
             forKey: .soundEffectsEnabled

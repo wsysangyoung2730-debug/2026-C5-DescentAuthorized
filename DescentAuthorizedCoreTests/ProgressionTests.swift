@@ -14,25 +14,31 @@ final class ProgressionTests: XCTestCase {
         _ = try controller.approveDescentDoor()
 
         _ = try controller.enterRecordsBattle()
+        _ = try controller.beginRecordsBattle()
         _ = try controller.completeEncounter(
             enemy: .recordsAdministrator,
             remainingPlayerHP: 40
         )
+        _ = try controller.continueAfterRecordsDefeat()
         _ = try controller.selectReward(candidateID: "floor9-worn-a")
         _ = try controller.approveDescentDoor()
 
         _ = try controller.enterProtectionRoom()
         _ = try controller.learnBasicBarrier()
         _ = try controller.completeProtectionTraining(grade: .approved)
+        _ = try controller.beginResidualBattle()
         _ = try controller.completeEncounter(
             enemy: .observationResidual,
             remainingPlayerHP: 25
         )
+        _ = try controller.continueAfterResidualDefeat()
         _ = try controller.releaseObservationDoor()
+        _ = try controller.beginAdministratorBattle()
         _ = try controller.completeEncounter(
             enemy: .observationAdministrator,
             remainingPlayerHP: 18
         )
+        _ = try controller.continueAfterAdministratorDefeat()
         _ = try controller.selectReward(candidateID: "floor8-forbidden")
         let completionEvents = try controller.approveDescentDoor()
 
@@ -89,6 +95,7 @@ final class ProgressionTests: XCTestCase {
         _ = try controller.enterProtectionRoom()
         _ = try controller.learnBasicBarrier()
         _ = try controller.completeProtectionTraining(grade: .approved)
+        _ = try controller.beginResidualBattle()
         _ = try controller.completeEncounter(
             enemy: .observationResidual,
             remainingPlayerHP: 10
@@ -173,10 +180,12 @@ final class ProgressionTests: XCTestCase {
         _ = try controller.completeTraining(spell: .riftSeverance, grade: .approved)
         _ = try controller.approveDescentDoor()
         _ = try controller.enterRecordsBattle()
+        _ = try controller.beginRecordsBattle()
         _ = try controller.completeEncounter(
             enemy: .recordsAdministrator,
             remainingPlayerHP: remainingHP
         )
+        _ = try controller.continueAfterRecordsDefeat()
         return controller
     }
 }

@@ -22,7 +22,7 @@ enum SpellCatalog {
         category: .attack,
         tier: .worn,
         recommendedMana: 30,
-        effect: .damage(base: 18, piercesNormalBarrier: false),
+        effect: .damage(minimum: 18, maximum: 25, piercesNormalBarrier: false),
         glyph: GlyphDefinition(
             difficulty: .easy,
             strokes: [
@@ -30,8 +30,8 @@ enum SpellCatalog {
                     points: [(20, 55), (37, 72), (67, 28), (78, 43), (66, 51)],
                     requiredNodeIndices: [1, 2],
                     optionalNodeIndices: [3],
-                    nodeRadius: 6,
-                    pathRadius: 7,
+                    nodeRadius: 9,
+                    pathRadius: 10,
                     optionalNodeGradeCap: .incomplete
                 )
             ],
@@ -45,15 +45,15 @@ enum SpellCatalog {
         category: .attack,
         tier: .worn,
         recommendedMana: 42,
-        effect: .damage(base: 28, piercesNormalBarrier: false),
+        effect: .damage(minimum: 28, maximum: 40, piercesNormalBarrier: false),
         glyph: GlyphDefinition(
             difficulty: .normal,
             strokes: [
                 stroke(
                     points: [(18, 68), (39, 25), (34, 56), (68, 35), (55, 75), (82, 58), (72, 48)],
                     requiredNodeIndices: [1, 2, 3, 4, 5],
-                    nodeRadius: 5,
-                    pathRadius: 5.5
+                    nodeRadius: 8,
+                    pathRadius: 8.5
                 )
             ],
             crossings: []
@@ -66,29 +66,41 @@ enum SpellCatalog {
         category: .attack,
         tier: .engraved,
         recommendedMana: 75,
-        effect: .damage(base: 34, piercesNormalBarrier: true),
+        effect: .damage(minimum: 34, maximum: 48, piercesNormalBarrier: true),
         glyph: GlyphDefinition(
             difficulty: .hard,
             strokes: [
                 stroke(
-                    points: [(24, 70), (17, 43), (35, 22), (59, 26), (82, 45), (76, 69)],
-                    requiredNodeIndices: [1, 2, 3, 4],
-                    nodeRadius: 4,
-                    pathRadius: 4.5
+                    points: [
+                        (24, 72), (30, 63), (37, 54),
+                        (36, 43), (37, 30), (40, 18),
+                        (44, 10), (51, 6), (57, 8),
+                        (59, 14), (57, 25), (54, 37),
+                        (50, 47), (44, 56), (32, 58),
+                        (43, 69), (49, 74), (56, 78),
+                        (62, 79), (69, 77), (76, 72)
+                    ],
+                    requiredNodeIndices: [2, 7, 13, 18],
+                    nodeRadius: 9,
+                    pathRadius: 9
                 ),
                 stroke(
-                    points: [(37, 82), (50, 52), (62, 34), (73, 18)],
-                    requiredNodeIndices: [1, 2],
-                    nodeRadius: 4,
-                    pathRadius: 4.5
+                    points: [
+                        (76, 8), (72, 20), (70, 32),
+                        (67, 45), (65, 58), (62, 70),
+                        (60, 79), (56, 87), (51, 92), (46, 94)
+                    ],
+                    requiredNodeIndices: [3, 6],
+                    nodeRadius: 9,
+                    pathRadius: 9
                 )
             ],
             crossings: [
                 GlyphCrossingRequirement(
                     firstStrokeIndex: 0,
                     secondStrokeIndex: 1,
-                    center: point(62, 34),
-                    radius: 6
+                    center: point(60, 78),
+                    radius: 10
                 )
             ]
         )
@@ -100,7 +112,7 @@ enum SpellCatalog {
         category: .defense,
         tier: .worn,
         recommendedMana: 32,
-        effect: .fixedBarrier(amount: 20, maxStack: 40),
+        effect: .fixedBarrier(minimum: 20, maximum: 30, maxStack: 40),
         glyph: GlyphDefinition(
             difficulty: .easy,
             strokes: [
@@ -108,8 +120,8 @@ enum SpellCatalog {
                     points: [(22, 68), (25, 42), (43, 24), (62, 28), (78, 50), (69, 72), (50, 78)],
                     requiredNodeIndices: [2, 4],
                     optionalNodeIndices: [1, 3, 5],
-                    nodeRadius: 6,
-                    pathRadius: 7
+                    nodeRadius: 9,
+                    pathRadius: 10
                 )
             ],
             crossings: []
@@ -122,15 +134,15 @@ enum SpellCatalog {
         category: .dispel,
         tier: .worn,
         recommendedMana: 28,
-        effect: .dispelAbsoluteBarrier(charges: 1),
+        effect: .dispelAbsoluteBarrier(minimumCharges: 1, maximumCharges: 2),
         glyph: GlyphDefinition(
             difficulty: .normal,
             strokes: [
                 stroke(
                     points: [(25, 72), (42, 57), (51, 48), (70, 27), (62, 55), (81, 68)],
                     requiredNodeIndices: [1, 2, 3, 4],
-                    nodeRadius: 5,
-                    pathRadius: 5.5
+                    nodeRadius: 8,
+                    pathRadius: 8.5
                 )
             ],
             crossings: []
