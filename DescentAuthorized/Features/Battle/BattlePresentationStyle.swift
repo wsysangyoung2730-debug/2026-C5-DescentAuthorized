@@ -35,14 +35,23 @@ struct BattleTopHUDView: View {
                 Text("제\(floor.rawValue)층")
                     .font(.system(size: 18, weight: .medium, design: .serif))
                     .foregroundStyle(DAColor.gold)
-                Text("TURN \(battle.turnNumber)")
-                    .font(.caption.monospacedDigit().weight(.bold))
-                    .foregroundStyle(DAColor.body)
-                Text(phaseTitle)
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(DAColor.secondary)
+
+                HStack(spacing: 5) {
+                    Text("TURN \(battle.turnNumber)")
+                        .font(.caption.monospacedDigit().weight(.bold))
+                        .foregroundStyle(DAColor.body)
+
+                    Text("·")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(DAColor.secondary)
+
+                    Text(phaseTitle)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(DAColor.secondary)
+                }
+                .lineLimit(1)
             }
-            .frame(width: 112)
+            .frame(width: 152)
             .frame(maxHeight: .infinity, alignment: .center)
 
             Spacer(minLength: 8)
