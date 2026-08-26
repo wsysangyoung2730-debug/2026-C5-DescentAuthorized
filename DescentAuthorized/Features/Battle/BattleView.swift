@@ -246,6 +246,18 @@ struct BattleView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.bottom, bottomBarHeight)
 
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: Color.black.opacity(0.16), location: 0.34),
+                        .init(color: Color.black.opacity(0.68), location: 1)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: bottomBarHeight + 74)
+                .allowsHitTesting(false)
+
                 glyphInputPanel(presentation)
                     .frame(width: inputPanelWidth, height: inputPanelHeight)
                     .position(
@@ -257,7 +269,6 @@ struct BattleView: View {
                     .frame(height: 218)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
-                    .background(DAColor.background.opacity(0.96))
             }
             .overlay {
                 Rectangle()
