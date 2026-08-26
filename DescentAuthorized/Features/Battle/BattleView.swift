@@ -625,6 +625,15 @@ struct BattleView: View {
         guard lastLoggedEventSequence != sequence else { return }
         lastLoggedEventSequence = sequence
 
+        let beginsNewBattle = events.contains { event in
+            guard case let .combat(combatEvent) = event else { return false }
+            guard case .battleStarted = combatEvent else { return false }
+            return true
+        }
+        if beginsNewBattle {
+            battleLogEntries.removeAll(keepingCapacity: true)
+        }
+
         let newEntries = events.compactMap(combatLogEntry)
         guard !newEntries.isEmpty else { return }
 
