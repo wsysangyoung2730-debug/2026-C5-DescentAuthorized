@@ -56,7 +56,10 @@ enum LoadingTipCatalog {
         "봉인 해제는 절대 방벽의 충전을 제거할 수 있습니다."
     ]
 
-    static func randomTip(for context: LoadingScreenContext) -> String {
+    static func randomTip(
+        for context: LoadingScreenContext,
+        excluding currentTip: String? = nil
+    ) -> String {
         let candidates: [String]
         switch context {
         case .startup, .floor10:
@@ -66,7 +69,8 @@ enum LoadingTipCatalog {
         case .floor8:
             candidates = general + floor9 + floor8
         }
-        return candidates.randomElement() ?? general[0]
+        let alternatives = candidates.filter { $0 != currentTip }
+        return alternatives.randomElement() ?? candidates.first ?? general[0]
     }
 }
 
@@ -74,6 +78,14 @@ struct LoadingScreenView: View {
     let context: LoadingScreenContext
     let progress: Double
     let tip: String
+    @State private var displayedTip: String
+
+    init(context: LoadingScreenContext, progress: Double, tip: String) {
+        self.context = context
+        self.progress = progress
+        self.tip = tip
+        _displayedTip = State(initialValue: tip)
+    }
 
     private var normalizedProgress: Double {
         min(max(progress, 0), 1)
@@ -99,9 +111,11 @@ struct LoadingScreenView: View {
                         Spacer()
 
                         HStack(alignment: .lastTextBaseline, spacing: 24) {
-                            Text("Tip : \(tip)")
+                            Text("Tip : \(displayedTip)")
                                 .font(.system(size: 18, weight: .medium))
                                 .lineLimit(2)
+                                .contentTransition(.opacity)
+                                .animation(.easeInOut(duration: 0.55), value: displayedTip)
 
                             Spacer(minLength: 24)
 
@@ -133,8 +147,26 @@ struct LoadingScreenView: View {
         .background(Color.black)
         .ignoresSafeArea()
         .allowsHitTesting(false)
+        .task(id: context) {
+            displayedTip = tip
+            while !Task.isCancelled {
+                do {
+                    try await Task.sleep(for: .seconds(5))
+                } catch {
+                    return
+                }
+                guard !Task.isCancelled else { return }
+                let nextTip = LoadingTipCatalog.randomTip(
+                    for: context,
+                    excluding: displayedTip
+                )
+                withAnimation(.easeInOut(duration: 0.55)) {
+                    displayedTip = nextTip
+                }
+            }
+        }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("로딩 중. \(tip)")
+        .accessibilityLabel("로딩 중. \(displayedTip)")
         .accessibilityValue("\(Int(normalizedProgress * 100))퍼센트")
     }
 
