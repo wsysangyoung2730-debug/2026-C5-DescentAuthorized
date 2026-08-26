@@ -107,7 +107,7 @@ struct DemoFlowView: View {
                 .help("설정")
                 .accessibilityLabel("설정")
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 54)
         }
         .frame(height: topBarHeight)
         .clipped()
