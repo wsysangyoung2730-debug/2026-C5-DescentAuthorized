@@ -12,6 +12,8 @@ struct GlyphCastingPanel: View {
     let availableMana: Double
     let availableStrokes: Int
     let erasureZones: [ErasureZone]
+    let showsResourceHeader: Bool
+    let onResourcePreviewChanged: ((Double, Int) -> Void)?
     let onCast: (GlyphCastSubmission) -> Void
 
     @State private var drawingState = RuneDrawingState.empty
@@ -23,12 +25,36 @@ struct GlyphCastingPanel: View {
 
     private let manaEstimator = GlyphManaEstimator()
 
+    init(
+        spell: SpellDefinition,
+        inputPreference: DrawingInputPreference,
+        availableMana: Double,
+        availableStrokes: Int,
+        erasureZones: [ErasureZone],
+        showsResourceHeader: Bool = true,
+        onResourcePreviewChanged: ((Double, Int) -> Void)? = nil,
+        onCast: @escaping (GlyphCastSubmission) -> Void
+    ) {
+        self.spell = spell
+        self.inputPreference = inputPreference
+        self.availableMana = availableMana
+        self.availableStrokes = availableStrokes
+        self.erasureZones = erasureZones
+        self.showsResourceHeader = showsResourceHeader
+        self.onResourcePreviewChanged = onResourcePreviewChanged
+        self.onCast = onCast
+    }
+
     var body: some View {
         VStack(spacing: 12) {
-            resourceHeader
+            if showsResourceHeader {
+                resourceHeader
+            }
             drawingSurface
             actionBar
         }
+        .onAppear { publishResourcePreview(for: drawingState) }
+        .onDisappear { onResourcePreviewChanged?(availableMana, availableStrokes) }
         .onChange(of: spell.id) { _, _ in resetDrawing() }
         .onChange(of: availableMana) { _, _ in resetDrawing() }
         .onChange(of: availableStrokes) { _, _ in resetDrawing() }
@@ -227,6 +253,7 @@ struct GlyphCastingPanel: View {
         drawingState = state
         feedback = nil
         rejectionMessage = nil
+        publishResourcePreview(for: state)
     }
 
     private func handleInputRejection(_ error: StrokeCaptureError) {
@@ -265,6 +292,19 @@ struct GlyphCastingPanel: View {
         lastInputMethod = nil
         feedback = nil
         rejectionMessage = nil
+        onResourcePreviewChanged?(availableMana, availableStrokes)
+    }
+
+    private func publishResourcePreview(for state: RuneDrawingState) {
+        let estimate = manaEstimator.estimate(
+            spell: spell,
+            strokes: state.previewStrokes,
+            erasureZones: erasureZones
+        )
+        onResourcePreviewChanged?(
+            max(0, availableMana - estimate.total),
+            availableStrokes - state.previewStrokes.count
+        )
     }
 
     private func gradeTitle(_ grade: CastingGrade) -> String {

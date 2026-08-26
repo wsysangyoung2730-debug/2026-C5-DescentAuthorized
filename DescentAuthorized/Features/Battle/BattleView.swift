@@ -146,6 +146,8 @@ struct BattleView: View {
     @State private var feedbackTask: Task<Void, Never>?
     @State private var battleLogEntries: [String] = []
     @State private var lastLoggedEventSequence: UInt64?
+    @State private var previewMana: Double?
+    @State private var previewStrokes: Int?
 
     var body: some View {
         ZStack {
@@ -193,6 +195,8 @@ struct BattleView: View {
         .task(id: gameSession.progress.currentScene) {
             battleLogEntries = []
             lastLoggedEventSequence = nil
+            previewMana = nil
+            previewStrokes = nil
             startEncounterIfNeeded()
             appendBattleLog(
                 gameSession.latestEvents,
@@ -274,6 +278,11 @@ struct BattleView: View {
                 availableMana: presentation.resources.mana,
                 availableStrokes: presentation.resources.strokes,
                 erasureZones: presentation.activeErasureZones,
+                showsResourceHeader: false,
+                onResourcePreviewChanged: { mana, strokes in
+                    previewMana = mana
+                    previewStrokes = strokes
+                },
                 onCast: { submission in
                     gameSession.send(.castSpell(
                         spell: spell.id,
@@ -356,7 +365,9 @@ struct BattleView: View {
 
     private func battleResourceBar(_ presentation: BattleUIPresentation) -> some View {
         let maximumMana = max(presentation.resources.maximumMana, 1)
-        let manaRatio = min(max(presentation.resources.mana / maximumMana, 0), 1)
+        let displayedMana = previewMana ?? presentation.resources.mana
+        let displayedStrokes = previewStrokes ?? presentation.resources.strokes
+        let manaRatio = min(max(displayedMana / maximumMana, 0), 1)
 
         return HStack(spacing: 10) {
             Text("마나 \(Int((manaRatio * 100).rounded()))%")
@@ -367,7 +378,7 @@ struct BattleView: View {
                 .frame(minWidth: 280, idealWidth: 460, maxWidth: 560)
                 .frame(height: 18)
 
-            Text(resourceSummary(presentation))
+            Text(resourceSummary(presentation, strokes: displayedStrokes))
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(DAColor.body.opacity(0.84))
                 .lineLimit(1)
@@ -419,19 +430,23 @@ struct BattleView: View {
 
                 Rectangle()
                     .fill(Color.white)
-                    .frame(width: markerWidth, height: height + 6)
-                    .offset(x: markerX, y: -3)
+                    .frame(width: markerWidth, height: height)
+                    .offset(x: markerX)
                     .shadow(color: .white.opacity(0.75), radius: 2)
 
                 RoundedRectangle(cornerRadius: 2)
                     .stroke(DAColor.gold.opacity(0.38), lineWidth: 1)
             }
+            .clipShape(RoundedRectangle(cornerRadius: 2))
             .animation(.easeOut(duration: 0.24), value: ratio)
         }
     }
 
-    private func resourceSummary(_ presentation: BattleUIPresentation) -> String {
-        let strokeSummary = "잔여 획 \(presentation.resources.strokes) / \(presentation.resources.maximumStrokes)"
+    private func resourceSummary(
+        _ presentation: BattleUIPresentation,
+        strokes: Int
+    ) -> String {
+        let strokeSummary = "잔여 획 \(strokes) / \(presentation.resources.maximumStrokes)"
         guard let selectedSpell = presentation.selectedSpell else { return strokeSummary }
         return "\(strokeSummary) · \(selectedSpell.name)"
     }
