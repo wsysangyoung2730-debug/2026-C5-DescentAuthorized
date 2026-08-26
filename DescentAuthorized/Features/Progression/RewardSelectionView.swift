@@ -178,7 +178,7 @@ struct RewardSelectionView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
                     .frame(maxWidth: metrics.cardWidth * 0.72)
-                    .padding(.top, metrics.cardHeight * 0.155)
+                    .padding(.top, metrics.cardHeight * 0.18)
 
                 ZStack {
                     Image("RewardScrollGlyphBackplate")
@@ -224,7 +224,7 @@ struct RewardSelectionView: View {
                     .frame(maxWidth: metrics.cardWidth * 0.78)
                     .padding(.top, 8)
                 tagRow(for: spell, fontSize: metrics.tagSize)
-                    .padding(.bottom, isSelected ? metrics.cardHeight * 0.065 : metrics.cardHeight * 0.085)
+                    .padding(.bottom, isSelected ? metrics.cardHeight * 0.095 : metrics.cardHeight * 0.115)
             }
             .frame(width: metrics.cardWidth, height: metrics.cardHeight)
 
@@ -538,8 +538,8 @@ private struct RewardLayoutMetrics {
     var confirmTextSize: CGFloat { 23 * scale }
     var footerSize: CGFloat { 13 * scale }
     var footerCenterY: CGFloat { size.height - confirmHeight * 0.67 }
-    var detailWidth: CGFloat { min(680, size.width * 0.56) }
-    var detailHeight: CGFloat { min(260, size.height * 0.34) }
+    var detailWidth: CGFloat { min(580 * scale, size.width * 0.48) }
+    var detailHeight: CGFloat { 245 * scale }
     var detailCenterY: CGFloat { headerTop + detailHeight * 0.58 }
     var detailGlyphSize: CGFloat { 118 * scale }
     var detailTitleSize: CGFloat { 23 * scale }
