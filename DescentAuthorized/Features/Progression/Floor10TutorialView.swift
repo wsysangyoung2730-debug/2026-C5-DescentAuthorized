@@ -501,7 +501,7 @@ private struct Floor10DescentSealView: View {
     }
 }
 
-private struct SealPatternDiagram: View {
+struct SealPatternDiagram: View {
     let selectedNodes: [Int]
     var dragLocation: CGPoint? = nil
     let lineColor: Color
@@ -554,7 +554,7 @@ private struct SealPatternDiagram: View {
     }
 }
 
-private enum Floor10SealLayout {
+enum Floor10SealLayout {
     static let nodes: [CGPoint] = [
         CGPoint(x: 0.50, y: 0.08),
         CGPoint(x: 0.22, y: 0.25),
@@ -668,7 +668,7 @@ private enum Floor10SealInputPhase {
     }
 }
 
-private struct Floor10SealResetButtonStyle: ButtonStyle {
+struct Floor10SealResetButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         ZStack {
             Image(configuration.isPressed ? "Floor10DescentResetButtonPressed" : "Floor10DescentResetButton")
@@ -680,7 +680,7 @@ private struct Floor10SealResetButtonStyle: ButtonStyle {
     }
 }
 
-private enum Floor10SealPalette {
+enum Floor10SealPalette {
     static let gold = Color(red: 184 / 255, green: 139 / 255, blue: 77 / 255)
     static let title = Color(red: 225 / 255, green: 202 / 255, blue: 164 / 255)
     static let secondary = Color(red: 210 / 255, green: 207 / 255, blue: 200 / 255)
