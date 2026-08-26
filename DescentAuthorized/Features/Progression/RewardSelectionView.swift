@@ -159,9 +159,9 @@ struct RewardSelectionView: View {
                 Image("RewardScrollSelectionGlow")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: metrics.cardWidth * 1.34, height: metrics.cardHeight * 1.3)
+                    .frame(width: metrics.cardWidth, height: metrics.cardHeight)
                     .blendMode(.screen)
-                    .opacity(appSettings.reducedMotion ? 0.75 : 0.92)
+                    .opacity(appSettings.reducedMotion ? 0.68 : 0.82)
                     .allowsHitTesting(false)
             }
 
@@ -176,7 +176,9 @@ struct RewardSelectionView: View {
                     .font(.system(size: metrics.cardCaptionSize, weight: .medium, design: .serif))
                     .foregroundStyle(categoryColor(candidate.category))
                     .lineLimit(1)
-                    .padding(.top, metrics.cardHeight * 0.13)
+                    .minimumScaleFactor(0.78)
+                    .frame(maxWidth: metrics.cardWidth * 0.72)
+                    .padding(.top, metrics.cardHeight * 0.155)
 
                 ZStack {
                     Image("RewardScrollGlyphBackplate")
@@ -202,19 +204,24 @@ struct RewardSelectionView: View {
                     .font(.system(size: metrics.cardTitleSize, weight: .medium, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.gold)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+                    .frame(maxWidth: metrics.cardWidth * 0.76)
                     .padding(.top, metrics.cardHeight * 0.025)
                 Text(summaryLine(for: spell))
                     .font(.system(size: metrics.cardBodySize, design: .serif).monospacedDigit())
                     .foregroundStyle(RewardSelectionPalette.body.opacity(0.86))
                     .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(maxWidth: metrics.cardWidth * 0.78)
                     .padding(.top, 7)
                 Text(effectDescription(for: spell))
                     .font(.system(size: metrics.cardBodySize, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
+                    .minimumScaleFactor(0.82)
                     .frame(height: metrics.cardHeight * 0.09, alignment: .top)
-                    .padding(.horizontal, metrics.cardWidth * 0.08)
+                    .frame(maxWidth: metrics.cardWidth * 0.78)
                     .padding(.top, 8)
                 tagRow(for: spell, fontSize: metrics.tagSize)
                     .padding(.bottom, isSelected ? metrics.cardHeight * 0.065 : metrics.cardHeight * 0.085)
@@ -309,9 +316,13 @@ struct RewardSelectionView: View {
                 Text(displayedName(for: candidate, spell: spell))
                     .font(.system(size: metrics.detailTitleSize, weight: .medium, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.gold)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 Text("\(categoryTitle(candidate.category)) · \(tierTitle(candidate.tier)) · \(spell.glyph.difficulty.rewardTitle)")
                     .font(.system(size: metrics.cardBodySize, weight: .medium, design: .serif))
                     .foregroundStyle(categoryColor(candidate.category))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 HStack(spacing: 18) {
                     ZStack {
                         Image("RewardScrollGlyphBackplate")
@@ -334,10 +345,13 @@ struct RewardSelectionView: View {
                         detailRow("필요 획", "\(spell.requiredStrokes)")
                         Text(effectDescription(for: spell))
                             .foregroundStyle(RewardSelectionPalette.body)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.78)
                             .padding(.top, 3)
                     }
                     .font(.system(size: metrics.detailBodySize, design: .serif).monospacedDigit())
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .layoutPriority(1)
                 }
                 Text("누르는 동안 상세 표시 · 손을 떼면 닫힘")
                     .font(.system(size: metrics.footerSize, design: .serif))
@@ -353,11 +367,17 @@ struct RewardSelectionView: View {
     }
 
     private func detailRow(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(label).foregroundStyle(RewardSelectionPalette.gold)
-            Spacer()
-            Text(value).foregroundStyle(.white)
+        HStack(spacing: 12) {
+            Text(label)
+                .foregroundStyle(RewardSelectionPalette.gold)
+                .frame(width: 72, alignment: .leading)
+            Text(value)
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity, alignment: .trailing)
         }
+        .frame(maxWidth: .infinity)
     }
 
     private func tagRow(for spell: SpellDefinition, fontSize: CGFloat) -> some View {
@@ -503,10 +523,10 @@ private struct RewardLayoutMetrics {
     var eyebrowSize: CGFloat { 17 * scale }
     var titleSize: CGFloat { 34 * scale }
     var bodySize: CGFloat { 16 * scale }
-    var cardWidth: CGFloat { min(300 * scale, (size.width - 104) / 3.3) }
+    var cardWidth: CGFloat { min(350, (size.width - 64) / 3.18) }
     var cardHeight: CGFloat { cardWidth * 1.333 }
-    var cardSpacing: CGFloat { max(22, 46 * scale) }
-    var cardsCenterY: CGFloat { size.height * 0.56 }
+    var cardSpacing: CGFloat { max(22, 30 * scale) }
+    var cardsCenterY: CGFloat { size.height * 0.54 }
     var selectedLift: CGFloat { 18 * scale }
     var glyphSize: CGFloat { cardWidth * 0.52 }
     var cardCaptionSize: CGFloat { 15 * scale }
@@ -518,8 +538,8 @@ private struct RewardLayoutMetrics {
     var confirmTextSize: CGFloat { 23 * scale }
     var footerSize: CGFloat { 13 * scale }
     var footerCenterY: CGFloat { size.height - confirmHeight * 0.67 }
-    var detailWidth: CGFloat { min(580 * scale, size.width * 0.48) }
-    var detailHeight: CGFloat { 245 * scale }
+    var detailWidth: CGFloat { min(680, size.width * 0.56) }
+    var detailHeight: CGFloat { min(260, size.height * 0.34) }
     var detailCenterY: CGFloat { headerTop + detailHeight * 0.58 }
     var detailGlyphSize: CGFloat { 118 * scale }
     var detailTitleSize: CGFloat { 23 * scale }
