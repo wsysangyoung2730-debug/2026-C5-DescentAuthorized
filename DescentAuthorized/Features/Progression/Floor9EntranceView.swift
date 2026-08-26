@@ -5,6 +5,7 @@ struct Floor9EntranceView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     @State private var inspectedRecord = false
+    @State private var isShowingClueDetail = false
     let sceneController: RealitySceneController
 
     var body: some View {
@@ -18,6 +19,12 @@ struct Floor9EntranceView: View {
             }
         }
         .ignoresSafeArea(edges: .bottom)
+        .overlay {
+            if isShowingClueDetail {
+                clueDetailOverlay
+                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
+            }
+        }
         .onAppear {
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
         }
@@ -264,31 +271,15 @@ struct Floor9EntranceView: View {
                         .foregroundStyle(inspectedRecord ? Floor9EntrancePalette.success : DAColor.magicGlow)
                 }
 
-                if inspectedRecord {
-                    Text("“승인자 서명이 자신의 필체와 닮아 있다.\n이름 칸만 기억침식으로 비어 있다.”")
-                        .font(.callout)
-                        .foregroundStyle(Floor9EntrancePalette.warmText)
-                        .lineSpacing(4)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                } else {
-                    Button {
-                        withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.25)) {
-                            inspectedRecord = true
-                        }
-                        gameSession.send(.readRecord("9-entrance-01"))
-                    } label: {
-                        HStack {
-                            Text("바닥의 승인 서류 확인")
-                                .font(.subheadline.weight(.semibold))
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.bold))
-                        }
-                        .foregroundStyle(Floor9EntrancePalette.warmText)
-                        .padding(.vertical, 4)
-                    }
-                    .buttonStyle(.plain)
+                HStack {
+                    Text(inspectedRecord ? "확인한 단서 다시 보기" : "바닥의 승인 서류 확인")
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.bold))
                 }
+                .foregroundStyle(Floor9EntrancePalette.warmText)
+                .padding(.vertical, 4)
             }
             .padding(.trailing, 62)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -306,6 +297,73 @@ struct Floor9EntranceView: View {
         .overlay {
             RoundedRectangle(cornerRadius: 7)
                 .stroke(DAColor.magic.opacity(0.52), lineWidth: 1)
+        }
+        .contentShape(RoundedRectangle(cornerRadius: 7))
+        .onTapGesture {
+            if !inspectedRecord {
+                inspectedRecord = true
+                gameSession.send(.readRecord("9-entrance-01"))
+            }
+            withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.22)) {
+                isShowingClueDetail = true
+            }
+        }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel(inspectedRecord ? "확인한 단서 다시 보기" : "바닥의 승인 서류 확인")
+    }
+
+    private var clueDetailOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.66)
+                .ignoresSafeArea()
+                .onTapGesture { closeClueDetail() }
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("확인된 단서")
+                        .font(.system(size: 18, weight: .semibold, design: .serif))
+                        .foregroundStyle(Floor9EntrancePalette.brass)
+
+                    Spacer()
+
+                    Button(action: closeClueDetail) {
+                        Image(systemName: "xmark")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Floor9EntrancePalette.warmText)
+                            .frame(width: 32, height: 32)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("단서 닫기")
+                }
+
+                Text("승인자 서명이 자신의 필체와 닮아 있다.\n이름 칸만 기억침식으로 비어 있다.")
+                    .font(.system(size: 20, weight: .medium, design: .serif))
+                    .foregroundStyle(Floor9EntrancePalette.title)
+                    .lineSpacing(7)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 26)
+            .padding(.vertical, 20)
+            .frame(width: 560)
+            .background(
+                LinearGradient(
+                    colors: [DAColor.magic.opacity(0.2), DAColor.card.opacity(0.98)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ),
+                in: RoundedRectangle(cornerRadius: 6)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Floor9EntrancePalette.brass.opacity(0.55), lineWidth: 1)
+            }
+            .shadow(color: DAColor.magic.opacity(0.35), radius: 18)
+        }
+    }
+
+    private func closeClueDetail() {
+        withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+            isShowingClueDetail = false
         }
     }
 

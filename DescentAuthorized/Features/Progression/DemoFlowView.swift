@@ -9,7 +9,7 @@ struct DemoFlowView: View {
     @State private var isShowingSettings = false
     @StateObject private var sceneController = RealitySceneController()
 
-    private let topBarHeight: CGFloat = 58
+    private let topBarHeight: CGFloat = 96
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -42,6 +42,7 @@ struct DemoFlowView: View {
                 .allowsHitTesting(false)
                 .animation(.easeInOut(duration: 0.18), value: sceneController.cameraFadeOpacity)
         }
+        .ignoresSafeArea(edges: .top)
         .sheet(isPresented: $isShowingPauseMenu) {
             PauseMenuView(onExitToTitle: onExit)
         }
@@ -90,7 +91,7 @@ struct DemoFlowView: View {
                     floorOrnament
 
                     Text("제\(gameSession.progress.currentFloor.rawValue)층")
-                        .font(.system(size: 19, weight: .medium, design: .serif))
+                        .font(.system(size: 24, weight: .medium, design: .serif))
                         .foregroundStyle(SharedHUDPalette.title)
                         .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
 
@@ -110,6 +111,10 @@ struct DemoFlowView: View {
         }
         .frame(height: topBarHeight)
         .clipped()
+        .background {
+            DAColor.background
+                .ignoresSafeArea(edges: .top)
+        }
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(SharedHUDPalette.brass.opacity(0.45))
@@ -121,7 +126,7 @@ struct DemoFlowView: View {
         Image("SharedFloorOrnament")
             .resizable()
             .scaledToFill()
-            .frame(width: 76, height: 20)
+            .frame(width: 96, height: 26)
             .clipped()
             .allowsHitTesting(false)
             .accessibilityHidden(true)
@@ -136,14 +141,14 @@ struct DemoFlowView: View {
                 Image("SharedHUDIconPlate")
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 48, height: 44)
+                    .frame(width: 68, height: 58)
                     .clipped()
 
                 Image(systemName: systemImage)
-                    .font(.system(size: 17, weight: .medium))
+                    .font(.system(size: 22, weight: .medium))
                     .foregroundStyle(SharedHUDPalette.icon)
             }
-            .frame(width: 48, height: 44)
+            .frame(width: 68, height: 58)
         }
         .buttonStyle(.plain)
     }
