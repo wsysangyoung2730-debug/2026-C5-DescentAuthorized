@@ -155,16 +155,6 @@ struct RewardSelectionView: View {
         let spell = displayedSpell(for: candidate)
 
         return ZStack {
-            if isSelected {
-                Image("RewardScrollSelectionGlow")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: metrics.cardWidth, height: metrics.cardHeight)
-                    .blendMode(.screen)
-                    .opacity(appSettings.reducedMotion ? 0.68 : 0.82)
-                    .allowsHitTesting(false)
-            }
-
             Image(cardFrameAsset(isSelected: isSelected, isDisabled: isDiscarded))
                 .resizable()
                 .scaledToFill()
