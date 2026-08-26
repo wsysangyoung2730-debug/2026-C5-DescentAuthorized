@@ -868,6 +868,7 @@ struct BattleView: View {
         .font(.system(size: 15, weight: .medium).monospacedDigit())
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 4)
+        .offset(y: -8)
     }
 
     private var encounterStandby: some View {
