@@ -82,7 +82,7 @@ struct DemoFlowView: View {
                 topBarButton(systemImage: "pause.fill") {
                     isShowingPauseMenu = true
                 }
-                .offset(x: 5, y: -3)
+                .offset(x: -7, y: -2)
                 .help("일시정지")
                 .accessibilityLabel("일시정지")
 
@@ -105,6 +105,7 @@ struct DemoFlowView: View {
                 topBarButton(systemImage: "gearshape") {
                     isShowingSettings = true
                 }
+                .offset(x: 3, y: -5)
                 .help("설정")
                 .accessibilityLabel("설정")
             }
