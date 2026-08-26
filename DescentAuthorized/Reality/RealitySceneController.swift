@@ -4,6 +4,11 @@ import RealityKit
 
 @MainActor
 final class RealitySceneController: ObservableObject {
+    private struct AuthoredCameraSnapshot {
+        let transformMatrix: simd_float4x4
+        let camera: PerspectiveCameraComponent
+    }
+
     enum LoadState: Equatable {
         case idle
         case loading(FloorSceneID)
@@ -30,6 +35,7 @@ final class RealitySceneController: ObservableObject {
     private var requestedCameraPreset: RealityCameraPreset = .main
     private var activeCameraName: String?
     private var pendingCameraName: String?
+    private var authoredCameraSnapshots: [String: AuthoredCameraSnapshot] = [:]
     private var requestedErasureZones: [ErasureZone] = []
     private var requestedBattleState: BattleState?
     private var requestedReducedMotion = false
@@ -170,20 +176,15 @@ final class RealitySceneController: ObservableObject {
 
     private func applyCamera(named cameraName: String) {
         guard
-            let root = registry.root,
-            let authoredCameraContainer = root.findEntity(named: cameraName),
+            let snapshot = authoredCameraSnapshots[cameraName],
             let cameraEntity
         else { return }
 
-        let authoredPerspectiveCamera = perspectiveCamera(in: authoredCameraContainer)
-        let authoredCamera = authoredPerspectiveCamera ?? authoredCameraContainer
         cameraEntity.setTransformMatrix(
-            authoredCamera.transformMatrix(relativeTo: nil),
+            snapshot.transformMatrix,
             relativeTo: nil
         )
-        if let authoredPerspectiveCamera {
-            cameraEntity.camera = authoredPerspectiveCamera.camera
-        }
+        cameraEntity.camera = snapshot.camera
         activeCameraName = cameraName
         scheduleBoardProjectionRefresh()
     }
@@ -282,6 +283,7 @@ final class RealitySceneController: ObservableObject {
         sceneAnchor = nil
         cameraEntity = nil
         activeCameraName = nil
+        authoredCameraSnapshots = [:]
         registry.reset()
         missingEntityRoles = []
         projectedMagicBoard = nil
@@ -302,6 +304,9 @@ final class RealitySceneController: ObservableObject {
         let anchor = AnchorEntity(world: .zero)
         anchor.name = "DA_RUNTIME_SCENE_ANCHOR"
         anchor.addChild(root)
+
+        authoredCameraSnapshots = captureAuthoredCameras(in: root, descriptor: descriptor)
+        removeAuthoredCameras(from: root)
 
         let camera = PerspectiveCamera()
         camera.name = "DA_RUNTIME_CAMERA"
@@ -343,6 +348,33 @@ final class RealitySceneController: ObservableObject {
         missingEntityRoles = registry.missingRequiredRoles
         loadState = .ready(descriptor.sceneID)
         scheduleBoardProjectionRefresh()
+    }
+
+    private func captureAuthoredCameras(
+        in root: Entity,
+        descriptor: RealitySceneDescriptor
+    ) -> [String: AuthoredCameraSnapshot] {
+        var snapshots: [String: AuthoredCameraSnapshot] = [:]
+        for cameraName in Set(descriptor.cameraNames.values) {
+            guard
+                let cameraContainer = root.findEntity(named: cameraName),
+                let authoredCamera = perspectiveCamera(in: cameraContainer)
+            else { continue }
+            snapshots[cameraName] = AuthoredCameraSnapshot(
+                transformMatrix: authoredCamera.transformMatrix(relativeTo: nil),
+                camera: authoredCamera.camera
+            )
+        }
+        return snapshots
+    }
+
+    private func removeAuthoredCameras(from entity: Entity) {
+        for child in Array(entity.children) {
+            removeAuthoredCameras(from: child)
+        }
+        if entity is PerspectiveCamera {
+            entity.removeFromParent()
+        }
     }
 
     private func scheduleBoardProjectionRefresh() {
