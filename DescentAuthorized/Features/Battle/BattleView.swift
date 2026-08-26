@@ -195,7 +195,7 @@ struct BattleView: View {
 
     private func battleContent(_ presentation: BattleUIPresentation) -> some View {
         GeometryReader { proxy in
-            let bottomBarHeight: CGFloat = 100
+            let bottomBarHeight: CGFloat = 214
             let inputPanelWidth = min(620, max(420, proxy.size.width * 0.38))
             let inputPanelHeight = min(430, max(300, proxy.size.height * 0.46))
             let stageHeight = proxy.size.height - bottomBarHeight
@@ -217,7 +217,7 @@ struct BattleView: View {
                     )
 
                 spellBar(presentation)
-                    .frame(height: 76)
+                    .frame(height: 190)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
                     .background(DAColor.background.opacity(0.96))
@@ -328,36 +328,69 @@ struct BattleView: View {
         return Button {
             selectedSpellID = spell.id
         } label: {
-            VStack(alignment: .leading, spacing: 5) {
-                HStack {
-                    Image(systemName: spellSymbol(spell.category))
-                    Spacer()
-                    Text("\(spell.requiredStrokes)획")
-                        .font(.caption2.monospacedDigit())
+            ZStack {
+                Image(spell.battleCardFrameAssetName)
+                    .resizable()
+                    .scaledToFill()
+
+                if let overlayAssetName = state.visualState.overlayAssetName {
+                    Image(overlayAssetName)
+                        .resizable()
+                        .scaledToFill()
                 }
-                Text(spell.name)
-                    .font(.caption.weight(.semibold))
-                    .lineLimit(1)
-                Text(categoryTitle(spell.category))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+
+                VStack(spacing: 5) {
+                    Spacer(minLength: 30)
+
+                    Image(spell.battleGlyphAssetName)
+                        .resizable()
+                        .scaledToFit()
+                        .blendMode(.screen)
+                        .frame(width: 76, height: 76)
+
+                    Spacer(minLength: 2)
+
+                    Text(spell.name)
+                        .font(.system(size: 14, weight: .semibold, design: .serif))
+                        .foregroundStyle(SharedHUDPalette.title)
+                        .lineLimit(1)
+
+                    Text("\(categoryTitle(spell.category)) · \(spell.requiredStrokes)획")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(DAColor.body.opacity(0.82))
+                        .lineLimit(1)
+
+                    Spacer(minLength: 10)
+                }
+                .padding(.horizontal, 12)
+
+                VStack {
+                    HStack {
+                        Spacer()
+                        Image(spell.battleScrollBadgeAssetName)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 34, height: 34)
+                            .clipShape(Circle())
+                            .overlay {
+                                Circle()
+                                    .stroke(SharedHUDPalette.brass.opacity(0.7), lineWidth: 1)
+                            }
+                            .accessibilityLabel(spell.battleScrollTierTitle)
+                    }
+                    Spacer()
+                }
+                .padding(10)
             }
-            .padding(8)
-            .frame(width: 126, height: 64, alignment: .leading)
-            .background(state.isSelected ? spellColor(spell.category).opacity(0.22) : DAColor.card.opacity(0.94))
-            .overlay {
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(
-                        state.isSelected ? spellColor(spell.category) : Color.white.opacity(0.1),
-                        lineWidth: state.isSelected ? 2 : 1
-                    )
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .frame(width: 132, height: 176)
+            .clipped()
         }
         .buttonStyle(.plain)
         .disabled(!state.canInteract)
-        .opacity(state.isAffordable && state.isPermitted ? 1 : 0.4)
-        .accessibilityLabel("\(spell.name), \(categoryTitle(spell.category)), \(spell.requiredStrokes)획")
+        .accessibilityLabel(
+            "\(spell.name), \(spell.battleScrollTierTitle), "
+                + "\(categoryTitle(spell.category)), \(spell.requiredStrokes)획"
+        )
     }
 
     private var encounterStandby: some View {
