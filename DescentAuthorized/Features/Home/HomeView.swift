@@ -193,12 +193,16 @@ private struct DescentMenuButtonStyle: ButtonStyle {
                             .padding(5)
                     }
                     .overlay(alignment: .top) {
-                        DescentButtonDiamond()
-                            .offset(y: -5)
+                        if prominence == .primary {
+                            DescentButtonDiamond()
+                                .offset(y: -5)
+                        }
                     }
                     .overlay(alignment: .bottom) {
-                        DescentButtonDiamond()
-                            .offset(y: 5)
+                        if prominence == .primary {
+                            DescentButtonDiamond()
+                                .offset(y: 5)
+                        }
                     }
                     .shadow(
                         color: Color.purple.opacity(prominence == .primary ? 0.25 : 0.12),
