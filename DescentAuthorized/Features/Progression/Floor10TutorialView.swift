@@ -365,10 +365,10 @@ private struct Floor10DescentSealView: View {
                 )
                 .contentShape(Rectangle())
                 .gesture(inputGesture(in: padProxy.size))
-                .background(Color.black.opacity(0.34), in: RoundedRectangle(cornerRadius: 8))
+                .background(Color.black.opacity(0.14), in: RoundedRectangle(cornerRadius: 8))
                 .overlay {
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Floor10SealPalette.gold.opacity(0.38), lineWidth: 1)
+                        .stroke(Floor10SealPalette.gold.opacity(0.24), lineWidth: 1)
                 }
             }
             .aspectRatio(0.78, contentMode: .fit)
