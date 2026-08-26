@@ -12,6 +12,8 @@ struct DemoFlowView: View {
     private let leftHUDButtonCenterRatio: CGFloat = 0.0615
     private let rightHUDButtonCenterRatio: CGFloat = 0.9395
     private let hudButtonCenterYRatio: CGFloat = 0.5
+    private let battleTopBarButtonWidth: CGFloat = 68
+    private let battleEdgeToHUDSpacing: CGFloat = 14
     private var topBarCenterYRatio: CGFloat { hudButtonCenterYRatio }
 
     private var topBarHeight: CGFloat {
@@ -159,12 +161,16 @@ struct DemoFlowView: View {
 
     private func battleTopBarControls(_ battle: BattleState) -> some View {
         GeometryReader { proxy in
+            let buttonHalfWidth = battleTopBarButtonWidth / 2
+            let leftPauseRightX = (proxy.size.width * leftHUDButtonCenterRatio) + buttonHalfWidth
+            let battleHorizontalPadding = leftPauseRightX + battleEdgeToHUDSpacing
+
             ZStack {
                 BattleTopHUDView(
                     battle: battle,
                     floor: gameSession.progress.currentFloor
                 )
-                .padding(.horizontal, proxy.size.width * 0.105)
+                .padding(.horizontal, battleHorizontalPadding)
                 .frame(height: proxy.size.height)
                 .position(
                     x: proxy.size.width * 0.5,
