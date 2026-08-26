@@ -12,7 +12,10 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            List {
+            ZStack {
+                DASettingsBackdrop(imageName: "SettingsMenuBackground")
+
+                List {
                 Section("입력 방식") {
                     Picker("입력 방식", selection: inputPreferenceBinding) {
                         Text("자동").tag(DrawingInputPreference.automatic)
@@ -124,6 +127,9 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                }
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
             }
             .navigationTitle("설정")
             .navigationBarTitleDisplayMode(.inline)
@@ -234,5 +240,22 @@ struct SettingsView: View {
 
     private var gameCenterStatusIcon: String {
         gameCenter.isAuthenticated ? "person.crop.circle.badge.checkmark" : "person.crop.circle.badge.xmark"
+    }
+}
+
+struct DASettingsBackdrop: View {
+    let imageName: String
+
+    var body: some View {
+        GeometryReader { proxy in
+            Image(imageName)
+                .resizable()
+                .scaledToFill()
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .clipped()
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }

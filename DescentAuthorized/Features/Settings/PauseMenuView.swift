@@ -12,46 +12,52 @@ struct PauseMenuView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Label("계속하기", systemImage: "play.fill")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.purple)
-                    .controlSize(.large)
-                    .frame(maxWidth: .infinity)
-                    .listRowBackground(Color.clear)
-                }
+            ZStack {
+                DASettingsBackdrop(imageName: "PauseMenuBackground")
 
-                Section("현재 절차") {
-                    LabeledContent("위치", value: "제\(gameSession.progress.currentFloor.rawValue)층")
-                    LabeledContent("체크포인트", value: checkpointTitle)
-
-                    if gameSession.battleState != nil {
-                        Button(role: .destructive) {
-                            isConfirmingRestart = true
+                List {
+                    Section {
+                        Button {
+                            dismiss()
                         } label: {
-                            Label("현재 전투 다시 시작", systemImage: "arrow.counterclockwise")
+                            Label("계속하기", systemImage: "play.fill")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.purple)
+                        .controlSize(.large)
+                        .frame(maxWidth: .infinity)
+                        .listRowBackground(Color.clear)
+                    }
+
+                    Section("현재 절차") {
+                        LabeledContent("위치", value: "제\(gameSession.progress.currentFloor.rawValue)층")
+                        LabeledContent("체크포인트", value: checkpointTitle)
+
+                        if gameSession.battleState != nil {
+                            Button(role: .destructive) {
+                                isConfirmingRestart = true
+                            } label: {
+                                Label("현재 전투 다시 시작", systemImage: "arrow.counterclockwise")
+                            }
+                        }
+                    }
+
+                    Section {
+                        Button {
+                            isShowingSettings = true
+                        } label: {
+                            Label("설정", systemImage: "gearshape")
+                        }
+
+                        Button {
+                            isConfirmingExit = true
+                        } label: {
+                            Label("타이틀로 돌아가기", systemImage: "house")
                         }
                     }
                 }
-
-                Section {
-                    Button {
-                        isShowingSettings = true
-                    } label: {
-                        Label("설정", systemImage: "gearshape")
-                    }
-
-                    Button {
-                        isConfirmingExit = true
-                    } label: {
-                        Label("타이틀로 돌아가기", systemImage: "house")
-                    }
-                }
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
             }
             .navigationTitle("절차 일시정지")
             .navigationBarTitleDisplayMode(.inline)

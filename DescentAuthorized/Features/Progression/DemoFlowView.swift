@@ -28,6 +28,7 @@ struct DemoFlowView: View {
                 VStack(spacing: 0) {
                     topBar
                         .frame(height: topBarHeight)
+                        .clipped()
 
                     sceneView
                         .id(gameSession.presentation.progressSceneID)
@@ -66,11 +67,15 @@ struct DemoFlowView: View {
         ZStack {
             DAColor.background.opacity(0.96)
 
-            Image("SharedTopHUDRail")
-                .resizable()
-                .scaledToFill()
-                .opacity(0.9)
-                .allowsHitTesting(false)
+            GeometryReader { proxy in
+                Image("SharedTopHUDRail")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .clipped()
+                    .opacity(0.9)
+                    .allowsHitTesting(false)
+            }
 
             HStack(spacing: 18) {
                 topBarButton(systemImage: "pause.fill") {
@@ -103,6 +108,7 @@ struct DemoFlowView: View {
             }
             .padding(.horizontal, 16)
         }
+        .frame(height: topBarHeight)
         .clipped()
         .overlay(alignment: .bottom) {
             Rectangle()

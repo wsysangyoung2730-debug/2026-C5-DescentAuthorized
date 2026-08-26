@@ -100,33 +100,14 @@ struct Floor9EntranceView: View {
         .frame(width: width)
         .frame(maxHeight: .infinity)
         .background {
-            ZStack {
-                LinearGradient(
-                    colors: [
-                        Floor9EntrancePalette.panelTop.opacity(0.98),
-                        DAColor.background.opacity(0.99)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-
-                Image("Floor9PanelTexture")
-                    .resizable()
-                    .scaledToFill()
-                    .opacity(0.22)
-                    .blendMode(.softLight)
-
-                Image("Floor9PanelScratches")
-                    .resizable()
-                    .scaledToFill()
-                    .opacity(0.12)
-                    .blendMode(.screen)
-
-                Image("Floor9BrassFrame")
-                    .resizable(resizingMode: .stretch)
-                    .opacity(0.44)
-            }
-            .clipped()
+            LinearGradient(
+                colors: [
+                    Floor9EntrancePalette.panelTop.opacity(0.985),
+                    DAColor.background.opacity(0.995)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         }
         .overlay(alignment: .leading) {
             Rectangle()
@@ -149,6 +130,7 @@ struct Floor9EntranceView: View {
                 .fill(Floor9EntrancePalette.brass.opacity(0.25))
                 .frame(height: 1)
         }
+        .clipped()
     }
 
     private var header: some View {
