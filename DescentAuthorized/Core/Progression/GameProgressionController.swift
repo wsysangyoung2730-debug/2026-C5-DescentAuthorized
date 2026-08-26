@@ -216,8 +216,13 @@ struct GameProgressionController: Sendable {
         progress.tutorials.formUnion([.absoluteBarrier, .dispel, .strongAttack])
         return [
             .checkpointChanged(.observationBattle),
-            .sceneChanged(setScene(.floor8AdministratorBattle))
+            .sceneChanged(setScene(.floor8AdministratorEncounter))
         ]
+    }
+
+    mutating func beginAdministratorBattle() throws -> [ProgressionEvent] {
+        try requireScene(.floor8AdministratorEncounter)
+        return [.sceneChanged(setScene(.floor8AdministratorBattle))]
     }
 
     mutating func restartCurrentEncounter() throws -> [ProgressionEvent] {

@@ -50,6 +50,8 @@ final class GameProgressValidatorTests: XCTestCase {
         try assertValid(controller.progress)
         _ = try controller.releaseObservationDoor()
         try assertValid(controller.progress)
+        _ = try controller.beginAdministratorBattle()
+        try assertValid(controller.progress)
         _ = try controller.completeEncounter(enemy: .observationAdministrator, remainingPlayerHP: 35)
         try assertValid(controller.progress)
         _ = try controller.selectReward(candidateID: "floor8-forbidden")

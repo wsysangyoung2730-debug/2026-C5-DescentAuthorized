@@ -186,6 +186,8 @@ struct DemoFlowView: View {
                     gameSession.send(.beginResidualBattle)
                 case .floor8ResidualDefeated:
                     gameSession.send(.continueAfterResidualDefeat)
+                case .floor8AdministratorEncounter:
+                    gameSession.send(.beginAdministratorBattle)
                 }
             }
         case .battle:
@@ -330,19 +332,20 @@ private extension BossNarrativeSequence {
         case .floor9Defeated: "Floor9AdministratorDefeated"
         case .floor8ResidualEncounter: "Floor8ResidualEncounter"
         case .floor8ResidualDefeated: "Floor8ResidualDefeated"
+        case .floor8AdministratorEncounter: "Floor8AdministratorEncounter"
         }
     }
 
     var recordTitle: String {
         switch self {
-        case .floor9Encounter, .floor8ResidualEncounter: "조우 기록"
+        case .floor9Encounter, .floor8ResidualEncounter, .floor8AdministratorEncounter: "조우 기록"
         case .floor9Defeated, .floor8ResidualDefeated: "처치 기록"
         }
     }
 
     var finalAccessibilityHint: String {
         switch self {
-        case .floor9Encounter, .floor8ResidualEncounter: "전투 시작"
+        case .floor9Encounter, .floor8ResidualEncounter, .floor8AdministratorEncounter: "전투 시작"
         case .floor9Defeated: "두루마리 선택으로 이동"
         case .floor8ResidualDefeated: "관측 본실 봉인문으로 이동"
         }
@@ -369,6 +372,12 @@ private extension BossNarrativeSequence {
         case .floor8ResidualDefeated:
             [
                 .init(speaker: "관측 잔류체", text: "“초점… 붕괴… 관측… 실패… 좌표… 전송… 불가…”")
+            ]
+        case .floor8AdministratorEncounter:
+            [
+                .init(speaker: "관측 관리자", text: "“관측 기준점 고정. 미등록 하강자의 진입을 확인했습니다.”"),
+                .init(speaker: "관측 관리자", text: "“대상의 현재 좌표와 관측 기록이 일치하지 않습니다. 오염 변수로 재분류합니다.”"),
+                .init(speaker: "관측 관리자", text: "“관측 차폐막을 전개합니다. 기준에서 벗어난 존재는—시야에서 제거합니다.”")
             ]
         }
     }

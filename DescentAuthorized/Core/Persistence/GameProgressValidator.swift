@@ -131,6 +131,7 @@ struct GameProgressValidator: Sendable {
             .floor8ResidualBattle,
             .floor8ResidualDefeated,
             .floor8SealedDoor,
+            .floor8AdministratorEncounter,
             .floor8AdministratorBattle,
             .floor8Reward,
             .floor8DescentDoor,
@@ -170,6 +171,7 @@ struct GameProgressValidator: Sendable {
         if [
             SceneID.floor8ResidualDefeated,
             .floor8SealedDoor,
+            .floor8AdministratorEncounter,
             .floor8AdministratorBattle,
             .floor8Reward,
             .floor8DescentDoor,
@@ -240,6 +242,7 @@ struct GameProgressValidator: Sendable {
              .floor8ResidualBattle,
              .floor8ResidualDefeated,
              .floor8SealedDoor,
+             .floor8AdministratorEncounter,
              .floor8AdministratorBattle,
              .floor8Reward,
              .floor8DescentDoor:
@@ -269,7 +272,7 @@ struct GameProgressValidator: Sendable {
             [.residualBattle]
         case .floor8ResidualDefeated, .floor8SealedDoor:
             [.residualDefeated]
-        case .floor8AdministratorBattle:
+        case .floor8AdministratorEncounter, .floor8AdministratorBattle:
             [.observationBattle]
         case .floor8Reward, .floor8DescentDoor:
             [.observationDefeated]
