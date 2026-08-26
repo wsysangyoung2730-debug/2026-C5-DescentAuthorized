@@ -9,6 +9,9 @@ struct DemoFlowView: View {
     @State private var isShowingSettings = false
     @StateObject private var sceneController = RealitySceneController()
 
+    private let leftHUDButtonCenterRatio: CGFloat = 0.0615
+    private let rightHUDButtonCenterRatio: CGFloat = 0.9395
+
     private var topBarHeight: CGFloat {
         gameSession.battleState == nil ? 96 : 112
     }
@@ -113,63 +116,75 @@ struct DemoFlowView: View {
     }
 
     private var defaultTopBarControls: some View {
-        HStack(alignment: .center, spacing: 18) {
-            topBarButton(systemImage: "pause.fill") {
-                isShowingPauseMenu = true
+        GeometryReader { proxy in
+            ZStack {
+                HStack(spacing: 11) {
+                    floorOrnament
+
+                    Text("제\(gameSession.progress.currentFloor.rawValue)층")
+                        .font(.system(size: 24, weight: .medium, design: .serif))
+                        .foregroundStyle(SharedHUDPalette.title)
+                        .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
+
+                    floorOrnament
+                        .scaleEffect(x: -1, y: 1)
+                }
+                .frame(height: 58)
+                .position(x: proxy.size.width * 0.5, y: proxy.size.height * 0.5)
+
+                topBarButton(systemImage: "pause.fill") {
+                    isShowingPauseMenu = true
+                }
+                .help("일시정지")
+                .accessibilityLabel("일시정지")
+                .position(
+                    x: proxy.size.width * leftHUDButtonCenterRatio,
+                    y: proxy.size.height * 0.5
+                )
+
+                topBarButton(systemImage: "gearshape") {
+                    isShowingSettings = true
+                }
+                .help("설정")
+                .accessibilityLabel("설정")
+                .position(
+                    x: proxy.size.width * rightHUDButtonCenterRatio,
+                    y: proxy.size.height * 0.5
+                )
             }
-            .help("일시정지")
-            .accessibilityLabel("일시정지")
-
-            Spacer(minLength: 20)
-
-            HStack(spacing: 11) {
-                floorOrnament
-
-                Text("제\(gameSession.progress.currentFloor.rawValue)층")
-                    .font(.system(size: 24, weight: .medium, design: .serif))
-                    .foregroundStyle(SharedHUDPalette.title)
-                    .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
-
-                floorOrnament
-                    .scaleEffect(x: -1, y: 1)
-            }
-            .frame(height: 58)
-
-            Spacer(minLength: 20)
-
-            topBarButton(systemImage: "gearshape") {
-                isShowingSettings = true
-            }
-            .help("설정")
-            .accessibilityLabel("설정")
         }
-        .padding(.horizontal, 54)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .offset(y: -3)
     }
 
     private func battleTopBarControls(_ battle: BattleState) -> some View {
-        HStack(alignment: .center, spacing: 14) {
-            topBarButton(systemImage: "pause.fill") {
-                isShowingPauseMenu = true
-            }
-            .help("일시정지")
-            .accessibilityLabel("일시정지")
+        GeometryReader { proxy in
+            ZStack {
+                BattleTopHUDView(
+                    battle: battle,
+                    floor: gameSession.progress.currentFloor
+                )
+                .padding(.horizontal, proxy.size.width * 0.105)
 
-            BattleTopHUDView(
-                battle: battle,
-                floor: gameSession.progress.currentFloor
-            )
+                topBarButton(systemImage: "pause.fill") {
+                    isShowingPauseMenu = true
+                }
+                .help("일시정지")
+                .accessibilityLabel("일시정지")
+                .position(
+                    x: proxy.size.width * leftHUDButtonCenterRatio,
+                    y: proxy.size.height * 0.5
+                )
 
-            topBarButton(systemImage: "gearshape") {
-                isShowingSettings = true
+                topBarButton(systemImage: "gearshape") {
+                    isShowingSettings = true
+                }
+                .help("설정")
+                .accessibilityLabel("설정")
+                .position(
+                    x: proxy.size.width * rightHUDButtonCenterRatio,
+                    y: proxy.size.height * 0.5
+                )
             }
-            .help("설정")
-            .accessibilityLabel("설정")
         }
-        .padding(.horizontal, 28)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .offset(y: -3)
     }
 
     private var floorOrnament: some View {
