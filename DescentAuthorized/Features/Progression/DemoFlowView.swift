@@ -242,17 +242,10 @@ struct DemoFlowView: View {
                         y: topHUDCenterY
                     )
                 } else {
-                    HStack(spacing: 11) {
-                        floorOrnament
-
-                        Text("제\(gameSession.progress.currentFloor.rawValue)층")
-                            .font(.system(size: 24, weight: .medium, design: .serif))
-                            .foregroundStyle(SharedHUDPalette.title)
-                            .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
-
-                        floorOrnament
-                            .scaleEffect(x: -1, y: 1)
-                    }
+                    FloorTitleAssetView(
+                        floor: gameSession.progress.currentFloor,
+                        size: .standard
+                    )
                     .frame(width: min(proxy.size.width * 0.54, 560), height: 72)
                     .position(
                         x: proxy.size.width * 0.5,
@@ -391,16 +384,6 @@ struct DemoFlowView: View {
             x: sourcePoint.x * scale - cropOffset.x,
             y: sourcePoint.y * scale - cropOffset.y
         )
-    }
-
-    private var floorOrnament: some View {
-        Image("SharedFloorOrnament")
-            .resizable()
-            .scaledToFill()
-            .frame(width: 96, height: 26)
-            .clipped()
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
     }
 
     private func topBarButton(

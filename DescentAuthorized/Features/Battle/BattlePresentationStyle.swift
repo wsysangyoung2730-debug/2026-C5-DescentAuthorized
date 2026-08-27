@@ -15,6 +15,93 @@ enum DAColor {
     static let gold = Color(red: 213 / 255, green: 174 / 255, blue: 67 / 255)
 }
 
+enum FloorTitlePresentationSize {
+    case standard
+    case battle
+}
+
+struct FloorTitleAssetView: View {
+    let floor: FloorID
+    let size: FloorTitlePresentationSize
+
+    var body: some View {
+        HStack(spacing: ornamentSpacing) {
+            ornament
+
+            floorTitle
+
+            ornament
+                .scaleEffect(x: -1, y: 1)
+        }
+        .frame(height: totalHeight)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("제\(floor.rawValue)층")
+    }
+
+    private var ornament: some View {
+        Image("SharedFloorTitleOrnament")
+            .resizable()
+            .scaledToFill()
+            .frame(width: ornamentWidth, height: ornamentHeight)
+            .clipped()
+            .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private var floorTitle: some View {
+        if let assetName = floorTitleAssetName {
+            Image(assetName)
+                .resizable()
+                .scaledToFill()
+                .frame(width: titleWidth, height: titleHeight)
+                .clipped()
+                .accessibilityHidden(true)
+        } else {
+            Text("제\(floor.rawValue)층")
+                .font(.system(size: fallbackFontSize, weight: .medium, design: .serif))
+                .foregroundStyle(DAColor.gold)
+                .frame(width: titleWidth, height: titleHeight)
+        }
+    }
+
+    private var floorTitleAssetName: String? {
+        switch floor {
+        case .floor10: "FloorTitle10"
+        case .floor9: "FloorTitle9"
+        case .floor8: "FloorTitle8"
+        case .floor7: nil
+        }
+    }
+
+    private var ornamentSpacing: CGFloat {
+        size == .battle ? 3 : 10
+    }
+
+    private var ornamentWidth: CGFloat {
+        size == .battle ? 54 : 112
+    }
+
+    private var ornamentHeight: CGFloat {
+        size == .battle ? 26 : 44
+    }
+
+    private var titleWidth: CGFloat {
+        size == .battle ? 76 : 132
+    }
+
+    private var titleHeight: CGFloat {
+        size == .battle ? 30 : 50
+    }
+
+    private var totalHeight: CGFloat {
+        size == .battle ? 32 : 54
+    }
+
+    private var fallbackFontSize: CGFloat {
+        size == .battle ? 18 : 24
+    }
+}
+
 struct BattleTopHUDView: View {
     let battle: BattleState
     let floor: FloorID
@@ -31,10 +118,8 @@ struct BattleTopHUDView: View {
 
             Spacer(minLength: 8)
 
-            VStack(spacing: 3) {
-                Text("제\(floor.rawValue)층")
-                    .font(.system(size: 18, weight: .medium, design: .serif))
-                    .foregroundStyle(DAColor.gold)
+            VStack(spacing: 1) {
+                FloorTitleAssetView(floor: floor, size: .battle)
 
                 HStack(spacing: 5) {
                     Text("TURN \(battle.turnNumber)")
@@ -51,7 +136,7 @@ struct BattleTopHUDView: View {
                 }
                 .lineLimit(1)
             }
-            .frame(width: 152)
+            .frame(width: 194)
             .frame(maxHeight: .infinity, alignment: .center)
 
             Spacer(minLength: 8)
