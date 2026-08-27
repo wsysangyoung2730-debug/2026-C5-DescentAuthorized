@@ -213,6 +213,8 @@ struct BattleView: View {
     @State private var detailPressTask: Task<Void, Never>?
     @State private var pressedSpellID: SpellID?
     @State private var detailPressWasCancelled = false
+    @State private var isCameraOrbiting = false
+    @State private var isCameraZooming = false
 
     var body: some View {
         ZStack {
@@ -284,6 +286,7 @@ struct BattleView: View {
                 reducedMotion: appSettings.reducedMotion
             )
             realityController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+            realityController.setBattleCameraInteractionEnabled(isBattleScene)
         }
         .onChange(of: gameSession.eventSequence) { _, _ in
             appendBattleLog(
@@ -299,6 +302,9 @@ struct BattleView: View {
             playerPulseTask?.cancel()
             feedbackTask?.cancel()
             detailPressTask?.cancel()
+            isCameraOrbiting = false
+            isCameraZooming = false
+            realityController.setBattleCameraInteractionEnabled(false)
         }
         .preferredColorScheme(.dark)
     }
@@ -320,6 +326,17 @@ struct BattleView: View {
                 enemyStage(presentation)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.bottom, bottomBarHeight)
+
+                if isBattleScene, realitySceneID != nil {
+                    battleCameraInteractionSurface(
+                        viewportSize: CGSize(
+                            width: contentWidth,
+                            height: max(stageHeight, 1)
+                        )
+                    )
+                    .frame(width: contentWidth, height: max(stageHeight, 1))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                }
 
                 LinearGradient(
                     stops: [
@@ -356,6 +373,45 @@ struct BattleView: View {
             .padding(.horizontal, horizontalContentInset)
             .padding(.vertical, 10)
         }
+    }
+
+    private func battleCameraInteractionSurface(viewportSize: CGSize) -> some View {
+        Color.clear
+            .contentShape(Rectangle())
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 4)
+                    .onChanged { value in
+                        guard !isCameraZooming else { return }
+                        if !isCameraOrbiting {
+                            isCameraOrbiting = true
+                            realityController.beginBattleCameraOrbit()
+                        }
+                        realityController.updateBattleCameraOrbit(
+                            translation: value.translation,
+                            viewportSize: viewportSize
+                        )
+                    }
+                    .onEnded { _ in
+                        isCameraOrbiting = false
+                    }
+            )
+            .simultaneousGesture(
+                MagnifyGesture(minimumScaleDelta: 0.01)
+                    .onChanged { value in
+                        if !isCameraZooming {
+                            isCameraZooming = true
+                            isCameraOrbiting = false
+                            realityController.beginBattleCameraZoom()
+                        }
+                        realityController.updateBattleCameraZoom(
+                            magnification: value.magnification
+                        )
+                    }
+                    .onEnded { _ in
+                        isCameraZooming = false
+                    }
+            )
+            .accessibilityHidden(true)
     }
 
     @ViewBuilder
