@@ -192,7 +192,7 @@ private struct BattleUIPresentation {
 struct BattleView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
-    let realityController: RealitySceneController
+    @ObservedObject var realityController: RealitySceneController
 
     @State private var selectedSpellID: SpellID?
     @State private var enemyHitFlash = false
@@ -287,6 +287,9 @@ struct BattleView: View {
             )
             realityController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             realityController.setBattleCameraInteractionEnabled(isBattleScene)
+            if isBattleScene {
+                realityController.resetBattleCamera(animated: false)
+            }
         }
         .onChange(of: gameSession.eventSequence) { _, _ in
             appendBattleLog(
@@ -336,6 +339,22 @@ struct BattleView: View {
                     )
                     .frame(width: contentWidth, height: max(stageHeight, 1))
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                }
+
+                if isBattleScene,
+                   realitySceneID != nil,
+                   realityController.isBattleCameraAdjusted {
+                    battleCameraResetButton
+                        .padding(.top, 14)
+                        .padding(.trailing, 16)
+                        .frame(
+                            width: contentWidth,
+                            height: max(stageHeight, 1),
+                            alignment: .topTrailing
+                        )
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .transition(.opacity.combined(with: .scale(scale: 0.94)))
+                        .zIndex(4)
                 }
 
                 LinearGradient(
@@ -412,6 +431,33 @@ struct BattleView: View {
                     }
             )
             .accessibilityHidden(true)
+    }
+
+    private var battleCameraResetButton: some View {
+        Button {
+            withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+                realityController.resetBattleCamera(animated: !appSettings.reducedMotion)
+            }
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: "viewfinder")
+                Text("기본 시점")
+            }
+            .font(.system(size: 13, weight: .semibold, design: .serif))
+            .foregroundStyle(DAColor.body)
+            .padding(.horizontal, 13)
+            .frame(height: 38)
+            .background(Color.black.opacity(0.76))
+            .clipShape(RoundedRectangle(cornerRadius: 5))
+            .overlay {
+                RoundedRectangle(cornerRadius: 5)
+                    .stroke(DAColor.gold.opacity(0.72), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.55), radius: 8, y: 3)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("전투 카메라 기본 시점으로 복귀")
+        .accessibilityHint("블렌더에 저장된 전투 시점으로 돌아갑니다")
     }
 
     @ViewBuilder
@@ -1335,6 +1381,7 @@ struct BattleView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Button("전투 재시작") {
+                    realityController.resetBattleCamera(animated: !appSettings.reducedMotion)
                     gameSession.send(.restartEncounter)
                 }
                 .buttonStyle(.borderedProminent)
