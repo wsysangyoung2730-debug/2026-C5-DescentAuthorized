@@ -5,6 +5,7 @@ struct DemoFlowView: View {
     @EnvironmentObject private var appSettings: AppSettings
 
     let onExit: () -> Void
+    let onSystemOverlayVisibilityChange: (Bool) -> Void
 
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
@@ -84,11 +85,25 @@ struct DemoFlowView: View {
         .sheet(isPresented: $isShowingSettings) {
             SettingsView()
         }
+        .onAppear(perform: reportSystemOverlayVisibility)
+        .onDisappear {
+            onSystemOverlayVisibilityChange(false)
+        }
+        .onChange(of: isShowingPauseMenu) { _, _ in
+            reportSystemOverlayVisibility()
+        }
+        .onChange(of: isShowingSettings) { _, _ in
+            reportSystemOverlayVisibility()
+        }
         .onChange(of: gameSession.presentation.floorSceneID) { _, floorSceneID in
             if floorSceneID == nil {
                 sceneController.unload()
             }
         }
+    }
+
+    private func reportSystemOverlayVisibility() {
+        onSystemOverlayVisibilityChange(isShowingPauseMenu || isShowingSettings)
     }
 
     private var isPresentationReady: Bool {

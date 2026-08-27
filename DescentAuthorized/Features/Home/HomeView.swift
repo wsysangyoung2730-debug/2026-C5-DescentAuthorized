@@ -6,6 +6,7 @@ struct HomeView: View {
 
     @State private var isShowingSettings = false
     @State private var isPlaying = false
+    @State private var isShowingGameSystemOverlay = false
     @State private var isPreparingStartup = false
     @State private var isStartupReady = false
     @State private var startupProgress = 0.0
@@ -16,7 +17,15 @@ struct HomeView: View {
             if isStartupReady {
                 NavigationStack {
                     if isPlaying {
-                        DemoFlowView(onExit: { isPlaying = false })
+                        DemoFlowView(
+                            onExit: {
+                                isShowingGameSystemOverlay = false
+                                isPlaying = false
+                            },
+                            onSystemOverlayVisibilityChange: { isPresented in
+                                isShowingGameSystemOverlay = isPresented
+                            }
+                        )
                     } else {
                         homeContent
                     }
@@ -32,6 +41,7 @@ struct HomeView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .gameStatusBarHidden(isPlaying && !isShowingGameSystemOverlay)
         .task {
             await prepareStartupAssets()
         }
@@ -155,6 +165,12 @@ struct HomeView: View {
         .buttonStyle(HomeMenuAssetButtonStyle())
         .frame(width: width, height: width / 3)
         .accessibilityLabel(accessibilityLabel)
+    }
+}
+
+private extension View {
+    func gameStatusBarHidden(_ hidden: Bool) -> some View {
+        statusBarHidden(hidden)
     }
 }
 
