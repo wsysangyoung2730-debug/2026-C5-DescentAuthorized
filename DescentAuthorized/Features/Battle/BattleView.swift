@@ -1513,6 +1513,7 @@ struct BattleView: View {
 
     private func updateDefeatPresentation(for phase: BattlePhase?) {
         guard phase == .defeat else {
+            let wasPresentingDefeat = defeatPresentationTask != nil || isDefeatPanelVisible
             defeatPresentationTask?.cancel()
             defeatPresentationTask = nil
             if isDefeatPanelVisible {
@@ -1520,7 +1521,8 @@ struct BattleView: View {
                     isDefeatPanelVisible = false
                 }
             }
-            if isBattleScene,
+            if wasPresentingDefeat,
+               isBattleScene,
                !isRestartLoading {
                 realityController.resetBattleCamera(animated: false)
                 realityController.setBattleCameraInteractionEnabled(true)
