@@ -926,7 +926,7 @@ struct BattleView: View {
     private func spellDetailOverlay(_ spell: SpellDefinition) -> some View {
         GeometryReader { proxy in
             let panelWidth = min(760, proxy.size.width * 0.58)
-            let panelHeight = panelWidth * (2.0 / 3.0)
+            let panelHeight = panelWidth * 0.75
             let effectRange = spell.effect.range
 
             ZStack {
@@ -1408,7 +1408,9 @@ struct BattleView: View {
     private var defeatOverlay: some View {
         GeometryReader { proxy in
             let panelWidth = min(760, proxy.size.width * 0.58)
-            let panelHeight = panelWidth * 0.75
+            let panelHeight = panelWidth * (2.0 / 3.0)
+            let retryButtonWidth = panelWidth * 0.7
+            let retryButtonHeight = panelHeight * 0.19
 
             ZStack {
                 Color.black.opacity(0.68)
@@ -1437,7 +1439,7 @@ struct BattleView: View {
                         .clipped()
                         .position(
                             x: panelWidth * 0.5,
-                            y: panelHeight * 0.32
+                            y: panelHeight * 0.345
                         )
 
                     Rectangle()
@@ -1445,7 +1447,7 @@ struct BattleView: View {
                         .frame(width: panelWidth * 0.67, height: 1)
                         .position(
                             x: panelWidth * 0.5,
-                            y: panelHeight * 0.405
+                            y: panelHeight * 0.43
                         )
 
                     Text("생체 반응이 한계치 아래로 감소했습니다.")
@@ -1453,7 +1455,7 @@ struct BattleView: View {
                         .foregroundStyle(DAColor.attack)
                         .position(
                             x: panelWidth * 0.5,
-                            y: panelHeight * 0.47
+                            y: panelHeight * 0.495
                         )
 
                     Text("전투 진입 직전의 기록으로 복원하여 다시 시작합니다.")
@@ -1461,7 +1463,7 @@ struct BattleView: View {
                         .foregroundStyle(DAColor.body.opacity(0.86))
                         .position(
                             x: panelWidth * 0.5,
-                            y: panelHeight * 0.535
+                            y: panelHeight * 0.56
                         )
 
                     Button {
@@ -1472,22 +1474,29 @@ struct BattleView: View {
                                 .resizable()
                                 .scaledToFill()
                                 .frame(
-                                    width: panelWidth * 0.7,
-                                    height: panelHeight * 0.19
+                                    width: retryButtonWidth,
+                                    height: retryButtonHeight
                                 )
                                 .clipped()
 
-                            HStack(spacing: 18) {
-                                Image("BattleDefeatRetryIcon")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 38, height: 38)
+                            Image("BattleDefeatRetryIcon")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 56, height: 56)
+                                .position(
+                                    x: retryButtonWidth * 0.18,
+                                    y: retryButtonHeight * 0.5
+                                )
 
-                                Text("전투 재시작")
-                                    .font(.system(size: 24, weight: .semibold, design: .serif))
-                                    .foregroundStyle(DAColor.body)
-                            }
+                            Text("전투 재시작")
+                                .font(.system(size: 24, weight: .semibold, design: .serif))
+                                .foregroundStyle(DAColor.body)
+                                .position(
+                                    x: retryButtonWidth * 0.59,
+                                    y: retryButtonHeight * 0.5
+                                )
                         }
+                        .frame(width: retryButtonWidth, height: retryButtonHeight)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -1495,7 +1504,7 @@ struct BattleView: View {
                     .accessibilityHint("전투 진입 직전 상태로 복원합니다")
                     .position(
                         x: panelWidth * 0.5,
-                        y: panelHeight * 0.77
+                        y: panelHeight * 0.73
                     )
                 }
                 .frame(width: panelWidth, height: panelHeight)
