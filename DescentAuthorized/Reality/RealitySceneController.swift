@@ -2,6 +2,22 @@ import Combine
 import Foundation
 import RealityKit
 
+struct BattleCameraInteractionConfiguration: Equatable, Sendable {
+    let maximumYaw: Float
+    let maximumUpwardPitch: Float
+    let maximumDownwardPitch: Float
+    let minimumDistanceScale: Float
+    let maximumDistanceScale: Float
+
+    static let standard = BattleCameraInteractionConfiguration(
+        maximumYaw: .pi * 35 / 180,
+        maximumUpwardPitch: .pi * 10 / 180,
+        maximumDownwardPitch: .pi * 15 / 180,
+        minimumDistanceScale: 0.85,
+        maximumDistanceScale: 1.15
+    )
+}
+
 @MainActor
 final class RealitySceneController: ObservableObject {
     private struct AuthoredCameraSnapshot {
@@ -21,6 +37,8 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var projectedMagicBoard: RealityProjectedBoard?
     @Published private(set) var cameraFadeOpacity: Double = 0
     @Published private(set) var isCameraTransitioning = false
+    @Published private(set) var isBattleCameraInteractionEnabled = false
+    @Published private(set) var isBattleCameraAdjusted = false
     @Published private(set) var loadingProgress: Double = 0
 
     let registry = RealityEntityRegistry()
@@ -42,6 +60,12 @@ final class RealitySceneController: ObservableObject {
     private var activeCameraName: String?
     private var pendingCameraName: String?
     private var authoredCameraSnapshots: [String: AuthoredCameraSnapshot] = [:]
+    private var battleCameraYaw: Float = 0
+    private var battleCameraPitch: Float = 0
+    private var battleCameraDistanceScale: Float = 1
+    private var battleCameraOrbitStartYaw: Float = 0
+    private var battleCameraOrbitStartPitch: Float = 0
+    private var battleCameraZoomStartScale: Float = 1
     private var requestedErasureZones: [ErasureZone] = []
     private var requestedBattleState: BattleState?
     private var requestedReducedMotion = false
@@ -128,6 +152,95 @@ final class RealitySceneController: ObservableObject {
         transitionCamera(to: preset)
     }
 
+    func setBattleCameraInteractionEnabled(_ isEnabled: Bool) {
+        guard isBattleCameraInteractionEnabled != isEnabled else { return }
+        isBattleCameraInteractionEnabled = isEnabled
+        if !isEnabled {
+            resetBattleCamera(animated: false)
+        }
+    }
+
+    func beginBattleCameraOrbit() {
+        guard canAdjustBattleCamera else { return }
+        battleCameraOrbitStartYaw = battleCameraYaw
+        battleCameraOrbitStartPitch = battleCameraPitch
+    }
+
+    func updateBattleCameraOrbit(
+        translation: CGSize,
+        viewportSize: CGSize,
+        configuration: BattleCameraInteractionConfiguration = .standard
+    ) {
+        guard canAdjustBattleCamera,
+              viewportSize.width > 0,
+              viewportSize.height > 0 else { return }
+
+        let horizontalProgress = Float(translation.width / viewportSize.width)
+        let verticalProgress = Float(translation.height / viewportSize.height)
+        let horizontalSweep = configuration.maximumYaw * 2
+        let verticalSweep = configuration.maximumUpwardPitch
+            + configuration.maximumDownwardPitch
+
+        battleCameraYaw = clamp(
+            battleCameraOrbitStartYaw - (horizontalProgress * horizontalSweep),
+            minimum: -configuration.maximumYaw,
+            maximum: configuration.maximumYaw
+        )
+        battleCameraPitch = clamp(
+            battleCameraOrbitStartPitch + (verticalProgress * verticalSweep),
+            minimum: -configuration.maximumUpwardPitch,
+            maximum: configuration.maximumDownwardPitch
+        )
+        applyBattleCameraTransform()
+    }
+
+    func beginBattleCameraZoom() {
+        guard canAdjustBattleCamera else { return }
+        battleCameraZoomStartScale = battleCameraDistanceScale
+    }
+
+    func updateBattleCameraZoom(
+        magnification: CGFloat,
+        configuration: BattleCameraInteractionConfiguration = .standard
+    ) {
+        guard canAdjustBattleCamera, magnification > 0 else { return }
+        battleCameraDistanceScale = clamp(
+            battleCameraZoomStartScale / Float(magnification),
+            minimum: configuration.minimumDistanceScale,
+            maximum: configuration.maximumDistanceScale
+        )
+        applyBattleCameraTransform()
+    }
+
+    func resetBattleCamera(animated: Bool) {
+        battleCameraYaw = 0
+        battleCameraPitch = 0
+        battleCameraDistanceScale = 1
+        battleCameraOrbitStartYaw = 0
+        battleCameraOrbitStartPitch = 0
+        battleCameraZoomStartScale = 1
+        isBattleCameraAdjusted = false
+
+        guard requestedCameraPreset == .battle,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        if animated {
+            cameraEntity.move(
+                to: Transform(matrix: snapshot.transformMatrix),
+                relativeTo: nil,
+                duration: 0.25,
+                timingFunction: .easeInOut
+            )
+        } else {
+            cameraEntity.stopAllAnimations(recursive: false)
+            cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+        }
+        cameraEntity.camera = snapshot.camera
+        scheduleBoardProjectionRefresh()
+    }
+
     private func transitionCamera(to preset: RealityCameraPreset) {
         guard
             let descriptor = registry.descriptor,
@@ -195,7 +308,99 @@ final class RealitySceneController: ObservableObject {
         )
         cameraEntity.camera = snapshot.camera
         activeCameraName = cameraName
+        clearBattleCameraAdjustmentState()
         scheduleBoardProjectionRefresh()
+    }
+
+    private var canAdjustBattleCamera: Bool {
+        isBattleCameraInteractionEnabled
+            && requestedCameraPreset == .battle
+            && !isCameraTransitioning
+            && activeCameraName != nil
+            && cameraEntity != nil
+    }
+
+    private func applyBattleCameraTransform() {
+        guard canAdjustBattleCamera,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        let baseMatrix = snapshot.transformMatrix
+        let basePosition = SIMD3<Float>(
+            baseMatrix.columns.3.x,
+            baseMatrix.columns.3.y,
+            baseMatrix.columns.3.z
+        )
+        let pivot = battleCameraPivot(baseMatrix: baseMatrix)
+        let worldUp = SIMD3<Float>(0, 0, 1)
+        let yawRotation = simd_quatf(angle: battleCameraYaw, axis: worldUp)
+        let baseRight = normalizedAxis(baseMatrix.columns.0, fallback: SIMD3<Float>(1, 0, 0))
+        let pitchAxis = yawRotation.act(baseRight)
+        let pitchRotation = simd_quatf(angle: battleCameraPitch, axis: pitchAxis)
+        let orbitRotation = pitchRotation * yawRotation
+
+        var adjustedMatrix = baseMatrix
+        for columnIndex in 0..<3 {
+            let column = baseMatrix[columnIndex]
+            let axis = SIMD3<Float>(column.x, column.y, column.z)
+            let adjustedAxis = orbitRotation.act(axis)
+            adjustedMatrix[columnIndex] = SIMD4<Float>(adjustedAxis, column.w)
+        }
+
+        let baseOffset = basePosition - pivot
+        let adjustedPosition = pivot
+            + orbitRotation.act(baseOffset) * battleCameraDistanceScale
+        adjustedMatrix.columns.3 = SIMD4<Float>(adjustedPosition, 1)
+
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.setTransformMatrix(adjustedMatrix, relativeTo: nil)
+        cameraEntity.camera = snapshot.camera
+        isBattleCameraAdjusted = abs(battleCameraYaw) > 0.001
+            || abs(battleCameraPitch) > 0.001
+            || abs(battleCameraDistanceScale - 1) > 0.001
+        scheduleBoardProjectionRefresh()
+    }
+
+    private func battleCameraPivot(baseMatrix: simd_float4x4) -> SIMD3<Float> {
+        if let enemy = registry.entity(for: .enemyActor) {
+            let bounds = enemy.visualBounds(relativeTo: nil)
+            return (bounds.min + bounds.max) * 0.5
+        }
+
+        let basePosition = SIMD3<Float>(
+            baseMatrix.columns.3.x,
+            baseMatrix.columns.3.y,
+            baseMatrix.columns.3.z
+        )
+        let backward = normalizedAxis(
+            baseMatrix.columns.2,
+            fallback: SIMD3<Float>(0, 1, 0)
+        )
+        return basePosition - (backward * 5)
+    }
+
+    private func normalizedAxis(
+        _ column: SIMD4<Float>,
+        fallback: SIMD3<Float>
+    ) -> SIMD3<Float> {
+        let axis = SIMD3<Float>(column.x, column.y, column.z)
+        let length = simd_length(axis)
+        return length > 0.0001 ? axis / length : fallback
+    }
+
+    private func clamp(_ value: Float, minimum: Float, maximum: Float) -> Float {
+        min(max(value, minimum), maximum)
+    }
+
+    private func clearBattleCameraAdjustmentState() {
+        battleCameraYaw = 0
+        battleCameraPitch = 0
+        battleCameraDistanceScale = 1
+        battleCameraOrbitStartYaw = 0
+        battleCameraOrbitStartPitch = 0
+        battleCameraZoomStartScale = 1
+        isBattleCameraAdjusted = false
     }
 
     private func perspectiveCamera(in entity: Entity) -> PerspectiveCamera? {
@@ -303,6 +508,8 @@ final class RealitySceneController: ObservableObject {
         cameraEntity = nil
         activeCameraName = nil
         authoredCameraSnapshots = [:]
+        isBattleCameraInteractionEnabled = false
+        clearBattleCameraAdjustmentState()
         registry.reset()
         missingEntityRoles = []
         projectedMagicBoard = nil
