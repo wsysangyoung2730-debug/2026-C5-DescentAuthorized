@@ -71,7 +71,7 @@ struct HomeView: View {
 
     private var homeContent: some View {
         GeometryReader { proxy in
-            let menuButtonWidth = min(max(proxy.size.width * 0.25, 300), 350)
+            let menuButtonWidth = min(max(proxy.size.width * 0.23, 280), 325)
 
             ZStack {
                 Image("HomeMainBackground")
