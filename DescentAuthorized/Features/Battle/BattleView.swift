@@ -1509,6 +1509,7 @@ struct BattleView: View {
         playerPulseTask?.cancel()
         feedbackTask?.cancel()
         detailPressTask?.cancel()
+        clearTransientBattleEffects()
         detailedSpell = nil
         feedbackText = nil
         showsFirstTurnBriefing = false
@@ -1541,6 +1542,7 @@ struct BattleView: View {
         defeatPresentationTask?.cancel()
         defeatPresentationTask = nil
         restartTask?.cancel()
+        clearTransientBattleEffects()
         let loadingContext = restartLoadingContext
         let loadingTip = LoadingTipCatalog.randomTip(for: loadingContext)
         realityController.setBattleCameraInteractionEnabled(false)
@@ -1567,6 +1569,7 @@ struct BattleView: View {
             }
 
             battleLogEntries.removeAll(keepingCapacity: true)
+            clearTransientBattleEffects()
             previewMana = nil
             previewStrokes = nil
             detailedSpell = nil
@@ -1605,6 +1608,12 @@ struct BattleView: View {
             restartLoadingPresentation = nil
             isDefeatPanelVisible = true
         }
+    }
+
+    private func clearTransientBattleEffects() {
+        enemyHitFlash = false
+        playerHitFlash = false
+        strongAttackFlash = false
     }
 
     private var residualBriefing: some View {
