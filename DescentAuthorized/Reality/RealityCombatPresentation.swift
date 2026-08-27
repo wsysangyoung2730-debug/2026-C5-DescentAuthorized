@@ -144,6 +144,7 @@ final class RealityCombatVFXRenderer {
     private var intentGeneration = 0
     private var intentScale: Float = 1.15
     private var intentVerticalOffset: Float = 0.3
+    private var intentShieldClearance: Float?
     private var currentShieldState: RealityShieldState = .none
     private var shieldAuraEntity: Entity?
     private var shieldTransitionTask: Task<Void, Never>?
@@ -155,6 +156,7 @@ final class RealityCombatVFXRenderer {
         enemyActor = registry.entity(for: .enemyActor)
         intentScale = registry.descriptor?.actor?.intentScale ?? 1.15
         intentVerticalOffset = registry.descriptor?.actor?.intentVerticalOffset ?? 0.3
+        intentShieldClearance = registry.descriptor?.actor?.intentShieldClearance
         registry.setEnabled(true, for: .generalShield)
         registry.setEnabled(true, for: .absoluteShield)
     }
@@ -200,6 +202,7 @@ final class RealityCombatVFXRenderer {
         enemyActor = nil
         intentScale = 1.15
         intentVerticalOffset = 0.3
+        intentShieldClearance = nil
         intentGeneration += 1
         shieldTransitionTask?.cancel()
         shieldTransitionTask = nil
@@ -221,6 +224,7 @@ final class RealityCombatVFXRenderer {
                 if state == .none {
                     shieldAuraEntity?.removeFromParent()
                     shieldAuraEntity = nil
+                    repositionCurrentIntent()
                 } else {
                     shieldAuraEntity?.components.set(OpacityComponent(opacity: 1))
                 }
@@ -269,6 +273,7 @@ final class RealityCombatVFXRenderer {
                 if self.shieldAuraEntity === previousAura {
                     self.shieldAuraEntity = nil
                 }
+                self.repositionCurrentIntent()
                 self.shieldTransitionTask = nil
             }
             return
@@ -284,6 +289,7 @@ final class RealityCombatVFXRenderer {
 
         shieldAuraEntity = aura
         enemyAnchor.addChild(aura)
+        repositionCurrentIntent()
         guard !reducedMotion else {
             aura.components.set(OpacityComponent(opacity: 1))
             return
@@ -458,11 +464,24 @@ final class RealityCombatVFXRenderer {
         guard let bounds = enemyBounds(relativeTo: anchor) else {
             return SIMD3(0, -0.16, 2.15)
         }
+        let baseHeight = bounds.max.z + intentVerticalOffset
+        let resolvedHeight: Float
+        if let intentShieldClearance, let shieldAuraEntity {
+            let shieldTop = shieldAuraEntity.visualBounds(relativeTo: anchor).max.z
+            resolvedHeight = max(baseHeight, shieldTop + intentShieldClearance)
+        } else {
+            resolvedHeight = baseHeight
+        }
         return SIMD3(
             (bounds.min.x + bounds.max.x) * 0.5,
             bounds.min.y - 0.35,
-            bounds.max.z + intentVerticalOffset
+            resolvedHeight
         )
+    }
+
+    private func repositionCurrentIntent() {
+        guard let enemyAnchor, let currentIntentEntity else { return }
+        currentIntentEntity.position = intentPosition(relativeTo: enemyAnchor)
     }
 
     private func hitPosition(relativeTo anchor: Entity) -> SIMD3<Float> {
