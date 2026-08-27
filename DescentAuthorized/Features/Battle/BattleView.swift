@@ -1428,7 +1428,7 @@ struct BattleView: View {
                         .frame(width: panelWidth * 0.37, height: panelWidth * 0.37)
                         .position(
                             x: panelWidth * 0.5,
-                            y: panelHeight * 0.11
+                            y: panelHeight * 0.085
                         )
                         .shadow(color: .black.opacity(0.66), radius: 12, y: 6)
 
