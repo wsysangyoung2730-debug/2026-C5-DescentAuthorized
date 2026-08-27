@@ -155,7 +155,13 @@ struct DemoFlowView: View {
         GeometryReader { proxy in
             let sideLabelWidth = min(max(proxy.size.width * 0.2, 190), 270)
             let buttonHalfWidth = battleTopBarButtonWidth / 2
-            let sideGap = max(14, proxy.size.width * 0.012)
+            let isFloor9Descent = {
+                if case let .descent(floor) = gameSession.presentation.experience {
+                    return floor == .floor9
+                }
+                return false
+            }()
+            let sideGap = max(14, proxy.size.width * 0.012) + (isFloor9Descent ? 10 : 0)
 
             ZStack {
                 if let configuration = descentTopHUDConfiguration {
