@@ -90,6 +90,13 @@ struct DemoFlowView: View {
     }
 
     private var descentTopHUDConfiguration: DescentTopHUDConfiguration? {
+        if gameSession.progress.currentScene == .floor10DescentDoor {
+            return DescentTopHUDConfiguration(
+                areaTitle: "제10층 · 승인 관리 구역",
+                inspectionTitle: "단일 문양 검수"
+            )
+        }
+
         guard case let .descent(floor) = gameSession.presentation.experience else {
             return nil
         }
