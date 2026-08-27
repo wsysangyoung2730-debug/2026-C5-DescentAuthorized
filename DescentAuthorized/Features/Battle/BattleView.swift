@@ -1412,7 +1412,7 @@ struct BattleView: View {
             let retryButtonWidth = panelWidth * 0.7
             let retryButtonHeight = panelHeight * 0.19
             let retryIconCenterXRatio = 326.5 / 1_774.0
-            let retryLabelCenterXRatio = ((454.0 + 1_640.0) / 2.0) / 1_774.0
+            let retryLabelCenterXRatio = (0.24 + 0.96) / 2.0
 
             ZStack {
                 Color.black.opacity(0.68)
