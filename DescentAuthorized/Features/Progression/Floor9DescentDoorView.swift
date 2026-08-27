@@ -64,6 +64,7 @@ private struct Floor9DescentSealView: View {
     @State private var dragLocation: CGPoint?
     @State private var phase: Floor9SealPhase = .ready
     @State private var remainingAttempts = 2
+    @State private var isGameOver = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -84,7 +85,56 @@ private struct Floor9DescentSealView: View {
             .padding(.vertical, 14)
         }
         .background(Color.black.opacity(0.18))
+        .overlay {
+            if isGameOver {
+                sealGameOverOverlay
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.24), value: isGameOver)
         .onAppear { onStateChanged(.ready) }
+    }
+
+    private var sealGameOverOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.82)
+                .ignoresSafeArea()
+
+            VStack(spacing: 14) {
+                Image(systemName: "xmark.octagon.fill")
+                    .font(.system(size: 48, weight: .semibold))
+                    .foregroundStyle(.red)
+
+                Text("GAME OVER")
+                    .font(.system(size: 32, weight: .bold, design: .serif))
+                    .foregroundStyle(.red)
+
+                Text("봉인 문양 검수에 실패했습니다.")
+                    .font(.title3.weight(.semibold))
+
+                Text("하강문 해제 절차를 처음부터 다시 시작합니다.")
+                    .font(.subheadline)
+                    .foregroundStyle(Floor10SealPalette.secondary)
+
+                Button(action: retrySeal) {
+                    Label("봉인문 해제 재시도", systemImage: "arrow.counterclockwise")
+                        .font(.headline)
+                        .frame(minWidth: 250)
+                        .frame(height: 48)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                .padding(.top, 8)
+            }
+            .padding(.horizontal, 42)
+            .padding(.vertical, 34)
+            .background(Color(red: 0.035, green: 0.04, blue: 0.055).opacity(0.98))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.red.opacity(0.55), lineWidth: 1)
+            }
+        }
     }
 
     private var header: some View {
@@ -313,7 +363,7 @@ private struct Floor9DescentSealView: View {
     private func inputGesture(in size: CGSize) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .local)
             .onChanged { value in
-                guard phase != .approved else { return }
+                guard phase != .approved, !isGameOver else { return }
                 if phase == .failed {
                     selectedNodes.removeAll()
                     phase = .ready
@@ -329,16 +379,20 @@ private struct Floor9DescentSealView: View {
             }
             .onEnded { _ in
                 dragLocation = nil
-                guard !selectedNodes.isEmpty, phase != .approved else { return }
+                guard !selectedNodes.isEmpty, phase != .approved, !isGameOver else { return }
                 evaluateInput()
             }
     }
 
     private func evaluateInput() {
         guard selectedNodes == currentSequence else {
+            let attemptsLeft = max(0, remainingAttempts - 1)
             phase = .failed
-            remainingAttempts = max(0, remainingAttempts - 1)
+            remainingAttempts = attemptsLeft
             onStateChanged(.failed)
+            if attemptsLeft == 0 {
+                isGameOver = true
+            }
             return
         }
 
@@ -360,6 +414,16 @@ private struct Floor9DescentSealView: View {
         dragLocation = nil
         phase = .ready
         if remainingAttempts == 0 { remainingAttempts = 2 }
+        onStateChanged(.ready)
+    }
+
+    private func retrySeal() {
+        completedStages = 0
+        selectedNodes.removeAll()
+        dragLocation = nil
+        remainingAttempts = 2
+        phase = .ready
+        isGameOver = false
         onStateChanged(.ready)
     }
 }
