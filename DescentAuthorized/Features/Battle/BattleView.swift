@@ -216,6 +216,8 @@ struct BattleView: View {
     @State private var isCameraLooking = false
     @State private var isCameraZooming = false
     @State private var cameraLookTranslationOrigin: CGSize?
+    @State private var isDefeatPanelVisible = false
+    @State private var defeatPresentationTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
@@ -262,8 +264,11 @@ struct BattleView: View {
                     .transition(.opacity)
             }
 
-            if gameSession.battleState?.phase == .defeat {
+            if gameSession.battleState?.phase == .defeat,
+               isDefeatPanelVisible {
                 defeatOverlay
+                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                    .zIndex(30)
             }
         }
         .task(id: gameSession.progress.currentScene) {
@@ -291,6 +296,7 @@ struct BattleView: View {
             if isBattleScene {
                 realityController.resetBattleCamera(animated: false)
             }
+            updateDefeatPresentation(for: gameSession.battleState?.phase)
         }
         .onChange(of: gameSession.eventSequence) { _, _ in
             appendBattleLog(
@@ -300,15 +306,19 @@ struct BattleView: View {
             present(gameSession.latestEvents)
             selectAvailableSpell()
             autoFinishPlayerTurnIfNeeded()
+            updateDefeatPresentation(for: gameSession.battleState?.phase)
         }
         .onDisappear {
             enemyPulseTask?.cancel()
             playerPulseTask?.cancel()
             feedbackTask?.cancel()
             detailPressTask?.cancel()
+            defeatPresentationTask?.cancel()
+            defeatPresentationTask = nil
             isCameraLooking = false
             isCameraZooming = false
             cameraLookTranslationOrigin = nil
+            isDefeatPanelVisible = false
             realityController.setBattleCameraInteractionEnabled(false)
         }
         .preferredColorScheme(.dark)
@@ -316,7 +326,8 @@ struct BattleView: View {
 
     private func battleContent(_ presentation: BattleUIPresentation) -> some View {
         GeometryReader { proxy in
-            let bottomBarHeight: CGFloat = 242
+            let isDefeated = presentation.phase == .defeat
+            let bottomBarHeight: CGFloat = isDefeated ? 0 : 242
             let horizontalContentInset: CGFloat = 18
             let contentWidth = max(0, proxy.size.width - (horizontalContentInset * 2))
             let inputPanelWidth = min(480, max(360, contentWidth * 0.34))
@@ -332,59 +343,61 @@ struct BattleView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.bottom, bottomBarHeight)
 
-                if isBattleScene, realitySceneID != nil {
-                    battleCameraInteractionSurface(
-                        viewportSize: CGSize(
-                            width: contentWidth,
-                            height: max(stageHeight, 1)
+                if !isDefeated {
+                    if isBattleScene, realitySceneID != nil {
+                        battleCameraInteractionSurface(
+                            viewportSize: CGSize(
+                                width: contentWidth,
+                                height: max(stageHeight, 1)
+                            )
                         )
-                    )
-                    .frame(width: contentWidth, height: max(stageHeight, 1))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                }
-
-                if isBattleScene,
-                   realitySceneID != nil,
-                   realityController.isBattleCameraAdjusted {
-                    battleCameraResetButton
-                        .padding(.top, 14)
-                        .padding(.trailing, 16)
-                        .frame(
-                            width: contentWidth,
-                            height: max(stageHeight, 1),
-                            alignment: .topTrailing
-                        )
+                        .frame(width: contentWidth, height: max(stageHeight, 1))
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                        .transition(.opacity.combined(with: .scale(scale: 0.94)))
-                        .zIndex(4)
-                }
+                    }
 
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: Color.black.opacity(0.16), location: 0.34),
-                        .init(color: Color.black.opacity(0.68), location: 1)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: bottomBarHeight + 74)
-                .allowsHitTesting(false)
+                    if isBattleScene,
+                       realitySceneID != nil,
+                       realityController.isBattleCameraAdjusted {
+                        battleCameraResetButton
+                            .padding(.top, 14)
+                            .padding(.trailing, 16)
+                            .frame(
+                                width: contentWidth,
+                                height: max(stageHeight, 1),
+                                alignment: .topTrailing
+                            )
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                            .transition(.opacity.combined(with: .scale(scale: 0.94)))
+                            .zIndex(4)
+                    }
 
-                glyphInputPanel(presentation)
-                    .frame(width: inputPanelWidth, height: inputPanelHeight)
-                    .position(
-                        x: inputPanelX(
-                            availableWidth: contentWidth,
-                            panelWidth: inputPanelWidth
-                        ),
-                        y: inputPanelCenterY
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: Color.black.opacity(0.16), location: 0.34),
+                            .init(color: Color.black.opacity(0.68), location: 1)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
+                    .frame(height: bottomBarHeight + 74)
+                    .allowsHitTesting(false)
 
-                spellBar(presentation)
-                    .frame(height: 218)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 12)
+                    glyphInputPanel(presentation)
+                        .frame(width: inputPanelWidth, height: inputPanelHeight)
+                        .position(
+                            x: inputPanelX(
+                                availableWidth: contentWidth,
+                                panelWidth: inputPanelWidth
+                            ),
+                            y: inputPanelCenterY
+                        )
+
+                    spellBar(presentation)
+                        .frame(height: 218)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 12)
+                }
             }
             .overlay {
                 Rectangle()
@@ -1377,26 +1390,135 @@ struct BattleView: View {
     }
 
     private var defeatOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.76)
-                .ignoresSafeArea()
-            VStack(spacing: 14) {
-                Image(systemName: "exclamationmark.octagon.fill")
-                    .font(.largeTitle)
-                    .foregroundStyle(.red)
-                Text("하강 봉인 절차 중단")
-                    .font(.title2.weight(.semibold))
-                Text("전투 진입 직전 상태에서 다시 시작합니다.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Button("전투 재시작") {
-                    realityController.resetBattleCamera(animated: !appSettings.reducedMotion)
-                    gameSession.send(.restartEncounter)
+        GeometryReader { proxy in
+            let panelWidth = min(760, proxy.size.width * 0.58)
+            let panelHeight = panelWidth * 0.75
+
+            ZStack {
+                Color.black.opacity(0.68)
+                    .ignoresSafeArea()
+
+                ZStack {
+                    Image("BattleDefeatPanel")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: panelWidth, height: panelHeight)
+                        .clipped()
+
+                    VStack(spacing: 5) {
+                        Image("BattleDefeatSeal")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: panelWidth * 0.18, height: panelWidth * 0.18)
+
+                        Image("BattleDefeatTitle")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: panelWidth * 0.64, height: panelHeight * 0.15)
+                            .clipped()
+
+                        Rectangle()
+                            .fill(DAColor.gold.opacity(0.42))
+                            .frame(width: panelWidth * 0.67, height: 1)
+                            .padding(.vertical, 4)
+
+                        Text("생체 반응이 한계치 아래로 감소했습니다.")
+                            .font(.system(size: 17, weight: .semibold, design: .serif))
+                            .foregroundStyle(DAColor.attack)
+
+                        Text("전투 진입 직전의 기록으로 복원하여 다시 시작합니다.")
+                            .font(.system(size: 14, weight: .medium, design: .serif))
+                            .foregroundStyle(DAColor.body.opacity(0.86))
+
+                        Button {
+                            restartDefeatedBattleImmediately()
+                        } label: {
+                            ZStack {
+                                Image("BattleDefeatRetryButton")
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(
+                                        width: panelWidth * 0.64,
+                                        height: panelHeight * 0.16
+                                    )
+                                    .clipped()
+
+                                HStack(spacing: 16) {
+                                    Image("BattleDefeatRetryIcon")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 38, height: 38)
+
+                                    Text("전투 재시작")
+                                        .font(.system(size: 24, weight: .semibold, design: .serif))
+                                        .foregroundStyle(DAColor.body)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("전투 재시작")
+                        .accessibilityHint("전투 진입 직전 상태로 복원합니다")
+                    }
+                    .padding(.horizontal, panelWidth * 0.09)
+                    .padding(.vertical, panelHeight * 0.07)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
+                .frame(width: panelWidth, height: panelHeight)
+                .shadow(color: .black.opacity(0.78), radius: 22, y: 10)
             }
         }
+    }
+
+    private func updateDefeatPresentation(for phase: BattlePhase?) {
+        guard phase == .defeat else {
+            defeatPresentationTask?.cancel()
+            defeatPresentationTask = nil
+            if isDefeatPanelVisible {
+                withAnimation(.easeOut(duration: 0.16)) {
+                    isDefeatPanelVisible = false
+                }
+            }
+            if isBattleScene {
+                realityController.resetBattleCamera(animated: false)
+                realityController.setBattleCameraInteractionEnabled(true)
+            }
+            return
+        }
+
+        guard defeatPresentationTask == nil,
+              !isDefeatPanelVisible else { return }
+
+        enemyPulseTask?.cancel()
+        playerPulseTask?.cancel()
+        feedbackTask?.cancel()
+        detailPressTask?.cancel()
+        detailedSpell = nil
+        feedbackText = nil
+        showsFirstTurnBriefing = false
+        isCameraLooking = false
+        isCameraZooming = false
+        cameraLookTranslationOrigin = nil
+        realityController.setBattleCameraInteractionEnabled(false)
+
+        defeatPresentationTask = Task { @MainActor in
+            defer { defeatPresentationTask = nil }
+            await realityController.playBattleDefeatCamera(
+                reducedMotion: appSettings.reducedMotion
+            )
+            guard !Task.isCancelled,
+                  gameSession.battleState?.phase == .defeat else { return }
+            withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.24)) {
+                isDefeatPanelVisible = true
+            }
+        }
+    }
+
+    private func restartDefeatedBattleImmediately() {
+        defeatPresentationTask?.cancel()
+        defeatPresentationTask = nil
+        isDefeatPanelVisible = false
+        realityController.resetBattleCamera(animated: false)
+        gameSession.send(.restartEncounter)
     }
 
     private var residualBriefing: some View {

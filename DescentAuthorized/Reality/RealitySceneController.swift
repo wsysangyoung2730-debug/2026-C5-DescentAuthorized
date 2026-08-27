@@ -242,6 +242,63 @@ final class RealitySceneController: ObservableObject {
         scheduleBoardProjectionRefresh()
     }
 
+    func playBattleDefeatCamera(reducedMotion: Bool) async {
+        setBattleCameraInteractionEnabled(false)
+        guard requestedCameraPreset == .battle,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+        cameraEntity.camera = snapshot.camera
+        clearBattleCameraAdjustmentState()
+
+        let baseTransform = Transform(matrix: snapshot.transformMatrix)
+        let settledTransform = battleDefeatCameraTransform(
+            from: baseTransform,
+            roll: .pi * 7 / 180,
+            pitch: -.pi * 3 / 180,
+            verticalDrop: 0.12
+        )
+        let fallenTransform = battleDefeatCameraTransform(
+            from: baseTransform,
+            roll: .pi * 38 / 180,
+            pitch: -.pi * 9 / 180,
+            verticalDrop: 0.68
+        )
+
+        if reducedMotion {
+            cameraEntity.setTransformMatrix(fallenTransform.matrix, relativeTo: nil)
+            return
+        }
+
+        cameraEntity.move(
+            to: settledTransform,
+            relativeTo: nil,
+            duration: 0.16,
+            timingFunction: .easeIn
+        )
+        do {
+            try await Task.sleep(for: .milliseconds(160))
+        } catch {
+            return
+        }
+        guard !Task.isCancelled else { return }
+
+        cameraEntity.move(
+            to: fallenTransform,
+            relativeTo: nil,
+            duration: 0.58,
+            timingFunction: .easeIn
+        )
+        do {
+            try await Task.sleep(for: .milliseconds(580))
+        } catch {
+            return
+        }
+    }
+
     private func transitionCamera(to preset: RealityCameraPreset) {
         guard
             let descriptor = registry.descriptor,
@@ -368,6 +425,26 @@ final class RealitySceneController: ObservableObject {
         let axis = SIMD3<Float>(column.x, column.y, column.z)
         let length = simd_length(axis)
         return length > 0.0001 ? axis / length : fallback
+    }
+
+    private func battleDefeatCameraTransform(
+        from baseTransform: Transform,
+        roll: Float,
+        pitch: Float,
+        verticalDrop: Float
+    ) -> Transform {
+        var transform = baseTransform
+        let rollRotation = simd_quatf(
+            angle: roll,
+            axis: SIMD3<Float>(0, 0, 1)
+        )
+        let pitchRotation = simd_quatf(
+            angle: pitch,
+            axis: SIMD3<Float>(1, 0, 0)
+        )
+        transform.rotation = baseTransform.rotation * rollRotation * pitchRotation
+        transform.translation.y -= verticalDrop
+        return transform
     }
 
     private func clamp(_ value: Float, minimum: Float, maximum: Float) -> Float {
