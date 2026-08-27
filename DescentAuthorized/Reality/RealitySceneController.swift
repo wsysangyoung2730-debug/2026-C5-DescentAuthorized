@@ -261,24 +261,13 @@ final class RealitySceneController: ObservableObject {
         battleCameraImpactGeneration &+= 1
         let generation = battleCameraImpactGeneration
         let baseMatrix = adjustedBattleCameraMatrix(from: snapshot)
-        let baseTransform = Transform(matrix: baseMatrix)
-        let right = normalizedAxis(
-            baseMatrix.columns.0,
-            fallback: SIMD3<Float>(1, 0, 0)
-        )
-        let up = normalizedAxis(
-            baseMatrix.columns.1,
-            fallback: SIMD3<Float>(0, 1, 0)
-        )
-        // 넓은 전투 무대에서도 충격이 식별되도록 이동 폭을 확보하되,
-        // 카메라 회전은 건드리지 않아 시야가 기울어지지 않게 유지한다.
-        let amplitude: Float = guarded ? 0.035 : 0.065
-        let keyframes: [(horizontal: Float, vertical: Float, milliseconds: Int64)] = [
-            (1, -0.48, 32),
-            (-0.78, 0.38, 50),
-            (0.5, -0.24, 65),
-            (-0.22, 0.1, 80),
-            (0, 0, 95)
+        let strength: Float = guarded ? 0.65 : 1
+        let keyframes: [(yawDegrees: Float, milliseconds: Int64)] = [
+            (-6.5, 42),
+            (7.5, 68),
+            (-3.8, 72),
+            (1.6, 78),
+            (0, 90)
         ]
 
         battleCameraImpactTask = Task { @MainActor [weak self, weak cameraEntity] in
@@ -286,11 +275,13 @@ final class RealitySceneController: ObservableObject {
             for keyframe in keyframes {
                 guard !Task.isCancelled,
                       generation == self.battleCameraImpactGeneration else { return }
-                var impactTransform = baseTransform
-                impactTransform.translation += right * (amplitude * keyframe.horizontal)
-                impactTransform.translation += up * (amplitude * keyframe.vertical)
+                let yawOffset = keyframe.yawDegrees * (.pi / 180) * strength
+                let impactMatrix = self.adjustedBattleCameraMatrix(
+                    from: snapshot,
+                    transientYaw: yawOffset
+                )
                 cameraEntity.move(
-                    to: impactTransform,
+                    to: Transform(matrix: impactMatrix),
                     relativeTo: nil,
                     duration: Double(keyframe.milliseconds) / 1_000,
                     timingFunction: .easeInOut
@@ -468,11 +459,15 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func adjustedBattleCameraMatrix(
-        from snapshot: AuthoredCameraSnapshot
+        from snapshot: AuthoredCameraSnapshot,
+        transientYaw: Float = 0
     ) -> simd_float4x4 {
         let baseMatrix = snapshot.transformMatrix
         let worldUp = SIMD3<Float>(0, 1, 0)
-        let yawRotation = simd_quatf(angle: battleCameraYaw, axis: worldUp)
+        let yawRotation = simd_quatf(
+            angle: battleCameraYaw + transientYaw,
+            axis: worldUp
+        )
         let baseRight = normalizedAxis(
             baseMatrix.columns.0,
             fallback: SIMD3<Float>(1, 0, 0)
