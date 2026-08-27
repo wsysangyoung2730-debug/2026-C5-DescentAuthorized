@@ -1,0 +1,709 @@
+import SwiftUI
+
+struct DescentSealStageConfiguration {
+    let recordTitle: String
+    let inputTitle: String
+    let sequence: [Int]
+}
+
+struct DescentSealProcedureConfiguration {
+    let recordSubtitle: String
+    let destination: String
+    let stages: [DescentSealStageConfiguration]
+    let accessibilityLabel: String
+    let maximumAttempts: Int
+    let layout: DescentSealPatternLayout
+
+    static let floor10 = DescentSealProcedureConfiguration(
+        recordSubtitle: "제10층 봉인 해제 기록",
+        destination: "제9층 기록 관리 구역",
+        stages: [
+            DescentSealStageConfiguration(
+                recordTitle: "단일 승인 문양",
+                inputTitle: "승인 기록 대조",
+                sequence: [0, 3, 1, 4, 7, 6, 9, 8, 5, 2]
+            )
+        ],
+        accessibilityLabel: "제10층 봉인 해제 정답 기록",
+        maximumAttempts: 2,
+        layout: .standard
+    )
+
+    static let floor9 = DescentSealProcedureConfiguration(
+        recordSubtitle: "제9층 이중 봉인 검수 기록",
+        destination: "제8층 관측실",
+        stages: [
+            DescentSealStageConfiguration(
+                recordTitle: "1단계 · 관리 서명",
+                inputTitle: "1차 기록 대조",
+                sequence: [0, 3, 1, 4, 7, 6, 9]
+            ),
+            DescentSealStageConfiguration(
+                recordTitle: "2단계 · 관측 좌표",
+                inputTitle: "2차 관측 좌표 검증",
+                sequence: [2, 5, 8, 6, 4, 1, 3]
+            )
+        ],
+        accessibilityLabel: "제9층 이중 봉인 해제 정답 기록",
+        maximumAttempts: 2,
+        layout: .standard
+    )
+}
+
+struct DescentDoorSceneView: View {
+    @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameSession: GameSessionStore
+
+    let configuration: DescentSealProcedureConfiguration
+    let sceneController: RealitySceneController
+
+    @State private var descentState: RealityDescentPresentationState = .ready
+    @State private var transitionTask: Task<Void, Never>?
+
+    var body: some View {
+        DescentSealProcedureView(
+            configuration: configuration,
+            onStateChanged: updateDescentState,
+            onApproved: completeDescent
+        )
+        .onAppear {
+            sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+            setDescentState(.ready)
+        }
+        .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
+            sceneController.setDescentPresentation(descentState, reducedMotion: reducedMotion)
+        }
+        .onDisappear { transitionTask?.cancel() }
+    }
+
+    private func updateDescentState(_ state: DoorGlyphPresentationState) {
+        switch state {
+        case .ready: setDescentState(.ready)
+        case .drawing: setDescentState(.drawing)
+        case .failed: setDescentState(.failed)
+        case .approved: setDescentState(.approved)
+        }
+    }
+
+    private func completeDescent() {
+        setDescentState(.approved)
+        transitionTask?.cancel()
+        transitionTask = Task { @MainActor in
+            try? await Task.sleep(
+                for: RealityDescentTransitionTiming.approvalAnimationDelay(
+                    reducedMotion: appSettings.reducedMotion
+                )
+            )
+            guard !Task.isCancelled else { return }
+            setDescentState(.open)
+            try? await Task.sleep(for: RealityDescentTransitionTiming.openStateHold)
+            guard !Task.isCancelled else { return }
+            gameSession.send(.approveDescentDoor)
+        }
+    }
+
+    private func setDescentState(_ state: RealityDescentPresentationState) {
+        descentState = state
+        sceneController.setDescentPresentation(state, reducedMotion: appSettings.reducedMotion)
+    }
+}
+
+private struct DescentSealProcedureView: View {
+    let configuration: DescentSealProcedureConfiguration
+    let onStateChanged: (DoorGlyphPresentationState) -> Void
+    let onApproved: () -> Void
+
+    @State private var completedStageCount = 0
+    @State private var selectedNodes: [Int] = []
+    @State private var dragLocation: CGPoint?
+    @State private var phase: DescentSealInputPhase = .ready
+    @State private var remainingAttempts: Int
+    @State private var isGameOver = false
+
+    init(
+        configuration: DescentSealProcedureConfiguration,
+        onStateChanged: @escaping (DoorGlyphPresentationState) -> Void,
+        onApproved: @escaping () -> Void
+    ) {
+        precondition(!configuration.stages.isEmpty, "A descent seal requires at least one stage")
+        self.configuration = configuration
+        self.onStateChanged = onStateChanged
+        self.onApproved = onApproved
+        _remainingAttempts = State(initialValue: configuration.maximumAttempts)
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let sideWidth = min(max(proxy.size.width * 0.235, 250), 350)
+            let centerWidth = min(max(proxy.size.width * 0.38, 430), 590)
+
+            VStack(spacing: 14) {
+                Color.clear
+                    .frame(height: 62)
+                    .accessibilityHidden(true)
+
+                HStack(alignment: .center, spacing: max(18, proxy.size.width * 0.02)) {
+                    recordPanel.frame(width: sideWidth)
+                    inputPanel.frame(width: centerWidth)
+                    informationPanel.frame(width: sideWidth)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .padding(.horizontal, max(20, proxy.size.width * 0.035))
+            .padding(.vertical, 14)
+        }
+        .background(Color.black.opacity(0.18))
+        .overlay {
+            if isGameOver {
+                sealGameOverOverlay
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.24), value: isGameOver)
+        .onAppear { onStateChanged(.ready) }
+    }
+
+    private var sealGameOverOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.82)
+                .ignoresSafeArea()
+
+            VStack(spacing: 14) {
+                Image(systemName: "xmark.octagon.fill")
+                    .font(.system(size: 48, weight: .semibold))
+                    .foregroundStyle(.red)
+
+                Text("GAME OVER")
+                    .font(.system(size: 32, weight: .bold, design: .serif))
+                    .foregroundStyle(.red)
+
+                Text("봉인 문양 검수에 실패했습니다.")
+                    .font(.title3.weight(.semibold))
+
+                Text("하강문 해제 절차를 처음부터 다시 시작합니다.")
+                    .font(.subheadline)
+                    .foregroundStyle(DescentSealPalette.secondary)
+
+                Button(action: retrySeal) {
+                    Label("봉인문 해제 재시도", systemImage: "arrow.counterclockwise")
+                        .font(.headline)
+                        .frame(minWidth: 250)
+                        .frame(height: 48)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                .padding(.top, 8)
+            }
+            .padding(.horizontal, 42)
+            .padding(.vertical, 34)
+            .background(Color(red: 0.035, green: 0.04, blue: 0.055).opacity(0.98))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.red.opacity(0.55), lineWidth: 1)
+            }
+        }
+    }
+
+    private var recordPanel: some View {
+        ZStack {
+            Image("Floor10DescentRecordParchment")
+                .resizable()
+                .scaledToFit()
+
+            GeometryReader { proxy in
+                ZStack(alignment: .bottomLeading) {
+                    VStack(spacing: 7) {
+                        Text("해제 기록")
+                            .font(.system(size: 23, weight: .semibold, design: .serif))
+                        Text(configuration.recordSubtitle)
+                            .font(.caption.weight(.medium))
+
+                        if completedStageCount > 0, configuration.stages.count > 1 {
+                            Label(
+                                "\(completedStageCount)단계 · 대조 완료",
+                                systemImage: "checkmark.circle.fill"
+                            )
+                            .font(.caption2.weight(.semibold))
+                        }
+
+                        recordPattern(stage: currentStageIndex)
+
+                        if configuration.stages.count == 1 {
+                            Text("기록된 순서를 따라 핵심점을 연결하십시오.")
+                                .font(.caption2)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .id(completedStageCount)
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                    .padding(.top, proxy.size.height * 0.17)
+                    .padding(.bottom, proxy.size.height * 0.15)
+                    .padding(.horizontal, proxy.size.width * 0.14)
+
+                    if let nextStageNumber {
+                        Label("\(nextStageNumber)단계 · 미확인", systemImage: "circle")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(DescentSealPalette.ink.opacity(0.48))
+                            .padding(.leading, proxy.size.width * 0.14)
+                            .padding(.bottom, proxy.size.height * 0.12)
+                            .transition(.opacity)
+                    }
+                }
+                .foregroundStyle(DescentSealPalette.ink)
+            }
+        }
+        .aspectRatio(CGFloat(1086) / 1448, contentMode: .fit)
+        .animation(.easeInOut(duration: 0.28), value: completedStageCount)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(configuration.accessibilityLabel)
+    }
+
+    private func recordPattern(stage: Int) -> some View {
+        let stageConfiguration = configuration.stages[stage]
+        return VStack(spacing: 0) {
+            HStack(spacing: 5) {
+                Image(systemName: completedStageCount > stage ? "checkmark.seal.fill" : "seal")
+                Text(stageConfiguration.recordTitle)
+            }
+            .font(.caption2.weight(.semibold))
+
+            SealPatternDiagram(
+                layout: configuration.layout,
+                selectedNodes: stageConfiguration.sequence,
+                lineColor: DescentSealPalette.ink,
+                nodeColor: DescentSealPalette.ink,
+                showsActiveEndpoint: false,
+                highlightsStartNode: true,
+                contentInsets: EdgeInsets(top: 22, leading: 4, bottom: 18, trailing: 4)
+            )
+            .frame(height: configuration.stages.count == 1 ? 250 : 190)
+        }
+    }
+
+    private var inputPanel: some View {
+        VStack(spacing: 10) {
+            VStack(spacing: 3) {
+                Text("봉인 문양 입력")
+                    .font(.system(size: 28, weight: .semibold, design: .serif))
+                    .foregroundStyle(DescentSealPalette.title)
+                Text("\(currentStage.inputTitle) · 핵심점을 순서대로 연결하십시오.")
+                    .font(.subheadline)
+                    .foregroundStyle(DescentSealPalette.secondary)
+            }
+
+            GeometryReader { padProxy in
+                SealPatternDiagram(
+                    layout: configuration.layout,
+                    selectedNodes: selectedNodes,
+                    dragLocation: dragLocation,
+                    lineColor: phase.lineColor,
+                    nodeColor: phase.statusColor,
+                    showsActiveEndpoint: true,
+                    highlightsStartNode: false
+                )
+                .contentShape(Rectangle())
+                .gesture(inputGesture(in: padProxy.size))
+                .background(Color.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(DescentSealPalette.gold.opacity(0.5), lineWidth: 1)
+                }
+            }
+            .aspectRatio(0.78, contentMode: .fit)
+            .accessibilityLabel("하강문 봉인 문양 입력판")
+
+            if configuration.stages.count > 1 {
+                HStack(spacing: 8) {
+                    ForEach(configuration.stages.indices, id: \.self) { index in
+                        Capsule()
+                            .fill(stageColor(index))
+                            .frame(width: 58, height: 4)
+                    }
+                }
+            }
+
+            Button(action: resetInput) {
+                Label(
+                    configuration.stages.count == 1 ? "입력 초기화" : "전체 입력 초기화",
+                    systemImage: "arrow.counterclockwise"
+                )
+                .font(.headline)
+                .foregroundStyle(DescentSealPalette.secondary)
+                .frame(maxWidth: 270)
+                .frame(height: 52)
+            }
+            .buttonStyle(DescentSealResetButtonStyle())
+            .disabled((selectedNodes.isEmpty && completedStageCount == 0) || phase == .approved)
+            .opacity(selectedNodes.isEmpty && completedStageCount == 0 ? 0.58 : 1)
+        }
+    }
+
+    private var informationPanel: some View {
+        ZStack {
+            Image("Floor10DescentInfoPanel")
+                .resizable()
+                .scaledToFit()
+
+            GeometryReader { proxy in
+                VStack(spacing: 0) {
+                    Text("하강 정보")
+                        .font(.system(size: 23, weight: .semibold, design: .serif))
+                        .foregroundStyle(DescentSealPalette.cyan)
+                        .padding(.bottom, 18)
+
+                    informationRow(icon: "location.north.line", title: "목적지", value: configuration.destination)
+                    divider
+                    if configuration.stages.count > 1 {
+                        informationRow(
+                            icon: "doc.text.magnifyingglass",
+                            title: "검수 단계",
+                            value: "\(currentStageIndex + 1) / \(configuration.stages.count)"
+                        )
+                        divider
+                    }
+                    informationRow(
+                        icon: "scope",
+                        title: "핵심점",
+                        value: "\(selectedNodes.count) / \(currentStage.sequence.count)"
+                    )
+                    divider
+                    informationRow(icon: "clock.arrow.circlepath", title: "남은 시도", value: "\(remainingAttempts)")
+
+                    Spacer(minLength: 12)
+
+                    VStack(spacing: 8) {
+                        Image(systemName: phase.statusIcon)
+                            .font(.system(size: 38, weight: .light))
+                        Text(statusTitle)
+                            .font(.system(size: 20, weight: .medium, design: .serif))
+                    }
+                    .foregroundStyle(phase.statusColor)
+                }
+                .padding(.top, proxy.size.height * 0.19)
+                .padding(.bottom, proxy.size.height * 0.11)
+                .padding(.horizontal, proxy.size.width * 0.13)
+            }
+        }
+        .aspectRatio(CGFloat(1122) / 1402, contentMode: .fit)
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(DescentSealPalette.cyan.opacity(0.18))
+            .frame(height: 1)
+            .padding(.vertical, 10)
+    }
+
+    private var currentStageIndex: Int {
+        min(completedStageCount, configuration.stages.count - 1)
+    }
+
+    private var currentStage: DescentSealStageConfiguration {
+        configuration.stages[currentStageIndex]
+    }
+
+    private var nextStageNumber: Int? {
+        let nextIndex = completedStageCount + 1
+        guard nextIndex < configuration.stages.count else { return nil }
+        return nextIndex + 1
+    }
+
+    private var statusTitle: String {
+        if phase == .ready, completedStageCount > 0 {
+            return "\(completedStageCount)차 검수 완료"
+        }
+        return phase.statusTitle
+    }
+
+    private func stageColor(_ index: Int) -> Color {
+        if phase == .approved || index < completedStageCount { return DescentSealPalette.magic }
+        if index == completedStageCount { return phase.statusColor }
+        return Color.white.opacity(0.24)
+    }
+
+    private func informationRow(icon: String, title: String, value: String) -> some View {
+        HStack(spacing: 9) {
+            Image(systemName: icon)
+                .frame(width: 22)
+                .foregroundStyle(DescentSealPalette.cyan.opacity(0.75))
+            Text(title).foregroundStyle(DescentSealPalette.secondary)
+            Spacer(minLength: 8)
+            Text(value)
+                .foregroundStyle(.white.opacity(0.88))
+                .multilineTextAlignment(.trailing)
+        }
+        .font(.caption.weight(.medium))
+    }
+
+    private func inputGesture(in size: CGSize) -> some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .local)
+            .onChanged { value in
+                guard phase != .approved, !isGameOver else { return }
+                if phase == .failed {
+                    selectedNodes.removeAll()
+                    phase = .ready
+                    onStateChanged(.ready)
+                }
+
+                dragLocation = value.location
+                if let node = configuration.layout.nearestNode(to: value.location, in: size),
+                   !selectedNodes.contains(node) {
+                    selectedNodes.append(node)
+                    phase = .drawing
+                    onStateChanged(.drawing)
+                }
+            }
+            .onEnded { _ in
+                dragLocation = nil
+                guard !selectedNodes.isEmpty, phase != .approved, !isGameOver else { return }
+                evaluateInput()
+            }
+    }
+
+    private func evaluateInput() {
+        guard selectedNodes == currentStage.sequence else {
+            let attemptsLeft = max(0, remainingAttempts - 1)
+            phase = .failed
+            remainingAttempts = attemptsLeft
+            onStateChanged(.failed)
+            if attemptsLeft == 0 {
+                isGameOver = true
+            }
+            return
+        }
+
+        selectedNodes.removeAll()
+        completedStageCount += 1
+        if completedStageCount == configuration.stages.count {
+            phase = .approved
+            onStateChanged(.approved)
+            onApproved()
+        } else {
+            phase = .ready
+            onStateChanged(.ready)
+        }
+    }
+
+    private func resetInput() {
+        completedStageCount = 0
+        selectedNodes.removeAll()
+        dragLocation = nil
+        phase = .ready
+        onStateChanged(.ready)
+    }
+
+    private func retrySeal() {
+        completedStageCount = 0
+        selectedNodes.removeAll()
+        dragLocation = nil
+        remainingAttempts = configuration.maximumAttempts
+        phase = .ready
+        isGameOver = false
+        onStateChanged(.ready)
+    }
+}
+
+struct SealPatternDiagram: View {
+    let layout: DescentSealPatternLayout
+    let selectedNodes: [Int]
+    var dragLocation: CGPoint? = nil
+    let lineColor: Color
+    let nodeColor: Color
+    let showsActiveEndpoint: Bool
+    let highlightsStartNode: Bool
+    var contentInsets: EdgeInsets = EdgeInsets()
+
+    var body: some View {
+        Canvas { context, size in
+            let diagramSize = CGSize(
+                width: max(1, size.width - contentInsets.leading - contentInsets.trailing),
+                height: max(1, size.height - contentInsets.top - contentInsets.bottom)
+            )
+            context.translateBy(x: contentInsets.leading, y: contentInsets.top)
+
+            layout.drawGuides(context: &context, size: diagramSize)
+            layout.drawCenterMark(context: &context, size: diagramSize)
+
+            if !selectedNodes.isEmpty {
+                var selectedPath = Path()
+                selectedPath.move(to: layout.point(selectedNodes[0], in: diagramSize))
+                for node in selectedNodes.dropFirst() {
+                    selectedPath.addLine(to: layout.point(node, in: diagramSize))
+                }
+                if let dragLocation, showsActiveEndpoint {
+                    selectedPath.addLine(to: CGPoint(
+                        x: dragLocation.x - contentInsets.leading,
+                        y: dragLocation.y - contentInsets.top
+                    ))
+                }
+                context.stroke(
+                    selectedPath,
+                    with: .color(lineColor),
+                    style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+                )
+            }
+
+            for index in layout.nodes.indices {
+                let center = layout.point(index, in: diagramSize)
+                let isSelected = selectedNodes.contains(index)
+                let isStartNode = highlightsStartNode && selectedNodes.first == index
+                let radius = isSelected ? 10.0 : 8.0
+
+                if isStartNode {
+                    let markerRadius = radius + 8
+                    var marker = Path()
+                    marker.move(to: CGPoint(x: center.x, y: center.y - markerRadius))
+                    marker.addLine(to: CGPoint(x: center.x + markerRadius, y: center.y))
+                    marker.addLine(to: CGPoint(x: center.x, y: center.y + markerRadius))
+                    marker.addLine(to: CGPoint(x: center.x - markerRadius, y: center.y))
+                    marker.closeSubpath()
+                    context.fill(marker, with: .color(nodeColor.opacity(0.18)))
+                    context.stroke(marker, with: .color(nodeColor.opacity(0.95)), lineWidth: 2)
+                    continue
+                }
+
+                let outer = Path(ellipseIn: CGRect(
+                    x: center.x - radius - 5,
+                    y: center.y - radius - 5,
+                    width: (radius + 5) * 2,
+                    height: (radius + 5) * 2
+                ))
+                context.stroke(outer, with: .color(nodeColor.opacity(isSelected ? 0.8 : 0.32)), lineWidth: 1.5)
+
+                let node = Path(ellipseIn: CGRect(
+                    x: center.x - radius,
+                    y: center.y - radius,
+                    width: radius * 2,
+                    height: radius * 2
+                ))
+                context.fill(node, with: .color(isSelected ? nodeColor : Color.black.opacity(0.62)))
+                context.stroke(node, with: .color(nodeColor.opacity(0.9)), lineWidth: 2)
+            }
+        }
+    }
+}
+
+struct DescentSealPatternLayout {
+    let nodes: [CGPoint]
+    let guideEdges: [(Int, Int)]
+    let centerMark: CGPoint
+
+    static let standard = DescentSealPatternLayout(
+        nodes: [
+            CGPoint(x: 0.50, y: 0.08),
+            CGPoint(x: 0.22, y: 0.25),
+            CGPoint(x: 0.78, y: 0.25),
+            CGPoint(x: 0.50, y: 0.33),
+            CGPoint(x: 0.27, y: 0.50),
+            CGPoint(x: 0.73, y: 0.50),
+            CGPoint(x: 0.50, y: 0.68),
+            CGPoint(x: 0.30, y: 0.82),
+            CGPoint(x: 0.70, y: 0.82),
+            CGPoint(x: 0.50, y: 0.94)
+        ],
+        guideEdges: [
+            (0, 3), (1, 3), (3, 2), (1, 4), (2, 5),
+            (4, 5), (4, 7), (5, 8), (7, 6), (6, 8), (6, 9)
+        ],
+        centerMark: CGPoint(x: 0.5, y: 0.51)
+    )
+
+    func point(_ index: Int, in size: CGSize) -> CGPoint {
+        let normalized = nodes[index]
+        return CGPoint(x: normalized.x * size.width, y: normalized.y * size.height)
+    }
+
+    func nearestNode(to location: CGPoint, in size: CGSize) -> Int? {
+        let threshold = max(32, min(size.width, size.height) * 0.09)
+        return nodes.indices
+            .map { ($0, distance(from: location, to: point($0, in: size))) }
+            .filter { $0.1 <= threshold }
+            .min { $0.1 < $1.1 }?
+            .0
+    }
+
+    func drawGuides(context: inout GraphicsContext, size: CGSize) {
+        var guides = Path()
+        for edge in guideEdges {
+            guides.move(to: point(edge.0, in: size))
+            guides.addLine(to: point(edge.1, in: size))
+        }
+        context.stroke(guides, with: .color(.white.opacity(0.13)), lineWidth: 1)
+    }
+
+    func drawCenterMark(context: inout GraphicsContext, size: CGSize) {
+        let center = CGPoint(x: size.width * centerMark.x, y: size.height * centerMark.y)
+        let halfWidth = size.width * 0.075
+        let halfHeight = size.height * 0.065
+        var diamond = Path()
+        diamond.move(to: CGPoint(x: center.x, y: center.y - halfHeight))
+        diamond.addLine(to: CGPoint(x: center.x + halfWidth, y: center.y))
+        diamond.addLine(to: CGPoint(x: center.x, y: center.y + halfHeight))
+        diamond.addLine(to: CGPoint(x: center.x - halfWidth, y: center.y))
+        diamond.closeSubpath()
+        context.stroke(diamond, with: .color(.white.opacity(0.28)), lineWidth: 1.5)
+    }
+
+    private func distance(from lhs: CGPoint, to rhs: CGPoint) -> CGFloat {
+        hypot(lhs.x - rhs.x, lhs.y - rhs.y)
+    }
+}
+
+private enum DescentSealInputPhase {
+    case ready
+    case drawing
+    case failed
+    case approved
+
+    var statusTitle: String {
+        switch self {
+        case .ready: "입력 대기"
+        case .drawing: "기록 대조 중"
+        case .failed: "문양 불일치"
+        case .approved: "하강 승인"
+        }
+    }
+
+    var statusIcon: String {
+        switch self {
+        case .ready: "circle.dotted"
+        case .drawing: "doc.text.magnifyingglass"
+        case .failed: "xmark.seal"
+        case .approved: "checkmark.seal.fill"
+        }
+    }
+
+    var statusColor: Color {
+        switch self {
+        case .ready: DescentSealPalette.secondary
+        case .drawing: DescentSealPalette.cyan
+        case .failed: .red
+        case .approved: DescentSealPalette.magic
+        }
+    }
+
+    var lineColor: Color { self == .failed ? .red : DescentSealPalette.magic }
+}
+
+struct DescentSealResetButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        ZStack {
+            Image(configuration.isPressed ? "Floor10DescentResetButtonPressed" : "Floor10DescentResetButton")
+                .resizable()
+                .scaledToFit()
+            configuration.label
+        }
+        .scaleEffect(configuration.isPressed ? 0.985 : 1)
+    }
+}
+
+enum DescentSealPalette {
+    static let gold = Color(red: 184 / 255, green: 139 / 255, blue: 77 / 255)
+    static let title = Color(red: 225 / 255, green: 202 / 255, blue: 164 / 255)
+    static let secondary = Color(red: 210 / 255, green: 207 / 255, blue: 200 / 255)
+    static let cyan = Color(red: 89 / 255, green: 204 / 255, blue: 224 / 255)
+    static let magic = Color(red: 154 / 255, green: 104 / 255, blue: 246 / 255)
+    static let ink = Color(red: 45 / 255, green: 34 / 255, blue: 25 / 255)
+}
