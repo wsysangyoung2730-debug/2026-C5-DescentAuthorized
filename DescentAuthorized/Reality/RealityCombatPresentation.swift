@@ -2,6 +2,7 @@ import Combine
 import Foundation
 import OSLog
 import RealityKit
+import UIKit
 
 enum RealityShieldState: Equatable, Sendable {
     case none
@@ -143,6 +144,10 @@ final class RealityCombatVFXRenderer {
     private var intentGeneration = 0
     private var intentScale: Float = 1.15
     private var intentVerticalOffset: Float = 0.3
+    private var currentShieldState: RealityShieldState = .none
+    private var shieldAuraEntity: Entity?
+    private var shieldTransitionTask: Task<Void, Never>?
+    private var shieldTransitionGeneration = 0
 
     func attach(to registry: RealityEntityRegistry) {
         root = registry.root
@@ -150,6 +155,8 @@ final class RealityCombatVFXRenderer {
         enemyActor = registry.entity(for: .enemyActor)
         intentScale = registry.descriptor?.actor?.intentScale ?? 1.15
         intentVerticalOffset = registry.descriptor?.actor?.intentVerticalOffset ?? 0.3
+        registry.setEnabled(true, for: .generalShield)
+        registry.setEnabled(true, for: .absoluteShield)
     }
 
     func present(
@@ -159,6 +166,7 @@ final class RealityCombatVFXRenderer {
         bundle: Bundle = .main
     ) {
         attach(to: registry)
+        var synchronizedShieldState: RealityShieldState?
         for cue in cues {
             switch cue {
             case let .intent(intent):
@@ -166,10 +174,17 @@ final class RealityCombatVFXRenderer {
             case let .hit(hit):
                 showHit(hit, reducedMotion: reducedMotion, bundle: bundle)
             case let .shield(state):
-                applyShield(state, registry: registry)
+                synchronizedShieldState = state
             case .clearIntent:
                 clearIntent()
             }
+        }
+        if let synchronizedShieldState {
+            applyShield(
+                synchronizedShieldState,
+                registry: registry,
+                reducedMotion: reducedMotion
+            )
         }
     }
 
@@ -186,11 +201,174 @@ final class RealityCombatVFXRenderer {
         intentScale = 1.15
         intentVerticalOffset = 0.3
         intentGeneration += 1
+        shieldTransitionTask?.cancel()
+        shieldTransitionTask = nil
+        shieldAuraEntity?.removeFromParent()
+        shieldAuraEntity = nil
+        currentShieldState = .none
+        shieldTransitionGeneration += 1
     }
 
-    private func applyShield(_ state: RealityShieldState, registry: RealityEntityRegistry) {
-        registry.setEnabled(state == .general, for: .generalShield)
-        registry.setEnabled(state == .absolute, for: .absoluteShield)
+    private func applyShield(
+        _ state: RealityShieldState,
+        registry: RealityEntityRegistry,
+        reducedMotion: Bool
+    ) {
+        guard state != currentShieldState else {
+            if reducedMotion {
+                shieldTransitionTask?.cancel()
+                shieldTransitionTask = nil
+                if state == .none {
+                    shieldAuraEntity?.removeFromParent()
+                    shieldAuraEntity = nil
+                } else {
+                    shieldAuraEntity?.components.set(OpacityComponent(opacity: 1))
+                }
+            }
+            return
+        }
+
+        shieldTransitionTask?.cancel()
+        shieldTransitionTask = nil
+        shieldTransitionGeneration += 1
+        let generation = shieldTransitionGeneration
+        let previousAura = shieldAuraEntity
+        currentShieldState = state
+
+        guard state != .none else {
+            guard let previousAura else { return }
+            if reducedMotion {
+                previousAura.removeFromParent()
+                shieldAuraEntity = nil
+                return
+            }
+
+            var dismissalTransform = previousAura.transform
+            dismissalTransform.scale *= 1.04
+            previousAura.move(
+                to: dismissalTransform,
+                relativeTo: previousAura.parent,
+                duration: 0.24,
+                timingFunction: .easeIn
+            )
+            shieldTransitionTask = Task { @MainActor [weak self, weak previousAura] in
+                guard let self, let previousAura else { return }
+                let steps = 6
+                for step in 1...steps {
+                    do {
+                        try await Task.sleep(for: .milliseconds(40))
+                    } catch {
+                        return
+                    }
+                    guard generation == self.shieldTransitionGeneration else { return }
+                    previousAura.components.set(
+                        OpacityComponent(opacity: Float(steps - step) / Float(steps))
+                    )
+                }
+                previousAura.removeFromParent()
+                if self.shieldAuraEntity === previousAura {
+                    self.shieldAuraEntity = nil
+                }
+                self.shieldTransitionTask = nil
+            }
+            return
+        }
+
+        previousAura?.removeFromParent()
+        guard let aura = makeShieldAura(for: state, registry: registry),
+              let enemyAnchor else {
+            currentShieldState = .none
+            shieldAuraEntity = nil
+            return
+        }
+
+        shieldAuraEntity = aura
+        enemyAnchor.addChild(aura)
+        guard !reducedMotion else {
+            aura.components.set(OpacityComponent(opacity: 1))
+            return
+        }
+
+        let finalTransform = aura.transform
+        var appearanceTransform = finalTransform
+        appearanceTransform.scale *= 0.9
+        aura.transform = appearanceTransform
+        aura.components.set(OpacityComponent(opacity: 0))
+        aura.move(
+            to: finalTransform,
+            relativeTo: enemyAnchor,
+            duration: 0.32,
+            timingFunction: .easeOut
+        )
+        shieldTransitionTask = Task { @MainActor [weak self, weak aura] in
+            guard let self, let aura else { return }
+            let steps = 8
+            for step in 1...steps {
+                do {
+                    try await Task.sleep(for: .milliseconds(40))
+                } catch {
+                    return
+                }
+                guard generation == self.shieldTransitionGeneration else { return }
+                aura.components.set(OpacityComponent(opacity: Float(step) / Float(steps)))
+            }
+            self.shieldTransitionTask = nil
+        }
+    }
+
+    private func makeShieldAura(
+        for state: RealityShieldState,
+        registry: RealityEntityRegistry
+    ) -> Entity? {
+        guard let enemyAnchor,
+              let actorBounds = enemyBounds(relativeTo: enemyAnchor) else { return nil }
+
+        let role: RealityEntityRole
+        let tint: UIColor
+        let materialOpacity: Float
+        switch state {
+        case .general:
+            role = .generalShield
+            tint = UIColor(red: 0.2, green: 0.72, blue: 1, alpha: 1)
+            materialOpacity = 0.14
+        case .absolute:
+            role = .absoluteShield
+            tint = UIColor(red: 1, green: 0.7, blue: 0.16, alpha: 1)
+            materialOpacity = 0.17
+        case .none:
+            return nil
+        }
+        guard let barrierBase = registry.entity(for: role) else { return nil }
+
+        let barrierBounds = barrierBase.visualBounds(relativeTo: enemyAnchor)
+        let actorSize = actorBounds.max - actorBounds.min
+        let barrierSize = barrierBounds.max - barrierBounds.min
+        let horizontalDiameter = max(
+            max(barrierSize.x, barrierSize.y),
+            max(actorSize.x, actorSize.y) * 1.45,
+            4.6
+        )
+        let verticalDiameter = max(actorSize.z + 0.4, horizontalDiameter * 0.8)
+
+        var material = UnlitMaterial(color: tint)
+        material.blending = .transparent(opacity: .init(scale: materialOpacity))
+        material.triangleFillMode = .lines
+        material.faceCulling = .none
+        material.writesDepth = false
+        material.readsDepth = true
+
+        let aura = ModelEntity(
+            mesh: .generateSphere(radius: 0.5),
+            materials: [material]
+        )
+        aura.name = "DA_RUNTIME_SHIELD_AURA"
+        aura.scale = SIMD3(horizontalDiameter, horizontalDiameter, verticalDiameter)
+        aura.position = SIMD3(
+            (actorBounds.min.x + actorBounds.max.x) * 0.5,
+            (actorBounds.min.y + actorBounds.max.y) * 0.5,
+            actorBounds.min.z + verticalDiameter * 0.44
+        )
+        return aura
     }
 
     private func showIntent(

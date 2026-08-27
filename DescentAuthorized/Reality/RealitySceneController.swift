@@ -339,8 +339,10 @@ final class RealitySceneController: ObservableObject {
         registry.rebuild(root: root, descriptor: descriptor)
         loadingProgress = 0.9
         registry.setDoorOpen(false)
-        registry.setEnabled(false, for: .generalShield)
-        registry.setEnabled(false, for: .absoluteShield)
+        // The authored entities are the inactive barrier pylons. They remain
+        // visible while the renderer adds and removes the active energy shell.
+        registry.setEnabled(true, for: .generalShield)
+        registry.setEnabled(true, for: .absoluteShield)
         progressionVFXRenderer.attach(to: registry)
         if let cameraName = descriptor.cameraName(for: requestedCameraPreset) {
             applyCamera(named: cameraName)
