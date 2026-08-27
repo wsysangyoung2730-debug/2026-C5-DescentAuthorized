@@ -11,6 +11,7 @@ enum RealityCameraPreset: String, CaseIterable, Sendable {
 enum RealityEntityRole: String, CaseIterable, Sendable {
     case magicInputBoard
     case enemySpawn
+    case enemyActor
     case descentDoor
     case openDescentDoor
     case descentStele
@@ -23,11 +24,35 @@ enum RealityEntityRole: String, CaseIterable, Sendable {
     case absoluteShield
 }
 
+struct RealityActorDescriptor: Sendable {
+    let assetID: GameAssetID
+    let expectedEntityName: String
+    let resourceSubdirectory: String
+    let targetHeight: Float
+
+    var resourceName: String { assetID.rawValue }
+}
+
 struct RealitySceneDescriptor: Sendable {
     let sceneID: FloorSceneID
     let resourceSubdirectory: String
     let cameraNames: [RealityCameraPreset: String]
     let entityNames: [RealityEntityRole: String]
+    let actor: RealityActorDescriptor?
+
+    init(
+        sceneID: FloorSceneID,
+        resourceSubdirectory: String,
+        cameraNames: [RealityCameraPreset: String],
+        entityNames: [RealityEntityRole: String],
+        actor: RealityActorDescriptor? = nil
+    ) {
+        self.sceneID = sceneID
+        self.resourceSubdirectory = resourceSubdirectory
+        self.cameraNames = cameraNames
+        self.entityNames = entityNames
+        self.actor = actor
+    }
 
     var resourceName: String { sceneID.rawValue }
 
@@ -79,7 +104,13 @@ struct RealitySceneDescriptor: Sendable {
                 .rewardScrollCenter: "F09_RewardScroll_Center_HoleAnchor",
                 .rewardScrollRight: "F09_RewardScroll_Right_HoleAnchor",
                 .generalShield: "F09_GeneralShield"
-            ]
+            ],
+            actor: .init(
+                assetID: .recordAdministrator,
+                expectedEntityName: "ACTOR_RecordAdministrator",
+                resourceSubdirectory: "Reality/Actors/RecordAdministrator",
+                targetHeight: 6.5
+            )
         ),
         .floor08ResidueIsolation: .init(
             sceneID: .floor08ResidueIsolation,
@@ -91,7 +122,13 @@ struct RealitySceneDescriptor: Sendable {
             entityNames: [
                 .magicInputBoard: "F08A_MagicInputBoard",
                 .enemySpawn: "SPAWN_ObservationResidue"
-            ]
+            ],
+            actor: .init(
+                assetID: .observationResidue,
+                expectedEntityName: "ACTOR_ObservationResidue",
+                resourceSubdirectory: "Reality/Actors/ObservationResidue",
+                targetHeight: 2.35
+            )
         ),
         .floor08AdministratorObservatory: .init(
             sceneID: .floor08AdministratorObservatory,
@@ -114,7 +151,13 @@ struct RealitySceneDescriptor: Sendable {
                 .rewardScrollCenter: "F08B_RewardScroll_Center_HoleAnchor",
                 .rewardScrollRight: "F08B_RewardScroll_Right_HoleAnchor",
                 .absoluteShield: "F08B_AbsoluteShield"
-            ]
+            ],
+            actor: .init(
+                assetID: .observationAdministrator,
+                expectedEntityName: "ACTOR_ObservationAdministrator",
+                resourceSubdirectory: "Reality/Actors/ObservationAdministrator",
+                targetHeight: 4.2
+            )
         )
     ]
 }
