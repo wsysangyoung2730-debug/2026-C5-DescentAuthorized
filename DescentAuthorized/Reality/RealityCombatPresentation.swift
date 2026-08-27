@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import OSLog
 import RealityKit
 
 enum RealityShieldState: Equatable, Sendable {
@@ -66,6 +67,9 @@ struct RealityCombatPresentationMapper {
                     cues.append(.shield(charges > 0 ? .absolute : .none))
                 }
 
+            case .enemyActionStarted:
+                cues.append(.clearIntent)
+
             case .victory, .defeat:
                 cues.append(.clearIntent)
 
@@ -125,15 +129,23 @@ struct RealityCombatPresentationMapper {
 
 @MainActor
 final class RealityCombatVFXRenderer {
+    private let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "DescentAuthorized",
+        category: "RealityCombatVFX"
+    )
     private weak var root: Entity?
     private weak var enemyAnchor: Entity?
+    private weak var enemyActor: Entity?
     private var currentIntentEntity: Entity?
+    private var currentIntentCue: RealityEnemyIntentCue?
+    private var pendingIntentCue: RealityEnemyIntentCue?
     private var loadCancellables: Set<AnyCancellable> = []
     private var intentGeneration = 0
 
     func attach(to registry: RealityEntityRegistry) {
         root = registry.root
         enemyAnchor = registry.entity(for: .enemySpawn) ?? registry.root
+        enemyActor = registry.entity(for: .enemyActor)
     }
 
     func present(
@@ -162,8 +174,11 @@ final class RealityCombatVFXRenderer {
         loadCancellables.removeAll()
         currentIntentEntity?.removeFromParent()
         currentIntentEntity = nil
+        currentIntentCue = nil
+        pendingIntentCue = nil
         root = nil
         enemyAnchor = nil
+        enemyActor = nil
         intentGeneration += 1
     }
 
@@ -177,20 +192,38 @@ final class RealityCombatVFXRenderer {
         reducedMotion: Bool,
         bundle: Bundle
     ) {
+        guard currentIntentCue != cue, pendingIntentCue != cue else { return }
         intentGeneration += 1
         let generation = intentGeneration
         currentIntentEntity?.removeFromParent()
         currentIntentEntity = nil
+        currentIntentCue = nil
+        pendingIntentCue = cue
 
-        load(assetID(for: cue), bundle: bundle) { [weak self] entity in
-            guard let self, generation == self.intentGeneration, let enemyAnchor = self.enemyAnchor else { return }
-            entity.name = "DA_RUNTIME_ENEMY_INTENT"
-            entity.position.y += 2.15
-            self.currentIntentEntity = entity
-            enemyAnchor.addChild(entity)
-            self.playAuthoredAnimation(on: entity)
-            self.animateAppearance(entity, reducedMotion: reducedMotion)
-        }
+        load(
+            assetID(for: cue),
+            bundle: bundle,
+            completion: { [weak self] entity in
+                guard let self, generation == self.intentGeneration, let enemyAnchor = self.enemyAnchor else { return }
+                let container = self.normalizedVFXContainer(
+                    payload: entity,
+                    name: "DA_RUNTIME_ENEMY_INTENT"
+                )
+                container.scale = SIMD3(repeating: 1.15)
+                container.position = self.intentPosition(relativeTo: enemyAnchor)
+                self.pendingIntentCue = nil
+                self.currentIntentCue = cue
+                self.currentIntentEntity = container
+                enemyAnchor.addChild(container)
+                self.playAuthoredAnimation(on: entity)
+                self.animateAppearance(container, reducedMotion: reducedMotion)
+            },
+            failure: { [weak self] message in
+                guard let self, generation == self.intentGeneration else { return }
+                self.pendingIntentCue = nil
+                self.logger.error("\(message, privacy: .public)")
+            }
+        )
     }
 
     private func showHit(
@@ -198,24 +231,87 @@ final class RealityCombatVFXRenderer {
         reducedMotion: Bool,
         bundle: Bundle
     ) {
-        load(assetID(for: cue), bundle: bundle) { [weak self] entity in
-            guard let self, let enemyAnchor = self.enemyAnchor else { return }
-            entity.name = "DA_RUNTIME_ENEMY_HIT"
-            enemyAnchor.addChild(entity)
-            self.playAuthoredAnimation(on: entity)
-            self.animateAppearance(entity, reducedMotion: reducedMotion)
+        load(
+            assetID(for: cue),
+            bundle: bundle,
+            completion: { [weak self] entity in
+                guard let self, let enemyAnchor = self.enemyAnchor else { return }
+                let container = self.normalizedVFXContainer(
+                    payload: entity,
+                    name: "DA_RUNTIME_ENEMY_HIT"
+                )
+                container.scale = SIMD3(repeating: 0.82)
+                container.position = self.hitPosition(relativeTo: enemyAnchor)
+                enemyAnchor.addChild(container)
+                self.playAuthoredAnimation(on: entity)
+                self.animateAppearance(container, reducedMotion: reducedMotion)
 
-            Task { @MainActor [weak entity] in
-                try? await Task.sleep(for: .milliseconds(reducedMotion ? 450 : 950))
-                entity?.removeFromParent()
+                Task { @MainActor [weak container] in
+                    try? await Task.sleep(for: .milliseconds(reducedMotion ? 1_000 : 1_500))
+                    guard let container else { return }
+                    if reducedMotion {
+                        container.removeFromParent()
+                    } else {
+                        await self.fadeOutAndRemove(container)
+                    }
+                }
+            },
+            failure: { [weak self] message in
+                self?.logger.error("\(message, privacy: .public)")
             }
-        }
+        )
     }
 
     private func clearIntent() {
         intentGeneration += 1
         currentIntentEntity?.removeFromParent()
         currentIntentEntity = nil
+        currentIntentCue = nil
+        pendingIntentCue = nil
+    }
+
+    private func intentPosition(relativeTo anchor: Entity) -> SIMD3<Float> {
+        guard let bounds = enemyBounds(relativeTo: anchor) else {
+            return SIMD3(0, -0.16, 2.15)
+        }
+        return SIMD3(
+            (bounds.min.x + bounds.max.x) * 0.5,
+            bounds.min.y - 0.35,
+            bounds.max.z + 0.3
+        )
+    }
+
+    private func hitPosition(relativeTo anchor: Entity) -> SIMD3<Float> {
+        guard let bounds = enemyBounds(relativeTo: anchor) else {
+            return SIMD3(0, -0.16, 1.3)
+        }
+        return SIMD3(
+            (bounds.min.x + bounds.max.x) * 0.5,
+            bounds.min.y - 0.24,
+            bounds.min.z + (bounds.max.z - bounds.min.z) * 0.56
+        )
+    }
+
+    private func enemyBounds(relativeTo anchor: Entity) -> BoundingBox? {
+        guard let enemyActor else { return nil }
+        let bounds = enemyActor.visualBounds(relativeTo: anchor)
+        let size = bounds.max - bounds.min
+        guard size.x > 0.01, size.y > 0.01, size.z > 0.01 else { return nil }
+        return bounds
+    }
+
+    private func normalizedVFXContainer(payload: Entity, name: String) -> Entity {
+        let container = Entity()
+        container.name = name
+        payload.isEnabled = true
+        container.addChild(payload)
+
+        let bounds = payload.visualBounds(relativeTo: container)
+        let size = bounds.max - bounds.min
+        if size.x > 0.01, size.y > 0.01, size.z > 0.01 {
+            payload.position -= (bounds.min + bounds.max) * 0.5
+        }
+        return container
     }
 
     private func animateAppearance(_ entity: Entity, reducedMotion: Bool) {
@@ -223,6 +319,17 @@ final class RealityCombatVFXRenderer {
         let finalTransform = entity.transform
         entity.scale *= 0.72
         entity.move(to: finalTransform, relativeTo: entity.parent, duration: 0.18, timingFunction: .easeOut)
+    }
+
+    private func fadeOutAndRemove(_ entity: Entity) async {
+        let steps = 10
+        for step in 1...steps {
+            guard entity.parent != nil else { return }
+            let opacity = Float(steps - step) / Float(steps)
+            entity.components.set(OpacityComponent(opacity: opacity))
+            try? await Task.sleep(for: .milliseconds(50))
+        }
+        entity.removeFromParent()
     }
 
     private func playAuthoredAnimation(on entity: Entity) {
@@ -234,19 +341,51 @@ final class RealityCombatVFXRenderer {
     private func load(
         _ assetID: GameAssetID,
         bundle: Bundle,
-        completion: @escaping @MainActor (Entity) -> Void
+        completion: @escaping @MainActor (Entity) -> Void,
+        failure: @escaping @MainActor (String) -> Void
     ) {
-        guard let resource = Self.resource(for: assetID),
-              let url = bundle.url(
+        guard let resource = Self.resource(for: assetID) else {
+            failure("3D 전투 효과 매핑이 없습니다: \(assetID.rawValue)")
+            return
+        }
+        guard let url = bundle.url(
                 forResource: resource.name,
                 withExtension: "usdc",
                 subdirectory: resource.subdirectory
-              ) else { return }
+        ) else {
+            failure("3D 전투 효과 파일이 없습니다: \(resource.subdirectory)/\(resource.name).usdc")
+            return
+        }
 
         Entity.loadAsync(contentsOf: url)
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { _ in }, receiveValue: completion)
+            .sink(
+                receiveCompletion: { result in
+                    if case let .failure(error) = result {
+                        failure("3D 전투 효과를 불러오지 못했습니다: \(error.localizedDescription)")
+                    }
+                },
+                receiveValue: { [weak self] loadedRoot in
+                    guard let self else { return }
+                    guard let effectEntity = loadedRoot.name == resource.entityName
+                            ? loadedRoot
+                            : loadedRoot.findEntity(named: resource.entityName) else {
+                        failure("3D 전투 효과의 기준 객체가 없습니다: \(resource.entityName)")
+                        return
+                    }
+                    effectEntity.removeFromParent()
+                    self.enableHierarchy(effectEntity)
+                    completion(effectEntity)
+                }
+            )
             .store(in: &loadCancellables)
+    }
+
+    private func enableHierarchy(_ entity: Entity) {
+        entity.isEnabled = true
+        for child in entity.children {
+            enableHierarchy(child)
+        }
     }
 
     private func assetID(for cue: RealityEnemyIntentCue) -> GameAssetID {
@@ -267,24 +406,30 @@ final class RealityCombatVFXRenderer {
         }
     }
 
-    private static func resource(for assetID: GameAssetID) -> (name: String, subdirectory: String)? {
+    private static func resource(
+        for assetID: GameAssetID
+    ) -> (name: String, subdirectory: String, entityName: String)? {
         switch assetID {
         case .hitNormal:
-            (assetID.rawValue, "Reality/VFX/Combat/HitNormal")
+            (assetID.rawValue, "Reality/VFX/Combat/HitNormal", "VFX_HitNormal")
         case .hitHeavy:
-            (assetID.rawValue, "Reality/VFX/Combat/HitHeavy")
+            (assetID.rawValue, "Reality/VFX/Combat/HitHeavy", "VFX_HitHeavy")
         case .hitCritical:
-            (assetID.rawValue, "Reality/VFX/Combat/HitCritical")
+            (assetID.rawValue, "Reality/VFX/Combat/HitCritical", "VFX_HitCritical")
         case .hitShield:
-            (assetID.rawValue, "Reality/VFX/Combat/HitShield")
+            (assetID.rawValue, "Reality/VFX/Combat/HitShield", "VFX_HitShield")
         case .intentAttack:
-            (assetID.rawValue, "Reality/VFX/Combat/IntentAttack")
+            (assetID.rawValue, "Reality/VFX/Combat/IntentAttack", "VFX_IntentAttack")
         case .intentHeavyAttack:
-            (assetID.rawValue, "Reality/VFX/Combat/IntentHeavyAttack")
+            (assetID.rawValue, "Reality/VFX/Combat/IntentHeavyAttack", "VFX_IntentHeavyAttack")
         case .intentShield:
-            (assetID.rawValue, "Reality/VFX/Combat/IntentShield")
+            (assetID.rawValue, "Reality/VFX/Combat/IntentShield", "VFX_IntentShield")
         case .intentAbsoluteShield:
-            (assetID.rawValue, "Reality/VFX/Combat/IntentAbsoluteShield")
+            (
+                assetID.rawValue,
+                "Reality/VFX/Combat/IntentAbsoluteShield",
+                "VFX_IntentAbsoluteShield"
+            )
         default:
             nil
         }

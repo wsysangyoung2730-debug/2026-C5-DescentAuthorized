@@ -18,6 +18,10 @@ final class RealityEntityRegistry {
 
     func entity(for role: RealityEntityRole) -> Entity? { entitiesByRole[role] }
 
+    func register(_ entity: Entity, for role: RealityEntityRole) {
+        entitiesByRole[role] = entity
+    }
+
     func entity(named name: String) -> Entity? { root?.findEntity(named: name) }
 
     func setEnabled(_ isEnabled: Bool, for role: RealityEntityRole) {

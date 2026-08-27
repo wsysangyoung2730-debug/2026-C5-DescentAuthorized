@@ -29,6 +29,7 @@ final class RealitySceneController: ObservableObject {
     private var sceneAnchor: AnchorEntity?
     private var cameraEntity: PerspectiveCamera?
     private var loadCancellable: AnyCancellable?
+    private var actorLoadCancellable: AnyCancellable?
     private var cameraTransitionTask: Task<Void, Never>?
     private var sceneLoadGeneration: UInt64 = 0
     private var cameraTransitionGeneration: UInt64 = 0
@@ -113,7 +114,7 @@ final class RealitySceneController: ObservableObject {
                         self.requestedSceneID == sceneID
                     else { return }
                     self.loadingProgress = 0.72
-                    self.install(root: root, descriptor: descriptor, in: arView)
+                    self.install(root: root, descriptor: descriptor, in: arView, bundle: bundle)
                 }
             )
     }
@@ -280,6 +281,8 @@ final class RealitySceneController: ObservableObject {
         sceneLoadGeneration &+= 1
         loadCancellable?.cancel()
         loadCancellable = nil
+        actorLoadCancellable?.cancel()
+        actorLoadCancellable = nil
         cancelCameraTransition()
         if let sceneAnchor, let arView {
             arView.scene.removeAnchor(sceneAnchor)
@@ -305,7 +308,12 @@ final class RealitySceneController: ObservableObject {
         loadState = .idle
     }
 
-    private func install(root: Entity, descriptor: RealitySceneDescriptor, in arView: ARView) {
+    private func install(
+        root: Entity,
+        descriptor: RealitySceneDescriptor,
+        in arView: ARView,
+        bundle: Bundle
+    ) {
         let anchor = AnchorEntity(world: .zero)
         anchor.name = "DA_RUNTIME_SCENE_ANCHOR"
         anchor.addChild(root)
@@ -330,6 +338,108 @@ final class RealitySceneController: ObservableObject {
         if let cameraName = descriptor.cameraName(for: requestedCameraPreset) {
             applyCamera(named: cameraName)
         }
+
+        guard let actor = descriptor.actor else {
+            completeInstallation(descriptor: descriptor)
+            return
+        }
+        guard let spawn = registry.entity(for: .enemySpawn) else {
+            fail(sceneID: descriptor.sceneID, message: "보스 배치 지점을 찾을 수 없습니다.")
+            return
+        }
+        guard let actorURL = bundle.url(
+            forResource: actor.resourceName,
+            withExtension: "usdc",
+            subdirectory: actor.resourceSubdirectory
+        ) else {
+            fail(sceneID: descriptor.sceneID, message: "보스 모델을 찾을 수 없습니다: \(actor.resourceName).usdc")
+            return
+        }
+
+        loadingProgress = 0.88
+        let actorLoadGeneration = sceneLoadGeneration
+        actorLoadCancellable = Entity.loadAsync(contentsOf: actorURL)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { [weak self] completion in
+                    guard
+                        let self,
+                        self.sceneLoadGeneration == actorLoadGeneration,
+                        self.requestedSceneID == descriptor.sceneID,
+                        case let .failure(error) = completion
+                    else { return }
+                    self.fail(
+                        sceneID: descriptor.sceneID,
+                        message: "보스 모델을 불러오지 못했습니다: \(error.localizedDescription)"
+                    )
+                },
+                receiveValue: { [weak self] actorRoot in
+                    guard
+                        let self,
+                        self.sceneLoadGeneration == actorLoadGeneration,
+                        self.requestedSceneID == descriptor.sceneID
+                    else { return }
+                    guard let actorEntity = actorRoot.name == actor.expectedEntityName
+                            ? actorRoot
+                            : actorRoot.findEntity(named: actor.expectedEntityName) else {
+                        self.fail(
+                            sceneID: descriptor.sceneID,
+                            message: "보스 모델의 기준 객체가 없습니다: \(actor.expectedEntityName)"
+                        )
+                        return
+                    }
+
+                    let actorContainer = Entity()
+                    actorContainer.name = "DA_RUNTIME_ENEMY_ACTOR"
+                    actorEntity.removeFromParent()
+                    actorContainer.addChild(actorEntity)
+                    self.normalizeActor(
+                        actorEntity,
+                        in: actorContainer,
+                        targetHeight: actor.targetHeight
+                    )
+                    spawn.addChild(actorContainer)
+                    self.registry.register(actorContainer, for: .enemyActor)
+                    self.loadingProgress = 0.94
+                    self.completeInstallation(descriptor: descriptor)
+                }
+            )
+    }
+
+    private func normalizeActor(
+        _ actorRoot: Entity,
+        in container: Entity,
+        targetHeight: Float
+    ) {
+        enableHierarchy(actorRoot)
+        var bounds = actorRoot.visualBounds(relativeTo: container)
+        var size = bounds.max - bounds.min
+        guard size.x > 0.01, size.y > 0.01, size.z > 0.01 else { return }
+
+        // The authored Reality scenes use Blender's Z-up coordinate system.
+        // Scale by the visible Z height so enlarging an actor does not stretch
+        // its depth toward the camera instead.
+        let uniformScale = targetHeight / size.z
+        actorRoot.scale *= SIMD3(repeating: uniformScale)
+
+        bounds = actorRoot.visualBounds(relativeTo: container)
+        size = bounds.max - bounds.min
+        guard size.x > 0.01, size.y > 0.01, size.z > 0.01 else { return }
+        actorRoot.position -= SIMD3(
+            (bounds.min.x + bounds.max.x) * 0.5,
+            (bounds.min.y + bounds.max.y) * 0.5,
+            bounds.min.z
+        )
+    }
+
+    private func enableHierarchy(_ entity: Entity) {
+        entity.isEnabled = true
+        for child in entity.children {
+            enableHierarchy(child)
+        }
+    }
+
+    private func completeInstallation(descriptor: RealitySceneDescriptor) {
         setErasureZones(requestedErasureZones)
         combatVFXRenderer.attach(to: registry)
         let restoredCues = pendingCombatCues + RealityCombatPresentationMapper.cues(
@@ -448,6 +558,7 @@ final class RealitySceneController: ObservableObject {
 
     private func fail(sceneID: FloorSceneID, message: String) {
         loadCancellable = nil
+        actorLoadCancellable = nil
         loadingProgress = 0
         loadState = .failed(sceneID, message)
     }
