@@ -270,12 +270,15 @@ final class RealitySceneController: ObservableObject {
             baseMatrix.columns.1,
             fallback: SIMD3<Float>(0, 1, 0)
         )
-        let amplitude: Float = guarded ? 0.012 : 0.022
+        // 넓은 전투 무대에서도 충격이 식별되도록 이동 폭을 확보하되,
+        // 카메라 회전은 건드리지 않아 시야가 기울어지지 않게 유지한다.
+        let amplitude: Float = guarded ? 0.035 : 0.065
         let keyframes: [(horizontal: Float, vertical: Float, milliseconds: Int64)] = [
-            (1, -0.42, 45),
-            (-0.68, 0.32, 55),
-            (0.34, -0.16, 65),
-            (0, 0, 80)
+            (1, -0.48, 32),
+            (-0.78, 0.38, 50),
+            (0.5, -0.24, 65),
+            (-0.22, 0.1, 80),
+            (0, 0, 95)
         ]
 
         battleCameraImpactTask = Task { @MainActor [weak self, weak cameraEntity] in
