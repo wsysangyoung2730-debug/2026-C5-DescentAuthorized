@@ -115,7 +115,7 @@ struct DescentDoorSceneView: View {
         case let .stageCompleted(final):
             cue = .descentSealStageCompleted(final: final)
         }
-        gameFeedback.triggerHaptic(for: cue, settings: appSettings.settings)
+        gameFeedback.trigger(cue, settings: appSettings.settings)
     }
 
     private func completeDescent() {

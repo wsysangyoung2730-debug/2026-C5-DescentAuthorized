@@ -3,6 +3,7 @@ import SwiftUI
 struct DemoFlowView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
     @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
 
     let onExit: () -> Void
     let onSystemOverlayVisibilityChange: (Bool) -> Void
@@ -84,9 +85,13 @@ struct DemoFlowView: View {
         .sheet(isPresented: $isShowingSettings) {
             SettingsView()
         }
-        .onAppear(perform: reportSystemOverlayVisibility)
+        .onAppear {
+            reportSystemOverlayVisibility()
+            synchronizeFloorMusic()
+        }
         .onDisappear {
             onSystemOverlayVisibilityChange(false)
+            gameFeedback.stopAllAudio()
         }
         .onChange(of: isShowingPauseMenu) { _, _ in
             reportSystemOverlayVisibility()
@@ -98,11 +103,62 @@ struct DemoFlowView: View {
             if floorSceneID == nil {
                 sceneController.unload()
             }
+            synchronizeFloorMusic()
+        }
+        .onChange(of: sceneController.loadState) { _, _ in
+            synchronizeFloorMusic()
+        }
+        .onChange(of: gameSession.progress.currentFloor) { _, _ in
+            synchronizeFloorMusic()
+        }
+        .onChange(of: gameSession.progress.currentScene) { _, _ in
+            synchronizeFloorMusic()
+        }
+        .onChange(of: battleRestartLoadingPresentation) { _, loading in
+            if loading == nil {
+                synchronizeFloorMusic()
+            } else {
+                gameFeedback.suspendMusicForLoading()
+            }
         }
     }
 
     private func reportSystemOverlayVisibility() {
         onSystemOverlayVisibilityChange(isShowingPauseMenu || isShowingSettings)
+    }
+
+    private func synchronizeFloorMusic() {
+        let isFloorModelReady: Bool
+        if let sceneID = gameSession.presentation.floorSceneID,
+           case let .ready(readySceneID) = sceneController.loadState,
+           readySceneID == sceneID {
+            isFloorModelReady = true
+        } else {
+            isFloorModelReady = false
+        }
+
+        gameFeedback.synchronizeFloorMusic(
+            floor: gameSession.progress.currentFloor,
+            isPresentationReady: isFloorModelReady
+                && battleRestartLoadingPresentation == nil,
+            keepsOutcomeMusic: keepsBattleOutcomeMusic,
+            settings: appSettings.settings
+        )
+    }
+
+    private var keepsBattleOutcomeMusic: Bool {
+        if gameSession.battleState?.phase == .defeat {
+            return true
+        }
+
+        switch gameSession.progress.currentScene {
+        case .floor9RecordsDefeated,
+             .floor8ResidualDefeated,
+             .floor8AdministratorDefeated:
+            return true
+        default:
+            return false
+        }
     }
 
     private var isPresentationReady: Bool {
