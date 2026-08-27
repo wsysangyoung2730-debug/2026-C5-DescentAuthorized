@@ -108,6 +108,7 @@ struct RewardSelectionView: View {
                 Text("제\(floor.rawValue)층 · 기록 보관고")
                     .font(.system(size: metrics.eyebrowSize, weight: .medium, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.gold)
+                    .padding(.leading, metrics.titleContentLeadingInset)
                 Image("RewardScrollHeaderTitle")
                     .resizable()
                     .scaledToFit()
@@ -120,6 +121,7 @@ struct RewardSelectionView: View {
                 Text("승인된 주문 기록 \(candidates.count)건 중 1건을 수령하십시오.")
                     .font(.system(size: metrics.bodySize, weight: .regular, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.body)
+                    .padding(.leading, metrics.titleContentLeadingInset)
                 Image("RewardScrollHeaderDivider")
                     .resizable()
                     .scaledToFit()
@@ -519,6 +521,7 @@ private struct RewardLayoutMetrics {
     var eyebrowSize: CGFloat { 17 * scale }
     var titleAssetWidth: CGFloat { min(350 * scale, headerWidth) }
     var titleAssetHeight: CGFloat { 58 * scale }
+    var titleContentLeadingInset: CGFloat { titleAssetWidth * (70.0 / 1_600.0) }
     var dividerHeight: CGFloat { 30 * scale }
     var bodySize: CGFloat { 16 * scale }
     var cardWidth: CGFloat { min(350, (size.width - 64) / 3.18) }
