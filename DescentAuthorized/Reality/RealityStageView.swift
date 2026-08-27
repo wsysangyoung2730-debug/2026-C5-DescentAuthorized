@@ -180,6 +180,7 @@ struct RealityStageView: View {
     let sceneID: FloorSceneID
     var cameraPreset: RealityCameraPreset = .main
     var erasureZones: [ErasureZone] = []
+    var reducedMotion = false
     @ObservedObject var controller: RealitySceneController
     @State private var loadingTip: String
 
@@ -187,11 +188,13 @@ struct RealityStageView: View {
         sceneID: FloorSceneID,
         cameraPreset: RealityCameraPreset = .main,
         erasureZones: [ErasureZone] = [],
+        reducedMotion: Bool = false,
         controller: RealitySceneController
     ) {
         self.sceneID = sceneID
         self.cameraPreset = cameraPreset
         self.erasureZones = erasureZones
+        self.reducedMotion = reducedMotion
         self.controller = controller
         let context = LoadingScreenContext(sceneID: sceneID)
         _loadingTip = State(initialValue: LoadingTipCatalog.randomTip(for: context))
@@ -203,6 +206,7 @@ struct RealityStageView: View {
                 sceneID: sceneID,
                 cameraPreset: cameraPreset,
                 erasureZones: erasureZones,
+                reducedMotion: reducedMotion,
                 controller: controller
             )
                 .ignoresSafeArea()
@@ -272,6 +276,7 @@ private struct RealityARView: UIViewRepresentable {
     let sceneID: FloorSceneID
     let cameraPreset: RealityCameraPreset
     let erasureZones: [ErasureZone]
+    let reducedMotion: Bool
     let controller: RealitySceneController
 
     func makeUIView(context: Context) -> ARView {
@@ -290,6 +295,7 @@ private struct RealityARView: UIViewRepresentable {
 
     private func synchronizePresentation() {
         controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
+        controller.setEnemyIdleMotion(reducedMotion: reducedMotion)
         controller.setErasureZones(erasureZones)
     }
 }

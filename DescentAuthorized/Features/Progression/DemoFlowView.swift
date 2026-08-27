@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DemoFlowView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
+    @EnvironmentObject private var appSettings: AppSettings
 
     let onExit: () -> Void
 
@@ -28,6 +29,7 @@ struct DemoFlowView: View {
                     sceneID: floorSceneID,
                     cameraPreset: gameSession.presentation.cameraPreset,
                     erasureZones: gameSession.battleState?.activeErasureZones ?? [],
+                    reducedMotion: appSettings.reducedMotion,
                     controller: sceneController
                 )
             } else {
@@ -89,6 +91,42 @@ struct DemoFlowView: View {
         }
     }
 
+    private var descentTopHUDConfiguration: DescentTopHUDConfiguration? {
+        if gameSession.progress.currentScene == .floor10DescentDoor {
+            return DescentTopHUDConfiguration(
+                areaTitle: "제10층 · 승인 관리 구역",
+                inspectionTitle: "단일 문양 검수"
+            )
+        }
+
+        guard case let .descent(floor) = gameSession.presentation.experience else {
+            return nil
+        }
+
+        switch floor {
+        case .floor10:
+            return DescentTopHUDConfiguration(
+                areaTitle: "제10층 · 승인 관리 구역",
+                inspectionTitle: "단일 문양 검수"
+            )
+        case .floor9:
+            return DescentTopHUDConfiguration(
+                areaTitle: "제9층 · 기록 관리 구역",
+                inspectionTitle: "이중 문양 검수"
+            )
+        case .floor8:
+            return DescentTopHUDConfiguration(
+                areaTitle: "제8층 · 관측 관리 구역",
+                inspectionTitle: "이중 문양 검수"
+            )
+        case .floor7:
+            return DescentTopHUDConfiguration(
+                areaTitle: "제7층 · 미확인 구역",
+                inspectionTitle: "봉인 문양 검수"
+            )
+        }
+    }
+
     private var topBar: some View {
         ZStack {
             DAColor.background.opacity(0.96)
@@ -124,20 +162,63 @@ struct DemoFlowView: View {
 
     private var defaultTopBarControls: some View {
         GeometryReader { proxy in
+            let sideLabelWidth = min(max(proxy.size.width * 0.2, 190), 270)
+            let buttonHalfWidth = battleTopBarButtonWidth / 2
+            let topHUDConfiguration = descentTopHUDConfiguration
+            let sideGap = max(14, proxy.size.width * 0.012)
+                + (topHUDConfiguration?.sideGapAdjustment ?? 0)
+
             ZStack {
-                HStack(spacing: 11) {
-                    floorOrnament
+                if let configuration = topHUDConfiguration {
+                    descentGateTitle
+                        .frame(width: min(proxy.size.width * 0.36, 460), height: 72)
+                        .position(
+                            x: proxy.size.width * 0.5,
+                            y: proxy.size.height * topBarCenterYRatio
+                        )
 
-                    Text("제\(gameSession.progress.currentFloor.rawValue)층")
-                        .font(.system(size: 24, weight: .medium, design: .serif))
-                        .foregroundStyle(SharedHUDPalette.title)
-                        .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
+                    descentAreaLabel(configuration.areaTitle)
+                        .frame(width: sideLabelWidth, alignment: .leading)
+                        .position(
+                            x: (proxy.size.width * leftHUDButtonCenterRatio)
+                                + buttonHalfWidth
+                                + sideGap
+                                + (sideLabelWidth / 2),
+                            y: proxy.size.height * topBarCenterYRatio
+                        )
 
-                    floorOrnament
-                        .scaleEffect(x: -1, y: 1)
+                    Text(configuration.inspectionTitle)
+                    .font(.system(size: 15, weight: .medium, design: .serif))
+                    .foregroundStyle(SharedHUDPalette.title.opacity(0.86))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+                    .frame(width: sideLabelWidth, alignment: .trailing)
+                    .position(
+                        x: (proxy.size.width * rightHUDButtonCenterRatio)
+                            - buttonHalfWidth
+                            - sideGap
+                            - configuration.inspectionGapAdjustment
+                            - (sideLabelWidth / 2),
+                        y: proxy.size.height * topBarCenterYRatio
+                    )
+                } else {
+                    HStack(spacing: 11) {
+                        floorOrnament
+
+                        Text("제\(gameSession.progress.currentFloor.rawValue)층")
+                            .font(.system(size: 24, weight: .medium, design: .serif))
+                            .foregroundStyle(SharedHUDPalette.title)
+                            .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
+
+                        floorOrnament
+                            .scaleEffect(x: -1, y: 1)
+                    }
+                    .frame(width: min(proxy.size.width * 0.54, 560), height: 72)
+                    .position(
+                        x: proxy.size.width * 0.5,
+                        y: proxy.size.height * topBarCenterYRatio
+                    )
                 }
-                .frame(height: 58)
-                .position(x: proxy.size.width * 0.5, y: proxy.size.height * topBarCenterYRatio)
 
                 topBarButton(systemImage: "pause.fill") {
                     isShowingPauseMenu = true
@@ -160,6 +241,32 @@ struct DemoFlowView: View {
                 )
             }
         }
+    }
+
+    private var descentGateTitle: some View {
+        Image("SharedDescentGateTitle")
+            .resizable()
+            .scaledToFit()
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("층 이동 봉인문")
+    }
+
+    private func descentAreaLabel(_ title: String) -> some View {
+        HStack(spacing: 9) {
+            Image("SharedDescentGateSymbol")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 34, height: 44)
+
+            Text(title)
+                .font(.system(size: 15, weight: .medium, design: .serif))
+                .foregroundStyle(SharedHUDPalette.title.opacity(0.86))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .combine)
     }
 
     private func battleTopBarControls(_ battle: BattleState) -> some View {
@@ -276,6 +383,25 @@ struct DemoFlowView: View {
         case .completion:
             DemoCompleteView(onReturnToTitle: onExit)
         }
+    }
+}
+
+private struct DescentTopHUDConfiguration {
+    let areaTitle: String
+    let inspectionTitle: String
+    let sideGapAdjustment: CGFloat
+    let inspectionGapAdjustment: CGFloat
+
+    init(
+        areaTitle: String,
+        inspectionTitle: String,
+        sideGapAdjustment: CGFloat = 10,
+        inspectionGapAdjustment: CGFloat = 12
+    ) {
+        self.areaTitle = areaTitle
+        self.inspectionTitle = inspectionTitle
+        self.sideGapAdjustment = sideGapAdjustment
+        self.inspectionGapAdjustment = inspectionGapAdjustment
     }
 }
 

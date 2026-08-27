@@ -18,6 +18,7 @@
 		100000000000000000000063 /* RealityErasureZoneRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000063 /* RealityErasureZoneRenderer.swift */; };
 		100000000000000000000064 /* RealityCombatPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000064 /* RealityCombatPresentation.swift */; };
 		100000000000000000000065 /* RealityProgressionPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000065 /* RealityProgressionPresentation.swift */; };
+		100000000000000000000066 /* DescentSealProcedureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000066 /* DescentSealProcedureView.swift */; };
 		100000000000000000000001 /* DescentAuthorizedApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000001 /* DescentAuthorizedApp.swift */; };
 		100000000000000000000002 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000002 /* HomeView.swift */; };
 		100000000000000000000003 /* BattleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000003 /* BattleView.swift */; };
@@ -81,6 +82,7 @@
 		200000000000000000000063 /* RealityErasureZoneRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityErasureZoneRenderer.swift; sourceTree = "<group>"; };
 		200000000000000000000064 /* RealityCombatPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityCombatPresentation.swift; sourceTree = "<group>"; };
 		200000000000000000000065 /* RealityProgressionPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityProgressionPresentation.swift; sourceTree = "<group>"; };
+		200000000000000000000066 /* DescentSealProcedureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DescentSealProcedureView.swift; sourceTree = "<group>"; };
 		200000000000000000000001 /* DescentAuthorizedApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DescentAuthorizedApp.swift; sourceTree = "<group>"; };
 		200000000000000000000002 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		200000000000000000000003 /* BattleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleView.swift; sourceTree = "<group>"; };
@@ -339,6 +341,7 @@
 			isa = PBXGroup;
 			children = (
 				200000000000000000000037 /* DemoFlowView.swift */,
+				200000000000000000000066 /* DescentSealProcedureView.swift */,
 				200000000000000000000035 /* DoorGlyphPanel.swift */,
 				200000000000000000000036 /* Floor10TutorialView.swift */,
 				200000000000000000000038 /* Floor9EntranceView.swift */,
@@ -498,6 +501,7 @@
 				100000000000000000000032 /* GlyphManaEstimator.swift in Sources */,
 				100000000000000000000033 /* GlyphCastingPanel.swift in Sources */,
 				100000000000000000000034 /* DescentDoorGlyphCatalog.swift in Sources */,
+				100000000000000000000066 /* DescentSealProcedureView.swift in Sources */,
 				100000000000000000000035 /* DoorGlyphPanel.swift in Sources */,
 				100000000000000000000036 /* Floor10TutorialView.swift in Sources */,
 				100000000000000000000037 /* DemoFlowView.swift in Sources */,

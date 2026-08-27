@@ -1,90 +1,12 @@
 import SwiftUI
 
 struct Floor8DescentDoorView: View {
-    @EnvironmentObject private var appSettings: AppSettings
-    @EnvironmentObject private var gameSession: GameSessionStore
     let sceneController: RealitySceneController
-    @State private var descentState: RealityDescentPresentationState = .ready
-    @State private var transitionTask: Task<Void, Never>?
 
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.2)
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
-
-            HStack {
-                Spacer(minLength: 320)
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("8-F / 제7층 하강문")
-                        .font(.caption.monospaced().weight(.bold))
-                        .foregroundStyle(.cyan)
-                    Text("잔여 절차: 미완료")
-                        .font(.title2.weight(.semibold))
-                    Text("관측 관리자는 무력화됐지만 봉인 시스템은 더 아래로 이어진다. 두 획의 승인 문양을 겹쳐 제7층 통로를 확인한다.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineSpacing(3)
-
-                    DoorGlyphPanel(
-                        definition: DescentDoorGlyphCatalog.floor8,
-                        inputPreference: appSettings.inputPreference,
-                        onStateChanged: updateDescentState,
-                        onApproved: { _ in
-                            completeDescent()
-                        }
-                    )
-                    .frame(width: 590, height: 410)
-                }
-                .padding(20)
-                .background(DAColor.panel.opacity(0.92))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(DAColor.divider, lineWidth: 1)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-            .padding(26)
-        }
-        .onAppear {
-            sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
-            setDescentState(.ready)
-        }
-        .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
-            sceneController.setDescentPresentation(descentState, reducedMotion: reducedMotion)
-        }
-        .onDisappear { transitionTask?.cancel() }
-    }
-
-    private func updateDescentState(_ state: DoorGlyphPresentationState) {
-        switch state {
-        case .ready: setDescentState(.ready)
-        case .drawing: setDescentState(.drawing)
-        case .failed: setDescentState(.failed)
-        case .approved: setDescentState(.approved)
-        }
-    }
-
-    private func completeDescent() {
-        setDescentState(.approved)
-        transitionTask?.cancel()
-        transitionTask = Task { @MainActor in
-            try? await Task.sleep(
-                for: RealityDescentTransitionTiming.approvalAnimationDelay(
-                    reducedMotion: appSettings.reducedMotion
-                )
-            )
-            guard !Task.isCancelled else { return }
-            setDescentState(.open)
-            try? await Task.sleep(for: RealityDescentTransitionTiming.openStateHold)
-            guard !Task.isCancelled else { return }
-            gameSession.send(.approveDescentDoor)
-        }
-    }
-
-    private func setDescentState(_ state: RealityDescentPresentationState) {
-        descentState = state
-        sceneController.setDescentPresentation(state, reducedMotion: appSettings.reducedMotion)
+        DescentDoorSceneView(
+            configuration: .floor8,
+            sceneController: sceneController
+        )
     }
 }
