@@ -438,7 +438,7 @@ struct FloorEntranceConfiguration {
         signalTitle: "확인된 단서",
         signalBody: "손등의 문양이 관리 단말보다 먼저 반응했다.",
         buttonAsset: "Floor10ExitButtonPlate",
-        actionTitle: "회의실을 나간다",
+        actionTitle: "회의실을 조사한다",
         actionIcon: "door.left.hand.open"
     )
 
