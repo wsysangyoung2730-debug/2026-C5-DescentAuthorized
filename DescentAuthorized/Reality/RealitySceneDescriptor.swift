@@ -148,7 +148,7 @@ struct RealitySceneDescriptor: Sendable {
                 resourceSubdirectory: "Reality/Actors/ObservationResidue",
                 targetHeight: 2.35,
                 intentScale: 0.64,
-                intentVerticalOffset: 0.12
+                intentVerticalOffset: 0.34
             )
         ),
         .floor08AdministratorObservatory: .init(
