@@ -54,11 +54,32 @@ struct RealityActorDescriptor: Sendable {
     var resourceName: String { assetID.rawValue }
 }
 
+struct RealityDescentDoorAnimationDescriptor: Sendable {
+    let leftPanelName: String
+    let rightPanelName: String
+    let lockCoreName: String
+    let logoLightName: String
+    let panelTravelDistance: Float
+
+    init(prefix: String, panelTravelDistance: Float = 0.12) {
+        leftPanelName = "\(prefix)_Door_LeftPanel"
+        rightPanelName = "\(prefix)_Door_RightPanel"
+        lockCoreName = "\(prefix)_Door_LockCore"
+        logoLightName = "\(prefix)_Door_LogoLight"
+        self.panelTravelDistance = panelTravelDistance
+    }
+
+    var controllerNames: [String] {
+        [leftPanelName, rightPanelName, lockCoreName, logoLightName]
+    }
+}
+
 struct RealitySceneDescriptor: Sendable {
     let sceneID: FloorSceneID
     let resourceSubdirectory: String
     let cameraNames: [RealityCameraPreset: String]
     let entityNames: [RealityEntityRole: String]
+    let descentDoorAnimation: RealityDescentDoorAnimationDescriptor?
     let actor: RealityActorDescriptor?
 
     init(
@@ -66,12 +87,14 @@ struct RealitySceneDescriptor: Sendable {
         resourceSubdirectory: String,
         cameraNames: [RealityCameraPreset: String],
         entityNames: [RealityEntityRole: String],
+        descentDoorAnimation: RealityDescentDoorAnimationDescriptor? = nil,
         actor: RealityActorDescriptor? = nil
     ) {
         self.sceneID = sceneID
         self.resourceSubdirectory = resourceSubdirectory
         self.cameraNames = cameraNames
         self.entityNames = entityNames
+        self.descentDoorAnimation = descentDoorAnimation
         self.actor = actor
     }
 
@@ -102,7 +125,8 @@ struct RealitySceneDescriptor: Sendable {
                 .openDescentDoor: "DA_STATE_OpenDoor_F10",
                 .descentStele: "F10_DescentStele",
                 .descentPedestal: "F10_DescentPedestal"
-            ]
+            ],
+            descentDoorAnimation: .init(prefix: "F10")
         ),
         .floor09ArchiveRedesign: .init(
             sceneID: .floor09ArchiveRedesign,
@@ -126,6 +150,7 @@ struct RealitySceneDescriptor: Sendable {
                 .rewardScrollRight: "F09_RewardScroll_Right_HoleAnchor",
                 .generalShield: "F09_GeneralShield"
             ],
+            descentDoorAnimation: .init(prefix: "F09"),
             actor: .init(
                 assetID: .recordAdministrator,
                 expectedEntityName: "ACTOR_RecordAdministrator",
@@ -176,6 +201,7 @@ struct RealitySceneDescriptor: Sendable {
                 .rewardScrollRight: "F08B_RewardScroll_Right_HoleAnchor",
                 .absoluteShield: "F08B_AbsoluteShield"
             ],
+            descentDoorAnimation: .init(prefix: "F08B"),
             actor: .init(
                 assetID: .observationAdministrator,
                 expectedEntityName: "ACTOR_ObservationAdministrator",

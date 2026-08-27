@@ -11,11 +11,21 @@ enum RealityDescentPresentationState: Equatable, Sendable {
 }
 
 enum RealityDescentTransitionTiming {
-    static func approvalAnimationDelay(reducedMotion: Bool) -> Duration {
-        .milliseconds(reducedMotion ? 20 : 560)
+    // The authored scenes describe a 30 fps, 68 frame opening sequence and
+    // switch to the fully open model at frame 56.
+    static let authoredFrameRate: Double = 30
+    static let openStateFrame: Double = 56
+    static let interfaceFadeDuration: TimeInterval = 0.28
+
+    static var doorOpeningAnimationDuration: TimeInterval {
+        openStateFrame / authoredFrameRate
     }
 
-    static let openStateHold: Duration = .milliseconds(1_200)
+    static func doorOpeningDelay(reducedMotion: Bool) -> Duration {
+        .milliseconds(reducedMotion ? 280 : 1_867)
+    }
+
+    static let openStateHold: Duration = .milliseconds(2_400)
 }
 
 enum RealityRewardPresentationState: Equatable, Sendable {
@@ -29,13 +39,22 @@ enum RealityRewardPresentationState: Equatable, Sendable {
 @MainActor
 final class RealityProgressionVFXRenderer {
     private var baseTransforms: [RealityEntityRole: Transform] = [:]
+    private var doorControllerBaseTransforms: [String: Transform] = [:]
     private var transitionGeneration = 0
 
     func attach(to registry: RealityEntityRegistry) {
         baseTransforms.removeAll()
+        doorControllerBaseTransforms.removeAll()
         for role in controlledRoles {
             if let entity = registry.entity(for: role) {
                 baseTransforms[role] = entity.transform
+            }
+        }
+        if let doorAnimation = registry.descriptor?.descentDoorAnimation {
+            for name in doorAnimation.controllerNames {
+                if let entity = registry.entity(named: name) {
+                    doorControllerBaseTransforms[name] = entity.transform
+                }
             }
         }
     }
@@ -53,6 +72,10 @@ final class RealityProgressionVFXRenderer {
         registry.setEnabled(state != .inactive, for: .descentPedestal)
         registry.setDoorOpen(state == .open)
 
+        if state != .approved, state != .open {
+            restoreDoorControllers(in: registry)
+        }
+
         restore(.descentStele, in: registry)
         restore(.descentPedestal, in: registry)
 
@@ -65,6 +88,7 @@ final class RealityProgressionVFXRenderer {
         case .approved:
             pulse(.descentPedestal, scale: 1.07, duration: 0.28, registry: registry)
             pulse(.descentStele, scale: 1.025, duration: 0.28, registry: registry)
+            animateDoorOpening(in: registry)
         case .inactive, .ready, .open:
             break
         }
@@ -138,6 +162,7 @@ final class RealityProgressionVFXRenderer {
     func reset() {
         transitionGeneration += 1
         baseTransforms.removeAll()
+        doorControllerBaseTransforms.removeAll()
     }
 
     private var controlledRoles: [RealityEntityRole] {
@@ -152,6 +177,70 @@ final class RealityProgressionVFXRenderer {
         guard let entity = registry.entity(for: role), let transform = baseTransforms[role] else { return }
         entity.stopAllAnimations(recursive: false)
         entity.transform = transform
+    }
+
+    private func restoreDoorControllers(in registry: RealityEntityRegistry) {
+        for (name, transform) in doorControllerBaseTransforms {
+            guard let entity = registry.entity(named: name) else { continue }
+            entity.stopAllAnimations(recursive: false)
+            entity.transform = transform
+        }
+    }
+
+    private func animateDoorOpening(in registry: RealityEntityRegistry) {
+        guard let descriptor = registry.descriptor?.descentDoorAnimation else { return }
+        restoreDoorControllers(in: registry)
+
+        moveDoorController(
+            named: descriptor.leftPanelName,
+            translationX: -descriptor.panelTravelDistance,
+            registry: registry
+        )
+        moveDoorController(
+            named: descriptor.rightPanelName,
+            translationX: descriptor.panelTravelDistance,
+            registry: registry
+        )
+
+        if let entity = registry.entity(named: descriptor.lockCoreName),
+           var target = doorControllerBaseTransforms[descriptor.lockCoreName] {
+            target.scale *= 0.12
+            target.translation.z += 0.08
+            target.rotation *= simd_quatf(angle: .pi * 0.75, axis: SIMD3(0, 0, 1))
+            entity.move(
+                to: target,
+                relativeTo: entity.parent,
+                duration: RealityDescentTransitionTiming.doorOpeningAnimationDuration,
+                timingFunction: .easeInOut
+            )
+        }
+
+        if let entity = registry.entity(named: descriptor.logoLightName),
+           var target = doorControllerBaseTransforms[descriptor.logoLightName] {
+            target.scale *= 1.16
+            entity.move(
+                to: target,
+                relativeTo: entity.parent,
+                duration: RealityDescentTransitionTiming.doorOpeningAnimationDuration,
+                timingFunction: .easeInOut
+            )
+        }
+    }
+
+    private func moveDoorController(
+        named name: String,
+        translationX: Float,
+        registry: RealityEntityRegistry
+    ) {
+        guard let entity = registry.entity(named: name),
+              var target = doorControllerBaseTransforms[name] else { return }
+        target.translation.x += translationX
+        entity.move(
+            to: target,
+            relativeTo: entity.parent,
+            duration: RealityDescentTransitionTiming.doorOpeningAnimationDuration,
+            timingFunction: .easeInOut
+        )
     }
 
     private func pulse(

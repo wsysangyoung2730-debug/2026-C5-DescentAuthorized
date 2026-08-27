@@ -80,22 +80,42 @@ struct DescentDoorSceneView: View {
 
     @State private var descentState: RealityDescentPresentationState = .ready
     @State private var transitionTask: Task<Void, Never>?
+    @State private var isSealInterfaceVisible = true
+    @State private var isCompletingDescent = false
 
     var body: some View {
-        DescentSealProcedureView(
-            configuration: configuration,
-            onStateChanged: updateDescentState,
-            onValidationFeedback: playValidationFeedback,
-            onApproved: completeDescent
+        ZStack {
+            Color.clear
+
+            if isSealInterfaceVisible {
+                DescentSealProcedureView(
+                    configuration: configuration,
+                    onStateChanged: updateDescentState,
+                    onValidationFeedback: playValidationFeedback,
+                    onApproved: completeDescent
+                )
+                .transition(.opacity)
+            }
+        }
+        .animation(
+            .easeOut(duration: RealityDescentTransitionTiming.interfaceFadeDuration),
+            value: isSealInterfaceVisible
         )
         .onAppear {
+            transitionTask?.cancel()
+            transitionTask = nil
+            isSealInterfaceVisible = true
+            isCompletingDescent = false
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             setDescentState(.ready)
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
             sceneController.setDescentPresentation(descentState, reducedMotion: reducedMotion)
         }
-        .onDisappear { transitionTask?.cancel() }
+        .onDisappear {
+            transitionTask?.cancel()
+            transitionTask = nil
+        }
     }
 
     private func updateDescentState(_ state: DoorGlyphPresentationState) {
@@ -119,11 +139,16 @@ struct DescentDoorSceneView: View {
     }
 
     private func completeDescent() {
-        setDescentState(.approved)
+        guard !isCompletingDescent else { return }
+        isCompletingDescent = true
+        isSealInterfaceVisible = false
+        if descentState != .approved {
+            setDescentState(.approved)
+        }
         transitionTask?.cancel()
         transitionTask = Task { @MainActor in
             try? await Task.sleep(
-                for: RealityDescentTransitionTiming.approvalAnimationDelay(
+                for: RealityDescentTransitionTiming.doorOpeningDelay(
                     reducedMotion: appSettings.reducedMotion
                 )
             )
