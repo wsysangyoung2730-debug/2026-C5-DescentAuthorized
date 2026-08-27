@@ -359,7 +359,6 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func transitionCamera(to preset: RealityCameraPreset) {
-        cancelBattleCameraImpact(restoreCamera: false)
         guard
             let descriptor = registry.descriptor,
             let cameraName = descriptor.cameraName(for: preset)
@@ -372,6 +371,7 @@ final class RealitySceneController: ObservableObject {
             return
         }
 
+        cancelBattleCameraImpact(restoreCamera: false)
         cameraTransitionTask?.cancel()
         cameraTransitionGeneration &+= 1
         let transitionGeneration = cameraTransitionGeneration
