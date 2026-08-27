@@ -72,6 +72,7 @@ struct DescentSealProcedureConfiguration {
 
 struct DescentDoorSceneView: View {
     @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let configuration: DescentSealProcedureConfiguration
@@ -84,6 +85,7 @@ struct DescentDoorSceneView: View {
         DescentSealProcedureView(
             configuration: configuration,
             onStateChanged: updateDescentState,
+            onValidationFeedback: playValidationFeedback,
             onApproved: completeDescent
         )
         .onAppear {
@@ -103,6 +105,17 @@ struct DescentDoorSceneView: View {
         case .failed: setDescentState(.failed)
         case .approved: setDescentState(.approved)
         }
+    }
+
+    private func playValidationFeedback(_ feedback: DescentSealValidationFeedback) {
+        let cue: GameFeedbackCue
+        switch feedback {
+        case let .rejected(exhausted):
+            cue = .descentSealRejected(exhausted: exhausted)
+        case let .stageCompleted(final):
+            cue = .descentSealStageCompleted(final: final)
+        }
+        gameFeedback.triggerHaptic(for: cue, settings: appSettings.settings)
     }
 
     private func completeDescent() {
@@ -128,9 +141,15 @@ struct DescentDoorSceneView: View {
     }
 }
 
+private enum DescentSealValidationFeedback {
+    case rejected(exhausted: Bool)
+    case stageCompleted(final: Bool)
+}
+
 private struct DescentSealProcedureView: View {
     let configuration: DescentSealProcedureConfiguration
     let onStateChanged: (DoorGlyphPresentationState) -> Void
+    let onValidationFeedback: (DescentSealValidationFeedback) -> Void
     let onApproved: () -> Void
 
     @State private var completedStageCount = 0
@@ -143,11 +162,13 @@ private struct DescentSealProcedureView: View {
     init(
         configuration: DescentSealProcedureConfiguration,
         onStateChanged: @escaping (DoorGlyphPresentationState) -> Void,
+        onValidationFeedback: @escaping (DescentSealValidationFeedback) -> Void,
         onApproved: @escaping () -> Void
     ) {
         precondition(!configuration.stages.isEmpty, "A descent seal requires at least one stage")
         self.configuration = configuration
         self.onStateChanged = onStateChanged
+        self.onValidationFeedback = onValidationFeedback
         self.onApproved = onApproved
         _remainingAttempts = State(initialValue: configuration.maximumAttempts)
     }
@@ -555,6 +576,7 @@ private struct DescentSealProcedureView: View {
             phase = .failed
             remainingAttempts = attemptsLeft
             onStateChanged(.failed)
+            onValidationFeedback(.rejected(exhausted: attemptsLeft == 0))
             if attemptsLeft == 0 {
                 isGameOver = true
             }
@@ -563,7 +585,9 @@ private struct DescentSealProcedureView: View {
 
         selectedNodes.removeAll()
         completedStageCount += 1
-        if completedStageCount == configuration.stages.count {
+        let isFinalStage = completedStageCount == configuration.stages.count
+        onValidationFeedback(.stageCompleted(final: isFinalStage))
+        if isFinalStage {
             phase = .approved
             onStateChanged(.approved)
             onApproved()

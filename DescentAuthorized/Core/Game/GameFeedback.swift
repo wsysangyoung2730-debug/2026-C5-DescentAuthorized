@@ -13,6 +13,8 @@ enum GameFeedbackCue: Equatable, Sendable {
     case defeat
     case rewardSelected
     case descentApproved
+    case descentSealRejected(exhausted: Bool)
+    case descentSealStageCompleted(final: Bool)
 }
 
 struct GameFeedbackMapper: Sendable {

@@ -31,6 +31,11 @@ final class GameFeedbackManager: ObservableObject {
         }
     }
 
+    func triggerHaptic(for cue: GameFeedbackCue, settings: GameSettings) {
+        guard settings.hapticsEnabled else { return }
+        playHaptic(for: cue)
+    }
+
     private func playEffect(for cue: GameFeedbackCue) {
         let resourceName = soundResourceName(for: cue)
         guard !missingResources.contains(resourceName) else { return }
@@ -116,6 +121,15 @@ final class GameFeedbackManager: ObservableObject {
             UIImpactFeedbackGenerator(style: .rigid).impactOccurred(intensity: 1)
         case .victory, .rewardSelected, .descentApproved:
             UINotificationFeedbackGenerator().notificationOccurred(.success)
+        case let .descentSealRejected(exhausted):
+            UINotificationFeedbackGenerator()
+                .notificationOccurred(exhausted ? .error : .warning)
+        case let .descentSealStageCompleted(final):
+            if final {
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+            } else {
+                UISelectionFeedbackGenerator().selectionChanged()
+            }
         }
     }
 
@@ -133,6 +147,10 @@ final class GameFeedbackManager: ObservableObject {
         case .defeat: "battle-defeat"
         case .rewardSelected: "scroll-selected"
         case .descentApproved: "descent-approved"
+        case let .descentSealRejected(exhausted):
+            exhausted ? "descent-seal-failed" : "descent-seal-rejected"
+        case let .descentSealStageCompleted(final):
+            final ? "descent-seal-approved" : "descent-seal-stage-complete"
         }
     }
 }
