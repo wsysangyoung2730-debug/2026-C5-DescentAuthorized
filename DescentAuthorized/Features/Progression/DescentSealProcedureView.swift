@@ -227,7 +227,7 @@ private struct DescentSealProcedureView: View {
                         .clipped()
                         .position(
                             x: panelWidth * 0.5,
-                            y: panelHeight * 0.49
+                            y: panelHeight * 0.465
                         )
 
                     Text("하강 절차가 일시 중단되었습니다.")
@@ -235,7 +235,7 @@ private struct DescentSealProcedureView: View {
                         .foregroundStyle(DAColor.attack)
                         .position(
                             x: panelWidth * 0.5,
-                            y: panelHeight * 0.49
+                            y: panelHeight * 0.515
                         )
 
                     Text("입력 기록을 초기화하고 현재 단계부터 다시 검수합니다.")
@@ -257,22 +257,21 @@ private struct DescentSealProcedureView: View {
                                 )
                                 .clipped()
 
-                            Image("DescentSealFailureRetryIcon")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 54, height: 54)
-                                .position(
-                                    x: retryButtonWidth * 0.18,
-                                    y: retryButtonHeight * 0.5
-                                )
+                            HStack(spacing: 26) {
+                                Image("DescentSealFailureRetryIcon")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 54, height: 54)
 
-                            Text("봉인 검수 재시도")
-                                .font(.system(size: 23, weight: .semibold, design: .serif))
-                                .foregroundStyle(DAColor.body)
-                                .position(
-                                    x: retryButtonWidth * 0.59,
-                                    y: retryButtonHeight * 0.5
-                                )
+                                Text("봉인 검수 재시도")
+                                    .font(.system(size: 23, weight: .semibold, design: .serif))
+                                    .foregroundStyle(DAColor.body)
+                            }
+                            .frame(
+                                width: retryButtonWidth,
+                                height: retryButtonHeight,
+                                alignment: .center
+                            )
                         }
                         .frame(width: retryButtonWidth, height: retryButtonHeight)
                         .contentShape(Rectangle())
