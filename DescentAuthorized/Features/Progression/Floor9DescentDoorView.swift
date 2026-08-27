@@ -153,8 +153,9 @@ private struct Floor9DescentSealView: View {
                     .font(.system(size: 28, weight: .semibold, design: .serif))
                     .foregroundStyle(Floor10SealPalette.title)
                     .frame(maxWidth: .infinity)
-                Text("하강 절차 03 / 04 · 이중 문양 검수")
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                Color.clear
+                    .frame(maxWidth: .infinity)
+                    .accessibilityHidden(true)
             }
             .font(.subheadline.weight(.medium))
             .foregroundStyle(Floor10SealPalette.secondary)
