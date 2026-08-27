@@ -15,7 +15,8 @@ struct DemoFlowView: View {
     private let topHUDRailSourceSize = CGSize(width: 1774, height: 887)
     private let leftHUDPlateSourceCenter = CGPoint(x: 109, y: 433.5)
     private let rightHUDPlateSourceCenter = CGPoint(x: 1665, y: 433.5)
-    private let battleTopBarButtonWidth: CGFloat = 68
+    private let battleTopBarButtonWidth: CGFloat = 74
+    private let battleTopBarButtonHeight: CGFloat = 64
     private let battlePlateToStatusSpacing: CGFloat = 14
     private let battlePlayerStatusLeadingRatio: CGFloat = 0.11
     private var topBarHeight: CGFloat {
@@ -411,14 +412,20 @@ struct DemoFlowView: View {
                 Image("SharedHUDIconPlate")
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 68, height: 58)
+                    .frame(
+                        width: battleTopBarButtonWidth,
+                        height: battleTopBarButtonHeight
+                    )
                     .clipped()
 
                 Image(systemName: systemImage)
-                    .font(.system(size: 22, weight: .medium))
+                    .font(.system(size: 24, weight: .medium))
                     .foregroundStyle(SharedHUDPalette.icon)
             }
-            .frame(width: 68, height: 58)
+            .frame(
+                width: battleTopBarButtonWidth,
+                height: battleTopBarButtonHeight
+            )
         }
         .buttonStyle(.plain)
     }
