@@ -501,40 +501,27 @@ struct BattleView: View {
     @ViewBuilder
     private func glyphInputPanel(_ presentation: BattleUIPresentation) -> some View {
         if let spell = presentation.selectedSpell {
-            ZStack {
-                Image("Floor9BrassFrame")
-                    .resizable()
-                    .scaledToFill()
-                    .scaleEffect(1.04)
-                    .blendMode(.screen)
-                    .opacity(0.82)
-                    .allowsHitTesting(false)
-
-                GlyphCastingPanel(
-                    spell: spell,
-                    inputPreference: appSettings.inputPreference,
-                    availableMana: presentation.resources.mana,
-                    availableStrokes: presentation.resources.strokes,
-                    erasureZones: presentation.activeErasureZones,
-                    showsResourceHeader: false,
-                    surfaceOpacity: 0.76,
-                    onResourcePreviewChanged: { mana, strokes in
-                        previewMana = mana
-                        previewStrokes = strokes
-                    },
-                    onCast: { submission in
-                        gameSession.send(.castSpell(
-                            spell: spell.id,
-                            strokes: submission.strokes,
-                            inputMethod: submission.inputMethod
-                        ))
-                    }
-                )
-                .padding(.horizontal, 26)
-                .padding(.vertical, 14)
-            }
-            .background(DAColor.background.opacity(0.58))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            GlyphCastingPanel(
+                spell: spell,
+                inputPreference: appSettings.inputPreference,
+                availableMana: presentation.resources.mana,
+                availableStrokes: presentation.resources.strokes,
+                erasureZones: presentation.activeErasureZones,
+                showsResourceHeader: false,
+                surfaceOpacity: 0.76,
+                usesBattleArtwork: true,
+                onResourcePreviewChanged: { mana, strokes in
+                    previewMana = mana
+                    previewStrokes = strokes
+                },
+                onCast: { submission in
+                    gameSession.send(.castSpell(
+                        spell: spell.id,
+                        strokes: submission.strokes,
+                        inputMethod: submission.inputMethod
+                    ))
+                }
+            )
         } else {
             Text("시전할 수 있는 주문이 없습니다")
                 .foregroundStyle(.secondary)
