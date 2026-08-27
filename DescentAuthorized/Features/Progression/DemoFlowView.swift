@@ -183,18 +183,19 @@ struct DemoFlowView: View {
                         )
 
                     Text(configuration.inspectionTitle)
-                        .font(.system(size: 15, weight: .medium, design: .serif))
-                        .foregroundStyle(SharedHUDPalette.title.opacity(0.86))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.78)
-                        .frame(width: sideLabelWidth, alignment: .trailing)
-                        .position(
-                            x: (proxy.size.width * rightHUDButtonCenterRatio)
-                                - buttonHalfWidth
-                                - sideGap
-                                - (sideLabelWidth / 2),
-                            y: proxy.size.height * topBarCenterYRatio
-                        )
+                    .font(.system(size: 15, weight: .medium, design: .serif))
+                    .foregroundStyle(SharedHUDPalette.title.opacity(0.86))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+                    .frame(width: sideLabelWidth, alignment: .trailing)
+                    .position(
+                        x: (proxy.size.width * rightHUDButtonCenterRatio)
+                            - buttonHalfWidth
+                            - sideGap
+                            - (configuration.inspectionTitle == "이중 문양 검수" ? 8 : 0)
+                            - (sideLabelWidth / 2),
+                        y: proxy.size.height * topBarCenterYRatio
+                    )
                 } else {
                     HStack(spacing: 11) {
                         floorOrnament
