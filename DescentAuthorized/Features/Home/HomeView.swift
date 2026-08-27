@@ -71,6 +71,8 @@ struct HomeView: View {
 
     private var homeContent: some View {
         GeometryReader { proxy in
+            let menuButtonWidth = min(max(proxy.size.width * 0.25, 300), 350)
+
             ZStack {
                 Image("HomeMainBackground")
                     .resizable()
@@ -90,14 +92,16 @@ struct HomeView: View {
                     if gameSession.hasSavedProgress {
                         homeButton(
                             assetName: "HomeDescentContinueButton",
-                            accessibilityLabel: "하강 절차 계속"
+                            accessibilityLabel: "하강 절차 계속",
+                            width: menuButtonWidth
                         ) {
                             isPlaying = true
                         }
 
                         homeButton(
                             assetName: "HomeRestartButton",
-                            accessibilityLabel: "처음부터"
+                            accessibilityLabel: "처음부터",
+                            width: menuButtonWidth
                         ) {
                             gameSession.startNewGame()
                             isPlaying = true
@@ -105,7 +109,8 @@ struct HomeView: View {
                     } else {
                         homeButton(
                             assetName: "HomeDescentStartButton",
-                            accessibilityLabel: "하강 절차 시작"
+                            accessibilityLabel: "하강 절차 시작",
+                            width: menuButtonWidth
                         ) {
                             gameSession.startNewGame()
                             isPlaying = true
@@ -138,6 +143,7 @@ struct HomeView: View {
     private func homeButton(
         assetName: String,
         accessibilityLabel: String,
+        width: CGFloat,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -147,7 +153,7 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .buttonStyle(HomeMenuAssetButtonStyle())
-        .frame(width: 400, height: 132)
+        .frame(width: width, height: width / 3)
         .accessibilityLabel(accessibilityLabel)
     }
 }
