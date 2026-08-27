@@ -63,10 +63,14 @@ struct GameFeedbackMapper: Sendable {
                         cues.append(.barrierApplied(isAbsolute: false))
                     }
                 case let .absoluteBarrierChanged(_, charges):
-                    if charges > 0 {
+                    if isResolvingPlayerSpell {
+                        if charges > 0 {
+                            cues.append(.barrierDamaged(strong: false))
+                        } else {
+                            cues.append(.barrierDispelled)
+                        }
+                    } else if charges > 0 {
                         cues.append(.barrierApplied(isAbsolute: true))
-                    } else if isResolvingPlayerSpell {
-                        cues.append(.barrierDispelled)
                     }
                 case .attackNegatedByAbsoluteBarrier:
                     cues.append(.absoluteBarrierNegated)
