@@ -2,6 +2,8 @@ import SwiftUI
 import UIKit
 
 struct HomeView: View {
+    @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
 
     @State private var isShowingSettings = false
@@ -105,6 +107,7 @@ struct HomeView: View {
                             accessibilityLabel: "하강 절차 계속",
                             width: menuButtonWidth
                         ) {
+                            gameFeedback.playInterface(.confirm, settings: appSettings.settings)
                             isPlaying = true
                         }
 
@@ -113,6 +116,7 @@ struct HomeView: View {
                             accessibilityLabel: "처음부터",
                             width: menuButtonWidth
                         ) {
+                            gameFeedback.playInterface(.confirm, settings: appSettings.settings)
                             gameSession.startNewGame()
                             isPlaying = true
                         }
@@ -122,6 +126,7 @@ struct HomeView: View {
                             accessibilityLabel: "하강 절차 시작",
                             width: menuButtonWidth
                         ) {
+                            gameFeedback.playInterface(.confirm, settings: appSettings.settings)
                             gameSession.startNewGame()
                             isPlaying = true
                         }
@@ -137,6 +142,7 @@ struct HomeView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
+                    gameFeedback.playInterface(.select, settings: appSettings.settings)
                     isShowingSettings = true
                 } label: {
                     Image(systemName: "gearshape")

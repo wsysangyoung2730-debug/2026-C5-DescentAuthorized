@@ -310,7 +310,7 @@ struct DemoFlowView: View {
                 }
 
                 topBarButton(systemImage: "pause.fill") {
-                    isShowingPauseMenu = true
+                    presentPauseMenu()
                 }
                 .help("일시정지")
                 .accessibilityLabel("일시정지")
@@ -320,7 +320,7 @@ struct DemoFlowView: View {
                 )
 
                 topBarButton(systemImage: "gearshape") {
-                    isShowingSettings = true
+                    presentSettings()
                 }
                 .help("설정")
                 .accessibilityLabel("설정")
@@ -397,7 +397,7 @@ struct DemoFlowView: View {
                 )
 
                 topBarButton(systemImage: "pause.fill") {
-                    isShowingPauseMenu = true
+                    presentPauseMenu()
                 }
                 .help("일시정지")
                 .accessibilityLabel("일시정지")
@@ -407,7 +407,7 @@ struct DemoFlowView: View {
                 )
 
                 topBarButton(systemImage: "gearshape") {
-                    isShowingSettings = true
+                    presentSettings()
                 }
                 .help("설정")
                 .accessibilityLabel("설정")
@@ -457,6 +457,16 @@ struct DemoFlowView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    private func presentPauseMenu() {
+        gameFeedback.playInterface(.select, settings: appSettings.settings)
+        isShowingPauseMenu = true
+    }
+
+    private func presentSettings() {
+        gameFeedback.playInterface(.select, settings: appSettings.settings)
+        isShowingSettings = true
     }
 
     @ViewBuilder

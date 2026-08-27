@@ -31,6 +31,7 @@ private struct RewardConfirmButtonStyle: ButtonStyle {
 
 struct RewardSelectionView: View {
     @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let floor: FloorID
@@ -77,7 +78,7 @@ struct RewardSelectionView: View {
         }
         .onDisappear {
             transitionTask?.cancel()
-            cancelDetailPress()
+            cancelDetailPress(playsCloseSound: false)
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
             sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion)
@@ -247,6 +248,7 @@ struct RewardSelectionView: View {
         .animation(.spring(response: 0.32, dampingFraction: 0.78), value: isSelected)
         .onTapGesture {
             guard !isResolving else { return }
+            gameFeedback.playInterface(.select, settings: appSettings.settings)
             withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
                 selectedCandidateID = candidate.id
             }
@@ -404,14 +406,23 @@ struct RewardSelectionView: View {
         detailPressTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(450))
             guard !Task.isCancelled else { return }
+            gameFeedback.trigger(
+                .recordOpened,
+                settings: appSettings.settings,
+                includesHaptic: false
+            )
             inspectedCandidateID = candidateID
         }
     }
 
-    private func cancelDetailPress() {
+    private func cancelDetailPress(playsCloseSound: Bool = true) {
+        let wasShowingDetails = inspectedCandidateID != nil
         detailPressTask?.cancel()
         detailPressTask = nil
         inspectedCandidateID = nil
+        if wasShowingDetails, playsCloseSound {
+            gameFeedback.playInterface(.back, settings: appSettings.settings)
+        }
     }
 
     private func displayedSpell(for candidate: RewardCandidate) -> SpellDefinition {

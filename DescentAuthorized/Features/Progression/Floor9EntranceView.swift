@@ -2,6 +2,7 @@ import SwiftUI
 
 struct Floor9EntranceView: View {
     @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
 
     @State private var inspectedRecord = false
@@ -293,7 +294,13 @@ struct Floor9EntranceView: View {
         }
         .contentShape(RoundedRectangle(cornerRadius: 7))
         .onTapGesture {
-            if !inspectedRecord {
+            if inspectedRecord {
+                gameFeedback.trigger(
+                    .recordOpened,
+                    settings: appSettings.settings,
+                    includesHaptic: false
+                )
+            } else {
                 inspectedRecord = true
                 gameSession.send(.readRecord("9-entrance-01"))
             }
@@ -355,6 +362,7 @@ struct Floor9EntranceView: View {
     }
 
     private func closeClueDetail() {
+        gameFeedback.playInterface(.back, settings: appSettings.settings)
         withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
             isShowingClueDetail = false
         }
@@ -377,6 +385,7 @@ struct Floor9EntranceView: View {
 
     private var enterButton: some View {
         Button {
+            gameFeedback.playInterface(.confirm, settings: appSettings.settings)
             gameSession.send(.enterRecordsBattle)
         } label: {
             HStack(spacing: 10) {

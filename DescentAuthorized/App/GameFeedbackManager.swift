@@ -109,6 +109,8 @@ final class GameFeedbackManager: ObservableObject {
     private var outcomeAsset: GameAudioAsset?
     private var outcomeCompletionTask: Task<Void, Never>?
     private var musicFadeTask: Task<Void, Never>?
+    private var eventSequenceTask: Task<Void, Never>?
+    private var pendingEventCues: [GameFeedbackCue] = []
     private var currentSettings = GameSettings.defaults
     private var isAudioSessionConfigured = false
 
@@ -129,11 +131,14 @@ final class GameFeedbackManager: ObservableObject {
         } else {
             musicFadeTask?.cancel()
             musicPlayer?.stop()
-            outcomePlayer?.stop()
         }
 
         if !settings.soundEffectsEnabled {
+            eventSequenceTask?.cancel()
+            eventSequenceTask = nil
+            pendingEventCues.removeAll(keepingCapacity: true)
             effectPlayers.values.flatMap { $0 }.forEach { $0.stop() }
+            stopOutcomeMusic(restoreFloorMusic: settings.musicEnabled)
         }
     }
 
@@ -146,9 +151,12 @@ final class GameFeedbackManager: ObservableObject {
         currentSettings = settings
         requestedMusicTrack = GameMusicTrack(floor: floor)
 
+        if !keepsOutcomeMusic {
+            stopOutcomeMusic(restoreFloorMusic: false)
+        }
+
         guard settings.musicEnabled else {
             musicPlayer?.stop()
-            outcomePlayer?.stop()
             return
         }
 
@@ -157,9 +165,6 @@ final class GameFeedbackManager: ObservableObject {
             return
         }
 
-        if !keepsOutcomeMusic {
-            stopOutcomeMusic(restoreFloorMusic: false)
-        }
         guard outcomePlayer?.isPlaying != true else { return }
         resumeRequestedMusicIfNeeded()
     }
@@ -173,6 +178,9 @@ final class GameFeedbackManager: ObservableObject {
         currentMusicTrack = nil
         musicFadeTask?.cancel()
         outcomeCompletionTask?.cancel()
+        eventSequenceTask?.cancel()
+        eventSequenceTask = nil
+        pendingEventCues.removeAll(keepingCapacity: true)
         musicPlayer?.stop()
         outcomePlayer?.stop()
         musicPlayer = nil
@@ -190,8 +198,14 @@ final class GameFeedbackManager: ObservableObject {
             stopOutcomeMusic(restoreFloorMusic: false)
         }
 
-        for cue in cues {
-            trigger(cue, settings: settings)
+        if settings.soundEffectsEnabled {
+            enqueueEventAudio(cues)
+        }
+
+        if settings.hapticsEnabled {
+            for cue in cues {
+                playHaptic(for: cue)
+            }
         }
     }
 
@@ -277,6 +291,35 @@ final class GameFeedbackManager: ObservableObject {
         }
     }
 
+    private func enqueueEventAudio(_ cues: [GameFeedbackCue]) {
+        pendingEventCues.append(contentsOf: cues)
+        guard eventSequenceTask == nil else { return }
+
+        eventSequenceTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            defer { eventSequenceTask = nil }
+
+            while !Task.isCancelled, !pendingEventCues.isEmpty {
+                let cue = pendingEventCues.removeFirst()
+                playEventAudio(for: cue)
+
+                if !pendingEventCues.isEmpty {
+                    try? await Task.sleep(for: .milliseconds(90))
+                }
+            }
+        }
+    }
+
+    private func playEventAudio(for cue: GameFeedbackCue) {
+        if cue == .victory {
+            playOutcome(.battleVictory)
+        } else if cue == .defeat {
+            playOutcome(.battleDefeat)
+        } else {
+            effectSequence(for: cue).forEach(playEffect)
+        }
+    }
+
     private func playEffect(_ playback: EffectPlayback) {
         guard !missingResources.contains(playback.asset) else { return }
         configureAudioSessionIfNeeded()
@@ -291,7 +334,7 @@ final class GameFeedbackManager: ObservableObject {
             pool.append(created)
             effectPlayers[playback.asset] = pool
             player = created
-        } else if let reusable = pool.min(by: { $0.currentTime < $1.currentTime }) {
+        } else if let reusable = pool.max(by: { $0.currentTime < $1.currentTime }) {
             player = reusable
         } else {
             return

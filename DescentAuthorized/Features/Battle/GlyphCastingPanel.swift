@@ -7,6 +7,9 @@ struct GlyphCastSubmission {
 }
 
 struct GlyphCastingPanel: View {
+    @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
+
     let spell: SpellDefinition
     let inputPreference: DrawingInputPreference
     let availableMana: Double
@@ -180,6 +183,7 @@ struct GlyphCastingPanel: View {
             let size = proxy.size
 
             Button {
+                gameFeedback.playInterface(.back, settings: appSettings.settings)
                 canvasController.undoLastStroke()
                 feedback = nil
             } label: {
@@ -238,6 +242,7 @@ struct GlyphCastingPanel: View {
             Spacer()
 
             Button {
+                gameFeedback.playInterface(.back, settings: appSettings.settings)
                 canvasController.undoLastStroke()
                 feedback = nil
             } label: {
@@ -349,6 +354,7 @@ struct GlyphCastingPanel: View {
     }
 
     private func handleInputRejection(_ error: StrokeCaptureError) {
+        gameFeedback.playInterface(.error, settings: appSettings.settings)
         switch error {
         case .inputRejected:
             rejectionMessage = "설정에서 허용한 입력 도구를 사용해 주세요"
@@ -363,6 +369,7 @@ struct GlyphCastingPanel: View {
 
     private func cast() {
         guard let method = lastInputMethod else { return }
+        gameFeedback.playInterface(.confirm, settings: appSettings.settings)
         let evaluation = GlyphEvaluator(maximumMana: availableMana).evaluate(
             spell: spell,
             strokes: completedStrokes,

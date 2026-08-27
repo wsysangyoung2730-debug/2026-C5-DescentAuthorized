@@ -197,6 +197,7 @@ struct BattleRestartLoadingPresentation: Equatable {
 
 struct BattleView: View {
     @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
     @ObservedObject var realityController: RealitySceneController
     @Binding var restartLoadingPresentation: BattleRestartLoadingPresentation?
@@ -695,6 +696,7 @@ struct BattleView: View {
                 .foregroundStyle(DAColor.secondary)
 
             Button {
+                gameFeedback.playInterface(.confirm, settings: appSettings.settings)
                 gameSession.send(.finishTurn)
             } label: {
                 Text("턴 종료")
@@ -860,7 +862,7 @@ struct BattleView: View {
         .accessibilityAddTraits(.isButton)
         .accessibilityAction {
             if state.canInteract {
-                selectedSpellID = spell.id
+                selectSpellFromUser(spell.id)
             }
         }
     }
@@ -872,6 +874,7 @@ struct BattleView: View {
             detailPressWasCancelled = true
             detailPressTask?.cancel()
             if detailedSpell?.id == spell.id {
+                gameFeedback.playInterface(.back, settings: appSettings.settings)
                 detailedSpell = nil
             }
             return
@@ -886,6 +889,11 @@ struct BattleView: View {
             guard !Task.isCancelled,
                   pressedSpellID == spell.id,
                   !detailPressWasCancelled else { return }
+            gameFeedback.trigger(
+                .recordOpened,
+                settings: appSettings.settings,
+                includesHaptic: false
+            )
             withAnimation(.easeOut(duration: 0.16)) {
                 detailedSpell = spell
             }
@@ -902,12 +910,18 @@ struct BattleView: View {
         detailPressWasCancelled = false
 
         if showedDetails {
+            gameFeedback.playInterface(.back, settings: appSettings.settings)
             withAnimation(.easeOut(duration: 0.14)) {
                 detailedSpell = nil
             }
         } else if shouldSelect {
-            selectedSpellID = spell.id
+            selectSpellFromUser(spell.id)
         }
+    }
+
+    private func selectSpellFromUser(_ spellID: SpellID) {
+        gameFeedback.playInterface(.select, settings: appSettings.settings)
+        selectedSpellID = spellID
     }
 
     private func spellDetailOverlay(_ spell: SpellDefinition) -> some View {
@@ -1006,6 +1020,7 @@ struct BattleView: View {
             Text("층 관리자 전투 절차를 준비 중입니다")
                 .font(.headline)
             Button("전투 시작") {
+                gameFeedback.playInterface(.confirm, settings: appSettings.settings)
                 startEncounterIfNeeded()
             }
             .buttonStyle(.borderedProminent)
@@ -1367,6 +1382,7 @@ struct BattleView: View {
                 )
 
                 Button("전투 시작") {
+                    gameFeedback.playInterface(.confirm, settings: appSettings.settings)
                     withAnimation(.easeOut(duration: 0.2)) {
                         showsFirstTurnBriefing = false
                     }
@@ -1566,6 +1582,7 @@ struct BattleView: View {
 
     private func restartDefeatedBattle() {
         guard !isRestartLoading else { return }
+        gameFeedback.playInterface(.confirm, settings: appSettings.settings)
 
         defeatPresentationTask?.cancel()
         defeatPresentationTask = nil
@@ -1684,6 +1701,7 @@ struct BattleView: View {
                     briefingRow(icon: row.0, title: row.1, detail: row.2)
                 }
                 Button("전투 시작") {
+                    gameFeedback.playInterface(.confirm, settings: appSettings.settings)
                     withAnimation(.easeOut(duration: 0.2)) {
                         showsFirstTurnBriefing = false
                     }

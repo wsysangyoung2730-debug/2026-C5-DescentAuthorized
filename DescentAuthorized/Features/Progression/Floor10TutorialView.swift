@@ -208,6 +208,9 @@ struct Floor10TutorialView: View {
 }
 
 struct FloorEntrancePanel: View {
+    @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
+
     let configuration: FloorEntranceConfiguration
     let action: () -> Void
 
@@ -378,7 +381,10 @@ struct FloorEntrancePanel: View {
     }
 
     private var actionButton: some View {
-        Button(action: action) {
+        Button {
+            gameFeedback.playInterface(.confirm, settings: appSettings.settings)
+            action()
+        } label: {
             ZStack {
                 Image(configuration.buttonAsset)
                     .resizable()

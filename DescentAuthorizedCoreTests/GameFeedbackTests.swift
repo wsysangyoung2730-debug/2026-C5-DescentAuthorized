@@ -138,4 +138,40 @@ final class GameFeedbackTests: XCTestCase {
 
         XCTAssertTrue(cues.isEmpty)
     }
+
+    func testNonAttackEnemyActionDoesNotPlayManagerAttackSound() {
+        let cues = mapper.cues(for: [
+            .combat(.enemyActionStarted(.grantNormalBarrier(name: "기록 방벽", amount: 20)))
+        ])
+
+        XCTAssertTrue(cues.isEmpty)
+    }
+
+    func testZeroDamageEventDoesNotPlayHitSound() {
+        let cues = mapper.cues(for: [
+            .combat(.damageApplied(target: .player, amount: 0, remainingHP: 100))
+        ])
+
+        XCTAssertTrue(cues.isEmpty)
+    }
+
+    func testEncounterRestartDoesNotReplayCombatOrOutcomeSound() {
+        let cues = mapper.cues(for: [
+            .encounterStarted(.recordsAdministrator)
+        ])
+
+        XCTAssertTrue(cues.isEmpty)
+    }
+
+    func testAbsoluteBarrierNegationUsesBarrierImpactAfterCast() {
+        let cues = mapper.cues(for: [
+            .combat(.spellResolved(spell: .riftSeverance, grade: .approved)),
+            .combat(.attackNegatedByAbsoluteBarrier(target: .enemy(.observationAdministrator)))
+        ])
+
+        XCTAssertEqual(cues, [
+            .spellAccepted(perfect: false),
+            .absoluteBarrierNegated
+        ])
+    }
 }
