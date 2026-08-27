@@ -192,7 +192,7 @@ struct DemoFlowView: View {
                         x: (proxy.size.width * rightHUDButtonCenterRatio)
                             - buttonHalfWidth
                             - sideGap
-                            - (configuration.inspectionTitle == "이중 문양 검수" ? 8 : 0)
+                            - (configuration.inspectionTitle == "이중 문양 검수" ? 12 : 0)
                             - (sideLabelWidth / 2),
                         y: proxy.size.height * topBarCenterYRatio
                     )
