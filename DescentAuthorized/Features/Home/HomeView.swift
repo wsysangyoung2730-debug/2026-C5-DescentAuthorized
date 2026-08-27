@@ -84,20 +84,29 @@ struct HomeView: View {
                     endPoint: .bottom
                 )
 
-                VStack(spacing: 18) {
+                VStack(spacing: 12) {
                     Spacer()
 
                     if gameSession.hasSavedProgress {
-                        homeButton("하강 절차 계속", prominence: .primary) {
+                        homeButton(
+                            assetName: "HomeDescentContinueButton",
+                            accessibilityLabel: "하강 절차 계속"
+                        ) {
                             isPlaying = true
                         }
 
-                        homeButton("처음부터", prominence: .secondary) {
+                        homeButton(
+                            assetName: "HomeRestartButton",
+                            accessibilityLabel: "처음부터"
+                        ) {
                             gameSession.startNewGame()
                             isPlaying = true
                         }
                     } else {
-                        homeButton("하강 절차 시작", prominence: .primary) {
+                        homeButton(
+                            assetName: "HomeDescentStartButton",
+                            accessibilityLabel: "하강 절차 시작"
+                        ) {
                             gameSession.startNewGame()
                             isPlaying = true
                         }
@@ -127,130 +136,34 @@ struct HomeView: View {
     }
 
     private func homeButton(
-        _ title: String,
-        prominence: DescentMenuButtonStyle.Prominence,
+        assetName: String,
+        accessibilityLabel: String,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Text(title)
-                .font(.system(size: 19, weight: .semibold, design: .serif))
-                .tracking(0.8)
+            Image(assetName)
+                .resizable()
+                .scaledToFit()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .buttonStyle(DescentMenuButtonStyle(prominence: prominence))
-        .frame(width: 300, height: 64)
+        .buttonStyle(HomeMenuAssetButtonStyle())
+        .frame(width: 400, height: 132)
+        .accessibilityLabel(accessibilityLabel)
     }
 }
 
-private struct DescentMenuButtonStyle: ButtonStyle {
-    enum Prominence: Equatable {
-        case primary
-        case secondary
-    }
-
-    let prominence: Prominence
-
-    private var surfaceColors: [Color] {
-        switch prominence {
-        case .primary:
-            [Color(red: 0.04, green: 0.04, blue: 0.045), Color(red: 0.10, green: 0.085, blue: 0.075)]
-        case .secondary:
-            [Color(red: 0.20, green: 0.19, blue: 0.18), Color(red: 0.13, green: 0.125, blue: 0.12)]
-        }
-    }
-
-    private var foregroundColor: Color {
-        prominence == .primary
-            ? Color(red: 0.93, green: 0.81, blue: 0.58)
-            : Color(red: 0.84, green: 0.76, blue: 0.62)
-    }
-
+private struct HomeMenuAssetButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .foregroundStyle(foregroundColor)
-            .background {
-                DescentButtonShape(cut: 12)
-                    .fill(
-                        LinearGradient(
-                            colors: surfaceColors,
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .overlay {
-                        DescentButtonShape(cut: 12)
-                            .stroke(
-                                Color(red: 0.78, green: 0.61, blue: 0.34),
-                                lineWidth: 2
-                            )
-                    }
-                    .overlay {
-                        DescentButtonShape(cut: 9)
-                            .stroke(
-                                Color(red: 0.93, green: 0.78, blue: 0.50).opacity(0.74),
-                                lineWidth: 0.8
-                            )
-                            .padding(5)
-                    }
-                    .overlay(alignment: .top) {
-                        if prominence == .primary {
-                            DescentButtonDiamond()
-                                .offset(y: -5)
-                        }
-                    }
-                    .overlay(alignment: .bottom) {
-                        if prominence == .primary {
-                            DescentButtonDiamond()
-                                .offset(y: 5)
-                        }
-                    }
-                    .shadow(
-                        color: Color.purple.opacity(prominence == .primary ? 0.25 : 0.12),
-                        radius: 8
-                    )
-            }
-            .contentShape(DescentButtonShape(cut: 12))
-            .scaleEffect(configuration.isPressed ? 0.975 : 1)
-            .brightness(configuration.isPressed ? 0.08 : 0)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
-    }
-}
-
-private struct DescentButtonShape: Shape {
-    let cut: CGFloat
-
-    func path(in rect: CGRect) -> Path {
-        Path { path in
-            path.move(to: CGPoint(x: rect.minX + cut, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.maxX - cut, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + cut))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - cut))
-            path.addLine(to: CGPoint(x: rect.maxX - cut, y: rect.maxY))
-            path.addLine(to: CGPoint(x: rect.minX + cut, y: rect.maxY))
-            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - cut))
-            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + cut))
-            path.closeSubpath()
-        }
-    }
-}
-
-private struct DescentButtonDiamond: View {
-    var body: some View {
-        Rectangle()
-            .fill(
-                LinearGradient(
-                    colors: [Color.purple, Color(red: 0.34, green: 0.12, blue: 0.58)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+            .contentShape(Rectangle())
+            .scaleEffect(configuration.isPressed ? 0.965 : 1)
+            .brightness(configuration.isPressed ? -0.08 : 0)
+            .saturation(configuration.isPressed ? 1.12 : 1)
+            .offset(y: configuration.isPressed ? 2 : 0)
+            .shadow(
+                color: Color.purple.opacity(configuration.isPressed ? 0.18 : 0.32),
+                radius: configuration.isPressed ? 5 : 10
             )
-            .frame(width: 10, height: 10)
-            .rotationEffect(.degrees(45))
-            .overlay {
-                Rectangle()
-                    .stroke(Color(red: 0.91, green: 0.73, blue: 0.42), lineWidth: 1)
-                    .rotationEffect(.degrees(45))
-            }
-            .shadow(color: .purple.opacity(0.7), radius: 5)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
