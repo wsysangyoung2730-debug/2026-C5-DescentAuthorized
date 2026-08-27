@@ -8,6 +8,7 @@ struct DemoFlowView: View {
 
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
+    @State private var battleRestartLoadingPresentation: BattleRestartLoadingPresentation?
     @StateObject private var sceneController = RealitySceneController()
 
     private let leftHUDButtonCenterRatio: CGFloat = 0.0615
@@ -59,6 +60,22 @@ struct DemoFlowView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
                 .animation(.easeInOut(duration: 0.18), value: sceneController.cameraFadeOpacity)
+
+            if let loading = battleRestartLoadingPresentation {
+                ZStack {
+                    LoadingScreenView(
+                        context: loading.context,
+                        progress: loading.progress,
+                        tip: loading.tip
+                    )
+
+                    Color.clear
+                        .contentShape(Rectangle())
+                }
+                .ignoresSafeArea()
+                .transition(.opacity)
+                .zIndex(50)
+            }
         }
         .ignoresSafeArea(edges: .top)
         .sheet(isPresented: $isShowingPauseMenu) {
@@ -369,7 +386,10 @@ struct DemoFlowView: View {
                 }
             }
         case .battle:
-            BattleView(realityController: sceneController)
+            BattleView(
+                realityController: sceneController,
+                restartLoadingPresentation: $battleRestartLoadingPresentation
+            )
         case let .reward(floor):
             RewardSelectionView(floor: floor, sceneController: sceneController)
         case .floor8Exploration:

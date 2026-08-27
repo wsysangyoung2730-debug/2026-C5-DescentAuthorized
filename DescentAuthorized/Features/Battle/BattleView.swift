@@ -189,10 +189,17 @@ private struct BattleUIPresentation {
     }
 }
 
+struct BattleRestartLoadingPresentation: Equatable {
+    let context: LoadingScreenContext
+    var progress: Double
+    let tip: String
+}
+
 struct BattleView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
     @ObservedObject var realityController: RealitySceneController
+    @Binding var restartLoadingPresentation: BattleRestartLoadingPresentation?
 
     @State private var selectedSpellID: SpellID?
     @State private var enemyHitFlash = false
@@ -218,10 +225,11 @@ struct BattleView: View {
     @State private var cameraLookTranslationOrigin: CGSize?
     @State private var isDefeatPanelVisible = false
     @State private var defeatPresentationTask: Task<Void, Never>?
-    @State private var isRestartLoading = false
-    @State private var restartLoadingProgress = 0.0
-    @State private var restartLoadingTip = "전투 기록을 복원하고 있습니다."
     @State private var restartTask: Task<Void, Never>?
+
+    private var isRestartLoading: Bool {
+        restartLoadingPresentation != nil
+    }
 
     var body: some View {
         ZStack {
@@ -275,21 +283,6 @@ struct BattleView: View {
                     .zIndex(30)
             }
 
-            if isRestartLoading {
-                ZStack {
-                    LoadingScreenView(
-                        context: restartLoadingContext,
-                        progress: restartLoadingProgress,
-                        tip: restartLoadingTip
-                    )
-
-                    Color.clear
-                        .contentShape(Rectangle())
-                }
-                .ignoresSafeArea()
-                .transition(.opacity)
-                .zIndex(40)
-            }
         }
         .task(id: gameSession.progress.currentScene) {
             battleLogEntries = []
@@ -341,7 +334,7 @@ struct BattleView: View {
             isCameraZooming = false
             cameraLookTranslationOrigin = nil
             isDefeatPanelVisible = false
-            isRestartLoading = false
+            restartLoadingPresentation = nil
             realityController.setBattleCameraInteractionEnabled(false)
         }
         .preferredColorScheme(.dark)
@@ -1548,20 +1541,24 @@ struct BattleView: View {
         defeatPresentationTask?.cancel()
         defeatPresentationTask = nil
         restartTask?.cancel()
-        restartLoadingTip = LoadingTipCatalog.randomTip(for: restartLoadingContext)
-        restartLoadingProgress = 0.08
+        let loadingContext = restartLoadingContext
+        let loadingTip = LoadingTipCatalog.randomTip(for: loadingContext)
         realityController.setBattleCameraInteractionEnabled(false)
 
         withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
             isDefeatPanelVisible = false
-            isRestartLoading = true
+            restartLoadingPresentation = BattleRestartLoadingPresentation(
+                context: loadingContext,
+                progress: 0.08,
+                tip: loadingTip
+            )
         }
 
         restartTask = Task { @MainActor in
             defer { restartTask = nil }
 
             guard await waitForRestartStep(milliseconds: 180) else { return }
-            restartLoadingProgress = 0.34
+            restartLoadingPresentation?.progress = 0.34
 
             gameSession.send(.restartEncounter)
             guard gameSession.battleState?.phase != .defeat else {
@@ -1579,16 +1576,16 @@ struct BattleView: View {
                 gameSession.battleState,
                 reducedMotion: appSettings.reducedMotion
             )
-            restartLoadingProgress = 0.82
+            restartLoadingPresentation?.progress = 0.82
 
             guard await waitForRestartStep(milliseconds: 420) else { return }
             selectAvailableSpell()
-            restartLoadingProgress = 1
+            restartLoadingPresentation?.progress = 1
 
             guard await waitForRestartStep(milliseconds: 180) else { return }
             realityController.setBattleCameraInteractionEnabled(isBattleScene)
             withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.2)) {
-                isRestartLoading = false
+                restartLoadingPresentation = nil
             }
         }
     }
@@ -1604,9 +1601,8 @@ struct BattleView: View {
     }
 
     private func restoreDefeatPanelAfterRestartFailure() {
-        restartLoadingProgress = 0
         withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
-            isRestartLoading = false
+            restartLoadingPresentation = nil
             isDefeatPanelVisible = true
         }
     }
