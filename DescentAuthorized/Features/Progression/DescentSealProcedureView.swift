@@ -262,10 +262,12 @@ private struct DescentSealProcedureView: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 54, height: 54)
+                                    .offset(x: -20)
 
                                 Text("봉인 검수 재시도")
                                     .font(.system(size: 23, weight: .semibold, design: .serif))
                                     .foregroundStyle(DAColor.body)
+                                    .offset(x: -20)
                             }
                             .frame(
                                 width: retryButtonWidth,

@@ -1494,7 +1494,7 @@ struct BattleView: View {
                                 .font(.system(size: 24, weight: .semibold, design: .serif))
                                 .foregroundStyle(DAColor.body)
                                 .position(
-                                    x: retryButtonWidth * retryLabelCenterXRatio,
+                                    x: retryButtonWidth * retryLabelCenterXRatio - 15,
                                     y: retryButtonHeight * 0.5
                                 )
                         }
