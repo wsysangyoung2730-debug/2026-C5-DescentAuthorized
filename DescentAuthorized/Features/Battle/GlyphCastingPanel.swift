@@ -131,12 +131,12 @@ struct GlyphCastingPanel: View {
                     .allowsHitTesting(false)
 
                 canvasContent
-                    .frame(width: size.width * 0.87, height: size.height * 0.59)
-                    .position(x: size.width * 0.5, y: size.height * 0.365)
+                    .frame(width: size.width * 0.89, height: size.height * 0.63)
+                    .position(x: size.width * 0.5, y: size.height * 0.36)
 
                 battleArtworkActionBar
-                    .frame(width: size.width * 0.76, height: size.height * 0.18)
-                    .position(x: size.width * 0.5, y: size.height * 0.845)
+                    .frame(width: size.width * 0.86, height: size.height * 0.18)
+                    .position(x: size.width * 0.5, y: size.height * 0.855)
             }
         }
         .aspectRatio(1331 / 994, contentMode: .fit)
@@ -176,7 +176,9 @@ struct GlyphCastingPanel: View {
     }
 
     private var battleArtworkActionBar: some View {
-        HStack(spacing: 18) {
+        GeometryReader { proxy in
+            let size = proxy.size
+
             Button {
                 canvasController.undoLastStroke()
                 feedback = nil
@@ -184,7 +186,7 @@ struct GlyphCastingPanel: View {
                 Image("BattleGlyphUndoButton")
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: 108, maxHeight: 64)
+                    .frame(width: size.width * 0.25, height: size.height)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -192,10 +194,12 @@ struct GlyphCastingPanel: View {
             .help("마지막 획 취소")
             .accessibilityLabel("마지막 획 취소")
             .disabled(completedStrokes.isEmpty || feedback != nil)
+            .position(x: size.width * 0.22, y: size.height * 0.5)
 
             Rectangle()
                 .fill(DAColor.gold.opacity(0.58))
-                .frame(width: 1, height: 42)
+                .frame(width: 1, height: size.height * 0.62)
+                .position(x: size.width * 0.42, y: size.height * 0.5)
                 .allowsHitTesting(false)
 
             Button {
@@ -210,13 +214,14 @@ struct GlyphCastingPanel: View {
                         .foregroundStyle(Color.white.opacity(0.94))
                         .shadow(color: .black.opacity(0.8), radius: 2, y: 1)
                 }
-                .frame(maxWidth: 190, maxHeight: 64)
+                .frame(width: size.width * 0.44, height: size.height)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .opacity(!canCast || feedback != nil ? 0.42 : 1)
             .accessibilityLabel("시전")
             .disabled(!canCast || feedback != nil)
+            .position(x: size.width * 0.7, y: size.height * 0.5)
         }
     }
 

@@ -346,7 +346,7 @@ struct BattleView: View {
             let bottomBarHeight: CGFloat = isDefeated ? 0 : 242
             let horizontalContentInset: CGFloat = 18
             let contentWidth = max(0, proxy.size.width - (horizontalContentInset * 2))
-            let inputPanelWidth = min(480, max(360, contentWidth * 0.34))
+            let inputPanelWidth = min(520, max(390, contentWidth * 0.36))
             let inputPanelHeight = min(360, max(280, inputPanelWidth * 0.76))
             let stageHeight = proxy.size.height - bottomBarHeight
             let inputPanelCenterY = min(
