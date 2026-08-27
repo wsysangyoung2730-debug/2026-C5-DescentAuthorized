@@ -48,6 +48,26 @@ struct DescentSealProcedureConfiguration {
         maximumAttempts: 2,
         layout: .standard
     )
+
+    static let floor8 = DescentSealProcedureConfiguration(
+        recordSubtitle: "제8층 이중 봉인 검수 기록",
+        destination: "제7층 미확인 구역",
+        stages: [
+            DescentSealStageConfiguration(
+                recordTitle: "1단계 · 중심 좌표",
+                inputTitle: "1차 중심 좌표 대조",
+                sequence: [3, 0, 4]
+            ),
+            DescentSealStageConfiguration(
+                recordTitle: "2단계 · 하강 경로",
+                inputTitle: "2차 하강 경로 검증",
+                sequence: [0, 4, 3, 1, 6, 5, 2]
+            )
+        ],
+        accessibilityLabel: "제8층 이중 봉인 해제 정답 기록",
+        maximumAttempts: 2,
+        layout: .standard
+    )
 }
 
 struct DescentDoorSceneView: View {
