@@ -189,7 +189,7 @@ private struct Floor9DescentSealView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     .id(completedStages)
                     .transition(.opacity.combined(with: .scale(scale: 0.98)))
-                    .padding(.top, proxy.size.height * 0.14)
+                    .padding(.top, proxy.size.height * 0.17)
                     .padding(.bottom, proxy.size.height * 0.15)
                     .padding(.horizontal, proxy.size.width * 0.14)
 
@@ -225,7 +225,8 @@ private struct Floor9DescentSealView: View {
                 lineColor: Floor10SealPalette.ink,
                 nodeColor: Floor10SealPalette.ink,
                 showsActiveEndpoint: false,
-                highlightsStartNode: true
+                highlightsStartNode: true,
+                contentInsets: EdgeInsets(top: 22, leading: 4, bottom: 18, trailing: 4)
             )
             .frame(height: 190)
         }
@@ -314,7 +315,7 @@ private struct Floor9DescentSealView: View {
                     }
                     .foregroundStyle(phase.statusColor)
                 }
-                .padding(.top, proxy.size.height * 0.16)
+                .padding(.top, proxy.size.height * 0.19)
                 .padding(.bottom, proxy.size.height * 0.11)
                 .padding(.horizontal, proxy.size.width * 0.13)
             }

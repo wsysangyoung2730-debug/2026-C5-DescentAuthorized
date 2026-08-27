@@ -510,20 +510,30 @@ struct SealPatternDiagram: View {
     let nodeColor: Color
     let showsActiveEndpoint: Bool
     let highlightsStartNode: Bool
+    var contentInsets: EdgeInsets = EdgeInsets()
 
     var body: some View {
         Canvas { context, size in
-            Floor10SealLayout.drawGuides(context: &context, size: size)
-            Floor10SealLayout.drawDiamond(context: &context, size: size)
+            let diagramSize = CGSize(
+                width: max(1, size.width - contentInsets.leading - contentInsets.trailing),
+                height: max(1, size.height - contentInsets.top - contentInsets.bottom)
+            )
+            context.translateBy(x: contentInsets.leading, y: contentInsets.top)
+
+            Floor10SealLayout.drawGuides(context: &context, size: diagramSize)
+            Floor10SealLayout.drawDiamond(context: &context, size: diagramSize)
 
             if !selectedNodes.isEmpty {
                 var selectedPath = Path()
-                selectedPath.move(to: Floor10SealLayout.point(selectedNodes[0], in: size))
+                selectedPath.move(to: Floor10SealLayout.point(selectedNodes[0], in: diagramSize))
                 for node in selectedNodes.dropFirst() {
-                    selectedPath.addLine(to: Floor10SealLayout.point(node, in: size))
+                    selectedPath.addLine(to: Floor10SealLayout.point(node, in: diagramSize))
                 }
                 if let dragLocation, showsActiveEndpoint {
-                    selectedPath.addLine(to: dragLocation)
+                    selectedPath.addLine(to: CGPoint(
+                        x: dragLocation.x - contentInsets.leading,
+                        y: dragLocation.y - contentInsets.top
+                    ))
                 }
                 context.stroke(
                     selectedPath,
@@ -533,7 +543,7 @@ struct SealPatternDiagram: View {
             }
 
             for index in Floor10SealLayout.nodes.indices {
-                let center = Floor10SealLayout.point(index, in: size)
+                let center = Floor10SealLayout.point(index, in: diagramSize)
                 let isSelected = selectedNodes.contains(index)
                 let isStartNode = highlightsStartNode && selectedNodes.first == index
                 let radius = isSelected ? 10.0 : 8.0
