@@ -43,6 +43,7 @@ struct RewardSelectionView: View {
     @State private var transitionTask: Task<Void, Never>?
     @State private var inspectedCandidateID: String?
     @State private var detailPressTask: Task<Void, Never>?
+    @State private var isSelectionInterfaceVisible = false
 
     private var candidates: [RewardCandidate] {
         RewardCatalog.candidates(for: floor)
@@ -53,12 +54,17 @@ struct RewardSelectionView: View {
             let metrics = RewardLayoutMetrics(size: proxy.size)
 
             ZStack {
-                backgroundTreatment
-                header(metrics: metrics)
-                cards(metrics: metrics)
-                footer(metrics: metrics)
+                if isSelectionInterfaceVisible {
+                    ZStack {
+                        backgroundTreatment
+                        header(metrics: metrics)
+                        cards(metrics: metrics)
+                        footer(metrics: metrics)
+                    }
+                    .transition(.opacity)
+                }
 
-                if let inspectedCandidate {
+                if isSelectionInterfaceVisible, let inspectedCandidate {
                     detailPanel(for: inspectedCandidate, metrics: metrics)
                         .transition(.opacity.combined(with: .scale(scale: 0.98)))
                         .zIndex(20)
@@ -67,13 +73,23 @@ struct RewardSelectionView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
+            isSelectionInterfaceVisible = false
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             setRewardState(.appearing)
             transitionTask?.cancel()
             transitionTask = Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 520))
+                try? await Task.sleep(
+                    for: RealityRewardTransitionTiming.appearanceDelay(
+                        reducedMotion: appSettings.reducedMotion
+                    )
+                )
                 guard !Task.isCancelled else { return }
                 setRewardState(.choosing)
+                withAnimation(
+                    .easeInOut(duration: RealityRewardTransitionTiming.interfaceFadeDuration)
+                ) {
+                    isSelectionInterfaceVisible = true
+                }
             }
         }
         .onDisappear {
