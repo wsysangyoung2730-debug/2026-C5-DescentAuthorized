@@ -108,17 +108,22 @@ struct RewardSelectionView: View {
                 Text("제\(floor.rawValue)층 · 기록 보관고")
                     .font(.system(size: metrics.eyebrowSize, weight: .medium, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.gold)
-                Text("보상 두루마리 선택")
-                    .font(.system(size: metrics.titleSize, weight: .medium, design: .serif))
-                    .foregroundStyle(RewardSelectionPalette.gold)
-                    .shadow(color: .black, radius: 5)
+                Image("RewardScrollHeaderTitle")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(
+                        width: metrics.titleAssetWidth,
+                        height: metrics.titleAssetHeight,
+                        alignment: .leading
+                    )
+                    .accessibilityLabel("보상 두루마리 선택")
                 Text("승인된 주문 기록 \(candidates.count)건 중 1건을 수령하십시오.")
                     .font(.system(size: metrics.bodySize, weight: .regular, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.body)
                 Image("RewardScrollHeaderDivider")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: metrics.headerWidth, height: 24)
+                    .frame(width: metrics.headerWidth, height: metrics.dividerHeight)
             }
             .position(
                 x: metrics.headerLeading + metrics.headerWidth / 2,
@@ -509,10 +514,12 @@ private struct RewardLayoutMetrics {
     var headerLeading: CGFloat { max(34, size.width * 0.035) }
     var headerTop: CGFloat { max(24, size.height * 0.035) }
     var headerWidth: CGFloat { min(480, size.width * 0.36) }
-    var headerHeight: CGFloat { 126 * scale }
+    var headerHeight: CGFloat { 142 * scale }
     var headerSpacing: CGFloat { 4 * scale }
     var eyebrowSize: CGFloat { 17 * scale }
-    var titleSize: CGFloat { 34 * scale }
+    var titleAssetWidth: CGFloat { min(350 * scale, headerWidth) }
+    var titleAssetHeight: CGFloat { 58 * scale }
+    var dividerHeight: CGFloat { 30 * scale }
     var bodySize: CGFloat { 16 * scale }
     var cardWidth: CGFloat { min(350, (size.width - 64) / 3.18) }
     var cardHeight: CGFloat { cardWidth * 1.333 }
