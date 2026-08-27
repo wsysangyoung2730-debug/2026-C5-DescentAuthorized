@@ -12,9 +12,9 @@ struct DemoFlowView: View {
     @State private var battleRestartLoadingPresentation: BattleRestartLoadingPresentation?
     @StateObject private var sceneController = RealitySceneController()
 
-    private let leftHUDButtonCenterRatio: CGFloat = 0.0615
-    private let rightHUDButtonCenterRatio: CGFloat = 0.9395
-    private let topHUDVerticalCenterRatio: CGFloat = 0.5
+    private let topHUDRailSourceSize = CGSize(width: 1774, height: 887)
+    private let leftHUDPlateSourceCenter = CGPoint(x: 109, y: 433.5)
+    private let rightHUDPlateSourceCenter = CGPoint(x: 1665, y: 433.5)
     private let battleTopBarButtonWidth: CGFloat = 68
     private let battlePlateToStatusSpacing: CGFloat = 14
     private let battlePlayerStatusLeadingRatio: CGFloat = 0.11
@@ -192,6 +192,15 @@ struct DemoFlowView: View {
 
     private var defaultTopBarControls: some View {
         GeometryReader { proxy in
+            let leftHUDPlateCenter = topHUDRailPoint(
+                sourcePoint: leftHUDPlateSourceCenter,
+                in: proxy.size
+            )
+            let rightHUDPlateCenter = topHUDRailPoint(
+                sourcePoint: rightHUDPlateSourceCenter,
+                in: proxy.size
+            )
+            let topHUDCenterY = (leftHUDPlateCenter.y + rightHUDPlateCenter.y) / 2
             let sideLabelWidth = min(max(proxy.size.width * 0.2, 190), 270)
             let buttonHalfWidth = battleTopBarButtonWidth / 2
             let topHUDConfiguration = descentTopHUDConfiguration
@@ -204,17 +213,17 @@ struct DemoFlowView: View {
                         .frame(width: min(proxy.size.width * 0.36, 460), height: 72)
                         .position(
                             x: proxy.size.width * 0.5,
-                            y: proxy.size.height * topHUDVerticalCenterRatio
+                            y: topHUDCenterY
                         )
 
                     descentAreaLabel(configuration.areaTitle)
                         .frame(width: sideLabelWidth, alignment: .leading)
                         .position(
-                            x: (proxy.size.width * leftHUDButtonCenterRatio)
+                            x: leftHUDPlateCenter.x
                                 + buttonHalfWidth
                                 + sideGap
                                 + (sideLabelWidth / 2),
-                            y: proxy.size.height * topHUDVerticalCenterRatio
+                            y: topHUDCenterY
                         )
 
                     Text(configuration.inspectionTitle)
@@ -224,12 +233,12 @@ struct DemoFlowView: View {
                     .minimumScaleFactor(0.78)
                     .frame(width: sideLabelWidth, alignment: .trailing)
                     .position(
-                        x: (proxy.size.width * rightHUDButtonCenterRatio)
+                        x: rightHUDPlateCenter.x
                             - buttonHalfWidth
                             - sideGap
                             - configuration.inspectionGapAdjustment
                             - (sideLabelWidth / 2),
-                        y: proxy.size.height * topHUDVerticalCenterRatio
+                        y: topHUDCenterY
                     )
                 } else {
                     HStack(spacing: 11) {
@@ -246,7 +255,7 @@ struct DemoFlowView: View {
                     .frame(width: min(proxy.size.width * 0.54, 560), height: 72)
                     .position(
                         x: proxy.size.width * 0.5,
-                        y: proxy.size.height * topHUDVerticalCenterRatio
+                        y: topHUDCenterY
                     )
                 }
 
@@ -256,8 +265,8 @@ struct DemoFlowView: View {
                 .help("일시정지")
                 .accessibilityLabel("일시정지")
                 .position(
-                    x: proxy.size.width * leftHUDButtonCenterRatio,
-                    y: proxy.size.height * topHUDVerticalCenterRatio
+                    x: leftHUDPlateCenter.x,
+                    y: leftHUDPlateCenter.y
                 )
 
                 topBarButton(systemImage: "gearshape") {
@@ -266,8 +275,8 @@ struct DemoFlowView: View {
                 .help("설정")
                 .accessibilityLabel("설정")
                 .position(
-                    x: proxy.size.width * rightHUDButtonCenterRatio,
-                    y: proxy.size.height * topHUDVerticalCenterRatio
+                    x: rightHUDPlateCenter.x,
+                    y: rightHUDPlateCenter.y
                 )
             }
         }
@@ -301,8 +310,17 @@ struct DemoFlowView: View {
 
     private func battleTopBarControls(_ battle: BattleState) -> some View {
         GeometryReader { proxy in
+            let leftHUDPlateCenter = topHUDRailPoint(
+                sourcePoint: leftHUDPlateSourceCenter,
+                in: proxy.size
+            )
+            let rightHUDPlateCenter = topHUDRailPoint(
+                sourcePoint: rightHUDPlateSourceCenter,
+                in: proxy.size
+            )
+            let topHUDCenterY = (leftHUDPlateCenter.y + rightHUDPlateCenter.y) / 2
             let buttonHalfWidth = battleTopBarButtonWidth / 2
-            let leftPauseRightX = (proxy.size.width * leftHUDButtonCenterRatio) + buttonHalfWidth
+            let leftPauseRightX = leftHUDPlateCenter.x + buttonHalfWidth
             let battleTrailingPadding = leftPauseRightX + battlePlateToStatusSpacing
             let playerStatusLeadingX = proxy.size.width * battlePlayerStatusLeadingRatio
             let statusAreaWidth = max(
@@ -325,7 +343,7 @@ struct DemoFlowView: View {
                 )
                 .position(
                     x: statusAreaCenterX,
-                    y: proxy.size.height * topHUDVerticalCenterRatio
+                    y: topHUDCenterY
                 )
 
                 topBarButton(systemImage: "pause.fill") {
@@ -334,8 +352,8 @@ struct DemoFlowView: View {
                 .help("일시정지")
                 .accessibilityLabel("일시정지")
                 .position(
-                    x: proxy.size.width * leftHUDButtonCenterRatio,
-                    y: proxy.size.height * topHUDVerticalCenterRatio
+                    x: leftHUDPlateCenter.x,
+                    y: leftHUDPlateCenter.y
                 )
 
                 topBarButton(systemImage: "gearshape") {
@@ -344,11 +362,34 @@ struct DemoFlowView: View {
                 .help("설정")
                 .accessibilityLabel("설정")
                 .position(
-                    x: proxy.size.width * rightHUDButtonCenterRatio,
-                    y: proxy.size.height * topHUDVerticalCenterRatio
+                    x: rightHUDPlateCenter.x,
+                    y: rightHUDPlateCenter.y
                 )
             }
         }
+    }
+
+    private func topHUDRailPoint(
+        sourcePoint: CGPoint,
+        in destinationSize: CGSize
+    ) -> CGPoint {
+        let scale = max(
+            destinationSize.width / topHUDRailSourceSize.width,
+            destinationSize.height / topHUDRailSourceSize.height
+        )
+        let scaledSize = CGSize(
+            width: topHUDRailSourceSize.width * scale,
+            height: topHUDRailSourceSize.height * scale
+        )
+        let cropOffset = CGPoint(
+            x: (scaledSize.width - destinationSize.width) / 2,
+            y: (scaledSize.height - destinationSize.height) / 2
+        )
+
+        return CGPoint(
+            x: sourcePoint.x * scale - cropOffset.x,
+            y: sourcePoint.y * scale - cropOffset.y
+        )
     }
 
     private var floorOrnament: some View {
