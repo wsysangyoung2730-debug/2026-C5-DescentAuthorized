@@ -328,7 +328,8 @@ final class RealitySceneController: ObservableObject {
               let cameraEntity else { return }
 
         let baseMatrix = snapshot.transformMatrix
-        let worldUp = SIMD3<Float>(0, 0, 1)
+        // RealityKit 런타임은 Y-up이다. 이 축을 고정해야 좌우 시선에 롤이 섞이지 않는다.
+        let worldUp = SIMD3<Float>(0, 1, 0)
         let yawRotation = simd_quatf(angle: battleCameraYaw, axis: worldUp)
         let baseRight = normalizedAxis(
             baseMatrix.columns.0,
