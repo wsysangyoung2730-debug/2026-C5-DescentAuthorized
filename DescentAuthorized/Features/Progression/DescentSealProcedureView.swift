@@ -56,7 +56,7 @@ struct DescentSealProcedureConfiguration {
             DescentSealStageConfiguration(
                 recordTitle: "1단계 · 중심 좌표",
                 inputTitle: "1차 중심 좌표 대조",
-                sequence: [3, 0, 4]
+                sequence: [3, 0, 4, 6, 5, 8, 9]
             ),
             DescentSealStageConfiguration(
                 recordTitle: "2단계 · 하강 경로",
