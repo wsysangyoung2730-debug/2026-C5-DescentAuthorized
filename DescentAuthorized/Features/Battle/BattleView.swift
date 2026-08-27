@@ -926,7 +926,7 @@ struct BattleView: View {
     private func spellDetailOverlay(_ spell: SpellDefinition) -> some View {
         GeometryReader { proxy in
             let panelWidth = min(760, proxy.size.width * 0.58)
-            let panelHeight = panelWidth * 0.75
+            let panelHeight = panelWidth * (2.0 / 3.0)
             let effectRange = spell.effect.range
 
             ZStack {
@@ -1417,67 +1417,86 @@ struct BattleView: View {
                 ZStack {
                     Image("BattleDefeatPanel")
                         .resizable()
-                        .scaledToFill()
+                        .scaledToFit()
                         .frame(width: panelWidth, height: panelHeight)
+
+                    Image("BattleDefeatSeal")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: panelWidth * 0.37, height: panelWidth * 0.37)
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.11
+                        )
+                        .shadow(color: .black.opacity(0.66), radius: 12, y: 6)
+
+                    Image("BattleDefeatTitle")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: panelWidth * 0.64, height: panelHeight * 0.13)
                         .clipped()
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.32
+                        )
 
-                    VStack(spacing: 5) {
-                        Image("BattleDefeatSeal")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: panelWidth * 0.18, height: panelWidth * 0.18)
+                    Rectangle()
+                        .fill(DAColor.gold.opacity(0.42))
+                        .frame(width: panelWidth * 0.67, height: 1)
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.405
+                        )
 
-                        Image("BattleDefeatTitle")
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: panelWidth * 0.64, height: panelHeight * 0.15)
-                            .clipped()
+                    Text("생체 반응이 한계치 아래로 감소했습니다.")
+                        .font(.system(size: 17, weight: .semibold, design: .serif))
+                        .foregroundStyle(DAColor.attack)
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.47
+                        )
 
-                        Rectangle()
-                            .fill(DAColor.gold.opacity(0.42))
-                            .frame(width: panelWidth * 0.67, height: 1)
-                            .padding(.vertical, 4)
+                    Text("전투 진입 직전의 기록으로 복원하여 다시 시작합니다.")
+                        .font(.system(size: 14, weight: .medium, design: .serif))
+                        .foregroundStyle(DAColor.body.opacity(0.86))
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.535
+                        )
 
-                        Text("생체 반응이 한계치 아래로 감소했습니다.")
-                            .font(.system(size: 17, weight: .semibold, design: .serif))
-                            .foregroundStyle(DAColor.attack)
+                    Button {
+                        restartDefeatedBattle()
+                    } label: {
+                        ZStack {
+                            Image("BattleDefeatRetryButton")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(
+                                    width: panelWidth * 0.7,
+                                    height: panelHeight * 0.19
+                                )
+                                .clipped()
 
-                        Text("전투 진입 직전의 기록으로 복원하여 다시 시작합니다.")
-                            .font(.system(size: 14, weight: .medium, design: .serif))
-                            .foregroundStyle(DAColor.body.opacity(0.86))
-
-                        Button {
-                            restartDefeatedBattle()
-                        } label: {
-                            ZStack {
-                                Image("BattleDefeatRetryButton")
+                            HStack(spacing: 18) {
+                                Image("BattleDefeatRetryIcon")
                                     .resizable()
-                                    .scaledToFill()
-                                    .frame(
-                                        width: panelWidth * 0.64,
-                                        height: panelHeight * 0.16
-                                    )
-                                    .clipped()
+                                    .scaledToFit()
+                                    .frame(width: 38, height: 38)
 
-                                HStack(spacing: 16) {
-                                    Image("BattleDefeatRetryIcon")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 38, height: 38)
-
-                                    Text("전투 재시작")
-                                        .font(.system(size: 24, weight: .semibold, design: .serif))
-                                        .foregroundStyle(DAColor.body)
-                                }
+                                Text("전투 재시작")
+                                    .font(.system(size: 24, weight: .semibold, design: .serif))
+                                    .foregroundStyle(DAColor.body)
                             }
-                            .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("전투 재시작")
-                        .accessibilityHint("전투 진입 직전 상태로 복원합니다")
+                        .contentShape(Rectangle())
                     }
-                    .padding(.horizontal, panelWidth * 0.09)
-                    .padding(.vertical, panelHeight * 0.07)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("전투 재시작")
+                    .accessibilityHint("전투 진입 직전 상태로 복원합니다")
+                    .position(
+                        x: panelWidth * 0.5,
+                        y: panelHeight * 0.77
+                    )
                 }
                 .frame(width: panelWidth, height: panelHeight)
                 .shadow(color: .black.opacity(0.78), radius: 22, y: 10)
