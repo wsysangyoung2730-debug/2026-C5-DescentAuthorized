@@ -163,13 +163,38 @@ struct DemoFlowView: View {
             DAColor.background.opacity(0.96)
 
             GeometryReader { proxy in
-                Image("SharedTopHUDRail")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: proxy.size.width, height: proxy.size.height)
-                    .clipped()
-                    .opacity(0.9)
-                    .allowsHitTesting(false)
+                let leftHUDPlateCenter = topHUDRailPoint(
+                    sourcePoint: leftHUDPlateSourceCenter,
+                    in: proxy.size
+                )
+                let rightHUDPlateCenter = topHUDRailPoint(
+                    sourcePoint: rightHUDPlateSourceCenter,
+                    in: proxy.size
+                )
+                let outerFrameMaskWidth = min(
+                    max(proxy.size.width * 0.085, 104),
+                    122
+                )
+
+                ZStack {
+                    Image("SharedTopHUDRail")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                        .clipped()
+                        .opacity(0.9)
+
+                    Rectangle()
+                        .fill(DAColor.background)
+                        .frame(width: outerFrameMaskWidth, height: proxy.size.height)
+                        .position(x: leftHUDPlateCenter.x, y: proxy.size.height / 2)
+
+                    Rectangle()
+                        .fill(DAColor.background)
+                        .frame(width: outerFrameMaskWidth, height: proxy.size.height)
+                        .position(x: rightHUDPlateCenter.x, y: proxy.size.height / 2)
+                }
+                .allowsHitTesting(false)
             }
 
             if let battle = gameSession.battleState {
