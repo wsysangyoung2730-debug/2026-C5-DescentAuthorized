@@ -184,44 +184,110 @@ private struct DescentSealProcedureView: View {
     }
 
     private var sealGameOverOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.82)
-                .ignoresSafeArea()
+        GeometryReader { proxy in
+            let panelWidth = min(720, proxy.size.width * 0.58)
+            let panelHeight = panelWidth * 0.75
+            let retryButtonWidth = panelWidth * 0.72
+            let retryButtonHeight = panelHeight * 0.19
 
-            VStack(spacing: 14) {
-                Image(systemName: "xmark.octagon.fill")
-                    .font(.system(size: 48, weight: .semibold))
-                    .foregroundStyle(.red)
+            ZStack {
+                Color.black.opacity(0.76)
+                    .ignoresSafeArea()
 
-                Text("GAME OVER")
-                    .font(.system(size: 32, weight: .bold, design: .serif))
-                    .foregroundStyle(.red)
+                ZStack {
+                    Image("DescentSealFailurePanel")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: panelWidth, height: panelHeight)
 
-                Text("봉인 문양 검수에 실패했습니다.")
-                    .font(.title3.weight(.semibold))
+                    Image("DescentSealFailureSeal")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: panelWidth * 0.37, height: panelWidth * 0.37)
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.09
+                        )
+                        .shadow(color: .black.opacity(0.7), radius: 12, y: 6)
 
-                Text("하강문 해제 절차를 처음부터 다시 시작합니다.")
-                    .font(.subheadline)
-                    .foregroundStyle(DescentSealPalette.secondary)
+                    Image("DescentSealFailureTitle")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: panelWidth * 0.65, height: panelHeight * 0.13)
+                        .clipped()
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.37
+                        )
 
-                Button(action: retrySeal) {
-                    Label("봉인문 해제 재시도", systemImage: "arrow.counterclockwise")
-                        .font(.headline)
-                        .frame(minWidth: 250)
-                        .frame(height: 48)
+                    Image("DescentSealFailureDecoration")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: panelWidth * 0.72, height: panelHeight * 0.07)
+                        .clipped()
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.49
+                        )
+
+                    Text("하강 절차가 일시 중단되었습니다.")
+                        .font(.system(size: 18, weight: .semibold, design: .serif))
+                        .foregroundStyle(DAColor.attack)
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.49
+                        )
+
+                    Text("입력 기록을 초기화하고 현재 단계부터 다시 검수합니다.")
+                        .font(.system(size: 15, weight: .medium, design: .serif))
+                        .foregroundStyle(DAColor.body.opacity(0.86))
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.59
+                        )
+
+                    Button(action: retrySeal) {
+                        ZStack {
+                            Image("DescentSealFailureRetryButton")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(
+                                    width: retryButtonWidth,
+                                    height: retryButtonHeight
+                                )
+                                .clipped()
+
+                            Image("DescentSealFailureRetryIcon")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 54, height: 54)
+                                .position(
+                                    x: retryButtonWidth * 0.18,
+                                    y: retryButtonHeight * 0.5
+                                )
+
+                            Text("봉인 검수 재시도")
+                                .font(.system(size: 23, weight: .semibold, design: .serif))
+                                .foregroundStyle(DAColor.body)
+                                .position(
+                                    x: retryButtonWidth * 0.59,
+                                    y: retryButtonHeight * 0.5
+                                )
+                        }
+                        .frame(width: retryButtonWidth, height: retryButtonHeight)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("봉인 검수 재시도")
+                    .accessibilityHint("현재 봉인 검수 단계부터 다시 시작합니다")
+                    .position(
+                        x: panelWidth * 0.5,
+                        y: panelHeight * 0.76
+                    )
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
-                .padding(.top, 8)
+                .frame(width: panelWidth, height: panelHeight)
             }
-            .padding(.horizontal, 42)
-            .padding(.vertical, 34)
-            .background(Color(red: 0.035, green: 0.04, blue: 0.055).opacity(0.98))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.red.opacity(0.55), lineWidth: 1)
-            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
@@ -515,7 +581,6 @@ private struct DescentSealProcedureView: View {
     }
 
     private func retrySeal() {
-        completedStageCount = 0
         selectedNodes.removeAll()
         dragLocation = nil
         remainingAttempts = configuration.maximumAttempts
