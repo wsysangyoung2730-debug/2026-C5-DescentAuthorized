@@ -6,15 +6,15 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     let maximumYaw: Float
     let maximumUpwardPitch: Float
     let maximumDownwardPitch: Float
-    let minimumDistanceScale: Float
-    let maximumDistanceScale: Float
+    let minimumFieldOfViewScale: Float
+    let maximumFieldOfViewScale: Float
 
     static let standard = BattleCameraInteractionConfiguration(
-        maximumYaw: .pi * 35 / 180,
-        maximumUpwardPitch: .pi * 10 / 180,
-        maximumDownwardPitch: .pi * 15 / 180,
-        minimumDistanceScale: 0.85,
-        maximumDistanceScale: 1.15
+        maximumYaw: .pi * 60 / 180,
+        maximumUpwardPitch: .pi * 25 / 180,
+        maximumDownwardPitch: .pi * 25 / 180,
+        minimumFieldOfViewScale: 0.85,
+        maximumFieldOfViewScale: 1.10
     )
 }
 
@@ -62,10 +62,10 @@ final class RealitySceneController: ObservableObject {
     private var authoredCameraSnapshots: [String: AuthoredCameraSnapshot] = [:]
     private var battleCameraYaw: Float = 0
     private var battleCameraPitch: Float = 0
-    private var battleCameraDistanceScale: Float = 1
-    private var battleCameraOrbitStartYaw: Float = 0
-    private var battleCameraOrbitStartPitch: Float = 0
-    private var battleCameraZoomStartScale: Float = 1
+    private var battleCameraFieldOfViewScale: Float = 1
+    private var battleCameraLookStartYaw: Float = 0
+    private var battleCameraLookStartPitch: Float = 0
+    private var battleCameraZoomStartFieldOfViewScale: Float = 1
     private var requestedErasureZones: [ErasureZone] = []
     private var requestedBattleState: BattleState?
     private var requestedReducedMotion = false
@@ -160,13 +160,13 @@ final class RealitySceneController: ObservableObject {
         }
     }
 
-    func beginBattleCameraOrbit() {
+    func beginBattleCameraLook() {
         guard canAdjustBattleCamera else { return }
-        battleCameraOrbitStartYaw = battleCameraYaw
-        battleCameraOrbitStartPitch = battleCameraPitch
+        battleCameraLookStartYaw = battleCameraYaw
+        battleCameraLookStartPitch = battleCameraPitch
     }
 
-    func updateBattleCameraOrbit(
+    func updateBattleCameraLook(
         translation: CGSize,
         viewportSize: CGSize,
         configuration: BattleCameraInteractionConfiguration = .standard
@@ -181,22 +181,23 @@ final class RealitySceneController: ObservableObject {
         let verticalSweep = configuration.maximumUpwardPitch
             + configuration.maximumDownwardPitch
 
+        // 손가락 이동과 시선 이동은 반대 방향이다. 오른쪽으로 끌면 왼쪽을 본다.
         battleCameraYaw = clamp(
-            battleCameraOrbitStartYaw - (horizontalProgress * horizontalSweep),
+            battleCameraLookStartYaw + (horizontalProgress * horizontalSweep),
             minimum: -configuration.maximumYaw,
             maximum: configuration.maximumYaw
         )
         battleCameraPitch = clamp(
-            battleCameraOrbitStartPitch + (verticalProgress * verticalSweep),
-            minimum: -configuration.maximumUpwardPitch,
-            maximum: configuration.maximumDownwardPitch
+            battleCameraLookStartPitch + (verticalProgress * verticalSweep),
+            minimum: -configuration.maximumDownwardPitch,
+            maximum: configuration.maximumUpwardPitch
         )
         applyBattleCameraTransform()
     }
 
     func beginBattleCameraZoom() {
         guard canAdjustBattleCamera else { return }
-        battleCameraZoomStartScale = battleCameraDistanceScale
+        battleCameraZoomStartFieldOfViewScale = battleCameraFieldOfViewScale
     }
 
     func updateBattleCameraZoom(
@@ -204,10 +205,10 @@ final class RealitySceneController: ObservableObject {
         configuration: BattleCameraInteractionConfiguration = .standard
     ) {
         guard canAdjustBattleCamera, magnification > 0 else { return }
-        battleCameraDistanceScale = clamp(
-            battleCameraZoomStartScale / Float(magnification),
-            minimum: configuration.minimumDistanceScale,
-            maximum: configuration.maximumDistanceScale
+        battleCameraFieldOfViewScale = clamp(
+            battleCameraZoomStartFieldOfViewScale / Float(magnification),
+            minimum: configuration.minimumFieldOfViewScale,
+            maximum: configuration.maximumFieldOfViewScale
         )
         applyBattleCameraTransform()
     }
@@ -215,10 +216,10 @@ final class RealitySceneController: ObservableObject {
     func resetBattleCamera(animated: Bool) {
         battleCameraYaw = 0
         battleCameraPitch = 0
-        battleCameraDistanceScale = 1
-        battleCameraOrbitStartYaw = 0
-        battleCameraOrbitStartPitch = 0
-        battleCameraZoomStartScale = 1
+        battleCameraFieldOfViewScale = 1
+        battleCameraLookStartYaw = 0
+        battleCameraLookStartPitch = 0
+        battleCameraZoomStartFieldOfViewScale = 1
         isBattleCameraAdjusted = false
 
         guard requestedCameraPreset == .battle,
@@ -327,57 +328,36 @@ final class RealitySceneController: ObservableObject {
               let cameraEntity else { return }
 
         let baseMatrix = snapshot.transformMatrix
-        let basePosition = SIMD3<Float>(
-            baseMatrix.columns.3.x,
-            baseMatrix.columns.3.y,
-            baseMatrix.columns.3.z
-        )
-        let pivot = battleCameraPivot(baseMatrix: baseMatrix)
         let worldUp = SIMD3<Float>(0, 0, 1)
         let yawRotation = simd_quatf(angle: battleCameraYaw, axis: worldUp)
-        let baseRight = normalizedAxis(baseMatrix.columns.0, fallback: SIMD3<Float>(1, 0, 0))
+        let baseRight = normalizedAxis(
+            baseMatrix.columns.0,
+            fallback: SIMD3<Float>(1, 0, 0)
+        )
         let pitchAxis = yawRotation.act(baseRight)
         let pitchRotation = simd_quatf(angle: battleCameraPitch, axis: pitchAxis)
-        let orbitRotation = pitchRotation * yawRotation
+        let lookRotation = pitchRotation * yawRotation
 
+        // Blender가 저장한 카메라 위치는 유지하고 시선 축만 회전한다.
         var adjustedMatrix = baseMatrix
         for columnIndex in 0..<3 {
             let column = baseMatrix[columnIndex]
             let axis = SIMD3<Float>(column.x, column.y, column.z)
-            let adjustedAxis = orbitRotation.act(axis)
+            let adjustedAxis = lookRotation.act(axis)
             adjustedMatrix[columnIndex] = SIMD4<Float>(adjustedAxis, column.w)
         }
 
-        let baseOffset = basePosition - pivot
-        let adjustedPosition = pivot
-            + orbitRotation.act(baseOffset) * battleCameraDistanceScale
-        adjustedMatrix.columns.3 = SIMD4<Float>(adjustedPosition, 1)
+        var adjustedCamera = snapshot.camera
+        adjustedCamera.fieldOfViewInDegrees = snapshot.camera.fieldOfViewInDegrees
+            * battleCameraFieldOfViewScale
 
         cameraEntity.stopAllAnimations(recursive: false)
         cameraEntity.setTransformMatrix(adjustedMatrix, relativeTo: nil)
-        cameraEntity.camera = snapshot.camera
+        cameraEntity.camera = adjustedCamera
         isBattleCameraAdjusted = abs(battleCameraYaw) > 0.001
             || abs(battleCameraPitch) > 0.001
-            || abs(battleCameraDistanceScale - 1) > 0.001
+            || abs(battleCameraFieldOfViewScale - 1) > 0.001
         scheduleBoardProjectionRefresh()
-    }
-
-    private func battleCameraPivot(baseMatrix: simd_float4x4) -> SIMD3<Float> {
-        if let enemy = registry.entity(for: .enemyActor) {
-            let bounds = enemy.visualBounds(relativeTo: nil)
-            return (bounds.min + bounds.max) * 0.5
-        }
-
-        let basePosition = SIMD3<Float>(
-            baseMatrix.columns.3.x,
-            baseMatrix.columns.3.y,
-            baseMatrix.columns.3.z
-        )
-        let backward = normalizedAxis(
-            baseMatrix.columns.2,
-            fallback: SIMD3<Float>(0, 1, 0)
-        )
-        return basePosition - (backward * 5)
     }
 
     private func normalizedAxis(
@@ -396,10 +376,10 @@ final class RealitySceneController: ObservableObject {
     private func clearBattleCameraAdjustmentState() {
         battleCameraYaw = 0
         battleCameraPitch = 0
-        battleCameraDistanceScale = 1
-        battleCameraOrbitStartYaw = 0
-        battleCameraOrbitStartPitch = 0
-        battleCameraZoomStartScale = 1
+        battleCameraFieldOfViewScale = 1
+        battleCameraLookStartYaw = 0
+        battleCameraLookStartPitch = 0
+        battleCameraZoomStartFieldOfViewScale = 1
         isBattleCameraAdjusted = false
     }
 

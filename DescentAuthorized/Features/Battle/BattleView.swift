@@ -213,8 +213,9 @@ struct BattleView: View {
     @State private var detailPressTask: Task<Void, Never>?
     @State private var pressedSpellID: SpellID?
     @State private var detailPressWasCancelled = false
-    @State private var isCameraOrbiting = false
+    @State private var isCameraLooking = false
     @State private var isCameraZooming = false
+    @State private var cameraLookTranslationOrigin: CGSize?
 
     var body: some View {
         ZStack {
@@ -305,8 +306,9 @@ struct BattleView: View {
             playerPulseTask?.cancel()
             feedbackTask?.cancel()
             detailPressTask?.cancel()
-            isCameraOrbiting = false
+            isCameraLooking = false
             isCameraZooming = false
+            cameraLookTranslationOrigin = nil
             realityController.setBattleCameraInteractionEnabled(false)
         }
         .preferredColorScheme(.dark)
@@ -401,17 +403,23 @@ struct BattleView: View {
                 DragGesture(minimumDistance: 4)
                     .onChanged { value in
                         guard !isCameraZooming else { return }
-                        if !isCameraOrbiting {
-                            isCameraOrbiting = true
-                            realityController.beginBattleCameraOrbit()
+                        if !isCameraLooking {
+                            isCameraLooking = true
+                            cameraLookTranslationOrigin = value.translation
+                            realityController.beginBattleCameraLook()
                         }
-                        realityController.updateBattleCameraOrbit(
-                            translation: value.translation,
+                        let origin = cameraLookTranslationOrigin ?? .zero
+                        realityController.updateBattleCameraLook(
+                            translation: CGSize(
+                                width: value.translation.width - origin.width,
+                                height: value.translation.height - origin.height
+                            ),
                             viewportSize: viewportSize
                         )
                     }
                     .onEnded { _ in
-                        isCameraOrbiting = false
+                        isCameraLooking = false
+                        cameraLookTranslationOrigin = nil
                     }
             )
             .simultaneousGesture(
@@ -419,7 +427,8 @@ struct BattleView: View {
                     .onChanged { value in
                         if !isCameraZooming {
                             isCameraZooming = true
-                            isCameraOrbiting = false
+                            isCameraLooking = false
+                            cameraLookTranslationOrigin = nil
                             realityController.beginBattleCameraZoom()
                         }
                         realityController.updateBattleCameraZoom(
