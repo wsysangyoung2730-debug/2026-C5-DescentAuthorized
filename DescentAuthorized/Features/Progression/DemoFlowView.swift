@@ -162,16 +162,12 @@ struct DemoFlowView: View {
         GeometryReader { proxy in
             let sideLabelWidth = min(max(proxy.size.width * 0.2, 190), 270)
             let buttonHalfWidth = battleTopBarButtonWidth / 2
-            let isFloor9Descent = {
-                if case let .descent(floor) = gameSession.presentation.experience {
-                    return floor == .floor9
-                }
-                return false
-            }()
-            let sideGap = max(14, proxy.size.width * 0.012) + (isFloor9Descent ? 10 : 0)
+            let topHUDConfiguration = descentTopHUDConfiguration
+            let sideGap = max(14, proxy.size.width * 0.012)
+                + (topHUDConfiguration?.sideGapAdjustment ?? 0)
 
             ZStack {
-                if let configuration = descentTopHUDConfiguration {
+                if let configuration = topHUDConfiguration {
                     descentGateTitle
                         .frame(width: min(proxy.size.width * 0.36, 460), height: 72)
                         .position(
@@ -199,7 +195,7 @@ struct DemoFlowView: View {
                         x: (proxy.size.width * rightHUDButtonCenterRatio)
                             - buttonHalfWidth
                             - sideGap
-                            - (configuration.inspectionTitle == "이중 문양 검수" ? 12 : 0)
+                            - configuration.inspectionGapAdjustment
                             - (sideLabelWidth / 2),
                         y: proxy.size.height * topBarCenterYRatio
                     )
@@ -391,6 +387,20 @@ struct DemoFlowView: View {
 private struct DescentTopHUDConfiguration {
     let areaTitle: String
     let inspectionTitle: String
+    let sideGapAdjustment: CGFloat
+    let inspectionGapAdjustment: CGFloat
+
+    init(
+        areaTitle: String,
+        inspectionTitle: String,
+        sideGapAdjustment: CGFloat = 10,
+        inspectionGapAdjustment: CGFloat = 12
+    ) {
+        self.areaTitle = areaTitle
+        self.inspectionTitle = inspectionTitle
+        self.sideGapAdjustment = sideGapAdjustment
+        self.inspectionGapAdjustment = inspectionGapAdjustment
+    }
 }
 
 private struct BossNarrativeView: View {
