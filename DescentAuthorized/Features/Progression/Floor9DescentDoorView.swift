@@ -71,16 +71,12 @@ private struct Floor9DescentSealView: View {
             let sideWidth = min(max(proxy.size.width * 0.235, 250), 350)
             let centerWidth = min(max(proxy.size.width * 0.38, 430), 590)
 
-            VStack(spacing: 14) {
-                header
-
-                HStack(alignment: .center, spacing: max(18, proxy.size.width * 0.02)) {
-                    recordPanel.frame(width: sideWidth)
-                    inputPanel.frame(width: centerWidth)
-                    informationPanel.frame(width: sideWidth)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            HStack(alignment: .center, spacing: max(18, proxy.size.width * 0.02)) {
+                recordPanel.frame(width: sideWidth)
+                inputPanel.frame(width: centerWidth)
+                informationPanel.frame(width: sideWidth)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.horizontal, max(20, proxy.size.width * 0.035))
             .padding(.vertical, 14)
         }
@@ -135,33 +131,6 @@ private struct Floor9DescentSealView: View {
                     .stroke(Color.red.opacity(0.55), lineWidth: 1)
             }
         }
-    }
-
-    private var header: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 3)
-                .fill(Color.black.opacity(0.78))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 3)
-                        .stroke(Floor10SealPalette.gold.opacity(0.74), lineWidth: 1)
-                }
-
-            HStack {
-                Label("제9층 · 기록 관리 구역", systemImage: "seal")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text("층 이동 봉인문")
-                    .font(.system(size: 28, weight: .semibold, design: .serif))
-                    .foregroundStyle(Floor10SealPalette.title)
-                    .frame(maxWidth: .infinity)
-                Color.clear
-                    .frame(maxWidth: .infinity)
-                    .accessibilityHidden(true)
-            }
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(Floor10SealPalette.secondary)
-            .padding(.horizontal, 24)
-        }
-        .frame(height: 62)
     }
 
     private var recordPanel: some View {

@@ -89,6 +89,13 @@ struct DemoFlowView: View {
         }
     }
 
+    private var isDescentDoorPresentation: Bool {
+        if case .descent = gameSession.presentation.experience {
+            return true
+        }
+        return false
+    }
+
     private var topBar: some View {
         ZStack {
             DAColor.background.opacity(0.96)
@@ -125,18 +132,24 @@ struct DemoFlowView: View {
     private var defaultTopBarControls: some View {
         GeometryReader { proxy in
             ZStack {
-                HStack(spacing: 11) {
-                    floorOrnament
+                Group {
+                    if isDescentDoorPresentation {
+                        descentGateTitle
+                    } else {
+                        HStack(spacing: 11) {
+                            floorOrnament
 
-                    Text("제\(gameSession.progress.currentFloor.rawValue)층")
-                        .font(.system(size: 24, weight: .medium, design: .serif))
-                        .foregroundStyle(SharedHUDPalette.title)
-                        .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
+                            Text("제\(gameSession.progress.currentFloor.rawValue)층")
+                                .font(.system(size: 24, weight: .medium, design: .serif))
+                                .foregroundStyle(SharedHUDPalette.title)
+                                .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
 
-                    floorOrnament
-                        .scaleEffect(x: -1, y: 1)
+                            floorOrnament
+                                .scaleEffect(x: -1, y: 1)
+                        }
+                    }
                 }
-                .frame(height: 58)
+                .frame(width: min(proxy.size.width * 0.54, 560), height: 72)
                 .position(x: proxy.size.width * 0.5, y: proxy.size.height * topBarCenterYRatio)
 
                 topBarButton(systemImage: "pause.fill") {
@@ -160,6 +173,23 @@ struct DemoFlowView: View {
                 )
             }
         }
+    }
+
+    private var descentGateTitle: some View {
+        HStack(spacing: 8) {
+            Image("SharedDescentGateSymbol")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 50, height: 64)
+
+            Image("SharedDescentGateTitle")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: 430, maxHeight: 70)
+        }
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("층 이동 봉인문")
     }
 
     private func battleTopBarControls(_ battle: BattleState) -> some View {
