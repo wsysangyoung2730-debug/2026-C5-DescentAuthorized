@@ -170,19 +170,15 @@ private struct Floor9DescentSealView: View {
                 .scaledToFit()
 
             GeometryReader { proxy in
-                VStack(spacing: 7) {
-                    Text("해제 기록")
-                        .font(.system(size: 23, weight: .semibold, design: .serif))
-                    Text("제9층 이중 봉인 검수 기록")
-                        .font(.caption.weight(.medium))
+                ZStack(alignment: .bottomLeading) {
+                    VStack(spacing: 7) {
+                        Text("해제 기록")
+                            .font(.system(size: 23, weight: .semibold, design: .serif))
+                        Text("제9층 이중 봉인 검수 기록")
+                            .font(.caption.weight(.medium))
 
-                    Group {
                         if completedStages == 0 {
                             recordPattern(stage: 0, title: "1단계 · 관리 서명")
-
-                            Label("2단계 · 미확인", systemImage: "circle")
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(Floor10SealPalette.ink.opacity(0.48))
                         } else {
                             Label("1단계 · 대조 완료", systemImage: "checkmark.circle.fill")
                                 .font(.caption2.weight(.semibold))
@@ -190,19 +186,24 @@ private struct Floor9DescentSealView: View {
                             recordPattern(stage: 1, title: "2단계 · 관측 좌표")
                         }
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     .id(completedStages)
                     .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                    .padding(.top, proxy.size.height * 0.14)
+                    .padding(.bottom, proxy.size.height * 0.15)
+                    .padding(.horizontal, proxy.size.width * 0.14)
 
-                    Text(completedStages == 0
-                         ? "1단계 기록을 먼저 연결하십시오."
-                         : "공개된 2단계 기록을 연결하십시오.")
-                        .font(.caption2)
-                        .multilineTextAlignment(.center)
+                    if completedStages == 0 {
+                        Label("2단계 · 미확인", systemImage: "circle")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Floor10SealPalette.ink.opacity(0.48))
+                            .padding(.leading, proxy.size.width * 0.14)
+                            .padding(.bottom, proxy.size.height * 0.12)
+                            .transition(.opacity)
+                    }
                 }
                 .foregroundStyle(Floor10SealPalette.ink)
-                .padding(.top, proxy.size.height * 0.105)
-                .padding(.bottom, proxy.size.height * 0.11)
-                .padding(.horizontal, proxy.size.width * 0.14)
             }
         }
         .aspectRatio(CGFloat(1086) / 1448, contentMode: .fit)
@@ -293,7 +294,7 @@ private struct Floor9DescentSealView: View {
                     Text("하강 정보")
                         .font(.system(size: 23, weight: .semibold, design: .serif))
                         .foregroundStyle(Floor10SealPalette.cyan)
-                        .padding(.bottom, 16)
+                        .padding(.bottom, 18)
 
                     informationRow(icon: "location.north.line", title: "목적지", value: "제8층 관측실")
                     divider
@@ -313,7 +314,7 @@ private struct Floor9DescentSealView: View {
                     }
                     .foregroundStyle(phase.statusColor)
                 }
-                .padding(.top, proxy.size.height * 0.12)
+                .padding(.top, proxy.size.height * 0.16)
                 .padding(.bottom, proxy.size.height * 0.11)
                 .padding(.horizontal, proxy.size.width * 0.13)
             }
