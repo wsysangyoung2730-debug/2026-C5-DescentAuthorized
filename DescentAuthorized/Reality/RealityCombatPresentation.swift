@@ -141,11 +141,15 @@ final class RealityCombatVFXRenderer {
     private var pendingIntentCue: RealityEnemyIntentCue?
     private var loadCancellables: Set<AnyCancellable> = []
     private var intentGeneration = 0
+    private var intentScale: Float = 1.15
+    private var intentVerticalOffset: Float = 0.3
 
     func attach(to registry: RealityEntityRegistry) {
         root = registry.root
         enemyAnchor = registry.entity(for: .enemySpawn) ?? registry.root
         enemyActor = registry.entity(for: .enemyActor)
+        intentScale = registry.descriptor?.actor?.intentScale ?? 1.15
+        intentVerticalOffset = registry.descriptor?.actor?.intentVerticalOffset ?? 0.3
     }
 
     func present(
@@ -179,6 +183,8 @@ final class RealityCombatVFXRenderer {
         root = nil
         enemyAnchor = nil
         enemyActor = nil
+        intentScale = 1.15
+        intentVerticalOffset = 0.3
         intentGeneration += 1
     }
 
@@ -209,7 +215,7 @@ final class RealityCombatVFXRenderer {
                     payload: entity,
                     name: "DA_RUNTIME_ENEMY_INTENT"
                 )
-                container.scale = SIMD3(repeating: 1.15)
+                container.scale = SIMD3(repeating: self.intentScale)
                 container.position = self.intentPosition(relativeTo: enemyAnchor)
                 self.pendingIntentCue = nil
                 self.currentIntentCue = cue
@@ -277,7 +283,7 @@ final class RealityCombatVFXRenderer {
         return SIMD3(
             (bounds.min.x + bounds.max.x) * 0.5,
             bounds.min.y - 0.35,
-            bounds.max.z + 0.3
+            bounds.max.z + intentVerticalOffset
         )
     }
 

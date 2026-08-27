@@ -29,6 +29,24 @@ struct RealityActorDescriptor: Sendable {
     let expectedEntityName: String
     let resourceSubdirectory: String
     let targetHeight: Float
+    let intentScale: Float
+    let intentVerticalOffset: Float
+
+    init(
+        assetID: GameAssetID,
+        expectedEntityName: String,
+        resourceSubdirectory: String,
+        targetHeight: Float,
+        intentScale: Float = 1.15,
+        intentVerticalOffset: Float = 0.3
+    ) {
+        self.assetID = assetID
+        self.expectedEntityName = expectedEntityName
+        self.resourceSubdirectory = resourceSubdirectory
+        self.targetHeight = targetHeight
+        self.intentScale = intentScale
+        self.intentVerticalOffset = intentVerticalOffset
+    }
 
     var resourceName: String { assetID.rawValue }
 }
@@ -109,7 +127,8 @@ struct RealitySceneDescriptor: Sendable {
                 assetID: .recordAdministrator,
                 expectedEntityName: "ACTOR_RecordAdministrator",
                 resourceSubdirectory: "Reality/Actors/RecordAdministrator",
-                targetHeight: 6.5
+                targetHeight: 6.5,
+                intentVerticalOffset: -0.8
             )
         ),
         .floor08ResidueIsolation: .init(
@@ -127,7 +146,9 @@ struct RealitySceneDescriptor: Sendable {
                 assetID: .observationResidue,
                 expectedEntityName: "ACTOR_ObservationResidue",
                 resourceSubdirectory: "Reality/Actors/ObservationResidue",
-                targetHeight: 2.35
+                targetHeight: 2.35,
+                intentScale: 0.64,
+                intentVerticalOffset: 0.12
             )
         ),
         .floor08AdministratorObservatory: .init(
