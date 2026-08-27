@@ -10,6 +10,7 @@
 		100000000000000000000054 /* RealityAssetIDs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000054 /* RealityAssetIDs.swift */; };
 		100000000000000000000055 /* AssetManifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000055 /* AssetManifest.json */; };
 		100000000000000000000056 /* Reality in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000056 /* Reality */; };
+		100000000000000000000067 /* Audio in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000067 /* Audio */; };
 		100000000000000000000057 /* RealitySceneDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000057 /* RealitySceneDescriptor.swift */; };
 		100000000000000000000058 /* RealityEntityRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000058 /* RealityEntityRegistry.swift */; };
 		100000000000000000000059 /* RealitySceneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000059 /* RealitySceneController.swift */; };
@@ -74,6 +75,7 @@
 		200000000000000000000054 /* RealityAssetIDs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityAssetIDs.swift; sourceTree = "<group>"; };
 		200000000000000000000055 /* AssetManifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = AssetManifest.json; sourceTree = "<group>"; };
 		200000000000000000000056 /* Reality */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Reality; sourceTree = "<group>"; };
+		200000000000000000000067 /* Audio */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Audio; sourceTree = "<group>"; };
 		200000000000000000000057 /* RealitySceneDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealitySceneDescriptor.swift; sourceTree = "<group>"; };
 		200000000000000000000058 /* RealityEntityRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityEntityRegistry.swift; sourceTree = "<group>"; };
 		200000000000000000000059 /* RealitySceneController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealitySceneController.swift; sourceTree = "<group>"; };
@@ -231,6 +233,7 @@
 		400000000000000000000008 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				200000000000000000000067 /* Audio */,
 				200000000000000000000055 /* AssetManifest.json */,
 				200000000000000000000056 /* Reality */,
 				200000000000000000000005 /* Assets.xcassets */,
@@ -449,6 +452,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				100000000000000000000067 /* Audio in Resources */,
 				100000000000000000000005 /* Assets.xcassets in Resources */,
 				100000000000000000000055 /* AssetManifest.json in Resources */,
 				100000000000000000000056 /* Reality in Resources */,
