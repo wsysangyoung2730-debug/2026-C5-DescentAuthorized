@@ -14,12 +14,10 @@ struct DemoFlowView: View {
 
     private let leftHUDButtonCenterRatio: CGFloat = 0.0615
     private let rightHUDButtonCenterRatio: CGFloat = 0.9395
-    private let hudButtonCenterYRatio: CGFloat = 0.5
+    private let topHUDVerticalCenterRatio: CGFloat = 0.5
     private let battleTopBarButtonWidth: CGFloat = 68
     private let battlePlateToStatusSpacing: CGFloat = 14
     private let battlePlayerStatusLeadingRatio: CGFloat = 0.11
-    private var topBarCenterYRatio: CGFloat { hudButtonCenterYRatio }
-
     private var topBarHeight: CGFloat {
         gameSession.battleState == nil ? 96 : 112
     }
@@ -206,7 +204,7 @@ struct DemoFlowView: View {
                         .frame(width: min(proxy.size.width * 0.36, 460), height: 72)
                         .position(
                             x: proxy.size.width * 0.5,
-                            y: proxy.size.height * topBarCenterYRatio
+                            y: proxy.size.height * topHUDVerticalCenterRatio
                         )
 
                     descentAreaLabel(configuration.areaTitle)
@@ -216,7 +214,7 @@ struct DemoFlowView: View {
                                 + buttonHalfWidth
                                 + sideGap
                                 + (sideLabelWidth / 2),
-                            y: proxy.size.height * topBarCenterYRatio
+                            y: proxy.size.height * topHUDVerticalCenterRatio
                         )
 
                     Text(configuration.inspectionTitle)
@@ -231,7 +229,7 @@ struct DemoFlowView: View {
                             - sideGap
                             - configuration.inspectionGapAdjustment
                             - (sideLabelWidth / 2),
-                        y: proxy.size.height * topBarCenterYRatio
+                        y: proxy.size.height * topHUDVerticalCenterRatio
                     )
                 } else {
                     HStack(spacing: 11) {
@@ -248,7 +246,7 @@ struct DemoFlowView: View {
                     .frame(width: min(proxy.size.width * 0.54, 560), height: 72)
                     .position(
                         x: proxy.size.width * 0.5,
-                        y: proxy.size.height * topBarCenterYRatio
+                        y: proxy.size.height * topHUDVerticalCenterRatio
                     )
                 }
 
@@ -259,7 +257,7 @@ struct DemoFlowView: View {
                 .accessibilityLabel("일시정지")
                 .position(
                     x: proxy.size.width * leftHUDButtonCenterRatio,
-                    y: proxy.size.height * hudButtonCenterYRatio
+                    y: proxy.size.height * topHUDVerticalCenterRatio
                 )
 
                 topBarButton(systemImage: "gearshape") {
@@ -269,7 +267,7 @@ struct DemoFlowView: View {
                 .accessibilityLabel("설정")
                 .position(
                     x: proxy.size.width * rightHUDButtonCenterRatio,
-                    y: proxy.size.height * hudButtonCenterYRatio
+                    y: proxy.size.height * topHUDVerticalCenterRatio
                 )
             }
         }
@@ -307,6 +305,12 @@ struct DemoFlowView: View {
             let leftPauseRightX = (proxy.size.width * leftHUDButtonCenterRatio) + buttonHalfWidth
             let battleTrailingPadding = leftPauseRightX + battlePlateToStatusSpacing
             let playerStatusLeadingX = proxy.size.width * battlePlayerStatusLeadingRatio
+            let statusAreaWidth = max(
+                proxy.size.width - playerStatusLeadingX - battleTrailingPadding,
+                0
+            )
+            let statusAreaCenterX = playerStatusLeadingX + (statusAreaWidth / 2)
+            let statusAreaHeight = min(proxy.size.height * 0.82, 92)
 
             ZStack {
                 BattleTopHUDView(
@@ -314,12 +318,14 @@ struct DemoFlowView: View {
                     floor: gameSession.progress.currentFloor,
                     enemyToNextActionSpacing: battlePlateToStatusSpacing
                 )
-                .padding(.leading, playerStatusLeadingX)
-                .padding(.trailing, battleTrailingPadding)
                 .frame(
-                    width: proxy.size.width,
-                    height: proxy.size.height,
+                    width: statusAreaWidth,
+                    height: statusAreaHeight,
                     alignment: .center
+                )
+                .position(
+                    x: statusAreaCenterX,
+                    y: proxy.size.height * topHUDVerticalCenterRatio
                 )
 
                 topBarButton(systemImage: "pause.fill") {
@@ -329,7 +335,7 @@ struct DemoFlowView: View {
                 .accessibilityLabel("일시정지")
                 .position(
                     x: proxy.size.width * leftHUDButtonCenterRatio,
-                    y: proxy.size.height * hudButtonCenterYRatio
+                    y: proxy.size.height * topHUDVerticalCenterRatio
                 )
 
                 topBarButton(systemImage: "gearshape") {
@@ -339,7 +345,7 @@ struct DemoFlowView: View {
                 .accessibilityLabel("설정")
                 .position(
                     x: proxy.size.width * rightHUDButtonCenterRatio,
-                    y: proxy.size.height * hudButtonCenterYRatio
+                    y: proxy.size.height * topHUDVerticalCenterRatio
                 )
             }
         }
