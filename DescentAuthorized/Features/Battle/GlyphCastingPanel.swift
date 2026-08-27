@@ -136,7 +136,7 @@ struct GlyphCastingPanel: View {
 
                 battleArtworkActionBar
                     .frame(width: size.width * 0.86, height: size.height * 0.18)
-                    .position(x: size.width * 0.5, y: size.height * 0.875)
+                    .position(x: size.width * 0.5, y: size.height * 0.872)
             }
         }
         .aspectRatio(1331 / 994, contentMode: .fit)
