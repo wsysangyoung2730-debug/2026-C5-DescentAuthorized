@@ -71,12 +71,18 @@ private struct Floor9DescentSealView: View {
             let sideWidth = min(max(proxy.size.width * 0.235, 250), 350)
             let centerWidth = min(max(proxy.size.width * 0.38, 430), 590)
 
-            HStack(alignment: .center, spacing: max(18, proxy.size.width * 0.02)) {
-                recordPanel.frame(width: sideWidth)
-                inputPanel.frame(width: centerWidth)
-                informationPanel.frame(width: sideWidth)
+            VStack(spacing: 14) {
+                Color.clear
+                    .frame(height: 62)
+                    .accessibilityHidden(true)
+
+                HStack(alignment: .center, spacing: max(18, proxy.size.width * 0.02)) {
+                    recordPanel.frame(width: sideWidth)
+                    inputPanel.frame(width: centerWidth)
+                    informationPanel.frame(width: sideWidth)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.horizontal, max(20, proxy.size.width * 0.035))
             .padding(.vertical, 14)
         }

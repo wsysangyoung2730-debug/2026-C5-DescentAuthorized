@@ -89,11 +89,33 @@ struct DemoFlowView: View {
         }
     }
 
-    private var isDescentDoorPresentation: Bool {
-        if case .descent = gameSession.presentation.experience {
-            return true
+    private var descentTopHUDConfiguration: DescentTopHUDConfiguration? {
+        guard case let .descent(floor) = gameSession.presentation.experience else {
+            return nil
         }
-        return false
+
+        switch floor {
+        case .floor10:
+            return DescentTopHUDConfiguration(
+                areaTitle: "제10층 · 승인 관리 구역",
+                inspectionTitle: "단일 문양 검수"
+            )
+        case .floor9:
+            return DescentTopHUDConfiguration(
+                areaTitle: "제9층 · 기록 관리 구역",
+                inspectionTitle: "이중 문양 검수"
+            )
+        case .floor8:
+            return DescentTopHUDConfiguration(
+                areaTitle: "제8층 · 관측 관리 구역",
+                inspectionTitle: "이중 문양 검수"
+            )
+        case .floor7:
+            return DescentTopHUDConfiguration(
+                areaTitle: "제7층 · 미확인 구역",
+                inspectionTitle: "봉인 문양 검수"
+            )
+        }
     }
 
     private var topBar: some View {
@@ -131,26 +153,60 @@ struct DemoFlowView: View {
 
     private var defaultTopBarControls: some View {
         GeometryReader { proxy in
+            let sideLabelWidth = min(max(proxy.size.width * 0.2, 190), 270)
+            let buttonHalfWidth = battleTopBarButtonWidth / 2
+            let sideGap = max(14, proxy.size.width * 0.012)
+
             ZStack {
-                Group {
-                    if isDescentDoorPresentation {
-                        descentGateTitle
-                    } else {
-                        HStack(spacing: 11) {
-                            floorOrnament
+                if let configuration = descentTopHUDConfiguration {
+                    descentGateTitle
+                        .frame(width: min(proxy.size.width * 0.36, 460), height: 72)
+                        .position(
+                            x: proxy.size.width * 0.5,
+                            y: proxy.size.height * topBarCenterYRatio
+                        )
 
-                            Text("제\(gameSession.progress.currentFloor.rawValue)층")
-                                .font(.system(size: 24, weight: .medium, design: .serif))
-                                .foregroundStyle(SharedHUDPalette.title)
-                                .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
+                    descentAreaLabel(configuration.areaTitle)
+                        .frame(width: sideLabelWidth, alignment: .leading)
+                        .position(
+                            x: (proxy.size.width * leftHUDButtonCenterRatio)
+                                + buttonHalfWidth
+                                + sideGap
+                                + (sideLabelWidth / 2),
+                            y: proxy.size.height * topBarCenterYRatio
+                        )
 
-                            floorOrnament
-                                .scaleEffect(x: -1, y: 1)
-                        }
+                    Text(configuration.inspectionTitle)
+                        .font(.system(size: 15, weight: .medium, design: .serif))
+                        .foregroundStyle(SharedHUDPalette.title.opacity(0.86))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
+                        .frame(width: sideLabelWidth, alignment: .trailing)
+                        .position(
+                            x: (proxy.size.width * rightHUDButtonCenterRatio)
+                                - buttonHalfWidth
+                                - sideGap
+                                - (sideLabelWidth / 2),
+                            y: proxy.size.height * topBarCenterYRatio
+                        )
+                } else {
+                    HStack(spacing: 11) {
+                        floorOrnament
+
+                        Text("제\(gameSession.progress.currentFloor.rawValue)층")
+                            .font(.system(size: 24, weight: .medium, design: .serif))
+                            .foregroundStyle(SharedHUDPalette.title)
+                            .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
+
+                        floorOrnament
+                            .scaleEffect(x: -1, y: 1)
                     }
+                    .frame(width: min(proxy.size.width * 0.54, 560), height: 72)
+                    .position(
+                        x: proxy.size.width * 0.5,
+                        y: proxy.size.height * topBarCenterYRatio
+                    )
                 }
-                .frame(width: min(proxy.size.width * 0.54, 560), height: 72)
-                .position(x: proxy.size.width * 0.5, y: proxy.size.height * topBarCenterYRatio)
 
                 topBarButton(systemImage: "pause.fill") {
                     isShowingPauseMenu = true
@@ -176,20 +232,29 @@ struct DemoFlowView: View {
     }
 
     private var descentGateTitle: some View {
-        HStack(spacing: 8) {
-            Image("SharedDescentGateSymbol")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 50, height: 64)
-
-            Image("SharedDescentGateTitle")
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: 430, maxHeight: 70)
-        }
+        Image("SharedDescentGateTitle")
+            .resizable()
+            .scaledToFit()
         .allowsHitTesting(false)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("층 이동 봉인문")
+    }
+
+    private func descentAreaLabel(_ title: String) -> some View {
+        HStack(spacing: 9) {
+            Image("SharedDescentGateSymbol")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 34, height: 44)
+
+            Text(title)
+                .font(.system(size: 15, weight: .medium, design: .serif))
+                .foregroundStyle(SharedHUDPalette.title.opacity(0.86))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .combine)
     }
 
     private func battleTopBarControls(_ battle: BattleState) -> some View {
@@ -307,6 +372,11 @@ struct DemoFlowView: View {
             DemoCompleteView(onReturnToTitle: onExit)
         }
     }
+}
+
+private struct DescentTopHUDConfiguration {
+    let areaTitle: String
+    let inspectionTitle: String
 }
 
 private struct BossNarrativeView: View {
