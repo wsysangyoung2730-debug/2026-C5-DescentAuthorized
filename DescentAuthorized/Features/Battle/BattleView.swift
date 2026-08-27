@@ -1201,6 +1201,7 @@ struct BattleView: View {
         )
         var enemyWasHit = false
         var playerWasHit = false
+        var playerBarrierWasHit = false
         var strongAttack = false
         var banner: (String, Color)?
 
@@ -1222,7 +1223,9 @@ struct BattleView: View {
                 banner = ("절대 방벽으로 무효화", .yellow)
                 didExperienceAbsoluteBarrier = true
             case let .normalBarrierChanged(target, amount):
-                if case .enemy = target, amount > 0 {
+                if case .player = target {
+                    playerBarrierWasHit = true
+                } else if case .enemy = target, amount > 0 {
                     banner = ("문서 방벽 전개", .cyan)
                 }
             case .erasureZoneAdded:
@@ -1238,6 +1241,12 @@ struct BattleView: View {
 
         if enemyWasHit { pulseEnemy() }
         if playerWasHit { pulsePlayer(strong: strongAttack) }
+        if strongAttack, playerWasHit || playerBarrierWasHit {
+            realityController.playStrongAttackCameraImpact(
+                guarded: playerBarrierWasHit && !playerWasHit,
+                reducedMotion: appSettings.reducedMotion
+            )
+        }
         if let banner { showFeedback(banner.0, color: banner.1) }
     }
 
