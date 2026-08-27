@@ -15,8 +15,8 @@ struct DemoFlowView: View {
     private let topHUDRailSourceSize = CGSize(width: 1774, height: 887)
     private let leftHUDPlateSourceCenter = CGPoint(x: 109, y: 433.5)
     private let rightHUDPlateSourceCenter = CGPoint(x: 1665, y: 433.5)
-    private let battleTopBarButtonWidth: CGFloat = 74
-    private let battleTopBarButtonHeight: CGFloat = 64
+    private let topBarButtonHitWidth: CGFloat = 112
+    private let topBarButtonHitHeight: CGFloat = 92
     private let battlePlateToStatusSpacing: CGFloat = 14
     private let battlePlayerStatusLeadingRatio: CGFloat = 0.11
     private var topBarHeight: CGFloat {
@@ -203,7 +203,7 @@ struct DemoFlowView: View {
             )
             let topHUDCenterY = (leftHUDPlateCenter.y + rightHUDPlateCenter.y) / 2
             let sideLabelWidth = min(max(proxy.size.width * 0.2, 190), 270)
-            let buttonHalfWidth = battleTopBarButtonWidth / 2
+            let buttonHalfWidth = topBarButtonHitWidth / 2
             let topHUDConfiguration = descentTopHUDConfiguration
             let sideGap = max(14, proxy.size.width * 0.012)
                 + (topHUDConfiguration?.sideGapAdjustment ?? 0)
@@ -320,7 +320,7 @@ struct DemoFlowView: View {
                 in: proxy.size
             )
             let topHUDCenterY = (leftHUDPlateCenter.y + rightHUDPlateCenter.y) / 2
-            let buttonHalfWidth = battleTopBarButtonWidth / 2
+            let buttonHalfWidth = topBarButtonHitWidth / 2
             let leftPauseRightX = leftHUDPlateCenter.x + buttonHalfWidth
             let battleTrailingPadding = leftPauseRightX + battlePlateToStatusSpacing
             let playerStatusLeadingX = proxy.size.width * battlePlayerStatusLeadingRatio
@@ -412,9 +412,10 @@ struct DemoFlowView: View {
                 .font(.system(size: 24, weight: .medium))
                 .foregroundStyle(SharedHUDPalette.icon)
                 .frame(
-                    width: battleTopBarButtonWidth,
-                    height: battleTopBarButtonHeight
+                    width: topBarButtonHitWidth,
+                    height: topBarButtonHitHeight
                 )
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
