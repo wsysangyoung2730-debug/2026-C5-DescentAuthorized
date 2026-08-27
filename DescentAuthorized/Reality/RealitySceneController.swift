@@ -31,6 +31,10 @@ final class RealitySceneController: ObservableObject {
     private var loadCancellable: AnyCancellable?
     private var actorLoadCancellable: AnyCancellable?
     private var cameraTransitionTask: Task<Void, Never>?
+    private var actorIdleMotionTask: Task<Void, Never>?
+    private weak var animatedEnemyAnchor: Entity?
+    private var enemyAnchorRestingTransform: Transform?
+    private var enemyIdleMotionAmplitude: Float = 0
     private var sceneLoadGeneration: UInt64 = 0
     private var cameraTransitionGeneration: UInt64 = 0
     private var requestedSceneID: FloorSceneID?
@@ -219,6 +223,7 @@ final class RealitySceneController: ObservableObject {
     ) {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
+        updateEnemyIdleMotion(reducedMotion: reducedMotion)
         let cues = RealityCombatPresentationMapper.cues(for: events, battleState: battleState)
         guard registry.root != nil else {
             pendingCombatCues.append(contentsOf: cues)
@@ -234,6 +239,7 @@ final class RealitySceneController: ObservableObject {
     func synchronizeCombatState(_ battleState: BattleState?, reducedMotion: Bool) {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
+        updateEnemyIdleMotion(reducedMotion: reducedMotion)
         guard let battleState, registry.root != nil else { return }
         combatVFXRenderer.present(
             RealityCombatPresentationMapper.cues(for: [], battleState: battleState),
@@ -283,6 +289,7 @@ final class RealitySceneController: ObservableObject {
         loadCancellable = nil
         actorLoadCancellable?.cancel()
         actorLoadCancellable = nil
+        stopEnemyIdleMotion(resetTransform: true)
         cancelCameraTransition()
         if let sceneAnchor, let arView {
             arView.scene.removeAnchor(sceneAnchor)
@@ -400,6 +407,11 @@ final class RealitySceneController: ObservableObject {
                     )
                     spawn.addChild(actorContainer)
                     self.registry.register(actorContainer, for: .enemyActor)
+                    self.prepareEnemyIdleMotion(
+                        spawn,
+                        targetHeight: actor.targetHeight,
+                        reducedMotion: self.requestedReducedMotion
+                    )
                     self.loadingProgress = 0.94
                     self.completeInstallation(descriptor: descriptor)
                 }
@@ -437,6 +449,68 @@ final class RealitySceneController: ObservableObject {
         for child in entity.children {
             enableHierarchy(child)
         }
+    }
+
+    private func prepareEnemyIdleMotion(
+        _ anchor: Entity,
+        targetHeight: Float,
+        reducedMotion: Bool
+    ) {
+        stopEnemyIdleMotion(resetTransform: true)
+        animatedEnemyAnchor = anchor
+        enemyAnchorRestingTransform = anchor.transform
+        enemyIdleMotionAmplitude = min(max(targetHeight * 0.014, 0.035), 0.09)
+        updateEnemyIdleMotion(reducedMotion: reducedMotion)
+    }
+
+    private func updateEnemyIdleMotion(reducedMotion: Bool) {
+        guard let anchor = animatedEnemyAnchor,
+              let restingTransform = enemyAnchorRestingTransform else { return }
+
+        if reducedMotion {
+            actorIdleMotionTask?.cancel()
+            actorIdleMotionTask = nil
+            anchor.stopAllAnimations(recursive: false)
+            anchor.transform = restingTransform
+            return
+        }
+        guard actorIdleMotionTask == nil else { return }
+
+        let amplitude = enemyIdleMotionAmplitude
+        actorIdleMotionTask = Task { @MainActor [weak anchor] in
+            guard let anchor else { return }
+            var isRaised = true
+            while !Task.isCancelled, anchor.parent != nil {
+                var target = restingTransform
+                target.translation.z += isRaised ? amplitude : 0
+                anchor.move(
+                    to: target,
+                    relativeTo: anchor.parent,
+                    duration: 1.9,
+                    timingFunction: .easeInOut
+                )
+                do {
+                    try await Task.sleep(for: .milliseconds(1_900))
+                } catch {
+                    return
+                }
+                isRaised.toggle()
+            }
+        }
+    }
+
+    private func stopEnemyIdleMotion(resetTransform: Bool) {
+        actorIdleMotionTask?.cancel()
+        actorIdleMotionTask = nil
+        if resetTransform,
+           let anchor = animatedEnemyAnchor,
+           let restingTransform = enemyAnchorRestingTransform {
+            anchor.stopAllAnimations(recursive: false)
+            anchor.transform = restingTransform
+        }
+        animatedEnemyAnchor = nil
+        enemyAnchorRestingTransform = nil
+        enemyIdleMotionAmplitude = 0
     }
 
     private func completeInstallation(descriptor: RealitySceneDescriptor) {
