@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DemoFlowView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
+    @EnvironmentObject private var appSettings: AppSettings
 
     let onExit: () -> Void
 
@@ -28,6 +29,7 @@ struct DemoFlowView: View {
                     sceneID: floorSceneID,
                     cameraPreset: gameSession.presentation.cameraPreset,
                     erasureZones: gameSession.battleState?.activeErasureZones ?? [],
+                    reducedMotion: appSettings.reducedMotion,
                     controller: sceneController
                 )
             } else {

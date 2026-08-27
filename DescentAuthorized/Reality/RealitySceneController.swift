@@ -216,6 +216,11 @@ final class RealitySceneController: ObservableObject {
         erasureZoneRenderer.render(zones: zones, on: board)
     }
 
+    func setEnemyIdleMotion(reducedMotion: Bool) {
+        requestedReducedMotion = reducedMotion
+        updateEnemyIdleMotion(reducedMotion: reducedMotion)
+    }
+
     func presentCombat(
         events: [DemoSessionEvent],
         battleState: BattleState?,
