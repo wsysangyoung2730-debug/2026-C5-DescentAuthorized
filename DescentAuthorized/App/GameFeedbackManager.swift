@@ -107,6 +107,9 @@ final class GameFeedbackManager: ObservableObject {
         case let .playerDamaged(strong):
             UIImpactFeedbackGenerator(style: strong ? .heavy : .rigid)
                 .impactOccurred(intensity: strong ? 1 : 0.75)
+        case let .playerGuarded(strong):
+            UIImpactFeedbackGenerator(style: strong ? .rigid : .soft)
+                .impactOccurred(intensity: strong ? 0.9 : 0.65)
         case .barrierApplied:
             UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.7)
         case .absoluteBarrierNegated, .barrierDispelled:
@@ -122,6 +125,7 @@ final class GameFeedbackManager: ObservableObject {
         case .spellRejected: "cast-rejected"
         case .enemyDamaged: "enemy-hit"
         case let .playerDamaged(strong): strong ? "player-hit-strong" : "player-hit"
+        case let .playerGuarded(strong): strong ? "barrier-hit-strong" : "barrier-hit"
         case .barrierApplied: "barrier-applied"
         case .absoluteBarrierNegated: "absolute-negated"
         case .barrierDispelled: "barrier-dispelled"

@@ -5,6 +5,7 @@ enum GameFeedbackCue: Equatable, Sendable {
     case spellRejected
     case enemyDamaged
     case playerDamaged(strong: Bool)
+    case playerGuarded(strong: Bool)
     case barrierApplied
     case absoluteBarrierNegated
     case barrierDispelled
@@ -18,6 +19,7 @@ struct GameFeedbackMapper: Sendable {
     func cues(for events: [DemoSessionEvent]) -> [GameFeedbackCue] {
         var cues: [GameFeedbackCue] = []
         var currentEnemyAttackIsStrong = false
+        var isResolvingEnemyAttack = false
 
         for event in events {
             switch event {
@@ -34,17 +36,29 @@ struct GameFeedbackMapper: Sendable {
                     guard amount > 0 else { continue }
                     switch target {
                     case .player:
+                        if let guardedCueIndex = cues.lastIndex(where: { cue in
+                            if case .playerGuarded = cue { return true }
+                            return false
+                        }) {
+                            cues.remove(at: guardedCueIndex)
+                        }
                         cues.append(.playerDamaged(strong: currentEnemyAttackIsStrong))
                     case .enemy:
                         cues.append(.enemyDamaged)
                     }
-                case let .normalBarrierChanged(_, amount):
-                    if amount > 0 { cues.append(.barrierApplied) }
+                case let .normalBarrierChanged(target, amount):
+                    if target == .player, isResolvingEnemyAttack {
+                        cues.append(.playerGuarded(strong: currentEnemyAttackIsStrong))
+                    } else if amount > 0 {
+                        cues.append(.barrierApplied)
+                    }
                 case .attackNegatedByAbsoluteBarrier:
                     cues.append(.absoluteBarrierNegated)
                 case let .enemyActionStarted(action):
+                    isResolvingEnemyAttack = false
                     if case let .attack(_, _, isStrong) = action {
                         currentEnemyAttackIsStrong = isStrong
+                        isResolvingEnemyAttack = true
                     }
                 case .victory:
                     cues.append(.victory)
