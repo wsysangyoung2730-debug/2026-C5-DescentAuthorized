@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameCenter: GameCenterManager
 
     @State private var testStrokes: [DrawnStroke] = []
@@ -47,6 +48,7 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
 
                         Button {
+                            gameFeedback.playInterface(.back, settings: appSettings.settings)
                             canvasController.undoLastStroke()
                         } label: {
                             Image(systemName: "arrow.uturn.backward")
@@ -134,6 +136,7 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
+                        gameFeedback.playInterface(.back, settings: appSettings.settings)
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
@@ -200,14 +203,20 @@ struct SettingsView: View {
     private var inputPreferenceBinding: Binding<DrawingInputPreference> {
         Binding(
             get: { appSettings.inputPreference },
-            set: { appSettings.setInputPreference($0) }
+            set: {
+                gameFeedback.playInterface(.select, settings: appSettings.settings)
+                appSettings.setInputPreference($0)
+            }
         )
     }
 
     private var drawingPadPositionBinding: Binding<DrawingPadPosition> {
         Binding(
             get: { appSettings.drawingPadPosition },
-            set: { appSettings.setDrawingPadPosition($0) }
+            set: {
+                gameFeedback.playInterface(.select, settings: appSettings.settings)
+                appSettings.setDrawingPadPosition($0)
+            }
         )
     }
 
@@ -217,7 +226,10 @@ struct SettingsView: View {
     ) -> Binding<Bool> {
         Binding(
             get: { get(appSettings.settings) },
-            set: set
+            set: { value in
+                gameFeedback.playInterface(.select, settings: appSettings.settings)
+                set(value)
+            }
         )
     }
 

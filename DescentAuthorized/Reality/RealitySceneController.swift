@@ -2,6 +2,22 @@ import Combine
 import Foundation
 import RealityKit
 
+struct BattleCameraInteractionConfiguration: Equatable, Sendable {
+    let maximumYaw: Float
+    let maximumUpwardPitch: Float
+    let maximumDownwardPitch: Float
+    let minimumFieldOfViewScale: Float
+    let maximumFieldOfViewScale: Float
+
+    static let standard = BattleCameraInteractionConfiguration(
+        maximumYaw: .pi * 60 / 180,
+        maximumUpwardPitch: .pi * 25 / 180,
+        maximumDownwardPitch: .pi * 25 / 180,
+        minimumFieldOfViewScale: 0.85,
+        maximumFieldOfViewScale: 1.10
+    )
+}
+
 @MainActor
 final class RealitySceneController: ObservableObject {
     private struct AuthoredCameraSnapshot {
@@ -21,6 +37,8 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var projectedMagicBoard: RealityProjectedBoard?
     @Published private(set) var cameraFadeOpacity: Double = 0
     @Published private(set) var isCameraTransitioning = false
+    @Published private(set) var isBattleCameraInteractionEnabled = false
+    @Published private(set) var isBattleCameraAdjusted = false
     @Published private(set) var loadingProgress: Double = 0
 
     let registry = RealityEntityRegistry()
@@ -29,14 +47,27 @@ final class RealitySceneController: ObservableObject {
     private var sceneAnchor: AnchorEntity?
     private var cameraEntity: PerspectiveCamera?
     private var loadCancellable: AnyCancellable?
+    private var actorLoadCancellable: AnyCancellable?
     private var cameraTransitionTask: Task<Void, Never>?
+    private var battleCameraImpactTask: Task<Void, Never>?
+    private var actorIdleMotionTask: Task<Void, Never>?
+    private weak var animatedEnemyAnchor: Entity?
+    private var enemyAnchorRestingTransform: Transform?
+    private var enemyIdleMotionAmplitude: Float = 0
     private var sceneLoadGeneration: UInt64 = 0
     private var cameraTransitionGeneration: UInt64 = 0
+    private var battleCameraImpactGeneration: UInt64 = 0
     private var requestedSceneID: FloorSceneID?
     private var requestedCameraPreset: RealityCameraPreset = .main
     private var activeCameraName: String?
     private var pendingCameraName: String?
     private var authoredCameraSnapshots: [String: AuthoredCameraSnapshot] = [:]
+    private var battleCameraYaw: Float = 0
+    private var battleCameraPitch: Float = 0
+    private var battleCameraFieldOfViewScale: Float = 1
+    private var battleCameraLookStartYaw: Float = 0
+    private var battleCameraLookStartPitch: Float = 0
+    private var battleCameraZoomStartFieldOfViewScale: Float = 1
     private var requestedErasureZones: [ErasureZone] = []
     private var requestedBattleState: BattleState?
     private var requestedReducedMotion = false
@@ -113,7 +144,7 @@ final class RealitySceneController: ObservableObject {
                         self.requestedSceneID == sceneID
                     else { return }
                     self.loadingProgress = 0.72
-                    self.install(root: root, descriptor: descriptor, in: arView)
+                    self.install(root: root, descriptor: descriptor, in: arView, bundle: bundle)
                 }
             )
     }
@@ -121,6 +152,210 @@ final class RealitySceneController: ObservableObject {
     func applyCameraPreset(_ preset: RealityCameraPreset) {
         requestedCameraPreset = preset
         transitionCamera(to: preset)
+    }
+
+    func setBattleCameraInteractionEnabled(_ isEnabled: Bool) {
+        guard isBattleCameraInteractionEnabled != isEnabled else { return }
+        isBattleCameraInteractionEnabled = isEnabled
+        if !isEnabled {
+            resetBattleCamera(animated: false)
+        }
+    }
+
+    func beginBattleCameraLook() {
+        guard canAdjustBattleCamera else { return }
+        cancelBattleCameraImpact(restoreCamera: true)
+        battleCameraLookStartYaw = battleCameraYaw
+        battleCameraLookStartPitch = battleCameraPitch
+    }
+
+    func updateBattleCameraLook(
+        translation: CGSize,
+        viewportSize: CGSize,
+        configuration: BattleCameraInteractionConfiguration = .standard
+    ) {
+        guard canAdjustBattleCamera,
+              viewportSize.width > 0,
+              viewportSize.height > 0 else { return }
+
+        let horizontalProgress = Float(translation.width / viewportSize.width)
+        let verticalProgress = Float(translation.height / viewportSize.height)
+        let horizontalSweep = configuration.maximumYaw * 2
+        let verticalSweep = configuration.maximumUpwardPitch
+            + configuration.maximumDownwardPitch
+
+        // 손가락 이동과 시선 이동은 반대 방향이다. 오른쪽으로 끌면 왼쪽을 본다.
+        battleCameraYaw = clamp(
+            battleCameraLookStartYaw + (horizontalProgress * horizontalSweep),
+            minimum: -configuration.maximumYaw,
+            maximum: configuration.maximumYaw
+        )
+        battleCameraPitch = clamp(
+            battleCameraLookStartPitch + (verticalProgress * verticalSweep),
+            minimum: -configuration.maximumDownwardPitch,
+            maximum: configuration.maximumUpwardPitch
+        )
+        applyBattleCameraTransform()
+    }
+
+    func beginBattleCameraZoom() {
+        guard canAdjustBattleCamera else { return }
+        cancelBattleCameraImpact(restoreCamera: true)
+        battleCameraZoomStartFieldOfViewScale = battleCameraFieldOfViewScale
+    }
+
+    func updateBattleCameraZoom(
+        magnification: CGFloat,
+        configuration: BattleCameraInteractionConfiguration = .standard
+    ) {
+        guard canAdjustBattleCamera, magnification > 0 else { return }
+        battleCameraFieldOfViewScale = clamp(
+            battleCameraZoomStartFieldOfViewScale / Float(magnification),
+            minimum: configuration.minimumFieldOfViewScale,
+            maximum: configuration.maximumFieldOfViewScale
+        )
+        applyBattleCameraTransform()
+    }
+
+    func resetBattleCamera(animated: Bool) {
+        cancelBattleCameraImpact(restoreCamera: false)
+        battleCameraYaw = 0
+        battleCameraPitch = 0
+        battleCameraFieldOfViewScale = 1
+        battleCameraLookStartYaw = 0
+        battleCameraLookStartPitch = 0
+        battleCameraZoomStartFieldOfViewScale = 1
+        isBattleCameraAdjusted = false
+
+        guard requestedCameraPreset == .battle,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        if animated {
+            cameraEntity.move(
+                to: Transform(matrix: snapshot.transformMatrix),
+                relativeTo: nil,
+                duration: 0.25,
+                timingFunction: .easeInOut
+            )
+        } else {
+            cameraEntity.stopAllAnimations(recursive: false)
+            cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+        }
+        cameraEntity.camera = snapshot.camera
+        scheduleBoardProjectionRefresh()
+    }
+
+    func playStrongAttackCameraImpact(
+        guarded: Bool,
+        reducedMotion: Bool
+    ) {
+        guard !reducedMotion,
+              canAdjustBattleCamera,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        cancelBattleCameraImpact(restoreCamera: true)
+        battleCameraImpactGeneration &+= 1
+        let generation = battleCameraImpactGeneration
+        let baseMatrix = adjustedBattleCameraMatrix(from: snapshot)
+        let strength: Float = guarded ? 0.65 : 1
+        let keyframes: [(yawDegrees: Float, milliseconds: Int64)] = [
+            (-6.5, 42),
+            (7.5, 68),
+            (-3.8, 72),
+            (1.6, 78),
+            (0, 90)
+        ]
+
+        battleCameraImpactTask = Task { @MainActor [weak self, weak cameraEntity] in
+            guard let self, let cameraEntity else { return }
+            for keyframe in keyframes {
+                guard !Task.isCancelled,
+                      generation == self.battleCameraImpactGeneration else { return }
+                let yawOffset = keyframe.yawDegrees * (.pi / 180) * strength
+                let impactMatrix = self.adjustedBattleCameraMatrix(
+                    from: snapshot,
+                    transientYaw: yawOffset
+                )
+                cameraEntity.move(
+                    to: Transform(matrix: impactMatrix),
+                    relativeTo: nil,
+                    duration: Double(keyframe.milliseconds) / 1_000,
+                    timingFunction: .easeInOut
+                )
+                do {
+                    try await Task.sleep(for: .milliseconds(keyframe.milliseconds))
+                } catch {
+                    return
+                }
+            }
+            guard generation == self.battleCameraImpactGeneration else { return }
+            cameraEntity.stopAllAnimations(recursive: false)
+            cameraEntity.setTransformMatrix(baseMatrix, relativeTo: nil)
+            self.battleCameraImpactTask = nil
+            self.scheduleBoardProjectionRefresh()
+        }
+    }
+
+    func playBattleDefeatCamera(reducedMotion: Bool) async {
+        cancelBattleCameraImpact(restoreCamera: false)
+        setBattleCameraInteractionEnabled(false)
+        guard requestedCameraPreset == .battle,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+        cameraEntity.camera = snapshot.camera
+        clearBattleCameraAdjustmentState()
+
+        let baseTransform = Transform(matrix: snapshot.transformMatrix)
+        let settledTransform = battleDefeatCameraTransform(
+            from: baseTransform,
+            roll: .pi * 7 / 180,
+            pitch: -.pi * 3 / 180,
+            verticalDrop: 0.12
+        )
+        let fallenTransform = battleDefeatCameraTransform(
+            from: baseTransform,
+            roll: .pi * 38 / 180,
+            pitch: -.pi * 9 / 180,
+            verticalDrop: 0.68
+        )
+
+        if reducedMotion {
+            cameraEntity.setTransformMatrix(fallenTransform.matrix, relativeTo: nil)
+            return
+        }
+
+        cameraEntity.move(
+            to: settledTransform,
+            relativeTo: nil,
+            duration: 0.16,
+            timingFunction: .easeIn
+        )
+        do {
+            try await Task.sleep(for: .milliseconds(160))
+        } catch {
+            return
+        }
+        guard !Task.isCancelled else { return }
+
+        cameraEntity.move(
+            to: fallenTransform,
+            relativeTo: nil,
+            duration: 0.58,
+            timingFunction: .easeIn
+        )
+        do {
+            try await Task.sleep(for: .milliseconds(580))
+        } catch {
+            return
+        }
     }
 
     private func transitionCamera(to preset: RealityCameraPreset) {
@@ -136,6 +371,7 @@ final class RealitySceneController: ObservableObject {
             return
         }
 
+        cancelBattleCameraImpact(restoreCamera: false)
         cameraTransitionTask?.cancel()
         cameraTransitionGeneration &+= 1
         let transitionGeneration = cameraTransitionGeneration
@@ -190,7 +426,119 @@ final class RealitySceneController: ObservableObject {
         )
         cameraEntity.camera = snapshot.camera
         activeCameraName = cameraName
+        clearBattleCameraAdjustmentState()
         scheduleBoardProjectionRefresh()
+    }
+
+    private var canAdjustBattleCamera: Bool {
+        isBattleCameraInteractionEnabled
+            && requestedCameraPreset == .battle
+            && !isCameraTransitioning
+            && activeCameraName != nil
+            && cameraEntity != nil
+    }
+
+    private func applyBattleCameraTransform() {
+        guard canAdjustBattleCamera,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        let adjustedMatrix = adjustedBattleCameraMatrix(from: snapshot)
+        var adjustedCamera = snapshot.camera
+        adjustedCamera.fieldOfViewInDegrees = snapshot.camera.fieldOfViewInDegrees
+            * battleCameraFieldOfViewScale
+
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.setTransformMatrix(adjustedMatrix, relativeTo: nil)
+        cameraEntity.camera = adjustedCamera
+        isBattleCameraAdjusted = abs(battleCameraYaw) > 0.001
+            || abs(battleCameraPitch) > 0.001
+            || abs(battleCameraFieldOfViewScale - 1) > 0.001
+        scheduleBoardProjectionRefresh()
+    }
+
+    private func adjustedBattleCameraMatrix(
+        from snapshot: AuthoredCameraSnapshot,
+        transientYaw: Float = 0
+    ) -> simd_float4x4 {
+        let baseMatrix = snapshot.transformMatrix
+        let worldUp = SIMD3<Float>(0, 1, 0)
+        let yawRotation = simd_quatf(
+            angle: battleCameraYaw + transientYaw,
+            axis: worldUp
+        )
+        let baseRight = normalizedAxis(
+            baseMatrix.columns.0,
+            fallback: SIMD3<Float>(1, 0, 0)
+        )
+        let pitchAxis = yawRotation.act(baseRight)
+        let pitchRotation = simd_quatf(angle: battleCameraPitch, axis: pitchAxis)
+        let lookRotation = pitchRotation * yawRotation
+
+        // Blender가 저장한 카메라 위치는 유지하고 시선 축만 회전한다.
+        var adjustedMatrix = baseMatrix
+        for columnIndex in 0..<3 {
+            let column = baseMatrix[columnIndex]
+            let axis = SIMD3<Float>(column.x, column.y, column.z)
+            let adjustedAxis = lookRotation.act(axis)
+            adjustedMatrix[columnIndex] = SIMD4<Float>(adjustedAxis, column.w)
+        }
+
+        return adjustedMatrix
+    }
+
+    private func cancelBattleCameraImpact(restoreCamera: Bool) {
+        guard battleCameraImpactTask != nil else { return }
+        battleCameraImpactTask?.cancel()
+        battleCameraImpactTask = nil
+        battleCameraImpactGeneration &+= 1
+        if restoreCamera {
+            applyBattleCameraTransform()
+        }
+    }
+
+    private func normalizedAxis(
+        _ column: SIMD4<Float>,
+        fallback: SIMD3<Float>
+    ) -> SIMD3<Float> {
+        let axis = SIMD3<Float>(column.x, column.y, column.z)
+        let length = simd_length(axis)
+        return length > 0.0001 ? axis / length : fallback
+    }
+
+    private func battleDefeatCameraTransform(
+        from baseTransform: Transform,
+        roll: Float,
+        pitch: Float,
+        verticalDrop: Float
+    ) -> Transform {
+        var transform = baseTransform
+        let rollRotation = simd_quatf(
+            angle: roll,
+            axis: SIMD3<Float>(0, 0, 1)
+        )
+        let pitchRotation = simd_quatf(
+            angle: pitch,
+            axis: SIMD3<Float>(1, 0, 0)
+        )
+        transform.rotation = baseTransform.rotation * rollRotation * pitchRotation
+        transform.translation.y -= verticalDrop
+        return transform
+    }
+
+    private func clamp(_ value: Float, minimum: Float, maximum: Float) -> Float {
+        min(max(value, minimum), maximum)
+    }
+
+    private func clearBattleCameraAdjustmentState() {
+        battleCameraYaw = 0
+        battleCameraPitch = 0
+        battleCameraFieldOfViewScale = 1
+        battleCameraLookStartYaw = 0
+        battleCameraLookStartPitch = 0
+        battleCameraZoomStartFieldOfViewScale = 1
+        isBattleCameraAdjusted = false
     }
 
     private func perspectiveCamera(in entity: Entity) -> PerspectiveCamera? {
@@ -211,6 +559,11 @@ final class RealitySceneController: ObservableObject {
         erasureZoneRenderer.render(zones: zones, on: board)
     }
 
+    func setEnemyIdleMotion(reducedMotion: Bool) {
+        requestedReducedMotion = reducedMotion
+        updateEnemyIdleMotion(reducedMotion: reducedMotion)
+    }
+
     func presentCombat(
         events: [DemoSessionEvent],
         battleState: BattleState?,
@@ -218,6 +571,7 @@ final class RealitySceneController: ObservableObject {
     ) {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
+        updateEnemyIdleMotion(reducedMotion: reducedMotion)
         let cues = RealityCombatPresentationMapper.cues(for: events, battleState: battleState)
         guard registry.root != nil else {
             pendingCombatCues.append(contentsOf: cues)
@@ -233,6 +587,7 @@ final class RealitySceneController: ObservableObject {
     func synchronizeCombatState(_ battleState: BattleState?, reducedMotion: Bool) {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
+        updateEnemyIdleMotion(reducedMotion: reducedMotion)
         guard let battleState, registry.root != nil else { return }
         combatVFXRenderer.present(
             RealityCombatPresentationMapper.cues(for: [], battleState: battleState),
@@ -280,6 +635,10 @@ final class RealitySceneController: ObservableObject {
         sceneLoadGeneration &+= 1
         loadCancellable?.cancel()
         loadCancellable = nil
+        actorLoadCancellable?.cancel()
+        actorLoadCancellable = nil
+        stopEnemyIdleMotion(resetTransform: true)
+        cancelBattleCameraImpact(restoreCamera: false)
         cancelCameraTransition()
         if let sceneAnchor, let arView {
             arView.scene.removeAnchor(sceneAnchor)
@@ -288,6 +647,8 @@ final class RealitySceneController: ObservableObject {
         cameraEntity = nil
         activeCameraName = nil
         authoredCameraSnapshots = [:]
+        isBattleCameraInteractionEnabled = false
+        clearBattleCameraAdjustmentState()
         registry.reset()
         missingEntityRoles = []
         projectedMagicBoard = nil
@@ -305,7 +666,12 @@ final class RealitySceneController: ObservableObject {
         loadState = .idle
     }
 
-    private func install(root: Entity, descriptor: RealitySceneDescriptor, in arView: ARView) {
+    private func install(
+        root: Entity,
+        descriptor: RealitySceneDescriptor,
+        in arView: ARView,
+        bundle: Bundle
+    ) {
         let anchor = AnchorEntity(world: .zero)
         anchor.name = "DA_RUNTIME_SCENE_ANCHOR"
         anchor.addChild(root)
@@ -324,12 +690,183 @@ final class RealitySceneController: ObservableObject {
         registry.rebuild(root: root, descriptor: descriptor)
         loadingProgress = 0.9
         registry.setDoorOpen(false)
-        registry.setEnabled(false, for: .generalShield)
-        registry.setEnabled(false, for: .absoluteShield)
+        // The authored entities are the inactive barrier pylons. They remain
+        // visible while the renderer adds and removes the active energy shell.
+        registry.setEnabled(true, for: .generalShield)
+        registry.setEnabled(true, for: .absoluteShield)
         progressionVFXRenderer.attach(to: registry)
         if let cameraName = descriptor.cameraName(for: requestedCameraPreset) {
             applyCamera(named: cameraName)
         }
+
+        guard let actor = descriptor.actor else {
+            completeInstallation(descriptor: descriptor)
+            return
+        }
+        guard let spawn = registry.entity(for: .enemySpawn) else {
+            fail(sceneID: descriptor.sceneID, message: "보스 배치 지점을 찾을 수 없습니다.")
+            return
+        }
+        guard let actorURL = bundle.url(
+            forResource: actor.resourceName,
+            withExtension: "usdc",
+            subdirectory: actor.resourceSubdirectory
+        ) else {
+            fail(sceneID: descriptor.sceneID, message: "보스 모델을 찾을 수 없습니다: \(actor.resourceName).usdc")
+            return
+        }
+
+        loadingProgress = 0.88
+        let actorLoadGeneration = sceneLoadGeneration
+        actorLoadCancellable = Entity.loadAsync(contentsOf: actorURL)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { [weak self] completion in
+                    guard
+                        let self,
+                        self.sceneLoadGeneration == actorLoadGeneration,
+                        self.requestedSceneID == descriptor.sceneID,
+                        case let .failure(error) = completion
+                    else { return }
+                    self.fail(
+                        sceneID: descriptor.sceneID,
+                        message: "보스 모델을 불러오지 못했습니다: \(error.localizedDescription)"
+                    )
+                },
+                receiveValue: { [weak self] actorRoot in
+                    guard
+                        let self,
+                        self.sceneLoadGeneration == actorLoadGeneration,
+                        self.requestedSceneID == descriptor.sceneID
+                    else { return }
+                    guard let actorEntity = actorRoot.name == actor.expectedEntityName
+                            ? actorRoot
+                            : actorRoot.findEntity(named: actor.expectedEntityName) else {
+                        self.fail(
+                            sceneID: descriptor.sceneID,
+                            message: "보스 모델의 기준 객체가 없습니다: \(actor.expectedEntityName)"
+                        )
+                        return
+                    }
+
+                    let actorContainer = Entity()
+                    actorContainer.name = "DA_RUNTIME_ENEMY_ACTOR"
+                    actorEntity.removeFromParent()
+                    actorContainer.addChild(actorEntity)
+                    self.normalizeActor(
+                        actorEntity,
+                        in: actorContainer,
+                        targetHeight: actor.targetHeight
+                    )
+                    spawn.addChild(actorContainer)
+                    self.registry.register(actorContainer, for: .enemyActor)
+                    self.prepareEnemyIdleMotion(
+                        spawn,
+                        targetHeight: actor.targetHeight,
+                        reducedMotion: self.requestedReducedMotion
+                    )
+                    self.loadingProgress = 0.94
+                    self.completeInstallation(descriptor: descriptor)
+                }
+            )
+    }
+
+    private func normalizeActor(
+        _ actorRoot: Entity,
+        in container: Entity,
+        targetHeight: Float
+    ) {
+        enableHierarchy(actorRoot)
+        var bounds = actorRoot.visualBounds(relativeTo: container)
+        var size = bounds.max - bounds.min
+        guard size.x > 0.01, size.y > 0.01, size.z > 0.01 else { return }
+
+        // The authored Reality scenes use Blender's Z-up coordinate system.
+        // Scale by the visible Z height so enlarging an actor does not stretch
+        // its depth toward the camera instead.
+        let uniformScale = targetHeight / size.z
+        actorRoot.scale *= SIMD3(repeating: uniformScale)
+
+        bounds = actorRoot.visualBounds(relativeTo: container)
+        size = bounds.max - bounds.min
+        guard size.x > 0.01, size.y > 0.01, size.z > 0.01 else { return }
+        actorRoot.position -= SIMD3(
+            (bounds.min.x + bounds.max.x) * 0.5,
+            (bounds.min.y + bounds.max.y) * 0.5,
+            bounds.min.z
+        )
+    }
+
+    private func enableHierarchy(_ entity: Entity) {
+        entity.isEnabled = true
+        for child in entity.children {
+            enableHierarchy(child)
+        }
+    }
+
+    private func prepareEnemyIdleMotion(
+        _ anchor: Entity,
+        targetHeight: Float,
+        reducedMotion: Bool
+    ) {
+        stopEnemyIdleMotion(resetTransform: true)
+        animatedEnemyAnchor = anchor
+        enemyAnchorRestingTransform = anchor.transform
+        enemyIdleMotionAmplitude = min(max(targetHeight * 0.014, 0.035), 0.09)
+        updateEnemyIdleMotion(reducedMotion: reducedMotion)
+    }
+
+    private func updateEnemyIdleMotion(reducedMotion: Bool) {
+        guard let anchor = animatedEnemyAnchor,
+              let restingTransform = enemyAnchorRestingTransform else { return }
+
+        if reducedMotion {
+            actorIdleMotionTask?.cancel()
+            actorIdleMotionTask = nil
+            anchor.stopAllAnimations(recursive: false)
+            anchor.transform = restingTransform
+            return
+        }
+        guard actorIdleMotionTask == nil else { return }
+
+        let amplitude = enemyIdleMotionAmplitude
+        actorIdleMotionTask = Task { @MainActor [weak anchor] in
+            guard let anchor else { return }
+            var isRaised = true
+            while !Task.isCancelled, anchor.parent != nil {
+                var target = restingTransform
+                target.translation.z += isRaised ? amplitude : 0
+                anchor.move(
+                    to: target,
+                    relativeTo: anchor.parent,
+                    duration: 1.9,
+                    timingFunction: .easeInOut
+                )
+                do {
+                    try await Task.sleep(for: .milliseconds(1_900))
+                } catch {
+                    return
+                }
+                isRaised.toggle()
+            }
+        }
+    }
+
+    private func stopEnemyIdleMotion(resetTransform: Bool) {
+        actorIdleMotionTask?.cancel()
+        actorIdleMotionTask = nil
+        if resetTransform,
+           let anchor = animatedEnemyAnchor,
+           let restingTransform = enemyAnchorRestingTransform {
+            anchor.stopAllAnimations(recursive: false)
+            anchor.transform = restingTransform
+        }
+        animatedEnemyAnchor = nil
+        enemyAnchorRestingTransform = nil
+        enemyIdleMotionAmplitude = 0
+    }
+
+    private func completeInstallation(descriptor: RealitySceneDescriptor) {
         setErasureZones(requestedErasureZones)
         combatVFXRenderer.attach(to: registry)
         let restoredCues = pendingCombatCues + RealityCombatPresentationMapper.cues(
@@ -448,6 +985,7 @@ final class RealitySceneController: ObservableObject {
 
     private func fail(sceneID: FloorSceneID, message: String) {
         loadCancellable = nil
+        actorLoadCancellable = nil
         loadingProgress = 0
         loadState = .failed(sceneID, message)
     }

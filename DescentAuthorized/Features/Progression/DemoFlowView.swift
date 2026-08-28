@@ -2,21 +2,24 @@ import SwiftUI
 
 struct DemoFlowView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
+    @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
 
     let onExit: () -> Void
+    let onSystemOverlayVisibilityChange: (Bool) -> Void
 
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
+    @State private var battleRestartLoadingPresentation: BattleRestartLoadingPresentation?
     @StateObject private var sceneController = RealitySceneController()
 
-    private let leftHUDButtonCenterRatio: CGFloat = 0.0615
-    private let rightHUDButtonCenterRatio: CGFloat = 0.9395
-    private let hudButtonCenterYRatio: CGFloat = 0.5
-    private let battleTopBarButtonWidth: CGFloat = 68
+    private let topHUDRailSourceSize = CGSize(width: 1774, height: 887)
+    private let leftHUDPlateSourceCenter = CGPoint(x: 109, y: 433.5)
+    private let rightHUDPlateSourceCenter = CGPoint(x: 1665, y: 433.5)
+    private let topBarButtonHitWidth: CGFloat = 112
+    private let topBarButtonHitHeight: CGFloat = 92
     private let battlePlateToStatusSpacing: CGFloat = 14
     private let battlePlayerStatusLeadingRatio: CGFloat = 0.11
-    private var topBarCenterYRatio: CGFloat { hudButtonCenterYRatio }
-
     private var topBarHeight: CGFloat {
         gameSession.battleState == nil ? 96 : 112
     }
@@ -28,6 +31,7 @@ struct DemoFlowView: View {
                     sceneID: floorSceneID,
                     cameraPreset: gameSession.presentation.cameraPreset,
                     erasureZones: gameSession.battleState?.activeErasureZones ?? [],
+                    reducedMotion: appSettings.reducedMotion,
                     controller: sceneController
                 )
             } else {
@@ -57,6 +61,22 @@ struct DemoFlowView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
                 .animation(.easeInOut(duration: 0.18), value: sceneController.cameraFadeOpacity)
+
+            if let loading = battleRestartLoadingPresentation {
+                ZStack {
+                    LoadingScreenView(
+                        context: loading.context,
+                        progress: loading.progress,
+                        tip: loading.tip
+                    )
+
+                    Color.clear
+                        .contentShape(Rectangle())
+                }
+                .ignoresSafeArea()
+                .transition(.opacity)
+                .zIndex(50)
+            }
         }
         .ignoresSafeArea(edges: .top)
         .sheet(isPresented: $isShowingPauseMenu) {
@@ -65,10 +85,79 @@ struct DemoFlowView: View {
         .sheet(isPresented: $isShowingSettings) {
             SettingsView()
         }
+        .onAppear {
+            reportSystemOverlayVisibility()
+            synchronizeFloorMusic()
+        }
+        .onDisappear {
+            onSystemOverlayVisibilityChange(false)
+            gameFeedback.stopAllAudio()
+        }
+        .onChange(of: isShowingPauseMenu) { _, _ in
+            reportSystemOverlayVisibility()
+        }
+        .onChange(of: isShowingSettings) { _, _ in
+            reportSystemOverlayVisibility()
+        }
         .onChange(of: gameSession.presentation.floorSceneID) { _, floorSceneID in
             if floorSceneID == nil {
                 sceneController.unload()
             }
+            synchronizeFloorMusic()
+        }
+        .onChange(of: sceneController.loadState) { _, _ in
+            synchronizeFloorMusic()
+        }
+        .onChange(of: gameSession.progress.currentFloor) { _, _ in
+            synchronizeFloorMusic()
+        }
+        .onChange(of: gameSession.progress.currentScene) { _, _ in
+            synchronizeFloorMusic()
+        }
+        .onChange(of: battleRestartLoadingPresentation) { _, loading in
+            if loading == nil {
+                synchronizeFloorMusic()
+            } else {
+                gameFeedback.suspendMusicForLoading()
+            }
+        }
+    }
+
+    private func reportSystemOverlayVisibility() {
+        onSystemOverlayVisibilityChange(isShowingPauseMenu || isShowingSettings)
+    }
+
+    private func synchronizeFloorMusic() {
+        let isFloorModelReady: Bool
+        if let sceneID = gameSession.presentation.floorSceneID,
+           case let .ready(readySceneID) = sceneController.loadState,
+           readySceneID == sceneID {
+            isFloorModelReady = true
+        } else {
+            isFloorModelReady = false
+        }
+
+        gameFeedback.synchronizeFloorMusic(
+            floor: gameSession.progress.currentFloor,
+            isPresentationReady: isFloorModelReady
+                && battleRestartLoadingPresentation == nil,
+            keepsOutcomeMusic: keepsBattleOutcomeMusic,
+            settings: appSettings.settings
+        )
+    }
+
+    private var keepsBattleOutcomeMusic: Bool {
+        if gameSession.battleState?.phase == .defeat {
+            return true
+        }
+
+        switch gameSession.progress.currentScene {
+        case .floor9RecordsDefeated,
+             .floor8ResidualDefeated,
+             .floor8AdministratorDefeated:
+            return true
+        default:
+            return false
         }
     }
 
@@ -86,6 +175,42 @@ struct DemoFlowView: View {
             return true
         default:
             return false
+        }
+    }
+
+    private var descentTopHUDConfiguration: DescentTopHUDConfiguration? {
+        if gameSession.progress.currentScene == .floor10DescentDoor {
+            return DescentTopHUDConfiguration(
+                areaTitle: "제10층 · 승인 관리 구역",
+                inspectionTitle: "단일 문양 검수"
+            )
+        }
+
+        guard case let .descent(floor) = gameSession.presentation.experience else {
+            return nil
+        }
+
+        switch floor {
+        case .floor10:
+            return DescentTopHUDConfiguration(
+                areaTitle: "제10층 · 승인 관리 구역",
+                inspectionTitle: "단일 문양 검수"
+            )
+        case .floor9:
+            return DescentTopHUDConfiguration(
+                areaTitle: "제9층 · 기록 관리 구역",
+                inspectionTitle: "이중 문양 검수"
+            )
+        case .floor8:
+            return DescentTopHUDConfiguration(
+                areaTitle: "제8층 · 관측 관리 구역",
+                inspectionTitle: "이중 문양 검수"
+            )
+        case .floor7:
+            return DescentTopHUDConfiguration(
+                areaTitle: "제7층 · 미확인 구역",
+                inspectionTitle: "봉인 문양 검수"
+            )
         }
     }
 
@@ -124,50 +249,136 @@ struct DemoFlowView: View {
 
     private var defaultTopBarControls: some View {
         GeometryReader { proxy in
+            let leftHUDPlateCenter = topHUDRailPoint(
+                sourcePoint: leftHUDPlateSourceCenter,
+                in: proxy.size
+            )
+            let rightHUDPlateCenter = topHUDRailPoint(
+                sourcePoint: rightHUDPlateSourceCenter,
+                in: proxy.size
+            )
+            let topHUDCenterY = (leftHUDPlateCenter.y + rightHUDPlateCenter.y) / 2
+            let sideLabelWidth = min(max(proxy.size.width * 0.2, 190), 270)
+            let buttonHalfWidth = topBarButtonHitWidth / 2
+            let topHUDConfiguration = descentTopHUDConfiguration
+            let sideGap = max(14, proxy.size.width * 0.012)
+                + (topHUDConfiguration?.sideGapAdjustment ?? 0)
+
             ZStack {
-                HStack(spacing: 11) {
-                    floorOrnament
+                if let configuration = topHUDConfiguration {
+                    descentGateTitle
+                        .frame(width: min(proxy.size.width * 0.36, 460), height: 72)
+                        .position(
+                            x: proxy.size.width * 0.5,
+                            y: topHUDCenterY
+                        )
 
-                    Text("제\(gameSession.progress.currentFloor.rawValue)층")
-                        .font(.system(size: 24, weight: .medium, design: .serif))
-                        .foregroundStyle(SharedHUDPalette.title)
-                        .shadow(color: SharedHUDPalette.brass.opacity(0.34), radius: 4)
+                    descentAreaLabel(configuration.areaTitle)
+                        .frame(width: sideLabelWidth, alignment: .leading)
+                        .position(
+                            x: leftHUDPlateCenter.x
+                                + buttonHalfWidth
+                                + sideGap
+                                + (sideLabelWidth / 2),
+                            y: topHUDCenterY
+                        )
 
-                    floorOrnament
-                        .scaleEffect(x: -1, y: 1)
+                    Text(configuration.inspectionTitle)
+                    .font(.system(size: 15, weight: .medium, design: .serif))
+                    .foregroundStyle(SharedHUDPalette.title.opacity(0.86))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+                    .frame(width: sideLabelWidth, alignment: .trailing)
+                    .position(
+                        x: rightHUDPlateCenter.x
+                            - buttonHalfWidth
+                            - sideGap
+                            - configuration.inspectionGapAdjustment
+                            - (sideLabelWidth / 2),
+                        y: topHUDCenterY
+                    )
+                } else {
+                    FloorTitleAssetView(
+                        floor: gameSession.progress.currentFloor,
+                        size: .standard
+                    )
+                    .frame(width: min(proxy.size.width * 0.54, 560), height: 72)
+                    .position(
+                        x: proxy.size.width * 0.5,
+                        y: topHUDCenterY
+                    )
                 }
-                .frame(height: 58)
-                .position(x: proxy.size.width * 0.5, y: proxy.size.height * topBarCenterYRatio)
 
                 topBarButton(systemImage: "pause.fill") {
-                    isShowingPauseMenu = true
+                    presentPauseMenu()
                 }
                 .help("일시정지")
                 .accessibilityLabel("일시정지")
                 .position(
-                    x: proxy.size.width * leftHUDButtonCenterRatio,
-                    y: proxy.size.height * hudButtonCenterYRatio
+                    x: leftHUDPlateCenter.x,
+                    y: leftHUDPlateCenter.y
                 )
 
                 topBarButton(systemImage: "gearshape") {
-                    isShowingSettings = true
+                    presentSettings()
                 }
                 .help("설정")
                 .accessibilityLabel("설정")
                 .position(
-                    x: proxy.size.width * rightHUDButtonCenterRatio,
-                    y: proxy.size.height * hudButtonCenterYRatio
+                    x: rightHUDPlateCenter.x,
+                    y: rightHUDPlateCenter.y
                 )
             }
         }
     }
 
+    private var descentGateTitle: some View {
+        Image("SharedDescentGateTitle")
+            .resizable()
+            .scaledToFit()
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("층 이동 봉인문")
+    }
+
+    private func descentAreaLabel(_ title: String) -> some View {
+        HStack(spacing: 9) {
+            Image("SharedDescentGateSymbol")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 34, height: 44)
+
+            Text(title)
+                .font(.system(size: 15, weight: .medium, design: .serif))
+                .foregroundStyle(SharedHUDPalette.title.opacity(0.86))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .combine)
+    }
+
     private func battleTopBarControls(_ battle: BattleState) -> some View {
         GeometryReader { proxy in
-            let buttonHalfWidth = battleTopBarButtonWidth / 2
-            let leftPauseRightX = (proxy.size.width * leftHUDButtonCenterRatio) + buttonHalfWidth
+            let leftHUDPlateCenter = topHUDRailPoint(
+                sourcePoint: leftHUDPlateSourceCenter,
+                in: proxy.size
+            )
+            let rightHUDPlateCenter = topHUDRailPoint(
+                sourcePoint: rightHUDPlateSourceCenter,
+                in: proxy.size
+            )
+            let topHUDCenterY = (leftHUDPlateCenter.y + rightHUDPlateCenter.y) / 2
+            let buttonHalfWidth = topBarButtonHitWidth / 2
+            let leftPauseRightX = leftHUDPlateCenter.x + buttonHalfWidth
             let battleTrailingPadding = leftPauseRightX + battlePlateToStatusSpacing
             let playerStatusLeadingX = proxy.size.width * battlePlayerStatusLeadingRatio
+            let statusAreaWidth = max(
+                proxy.size.width - playerStatusLeadingX - battleTrailingPadding,
+                0
+            )
+            let statusAreaCenterX = playerStatusLeadingX + (statusAreaWidth / 2)
+            let statusAreaHeight = min(proxy.size.height * 0.82, 92)
 
             ZStack {
                 BattleTopHUDView(
@@ -175,45 +386,60 @@ struct DemoFlowView: View {
                     floor: gameSession.progress.currentFloor,
                     enemyToNextActionSpacing: battlePlateToStatusSpacing
                 )
-                .padding(.leading, playerStatusLeadingX)
-                .padding(.trailing, battleTrailingPadding)
                 .frame(
-                    width: proxy.size.width,
-                    height: proxy.size.height,
+                    width: statusAreaWidth,
+                    height: statusAreaHeight,
                     alignment: .center
+                )
+                .position(
+                    x: statusAreaCenterX,
+                    y: topHUDCenterY
                 )
 
                 topBarButton(systemImage: "pause.fill") {
-                    isShowingPauseMenu = true
+                    presentPauseMenu()
                 }
                 .help("일시정지")
                 .accessibilityLabel("일시정지")
                 .position(
-                    x: proxy.size.width * leftHUDButtonCenterRatio,
-                    y: proxy.size.height * hudButtonCenterYRatio
+                    x: leftHUDPlateCenter.x,
+                    y: leftHUDPlateCenter.y
                 )
 
                 topBarButton(systemImage: "gearshape") {
-                    isShowingSettings = true
+                    presentSettings()
                 }
                 .help("설정")
                 .accessibilityLabel("설정")
                 .position(
-                    x: proxy.size.width * rightHUDButtonCenterRatio,
-                    y: proxy.size.height * hudButtonCenterYRatio
+                    x: rightHUDPlateCenter.x,
+                    y: rightHUDPlateCenter.y
                 )
             }
         }
     }
 
-    private var floorOrnament: some View {
-        Image("SharedFloorOrnament")
-            .resizable()
-            .scaledToFill()
-            .frame(width: 96, height: 26)
-            .clipped()
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
+    private func topHUDRailPoint(
+        sourcePoint: CGPoint,
+        in destinationSize: CGSize
+    ) -> CGPoint {
+        let scale = max(
+            destinationSize.width / topHUDRailSourceSize.width,
+            destinationSize.height / topHUDRailSourceSize.height
+        )
+        let scaledSize = CGSize(
+            width: topHUDRailSourceSize.width * scale,
+            height: topHUDRailSourceSize.height * scale
+        )
+        let cropOffset = CGPoint(
+            x: (scaledSize.width - destinationSize.width) / 2,
+            y: (scaledSize.height - destinationSize.height) / 2
+        )
+
+        return CGPoint(
+            x: sourcePoint.x * scale - cropOffset.x,
+            y: sourcePoint.y * scale - cropOffset.y
+        )
     }
 
     private func topBarButton(
@@ -221,20 +447,26 @@ struct DemoFlowView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            ZStack {
-                Image("SharedHUDIconPlate")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 68, height: 58)
-                    .clipped()
-
-                Image(systemName: systemImage)
-                    .font(.system(size: 22, weight: .medium))
-                    .foregroundStyle(SharedHUDPalette.icon)
-            }
-            .frame(width: 68, height: 58)
+            Image(systemName: systemImage)
+                .font(.system(size: 24, weight: .medium))
+                .foregroundStyle(SharedHUDPalette.icon)
+                .frame(
+                    width: topBarButtonHitWidth,
+                    height: topBarButtonHitHeight
+                )
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    private func presentPauseMenu() {
+        gameFeedback.playInterface(.select, settings: appSettings.settings)
+        isShowingPauseMenu = true
+    }
+
+    private func presentSettings() {
+        gameFeedback.playInterface(.select, settings: appSettings.settings)
+        isShowingSettings = true
     }
 
     @ViewBuilder
@@ -262,7 +494,10 @@ struct DemoFlowView: View {
                 }
             }
         case .battle:
-            BattleView(realityController: sceneController)
+            BattleView(
+                realityController: sceneController,
+                restartLoadingPresentation: $battleRestartLoadingPresentation
+            )
         case let .reward(floor):
             RewardSelectionView(floor: floor, sceneController: sceneController)
         case .floor8Exploration:
@@ -276,6 +511,25 @@ struct DemoFlowView: View {
         case .completion:
             DemoCompleteView(onReturnToTitle: onExit)
         }
+    }
+}
+
+private struct DescentTopHUDConfiguration {
+    let areaTitle: String
+    let inspectionTitle: String
+    let sideGapAdjustment: CGFloat
+    let inspectionGapAdjustment: CGFloat
+
+    init(
+        areaTitle: String,
+        inspectionTitle: String,
+        sideGapAdjustment: CGFloat = 10,
+        inspectionGapAdjustment: CGFloat = 12
+    ) {
+        self.areaTitle = areaTitle
+        self.inspectionTitle = inspectionTitle
+        self.sideGapAdjustment = sideGapAdjustment
+        self.inspectionGapAdjustment = inspectionGapAdjustment
     }
 }
 

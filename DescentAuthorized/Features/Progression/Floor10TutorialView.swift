@@ -4,8 +4,6 @@ struct Floor10TutorialView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
 
-    @State private var descentState: RealityDescentPresentationState = .inactive
-    @State private var transitionTask: Task<Void, Never>?
     let sceneController: RealitySceneController
 
     var body: some View {
@@ -39,12 +37,10 @@ struct Floor10TutorialView: View {
                 }
             }
         }
-        .onAppear { synchronizeDescentState() }
-        .onChange(of: gameSession.progress.currentScene) { _, _ in synchronizeDescentState() }
-        .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
-            sceneController.setDescentPresentation(descentState, reducedMotion: reducedMotion)
+        .onAppear { resetPresentationOutsideDescent() }
+        .onChange(of: gameSession.progress.currentScene) { _, _ in
+            resetPresentationOutsideDescent()
         }
-        .onDisappear { transitionTask?.cancel() }
     }
 
     @ViewBuilder
@@ -147,9 +143,9 @@ struct Floor10TutorialView: View {
     }
 
     private var descentDoorScene: some View {
-        Floor10DescentSealView(
-            onStateChanged: updateDescentState,
-            onApproved: completeDescent
+        DescentDoorSceneView(
+            configuration: .floor10,
+            sceneController: sceneController
         )
     }
 
@@ -205,491 +201,16 @@ struct Floor10TutorialView: View {
         }
     }
 
-    private func synchronizeDescentState() {
-        sceneController.setRewardPresentation(.inactive, reducedMotion: appSettings.reducedMotion)
-        setDescentState(gameSession.progress.currentScene == .floor10DescentDoor ? .ready : .inactive)
+    private func resetPresentationOutsideDescent() {
+        guard gameSession.progress.currentScene != .floor10DescentDoor else { return }
+        sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
     }
-
-    private func updateDescentState(_ state: DoorGlyphPresentationState) {
-        switch state {
-        case .ready: setDescentState(.ready)
-        case .drawing: setDescentState(.drawing)
-        case .failed: setDescentState(.failed)
-        case .approved: setDescentState(.approved)
-        }
-    }
-
-    private func completeDescent() {
-        setDescentState(.approved)
-        transitionTask?.cancel()
-        transitionTask = Task { @MainActor in
-            try? await Task.sleep(
-                for: RealityDescentTransitionTiming.approvalAnimationDelay(
-                    reducedMotion: appSettings.reducedMotion
-                )
-            )
-            guard !Task.isCancelled else { return }
-            setDescentState(.open)
-            try? await Task.sleep(for: RealityDescentTransitionTiming.openStateHold)
-            guard !Task.isCancelled else { return }
-            gameSession.send(.approveDescentDoor)
-        }
-    }
-
-    private func setDescentState(_ state: RealityDescentPresentationState) {
-        descentState = state
-        sceneController.setDescentPresentation(state, reducedMotion: appSettings.reducedMotion)
-    }
-}
-
-private struct Floor10DescentSealView: View {
-    let onStateChanged: (DoorGlyphPresentationState) -> Void
-    let onApproved: () -> Void
-
-    @State private var selectedNodes: [Int] = []
-    @State private var dragLocation: CGPoint?
-    @State private var phase: Floor10SealInputPhase = .ready
-    @State private var remainingAttempts = 2
-
-    var body: some View {
-        GeometryReader { proxy in
-            let sideWidth = min(max(proxy.size.width * 0.235, 250), 350)
-            let centerWidth = min(max(proxy.size.width * 0.38, 430), 590)
-
-            VStack(spacing: 14) {
-                header
-
-                HStack(alignment: .center, spacing: max(18, proxy.size.width * 0.02)) {
-                    recordPanel
-                        .frame(width: sideWidth)
-
-                    inputPanel
-                        .frame(width: centerWidth)
-
-                    informationPanel
-                        .frame(width: sideWidth)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .padding(.horizontal, max(20, proxy.size.width * 0.035))
-            .padding(.vertical, 14)
-        }
-        .background(Color.black.opacity(0.16))
-        .onAppear { onStateChanged(.ready) }
-    }
-
-    private var header: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 3)
-                .fill(Color.black.opacity(0.76))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 3)
-                        .stroke(Floor10SealPalette.gold.opacity(0.74), lineWidth: 1)
-                }
-
-            HStack {
-                Label("제10층 · 절차 관리 구역", systemImage: "seal")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text("층 이동 봉인문")
-                    .font(.system(size: 28, weight: .semibold, design: .serif))
-                    .foregroundStyle(Floor10SealPalette.title)
-                    .frame(maxWidth: .infinity)
-
-                Text("하강 절차 02 / 03 · 문양 입력")
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(Floor10SealPalette.secondary)
-            .padding(.horizontal, 24)
-        }
-        .frame(height: 62)
-    }
-
-    private var recordPanel: some View {
-        ZStack {
-            Image("Floor10DescentRecordParchment")
-                .resizable()
-                .scaledToFit()
-
-            GeometryReader { proxy in
-                VStack(spacing: 8) {
-                    Text("해제 기록")
-                        .font(.system(size: 24, weight: .semibold, design: .serif))
-
-                    Text("제10층 봉인 해제 기록")
-                        .font(.caption.weight(.medium))
-
-                    SealPatternDiagram(
-                        selectedNodes: Floor10SealLayout.targetSequence,
-                        lineColor: Floor10SealPalette.ink,
-                        nodeColor: Floor10SealPalette.ink,
-                        showsActiveEndpoint: false
-                    )
-                    .padding(.horizontal, proxy.size.width * 0.08)
-
-                    Text("기록된 순서를 따라 핵심점을 연결하십시오.")
-                        .font(.caption2)
-                        .multilineTextAlignment(.center)
-                }
-                .foregroundStyle(Floor10SealPalette.ink)
-                .padding(.top, proxy.size.height * 0.12)
-                .padding(.bottom, proxy.size.height * 0.13)
-                .padding(.horizontal, proxy.size.width * 0.14)
-            }
-        }
-        .aspectRatio(CGFloat(1086) / 1448, contentMode: .fit)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("제10층 봉인 해제 정답 기록")
-    }
-
-    private var inputPanel: some View {
-        VStack(spacing: 10) {
-            VStack(spacing: 3) {
-                Text("봉인 문양 입력")
-                    .font(.system(size: 28, weight: .semibold, design: .serif))
-                    .foregroundStyle(Floor10SealPalette.title)
-
-                Text("해제 기록에 표시된 순서대로 핵심점을 연결하십시오.")
-                    .font(.subheadline)
-                    .foregroundStyle(Floor10SealPalette.secondary)
-            }
-
-            GeometryReader { padProxy in
-                SealPatternDiagram(
-                    selectedNodes: selectedNodes,
-                    dragLocation: dragLocation,
-                    lineColor: phase.lineColor,
-                    nodeColor: phase.nodeColor,
-                    showsActiveEndpoint: true
-                )
-                .contentShape(Rectangle())
-                .gesture(inputGesture(in: padProxy.size))
-                .background(Color.black.opacity(0.46), in: RoundedRectangle(cornerRadius: 8))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Floor10SealPalette.gold.opacity(0.46), lineWidth: 1)
-                }
-            }
-            .aspectRatio(0.78, contentMode: .fit)
-            .accessibilityLabel("하강문 봉인 문양 입력판")
-
-            Button(action: resetInput) {
-                Label("입력 초기화", systemImage: "arrow.counterclockwise")
-                    .font(.headline)
-                    .foregroundStyle(Floor10SealPalette.secondary)
-                    .frame(maxWidth: 270)
-                    .frame(height: 52)
-            }
-            .buttonStyle(Floor10SealResetButtonStyle())
-            .disabled(selectedNodes.isEmpty || phase == .approved)
-            .opacity(selectedNodes.isEmpty ? 0.58 : 1)
-        }
-    }
-
-    private var informationPanel: some View {
-        ZStack {
-            Image("Floor10DescentInfoPanel")
-                .resizable()
-                .scaledToFit()
-
-            GeometryReader { proxy in
-                VStack(spacing: 0) {
-                    Text("하강 정보")
-                        .font(.system(size: 23, weight: .semibold, design: .serif))
-                        .foregroundStyle(Floor10SealPalette.cyan)
-                        .padding(.bottom, 18)
-
-                    informationRow(icon: "location.north.line", title: "목적지", value: "제9층 기록 관리 구역")
-                    divider
-                    informationRow(icon: "scope", title: "입력 상태", value: "\(selectedNodes.count) / \(Floor10SealLayout.targetSequence.count)")
-                    divider
-                    informationRow(icon: "clock.arrow.circlepath", title: "남은 시도", value: "\(remainingAttempts)")
-
-                    Spacer(minLength: 18)
-
-                    VStack(spacing: 9) {
-                        Image(systemName: phase.statusIcon)
-                            .font(.system(size: 42, weight: .light))
-                        Text(phase.statusTitle)
-                            .font(.system(size: 22, weight: .medium, design: .serif))
-                        HStack(spacing: 7) {
-                            ForEach(0..<3, id: \.self) { index in
-                                Circle()
-                                    .fill(index == phase.indicatorIndex ? phase.statusColor : Color.white.opacity(0.24))
-                                    .frame(width: 7, height: 7)
-                            }
-                        }
-                    }
-                    .foregroundStyle(phase.statusColor)
-                }
-                .padding(.top, proxy.size.height * 0.13)
-                .padding(.bottom, proxy.size.height * 0.12)
-                .padding(.horizontal, proxy.size.width * 0.14)
-            }
-        }
-        .aspectRatio(CGFloat(1122) / 1402, contentMode: .fit)
-    }
-
-    private var divider: some View {
-        Rectangle()
-            .fill(Floor10SealPalette.cyan.opacity(0.18))
-            .frame(height: 1)
-            .padding(.vertical, 13)
-    }
-
-    private func informationRow(icon: String, title: String, value: String) -> some View {
-        HStack(spacing: 9) {
-            Image(systemName: icon)
-                .frame(width: 22)
-                .foregroundStyle(Floor10SealPalette.cyan.opacity(0.75))
-            Text(title)
-                .foregroundStyle(Floor10SealPalette.secondary)
-            Spacer(minLength: 8)
-            Text(value)
-                .foregroundStyle(.white.opacity(0.88))
-                .multilineTextAlignment(.trailing)
-        }
-        .font(.caption.weight(.medium))
-    }
-
-    private func inputGesture(in size: CGSize) -> some Gesture {
-        DragGesture(minimumDistance: 0, coordinateSpace: .local)
-            .onChanged { value in
-                guard phase != .approved else { return }
-                if phase == .failed {
-                    selectedNodes.removeAll()
-                    phase = .ready
-                    onStateChanged(.ready)
-                }
-
-                dragLocation = value.location
-                if let node = Floor10SealLayout.nearestNode(to: value.location, in: size),
-                   !selectedNodes.contains(node) {
-                    selectedNodes.append(node)
-                    phase = .drawing
-                    onStateChanged(.drawing)
-                }
-            }
-            .onEnded { _ in
-                dragLocation = nil
-                guard !selectedNodes.isEmpty, phase != .approved else { return }
-                evaluateInput()
-            }
-    }
-
-    private func evaluateInput() {
-        if selectedNodes == Floor10SealLayout.targetSequence {
-            phase = .approved
-            onStateChanged(.approved)
-            onApproved()
-        } else {
-            phase = .failed
-            remainingAttempts = max(0, remainingAttempts - 1)
-            onStateChanged(.failed)
-        }
-    }
-
-    private func resetInput() {
-        selectedNodes.removeAll()
-        dragLocation = nil
-        phase = .ready
-        if remainingAttempts == 0 {
-            remainingAttempts = 2
-        }
-        onStateChanged(.ready)
-    }
-}
-
-private struct SealPatternDiagram: View {
-    let selectedNodes: [Int]
-    var dragLocation: CGPoint? = nil
-    let lineColor: Color
-    let nodeColor: Color
-    let showsActiveEndpoint: Bool
-
-    var body: some View {
-        Canvas { context, size in
-            Floor10SealLayout.drawGuides(context: &context, size: size)
-            Floor10SealLayout.drawDiamond(context: &context, size: size)
-
-            if !selectedNodes.isEmpty {
-                var selectedPath = Path()
-                selectedPath.move(to: Floor10SealLayout.point(selectedNodes[0], in: size))
-                for node in selectedNodes.dropFirst() {
-                    selectedPath.addLine(to: Floor10SealLayout.point(node, in: size))
-                }
-                if let dragLocation, showsActiveEndpoint {
-                    selectedPath.addLine(to: dragLocation)
-                }
-                context.stroke(
-                    selectedPath,
-                    with: .color(lineColor),
-                    style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
-                )
-            }
-
-            for index in Floor10SealLayout.nodes.indices {
-                let center = Floor10SealLayout.point(index, in: size)
-                let isSelected = selectedNodes.contains(index)
-                let radius = isSelected ? 10.0 : 8.0
-                let outer = Path(ellipseIn: CGRect(
-                    x: center.x - radius - 5,
-                    y: center.y - radius - 5,
-                    width: (radius + 5) * 2,
-                    height: (radius + 5) * 2
-                ))
-                context.stroke(outer, with: .color(nodeColor.opacity(isSelected ? 0.8 : 0.32)), lineWidth: 1.5)
-
-                let node = Path(ellipseIn: CGRect(
-                    x: center.x - radius,
-                    y: center.y - radius,
-                    width: radius * 2,
-                    height: radius * 2
-                ))
-                context.fill(node, with: .color(isSelected ? nodeColor : Color.black.opacity(0.62)))
-                context.stroke(node, with: .color(nodeColor.opacity(0.9)), lineWidth: 2)
-            }
-        }
-    }
-}
-
-private enum Floor10SealLayout {
-    static let nodes: [CGPoint] = [
-        CGPoint(x: 0.50, y: 0.08),
-        CGPoint(x: 0.22, y: 0.25),
-        CGPoint(x: 0.78, y: 0.25),
-        CGPoint(x: 0.50, y: 0.33),
-        CGPoint(x: 0.27, y: 0.50),
-        CGPoint(x: 0.73, y: 0.50),
-        CGPoint(x: 0.50, y: 0.68),
-        CGPoint(x: 0.30, y: 0.82),
-        CGPoint(x: 0.70, y: 0.82),
-        CGPoint(x: 0.50, y: 0.94)
-    ]
-
-    static let targetSequence = [0, 3, 1, 4, 7, 6, 9, 8, 5, 2]
-
-    private static let guideEdges: [(Int, Int)] = [
-        (0, 3), (1, 3), (3, 2), (1, 4), (2, 5),
-        (4, 5), (4, 7), (5, 8), (7, 6), (6, 8), (6, 9)
-    ]
-
-    static func point(_ index: Int, in size: CGSize) -> CGPoint {
-        let normalized = nodes[index]
-        return CGPoint(x: normalized.x * size.width, y: normalized.y * size.height)
-    }
-
-    static func nearestNode(to location: CGPoint, in size: CGSize) -> Int? {
-        let threshold = max(32, min(size.width, size.height) * 0.09)
-        return nodes.indices
-            .map { ($0, distance(from: location, to: point($0, in: size))) }
-            .filter { $0.1 <= threshold }
-            .min { $0.1 < $1.1 }?
-            .0
-    }
-
-    static func drawGuides(context: inout GraphicsContext, size: CGSize) {
-        var guides = Path()
-        for edge in guideEdges {
-            guides.move(to: point(edge.0, in: size))
-            guides.addLine(to: point(edge.1, in: size))
-        }
-        context.stroke(guides, with: .color(.white.opacity(0.13)), lineWidth: 1)
-    }
-
-    static func drawDiamond(context: inout GraphicsContext, size: CGSize) {
-        let center = CGPoint(x: size.width * 0.5, y: size.height * 0.51)
-        let halfWidth = size.width * 0.075
-        let halfHeight = size.height * 0.065
-        var diamond = Path()
-        diamond.move(to: CGPoint(x: center.x, y: center.y - halfHeight))
-        diamond.addLine(to: CGPoint(x: center.x + halfWidth, y: center.y))
-        diamond.addLine(to: CGPoint(x: center.x, y: center.y + halfHeight))
-        diamond.addLine(to: CGPoint(x: center.x - halfWidth, y: center.y))
-        diamond.closeSubpath()
-        context.stroke(diamond, with: .color(.white.opacity(0.28)), lineWidth: 1.5)
-    }
-
-    private static func distance(from lhs: CGPoint, to rhs: CGPoint) -> CGFloat {
-        hypot(lhs.x - rhs.x, lhs.y - rhs.y)
-    }
-}
-
-private enum Floor10SealInputPhase {
-    case ready
-    case drawing
-    case failed
-    case approved
-
-    var statusTitle: String {
-        switch self {
-        case .ready: "입력 대기"
-        case .drawing: "문양 확인 중"
-        case .failed: "문양 불일치"
-        case .approved: "하강 승인"
-        }
-    }
-
-    var statusIcon: String {
-        switch self {
-        case .ready: "circle.dotted"
-        case .drawing: "scope"
-        case .failed: "xmark.seal"
-        case .approved: "checkmark.seal.fill"
-        }
-    }
-
-    var statusColor: Color {
-        switch self {
-        case .ready: Floor10SealPalette.secondary
-        case .drawing: Floor10SealPalette.cyan
-        case .failed: .red
-        case .approved: Floor10SealPalette.magic
-        }
-    }
-
-    var lineColor: Color {
-        switch self {
-        case .failed: .red
-        case .approved: Floor10SealPalette.magic
-        default: Floor10SealPalette.magic
-        }
-    }
-
-    var nodeColor: Color { statusColor }
-
-    var indicatorIndex: Int {
-        switch self {
-        case .ready: 0
-        case .drawing: 1
-        case .failed, .approved: 2
-        }
-    }
-}
-
-private struct Floor10SealResetButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        ZStack {
-            Image(configuration.isPressed ? "Floor10DescentResetButtonPressed" : "Floor10DescentResetButton")
-                .resizable()
-                .scaledToFit()
-            configuration.label
-        }
-        .scaleEffect(configuration.isPressed ? 0.985 : 1)
-    }
-}
-
-private enum Floor10SealPalette {
-    static let gold = Color(red: 184 / 255, green: 139 / 255, blue: 77 / 255)
-    static let title = Color(red: 225 / 255, green: 202 / 255, blue: 164 / 255)
-    static let secondary = Color(red: 210 / 255, green: 207 / 255, blue: 200 / 255)
-    static let cyan = Color(red: 89 / 255, green: 204 / 255, blue: 224 / 255)
-    static let magic = Color(red: 154 / 255, green: 104 / 255, blue: 246 / 255)
-    static let ink = Color(red: 45 / 255, green: 34 / 255, blue: 25 / 255)
 }
 
 struct FloorEntrancePanel: View {
+    @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
+
     let configuration: FloorEntranceConfiguration
     let action: () -> Void
 
@@ -860,7 +381,10 @@ struct FloorEntrancePanel: View {
     }
 
     private var actionButton: some View {
-        Button(action: action) {
+        Button {
+            gameFeedback.playInterface(.confirm, settings: appSettings.settings)
+            action()
+        } label: {
             ZStack {
                 Image(configuration.buttonAsset)
                     .resizable()
@@ -920,7 +444,7 @@ struct FloorEntranceConfiguration {
         signalTitle: "확인된 단서",
         signalBody: "손등의 문양이 관리 단말보다 먼저 반응했다.",
         buttonAsset: "Floor10ExitButtonPlate",
-        actionTitle: "회의실을 나간다",
+        actionTitle: "회의실을 조사한다",
         actionIcon: "door.left.hand.open"
     )
 

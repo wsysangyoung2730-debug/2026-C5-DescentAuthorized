@@ -31,6 +31,7 @@ private struct RewardConfirmButtonStyle: ButtonStyle {
 
 struct RewardSelectionView: View {
     @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let floor: FloorID
@@ -42,6 +43,7 @@ struct RewardSelectionView: View {
     @State private var transitionTask: Task<Void, Never>?
     @State private var inspectedCandidateID: String?
     @State private var detailPressTask: Task<Void, Never>?
+    @State private var isSelectionInterfaceVisible = false
 
     private var candidates: [RewardCandidate] {
         RewardCatalog.candidates(for: floor)
@@ -52,12 +54,17 @@ struct RewardSelectionView: View {
             let metrics = RewardLayoutMetrics(size: proxy.size)
 
             ZStack {
-                backgroundTreatment
-                header(metrics: metrics)
-                cards(metrics: metrics)
-                footer(metrics: metrics)
+                if isSelectionInterfaceVisible {
+                    ZStack {
+                        backgroundTreatment
+                        header(metrics: metrics)
+                        cards(metrics: metrics)
+                        footer(metrics: metrics)
+                    }
+                    .transition(.opacity)
+                }
 
-                if let inspectedCandidate {
+                if isSelectionInterfaceVisible, let inspectedCandidate {
                     detailPanel(for: inspectedCandidate, metrics: metrics)
                         .transition(.opacity.combined(with: .scale(scale: 0.98)))
                         .zIndex(20)
@@ -66,18 +73,28 @@ struct RewardSelectionView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
+            isSelectionInterfaceVisible = false
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             setRewardState(.appearing)
             transitionTask?.cancel()
             transitionTask = Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 520))
+                try? await Task.sleep(
+                    for: RealityRewardTransitionTiming.appearanceDelay(
+                        reducedMotion: appSettings.reducedMotion
+                    )
+                )
                 guard !Task.isCancelled else { return }
                 setRewardState(.choosing)
+                withAnimation(
+                    .easeInOut(duration: RealityRewardTransitionTiming.interfaceFadeDuration)
+                ) {
+                    isSelectionInterfaceVisible = true
+                }
             }
         }
         .onDisappear {
             transitionTask?.cancel()
-            cancelDetailPress()
+            cancelDetailPress(playsCloseSound: false)
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
             sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion)
@@ -108,17 +125,24 @@ struct RewardSelectionView: View {
                 Text("제\(floor.rawValue)층 · 기록 보관고")
                     .font(.system(size: metrics.eyebrowSize, weight: .medium, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.gold)
-                Text("보상 두루마리 선택")
-                    .font(.system(size: metrics.titleSize, weight: .medium, design: .serif))
-                    .foregroundStyle(RewardSelectionPalette.gold)
-                    .shadow(color: .black, radius: 5)
+                    .padding(.leading, metrics.titleContentLeadingInset)
+                Image("RewardScrollHeaderTitle")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(
+                        width: metrics.titleAssetWidth,
+                        height: metrics.titleAssetHeight,
+                        alignment: .leading
+                    )
+                    .accessibilityLabel("보상 두루마리 선택")
                 Text("승인된 주문 기록 \(candidates.count)건 중 1건을 수령하십시오.")
                     .font(.system(size: metrics.bodySize, weight: .regular, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.body)
+                    .padding(.leading, metrics.titleContentLeadingInset)
                 Image("RewardScrollHeaderDivider")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: metrics.headerWidth, height: 24)
+                    .frame(width: metrics.headerWidth, height: metrics.dividerHeight)
             }
             .position(
                 x: metrics.headerLeading + metrics.headerWidth / 2,
@@ -240,6 +264,7 @@ struct RewardSelectionView: View {
         .animation(.spring(response: 0.32, dampingFraction: 0.78), value: isSelected)
         .onTapGesture {
             guard !isResolving else { return }
+            gameFeedback.playInterface(.select, settings: appSettings.settings)
             withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
                 selectedCandidateID = candidate.id
             }
@@ -397,14 +422,23 @@ struct RewardSelectionView: View {
         detailPressTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(450))
             guard !Task.isCancelled else { return }
+            gameFeedback.trigger(
+                .recordOpened,
+                settings: appSettings.settings,
+                includesHaptic: false
+            )
             inspectedCandidateID = candidateID
         }
     }
 
-    private func cancelDetailPress() {
+    private func cancelDetailPress(playsCloseSound: Bool = true) {
+        let wasShowingDetails = inspectedCandidateID != nil
         detailPressTask?.cancel()
         detailPressTask = nil
         inspectedCandidateID = nil
+        if wasShowingDetails, playsCloseSound {
+            gameFeedback.playInterface(.back, settings: appSettings.settings)
+        }
     }
 
     private func displayedSpell(for candidate: RewardCandidate) -> SpellDefinition {
@@ -509,10 +543,13 @@ private struct RewardLayoutMetrics {
     var headerLeading: CGFloat { max(34, size.width * 0.035) }
     var headerTop: CGFloat { max(24, size.height * 0.035) }
     var headerWidth: CGFloat { min(480, size.width * 0.36) }
-    var headerHeight: CGFloat { 126 * scale }
+    var headerHeight: CGFloat { 142 * scale }
     var headerSpacing: CGFloat { 4 * scale }
     var eyebrowSize: CGFloat { 17 * scale }
-    var titleSize: CGFloat { 34 * scale }
+    var titleAssetWidth: CGFloat { min(350 * scale, headerWidth) }
+    var titleAssetHeight: CGFloat { 58 * scale }
+    var titleContentLeadingInset: CGFloat { titleAssetWidth * (70.0 / 1_600.0) }
+    var dividerHeight: CGFloat { 30 * scale }
     var bodySize: CGFloat { 16 * scale }
     var cardWidth: CGFloat { min(350, (size.width - 64) / 3.18) }
     var cardHeight: CGFloat { cardWidth * 1.333 }

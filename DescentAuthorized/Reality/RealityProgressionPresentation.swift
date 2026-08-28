@@ -11,11 +11,21 @@ enum RealityDescentPresentationState: Equatable, Sendable {
 }
 
 enum RealityDescentTransitionTiming {
-    static func approvalAnimationDelay(reducedMotion: Bool) -> Duration {
-        .milliseconds(reducedMotion ? 20 : 560)
+    // The authored scenes describe a 30 fps, 68 frame opening sequence and
+    // switch to the fully open model at frame 56.
+    static let authoredFrameRate: Double = 30
+    static let openStateFrame: Double = 56
+    static let interfaceFadeDuration: TimeInterval = 0.28
+
+    static var doorOpeningAnimationDuration: TimeInterval {
+        openStateFrame / authoredFrameRate
     }
 
-    static let openStateHold: Duration = .milliseconds(1_200)
+    static func doorOpeningDelay(reducedMotion: Bool) -> Duration {
+        .milliseconds(reducedMotion ? 280 : 1_867)
+    }
+
+    static let openStateHold: Duration = .milliseconds(2_400)
 }
 
 enum RealityRewardPresentationState: Equatable, Sendable {
@@ -26,16 +36,47 @@ enum RealityRewardPresentationState: Equatable, Sendable {
     case resolved(selectedIndex: Int)
 }
 
+enum RealityRewardTransitionTiming {
+    // Both reward scenes describe a 30 fps, 66 frame emergence sequence.
+    static let authoredFrameRate: Double = 30
+    static let appearanceEndFrame: Double = 66
+    static let interfaceFadeDuration: TimeInterval = 0.36
+    static let scrollBaseDuration: TimeInterval = 1.72
+    static let scrollStagger: TimeInterval = 0.18
+
+    static var appearanceDuration: TimeInterval {
+        appearanceEndFrame / authoredFrameRate
+    }
+
+    static func appearanceDelay(reducedMotion: Bool) -> Duration {
+        .milliseconds(reducedMotion ? 20 : Int64(appearanceDuration * 1_000))
+    }
+
+    static func scrollDuration(at index: Int, reducedMotion: Bool) -> TimeInterval {
+        reducedMotion ? 0.01 : scrollBaseDuration + Double(index) * scrollStagger
+    }
+}
+
 @MainActor
 final class RealityProgressionVFXRenderer {
     private var baseTransforms: [RealityEntityRole: Transform] = [:]
+    private var doorControllerBaseTransforms: [String: Transform] = [:]
     private var transitionGeneration = 0
+    private var rewardIdleTask: Task<Void, Never>?
 
     func attach(to registry: RealityEntityRegistry) {
         baseTransforms.removeAll()
+        doorControllerBaseTransforms.removeAll()
         for role in controlledRoles {
             if let entity = registry.entity(for: role) {
                 baseTransforms[role] = entity.transform
+            }
+        }
+        if let doorAnimation = registry.descriptor?.descentDoorAnimation {
+            for name in doorAnimation.controllerNames {
+                if let entity = registry.entity(named: name) {
+                    doorControllerBaseTransforms[name] = entity.transform
+                }
             }
         }
     }
@@ -53,6 +94,10 @@ final class RealityProgressionVFXRenderer {
         registry.setEnabled(state != .inactive, for: .descentPedestal)
         registry.setDoorOpen(state == .open)
 
+        if state != .approved, state != .open {
+            restoreDoorControllers(in: registry)
+        }
+
         restore(.descentStele, in: registry)
         restore(.descentPedestal, in: registry)
 
@@ -65,6 +110,7 @@ final class RealityProgressionVFXRenderer {
         case .approved:
             pulse(.descentPedestal, scale: 1.07, duration: 0.28, registry: registry)
             pulse(.descentStele, scale: 1.025, duration: 0.28, registry: registry)
+            animateDoorOpening(in: registry)
         case .inactive, .ready, .open:
             break
         }
@@ -76,10 +122,13 @@ final class RealityProgressionVFXRenderer {
         reducedMotion: Bool
     ) {
         guard registry.root != nil else { return }
+        rewardIdleTask?.cancel()
+        rewardIdleTask = nil
         transitionGeneration += 1
         let generation = transitionGeneration
         let roles = rewardRoles
 
+        restore(.rewardStand, in: registry)
         registry.setEnabled(state != .inactive, for: .rewardStand)
         for role in roles {
             restore(role, in: registry)
@@ -90,21 +139,25 @@ final class RealityProgressionVFXRenderer {
         case .inactive:
             return
         case .appearing:
+            animateRewardStandAppearance(in: registry, reducedMotion: reducedMotion)
             for (index, role) in roles.enumerated() {
                 guard let entity = registry.entity(for: role), let base = baseTransforms[role] else { continue }
                 var hidden = base
-                hidden.translation.y -= reducedMotion ? 0 : 0.18
-                hidden.scale = SIMD3(repeating: reducedMotion ? 1 : 0.06)
+                hidden.translation.y -= reducedMotion ? 0 : 0.44
+                hidden.scale *= reducedMotion ? 1 : 0.68
                 entity.transform = hidden
                 entity.move(
                     to: base,
                     relativeTo: entity.parent,
-                    duration: reducedMotion ? 0.01 : 0.34 + Double(index) * 0.08,
+                    duration: RealityRewardTransitionTiming.scrollDuration(
+                        at: index,
+                        reducedMotion: reducedMotion
+                    ),
                     timingFunction: .easeOut
                 )
             }
         case .choosing:
-            break
+            startRewardIdleMotion(in: registry, generation: generation, reducedMotion: reducedMotion)
         case let .resolving(selectedIndex), let .resolved(selectedIndex):
             for (index, role) in roles.enumerated() {
                 guard let entity = registry.entity(for: role), let base = baseTransforms[role] else { continue }
@@ -136,12 +189,15 @@ final class RealityProgressionVFXRenderer {
     }
 
     func reset() {
+        rewardIdleTask?.cancel()
+        rewardIdleTask = nil
         transitionGeneration += 1
         baseTransforms.removeAll()
+        doorControllerBaseTransforms.removeAll()
     }
 
     private var controlledRoles: [RealityEntityRole] {
-        [.descentStele, .descentPedestal] + rewardRoles
+        [.descentStele, .descentPedestal, .rewardStand] + rewardRoles
     }
 
     private var rewardRoles: [RealityEntityRole] {
@@ -152,6 +208,122 @@ final class RealityProgressionVFXRenderer {
         guard let entity = registry.entity(for: role), let transform = baseTransforms[role] else { return }
         entity.stopAllAnimations(recursive: false)
         entity.transform = transform
+    }
+
+    private func restoreDoorControllers(in registry: RealityEntityRegistry) {
+        for (name, transform) in doorControllerBaseTransforms {
+            guard let entity = registry.entity(named: name) else { continue }
+            entity.stopAllAnimations(recursive: false)
+            entity.transform = transform
+        }
+    }
+
+    private func animateDoorOpening(in registry: RealityEntityRegistry) {
+        guard let descriptor = registry.descriptor?.descentDoorAnimation else { return }
+        restoreDoorControllers(in: registry)
+
+        moveDoorController(
+            named: descriptor.leftPanelName,
+            translationX: -descriptor.panelTravelDistance,
+            registry: registry
+        )
+        moveDoorController(
+            named: descriptor.rightPanelName,
+            translationX: descriptor.panelTravelDistance,
+            registry: registry
+        )
+
+        if let entity = registry.entity(named: descriptor.lockCoreName),
+           var target = doorControllerBaseTransforms[descriptor.lockCoreName] {
+            target.scale *= 0.12
+            target.translation.z += 0.08
+            target.rotation *= simd_quatf(angle: .pi * 0.75, axis: SIMD3(0, 0, 1))
+            entity.move(
+                to: target,
+                relativeTo: entity.parent,
+                duration: RealityDescentTransitionTiming.doorOpeningAnimationDuration,
+                timingFunction: .easeInOut
+            )
+        }
+
+        if let entity = registry.entity(named: descriptor.logoLightName),
+           var target = doorControllerBaseTransforms[descriptor.logoLightName] {
+            target.scale *= 1.16
+            entity.move(
+                to: target,
+                relativeTo: entity.parent,
+                duration: RealityDescentTransitionTiming.doorOpeningAnimationDuration,
+                timingFunction: .easeInOut
+            )
+        }
+    }
+
+    private func moveDoorController(
+        named name: String,
+        translationX: Float,
+        registry: RealityEntityRegistry
+    ) {
+        guard let entity = registry.entity(named: name),
+              var target = doorControllerBaseTransforms[name] else { return }
+        target.translation.x += translationX
+        entity.move(
+            to: target,
+            relativeTo: entity.parent,
+            duration: RealityDescentTransitionTiming.doorOpeningAnimationDuration,
+            timingFunction: .easeInOut
+        )
+    }
+
+    private func animateRewardStandAppearance(
+        in registry: RealityEntityRegistry,
+        reducedMotion: Bool
+    ) {
+        guard let entity = registry.entity(for: .rewardStand),
+              let base = baseTransforms[.rewardStand] else { return }
+        var hidden = base
+        hidden.translation.y -= reducedMotion ? 0 : 0.1
+        hidden.scale *= reducedMotion ? 1 : 0.97
+        entity.transform = hidden
+        entity.move(
+            to: base,
+            relativeTo: entity.parent,
+            duration: reducedMotion ? 0.01 : 0.62,
+            timingFunction: .easeOut
+        )
+    }
+
+    private func startRewardIdleMotion(
+        in registry: RealityEntityRegistry,
+        generation: Int,
+        reducedMotion: Bool
+    ) {
+        guard !reducedMotion else { return }
+        let roles = rewardRoles
+        rewardIdleTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            var isRaised = true
+            while !Task.isCancelled, self.transitionGeneration == generation {
+                for (index, role) in roles.enumerated() {
+                    guard let entity = registry.entity(for: role),
+                          var target = self.baseTransforms[role] else { continue }
+                    target.translation.y += isRaised
+                        ? 0.018 + Float(index) * 0.004
+                        : -0.006
+                    entity.move(
+                        to: target,
+                        relativeTo: entity.parent,
+                        duration: 1.25,
+                        timingFunction: .easeInOut
+                    )
+                }
+                do {
+                    try await Task.sleep(for: .milliseconds(1_250))
+                } catch {
+                    return
+                }
+                isRaised.toggle()
+            }
+        }
     }
 
     private func pulse(

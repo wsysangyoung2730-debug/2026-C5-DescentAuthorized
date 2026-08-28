@@ -57,6 +57,7 @@ struct DescentAuthorizedApp: App {
             HomeView()
                 .environmentObject(appSettings)
                 .environmentObject(gameCenter)
+                .environmentObject(gameFeedback)
                 .environmentObject(gameSession)
                 .alert(item: $gameSession.presentedError) { error in
                     Alert(
