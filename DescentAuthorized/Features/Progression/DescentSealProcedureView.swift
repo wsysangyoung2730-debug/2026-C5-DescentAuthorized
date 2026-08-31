@@ -98,6 +98,7 @@ struct DescentDoorSceneView: View {
                     onStateChanged: updateDescentState,
                     onValidationFeedback: playValidationFeedback,
                     onRejected: presentSealRejection,
+                    onCollapse: presentSealCollapse,
                     onRetry: retrySeal,
                     onApproved: completeDescent
                 )
@@ -149,11 +150,13 @@ struct DescentDoorSceneView: View {
         gameFeedback.trigger(cue, settings: appSettings.settings)
     }
 
-    private func presentSealRejection(exhausted: Bool) async {
+    private func presentSealRejection() async {
         await sceneController.playDescentSealRejectionCamera(
             reducedMotion: appSettings.reducedMotion
         )
-        guard !Task.isCancelled, exhausted else { return }
+    }
+
+    private func presentSealCollapse() async {
         await sceneController.playDescentSealFailureCamera(
             reducedMotion: appSettings.reducedMotion
         )
@@ -235,7 +238,8 @@ private struct DescentSealProcedureView: View {
     let configuration: DescentSealProcedureConfiguration
     let onStateChanged: (DoorGlyphPresentationState) -> Void
     let onValidationFeedback: (DescentSealValidationFeedback) -> Void
-    let onRejected: (Bool) async -> Void
+    let onRejected: () async -> Void
+    let onCollapse: () async -> Void
     let onRetry: () async -> Void
     let onApproved: () -> Void
 
@@ -245,6 +249,7 @@ private struct DescentSealProcedureView: View {
     @State private var phase: DescentSealInputPhase = .ready
     @State private var remainingAttempts: Int
     @State private var isGameOver = false
+    @State private var isSealInterfaceSuppressed = false
     @State private var isRetrying = false
     @State private var validationTask: Task<Void, Never>?
 
@@ -252,7 +257,8 @@ private struct DescentSealProcedureView: View {
         configuration: DescentSealProcedureConfiguration,
         onStateChanged: @escaping (DoorGlyphPresentationState) -> Void,
         onValidationFeedback: @escaping (DescentSealValidationFeedback) -> Void,
-        onRejected: @escaping (Bool) async -> Void,
+        onRejected: @escaping () async -> Void,
+        onCollapse: @escaping () async -> Void,
         onRetry: @escaping () async -> Void,
         onApproved: @escaping () -> Void
     ) {
@@ -261,32 +267,39 @@ private struct DescentSealProcedureView: View {
         self.onStateChanged = onStateChanged
         self.onValidationFeedback = onValidationFeedback
         self.onRejected = onRejected
+        self.onCollapse = onCollapse
         self.onRetry = onRetry
         self.onApproved = onApproved
         _remainingAttempts = State(initialValue: configuration.maximumAttempts)
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            let sideWidth = min(max(proxy.size.width * 0.235, 250), 350)
-            let centerWidth = min(max(proxy.size.width * 0.38, 430), 590)
+        ZStack {
+            if !isSealInterfaceSuppressed {
+                GeometryReader { proxy in
+                    let sideWidth = min(max(proxy.size.width * 0.235, 250), 350)
+                    let centerWidth = min(max(proxy.size.width * 0.38, 430), 590)
 
-            VStack(spacing: 14) {
-                Color.clear
-                    .frame(height: 62)
-                    .accessibilityHidden(true)
+                    VStack(spacing: 14) {
+                        Color.clear
+                            .frame(height: 62)
+                            .accessibilityHidden(true)
 
-                HStack(alignment: .center, spacing: max(18, proxy.size.width * 0.02)) {
-                    recordPanel.frame(width: sideWidth)
-                    inputPanel.frame(width: centerWidth)
-                    informationPanel.frame(width: sideWidth)
+                        HStack(alignment: .center, spacing: max(18, proxy.size.width * 0.02)) {
+                            recordPanel.frame(width: sideWidth)
+                            inputPanel.frame(width: centerWidth)
+                            informationPanel.frame(width: sideWidth)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    .padding(.horizontal, max(20, proxy.size.width * 0.035))
+                    .padding(.vertical, 14)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transition(.opacity)
             }
-            .padding(.horizontal, max(20, proxy.size.width * 0.035))
-            .padding(.vertical, 14)
         }
-        .background(Color.black.opacity(0.18))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(isSealInterfaceSuppressed ? Color.clear : Color.black.opacity(0.18))
         .overlay {
             if isGameOver {
                 sealGameOverOverlay
@@ -294,6 +307,7 @@ private struct DescentSealProcedureView: View {
             }
         }
         .animation(.easeInOut(duration: 0.24), value: isGameOver)
+        .animation(.easeOut(duration: 0.28), value: isSealInterfaceSuppressed)
         .onAppear { onStateChanged(.ready) }
         .onDisappear {
             validationTask?.cancel()
@@ -707,14 +721,16 @@ private struct DescentSealProcedureView: View {
             isGameOver = false
         }
         validationTask = Task { @MainActor in
-            await onRetry()
-            guard !Task.isCancelled else { return }
             selectedNodes.removeAll()
             dragLocation = nil
             remainingAttempts = configuration.maximumAttempts
             phase = .ready
-            isRetrying = false
+            isSealInterfaceSuppressed = false
             onStateChanged(.ready)
+
+            await onRetry()
+            guard !Task.isCancelled else { return }
+            isRetrying = false
             validationTask = nil
         }
     }
@@ -722,9 +738,15 @@ private struct DescentSealProcedureView: View {
     private func presentRejectedInput(exhausted: Bool) {
         validationTask?.cancel()
         validationTask = Task { @MainActor in
-            await onRejected(exhausted)
+            await onRejected()
             guard !Task.isCancelled else { return }
             if exhausted {
+                withAnimation(.easeOut(duration: 0.28)) {
+                    isSealInterfaceSuppressed = true
+                }
+                guard await waitForFailureStep(milliseconds: 300) else { return }
+                await onCollapse()
+                guard !Task.isCancelled else { return }
                 withAnimation(.easeIn(duration: 0.2)) {
                     isGameOver = true
                 }
@@ -735,6 +757,15 @@ private struct DescentSealProcedureView: View {
                 onStateChanged(.ready)
             }
             validationTask = nil
+        }
+    }
+
+    private func waitForFailureStep(milliseconds: Int) async -> Bool {
+        do {
+            try await Task.sleep(for: .milliseconds(milliseconds))
+            return !Task.isCancelled
+        } catch {
+            return false
         }
     }
 }

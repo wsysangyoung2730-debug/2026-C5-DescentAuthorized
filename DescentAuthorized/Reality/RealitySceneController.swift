@@ -39,6 +39,7 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var isCameraTransitioning = false
     @Published private(set) var isBattleCameraInteractionEnabled = false
     @Published private(set) var isBattleCameraAdjusted = false
+    @Published private(set) var isDescentFailurePresentationActive = false
     @Published private(set) var loadingProgress: Double = 0
 
     let registry = RealityEntityRegistry()
@@ -418,37 +419,50 @@ final class RealitySceneController: ObservableObject {
 
         descentCameraEffectGeneration &+= 1
         let generation = descentCameraEffectGeneration
+        isDescentFailurePresentationActive = true
         let baseTransform = Transform(matrix: snapshot.transformMatrix)
-        let settledTransform = descentCameraTransform(
+        let bracedTransform = descentCameraTransform(
             from: baseTransform,
-            roll: .pi * 5 / 180,
-            pitch: -.pi * 2 / 180,
-            verticalDrop: 0.08
+            roll: .pi * 4 / 180,
+            pitch: -.pi * 1.5 / 180,
+            verticalDrop: 0.05
         )
-        let fallenTransform = descentCameraTransform(
+        let fallingTransform = descentCameraTransform(
             from: baseTransform,
-            roll: .pi * 30 / 180,
-            pitch: -.pi * 7 / 180,
-            verticalDrop: 0.46
+            roll: .pi * 20 / 180,
+            pitch: -.pi * 6 / 180,
+            verticalDrop: 0.44
+        )
+        let impactTransform = descentCameraTransform(
+            from: baseTransform,
+            roll: .pi * 34 / 180,
+            pitch: -.pi * 11 / 180,
+            verticalDrop: 0.74
+        )
+        let groundedTransform = descentCameraTransform(
+            from: baseTransform,
+            roll: .pi * 31 / 180,
+            pitch: -.pi * 9.5 / 180,
+            verticalDrop: 0.69
         )
 
         cameraEntity.stopAllAnimations(recursive: false)
         cameraEntity.camera = snapshot.camera
 
         if reducedMotion {
-            cameraEntity.setTransformMatrix(fallenTransform.matrix, relativeTo: nil)
-            try? await Task.sleep(for: .milliseconds(220))
+            cameraEntity.setTransformMatrix(groundedTransform.matrix, relativeTo: nil)
+            try? await Task.sleep(for: .milliseconds(650))
             return
         }
 
         cameraEntity.move(
-            to: settledTransform,
+            to: bracedTransform,
             relativeTo: nil,
-            duration: 0.14,
+            duration: 0.24,
             timingFunction: .easeIn
         )
         do {
-            try await Task.sleep(for: .milliseconds(140))
+            try await Task.sleep(for: .milliseconds(240))
         } catch {
             return
         }
@@ -456,13 +470,42 @@ final class RealitySceneController: ObservableObject {
               generation == descentCameraEffectGeneration else { return }
 
         cameraEntity.move(
-            to: fallenTransform,
+            to: fallingTransform,
             relativeTo: nil,
-            duration: 0.48,
+            duration: 0.86,
             timingFunction: .easeIn
         )
         do {
-            try await Task.sleep(for: .milliseconds(480))
+            try await Task.sleep(for: .milliseconds(860))
+        } catch {
+            return
+        }
+        guard !Task.isCancelled,
+              generation == descentCameraEffectGeneration else { return }
+
+        cameraEntity.move(
+            to: impactTransform,
+            relativeTo: nil,
+            duration: 0.34,
+            timingFunction: .easeIn
+        )
+        do {
+            try await Task.sleep(for: .milliseconds(340))
+        } catch {
+            return
+        }
+        guard !Task.isCancelled,
+              generation == descentCameraEffectGeneration else { return }
+
+        cameraEntity.move(
+            to: groundedTransform,
+            relativeTo: nil,
+            duration: 0.22,
+            timingFunction: .easeOut
+        )
+        do {
+            try await Task.sleep(for: .milliseconds(220))
+            try await Task.sleep(for: .milliseconds(700))
         } catch {
             return
         }
@@ -676,6 +719,7 @@ final class RealitySceneController: ObservableObject {
 
     private func cancelDescentCameraEffect(restoreCamera: Bool) {
         descentCameraEffectGeneration &+= 1
+        isDescentFailurePresentationActive = false
         guard restoreCamera,
               requestedCameraPreset == .descentInput,
               let activeCameraName,

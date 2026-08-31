@@ -45,14 +45,21 @@ struct DemoFlowView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     VStack(spacing: 0) {
-                        topBar
-                            .frame(height: topBarHeight)
-                            .clipped()
+                        if !sceneController.isDescentFailurePresentationActive {
+                            topBar
+                                .frame(height: topBarHeight)
+                                .clipped()
+                                .transition(.opacity)
+                        }
 
                         sceneView
                             .id(gameSession.presentation.progressSceneID)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
+                    .animation(
+                        .easeOut(duration: appSettings.reducedMotion ? 0 : 0.24),
+                        value: sceneController.isDescentFailurePresentationActive
+                    )
                 }
             }
 
