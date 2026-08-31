@@ -235,6 +235,8 @@ private enum DescentSealValidationFeedback {
 }
 
 private struct DescentSealProcedureView: View {
+    @EnvironmentObject private var gameSession: GameSessionStore
+
     let configuration: DescentSealProcedureConfiguration
     let onStateChanged: (DoorGlyphPresentationState) -> Void
     let onValidationFeedback: (DescentSealValidationFeedback) -> Void
@@ -252,6 +254,7 @@ private struct DescentSealProcedureView: View {
     @State private var isSealInterfaceSuppressed = false
     @State private var isRetrying = false
     @State private var validationTask: Task<Void, Never>?
+    @State private var coachStep: TutorialCoachStep?
 
     init(
         configuration: DescentSealProcedureConfiguration,
@@ -308,7 +311,15 @@ private struct DescentSealProcedureView: View {
         }
         .animation(.easeInOut(duration: 0.24), value: isGameOver)
         .animation(.easeOut(duration: 0.28), value: isSealInterfaceSuppressed)
-        .onAppear { onStateChanged(.ready) }
+        .tutorialCoach(
+            step: coachStep,
+            onNext: advanceCoach,
+            onSkip: skipCoach
+        )
+        .onAppear {
+            onStateChanged(.ready)
+            resumeCoachIfNeeded()
+        }
         .onDisappear {
             validationTask?.cancel()
             validationTask = nil
@@ -478,6 +489,7 @@ private struct DescentSealProcedureView: View {
         .animation(.easeInOut(duration: 0.28), value: completedStageCount)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(configuration.accessibilityLabel)
+        .tutorialTarget("descent.record")
     }
 
     private func recordPattern(stage: Int) -> some View {
@@ -533,6 +545,7 @@ private struct DescentSealProcedureView: View {
             }
             .aspectRatio(0.78, contentMode: .fit)
             .accessibilityLabel("하강문 봉인 문양 입력판")
+            .tutorialTarget("descent.input")
 
             if configuration.stages.count > 1 {
                 HStack(spacing: 8) {
@@ -557,6 +570,7 @@ private struct DescentSealProcedureView: View {
             .buttonStyle(DescentSealResetButtonStyle())
             .disabled((selectedNodes.isEmpty && completedStageCount == 0) || phase == .approved)
             .opacity(selectedNodes.isEmpty && completedStageCount == 0 ? 0.58 : 1)
+            .tutorialTarget("descent.reset")
         }
     }
 
@@ -607,6 +621,7 @@ private struct DescentSealProcedureView: View {
             }
         }
         .aspectRatio(CGFloat(1122) / 1402, contentMode: .fit)
+        .tutorialTarget("descent.information")
     }
 
     private var divider: some View {
@@ -663,7 +678,8 @@ private struct DescentSealProcedureView: View {
                 guard phase != .approved,
                       phase != .failed,
                       !isGameOver,
-                      !isRetrying else { return }
+                      !isRetrying,
+                      coachStep == nil else { return }
 
                 dragLocation = value.location
                 if let node = configuration.layout.nearestNode(to: value.location, in: size),
@@ -682,6 +698,9 @@ private struct DescentSealProcedureView: View {
 
     private func evaluateInput() {
         guard selectedNodes == currentStage.sequence else {
+            if configuration.loadingContext == .floor10 {
+                gameSession.send(.recordTutorialFailure(.descentSeal))
+            }
             let attemptsLeft = max(0, remainingAttempts - 1)
             phase = .failed
             remainingAttempts = attemptsLeft
@@ -767,6 +786,82 @@ private struct DescentSealProcedureView: View {
         } catch {
             return false
         }
+    }
+
+    private func resumeCoachIfNeeded() {
+        guard configuration.loadingContext == .floor10 else { return }
+        let progress = gameSession.progress.tutorialProgress
+        guard progress.shouldPresent(.floor10DescentSeal) else { return }
+        let step = progress.activeSequence == .floor10DescentSeal
+            ? (progress.activeStep ?? .descentRecord)
+            : .descentRecord
+        if progress.activeSequence != .floor10DescentSeal {
+            gameSession.send(.beginTutorial(sequence: .floor10DescentSeal, step: step))
+        }
+        coachStep = descentCoach(for: step)
+    }
+
+    private func descentCoach(for step: TutorialStepID) -> TutorialCoachStep? {
+        switch step {
+        case .descentRecord:
+            TutorialCoachStep(
+                id: step,
+                title: "해제 기록",
+                message: "왼쪽 기록은 봉인문이 요구하는 정답 문양입니다. 밝은 시작점에서 출발해 표시된 핵심점을 순서대로 기억하십시오.",
+                targetIDs: ["descent.record"],
+                placement: .bottom
+            )
+        case .descentInput:
+            TutorialCoachStep(
+                id: step,
+                title: "한 붓 입력",
+                message: "가운데 입력판에서 손을 떼지 않고 한 번에 경로를 연결합니다. 시작 위치와 핵심점의 순서가 모두 일치해야 승인됩니다.",
+                targetIDs: ["descent.input"],
+                placement: .bottom
+            )
+        case .descentInformation:
+            TutorialCoachStep(
+                id: step,
+                title: "하강 정보",
+                message: "목적지, 현재 연결한 핵심점 수, 남은 검수 시도를 확인할 수 있습니다. 시도가 모두 소진되면 현재 단계부터 다시 검수합니다.",
+                targetIDs: ["descent.information"],
+                placement: .bottom
+            )
+        case .descentReset:
+            TutorialCoachStep(
+                id: step,
+                title: "입력 초기화",
+                message: "경로를 잘못 시작했다면 입력 초기화로 현재 선을 지우고 다시 시작할 수 있습니다. 초기화는 실패 횟수를 차감하지 않습니다.",
+                targetIDs: ["descent.reset"],
+                placement: .top
+            )
+        default:
+            nil
+        }
+    }
+
+    private func advanceCoach() {
+        guard let step = coachStep?.id else { return }
+        let next: TutorialStepID?
+        switch step {
+        case .descentRecord: next = .descentInput
+        case .descentInput: next = .descentInformation
+        case .descentInformation: next = .descentReset
+        case .descentReset: next = nil
+        default: next = nil
+        }
+        gameSession.send(.completeTutorialStep(step: step, next: next))
+        if let next {
+            coachStep = descentCoach(for: next)
+        } else {
+            gameSession.send(.completeTutorial(.floor10DescentSeal))
+            coachStep = nil
+        }
+    }
+
+    private func skipCoach() {
+        gameSession.send(.skipTutorial(.floor10DescentSeal))
+        coachStep = nil
     }
 }
 
