@@ -79,14 +79,8 @@ struct Floor10TutorialView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             sceneCode(code)
-            Label("해독 가능한 주문 기록", systemImage: "doc.text.magnifyingglass")
-                .font(.headline)
-                .foregroundStyle(.purple)
-            Text(spell.name)
-                .font(.system(size: 32, weight: .semibold))
-            Text(body)
-                .foregroundStyle(.secondary)
-                .lineSpacing(4)
+            discoverySpeechBubble(spell: spell, body: body)
+                .tutorialTarget("floor10.spell-record")
 
             glyphPreview(spell)
                 .frame(maxHeight: 260)
@@ -94,14 +88,34 @@ struct Floor10TutorialView: View {
             Spacer()
 
             Button {
+                gameSession.send(.completeTutorialStep(
+                    step: tutorialInspectStep(for: spell.id),
+                    next: tutorialTrainingStep(for: spell.id)
+                ))
                 gameSession.send(.learnSpell(spell.id))
             } label: {
-                Label("\(spell.name) 익히기", systemImage: "scroll.fill")
+                Label("문양 해독 후 \(spell.name) 익히기", systemImage: "scroll.fill")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .tint(.purple)
         }
+        .onAppear {
+            beginSpellTutorialIfNeeded(spell.id, step: tutorialInspectStep(for: spell.id))
+        }
+        .tutorialCoach(
+            step: discoveryCoachStep(for: spell),
+            nextTitle: "기록 확인",
+            onNext: {
+                gameSession.send(.completeTutorialStep(
+                    step: tutorialInspectStep(for: spell.id),
+                    next: tutorialInspectStep(for: spell.id)
+                ))
+            },
+            onSkip: {
+                gameSession.send(.skipTutorial(tutorialSequence(for: spell.id)))
+            }
+        )
     }
 
     private var trainingScene: some View {
@@ -122,6 +136,8 @@ struct Floor10TutorialView: View {
                     .foregroundStyle(.red)
             }
 
+            trainingGuidance(for: spell)
+
             GlyphCastingPanel(
                 spell: spell,
                 inputPreference: appSettings.inputPreference,
@@ -129,7 +145,11 @@ struct Floor10TutorialView: View {
                 availableStrokes: 2,
                 erasureZones: [],
                 onCast: { submission in
-                    guard submission.evaluation.succeeded else { return }
+                    guard submission.evaluation.succeeded else {
+                        gameSession.send(.recordTutorialFailure(tutorialMechanic(for: spell.id)))
+                        return
+                    }
+                    completeSpellTutorialIfActive(spell.id)
                     gameSession.send(.completeTraining(
                         spell: spell.id,
                         grade: submission.evaluation.grade
@@ -138,6 +158,138 @@ struct Floor10TutorialView: View {
             )
             .frame(maxWidth: 760)
         }
+        .onAppear {
+            beginSpellTutorialIfNeeded(spell.id, step: tutorialTrainingStep(for: spell.id))
+        }
+    }
+
+    private func discoverySpeechBubble(spell: SpellDefinition, body: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("조사한 흔적이 반응한다", systemImage: "sparkles")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.purple)
+            Text("“\(body)”")
+                .font(.system(size: 17, design: .serif))
+                .foregroundStyle(.white.opacity(0.9))
+                .lineSpacing(4)
+            HStack {
+                Text("복원 후보")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(spell.name)
+                    .font(.headline)
+                    .foregroundStyle(DAColor.gold)
+            }
+        }
+        .padding(18)
+        .background(DAColor.card.opacity(0.94), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(alignment: .bottomLeading) {
+            TrianglePointer()
+                .fill(DAColor.card.opacity(0.94))
+                .frame(width: 22, height: 12)
+                .offset(x: 28, y: 11)
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(DAColor.gold.opacity(0.42), lineWidth: 1)
+        }
+    }
+
+    @ViewBuilder
+    private func trainingGuidance(for spell: SpellDefinition) -> some View {
+        let failures = gameSession.progress.tutorialProgress.failureCount(
+            for: tutorialMechanic(for: spell.id)
+        )
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: failures == 0 ? "hand.draw" : "lightbulb.max.fill")
+                .foregroundStyle(failures == 0 ? Color.purple : DAColor.gold)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(trainingGuidanceTitle(failures: failures))
+                    .font(.subheadline.weight(.semibold))
+                Text(trainingGuidanceMessage(failures: failures, spell: spell))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+            if failures > 0 {
+                Text("실패 \(failures)회")
+                    .font(.caption2.monospaced().weight(.bold))
+                    .foregroundStyle(.red.opacity(0.82))
+            }
+        }
+        .padding(12)
+        .background(.black.opacity(0.34), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func trainingGuidanceTitle(failures: Int) -> String {
+        switch failures {
+        case 0: "문양 입력"
+        case 1: "시작점부터 다시 확인"
+        default: "핵심점을 순서대로 통과"
+        }
+    }
+
+    private func trainingGuidanceMessage(failures: Int, spell: SpellDefinition) -> String {
+        switch failures {
+        case 0:
+            "밝은 시작점에서 손을 떼지 말고 가이드 선을 따라가십시오."
+        case 1:
+            "첫 입력 위치가 시작점 안에 있는지 확인한 뒤 천천히 그리십시오."
+        default:
+            "\(spell.requiredStrokes)개의 획을 구분하고, 각 획의 밝은 핵심점을 표시된 순서대로 지나십시오. 속도보다 정확도가 우선입니다."
+        }
+    }
+
+    private func tutorialSequence(for spell: SpellID) -> TutorialSequenceID {
+        spell == .afterglowErasure ? .afterglowDiscovery : .riftDiscovery
+    }
+
+    private func tutorialInspectStep(for spell: SpellID) -> TutorialStepID {
+        spell == .afterglowErasure ? .afterglowInspect : .riftInspect
+    }
+
+    private func tutorialTrainingStep(for spell: SpellID) -> TutorialStepID {
+        spell == .afterglowErasure ? .afterglowTraining : .riftTraining
+    }
+
+    private func tutorialMechanic(for spell: SpellID) -> TutorialMechanicID {
+        spell == .afterglowErasure ? .afterglowDrawing : .riftDrawing
+    }
+
+    private func beginSpellTutorialIfNeeded(_ spell: SpellID, step: TutorialStepID) {
+        let sequence = tutorialSequence(for: spell)
+        let progress = gameSession.progress.tutorialProgress
+        guard progress.shouldPresent(sequence), progress.activeSequence != sequence else { return }
+        gameSession.send(.beginTutorial(sequence: sequence, step: step))
+    }
+
+    private func completeSpellTutorialIfActive(_ spell: SpellID) {
+        let sequence = tutorialSequence(for: spell)
+        guard gameSession.progress.tutorialProgress.activeSequence == sequence else { return }
+        gameSession.send(.completeTutorialStep(
+            step: tutorialTrainingStep(for: spell),
+            next: nil
+        ))
+        gameSession.send(.completeTutorial(sequence))
+    }
+
+    private func discoveryCoachStep(for spell: SpellDefinition) -> TutorialCoachStep? {
+        let sequence = tutorialSequence(for: spell.id)
+        let progress = gameSession.progress.tutorialProgress
+        guard progress.activeSequence == sequence,
+              progress.activeStep == tutorialInspectStep(for: spell.id),
+              !progress.completedSteps.contains(tutorialInspectStep(for: spell.id)) else {
+            return nil
+        }
+        return TutorialCoachStep(
+            id: tutorialInspectStep(for: spell.id),
+            title: "주문 흔적 발견",
+            message: "조사 중 발견한 마력 흔적과 이 기록이 같은 문양으로 반응합니다. 기록을 확인한 뒤 직접 익혀 보십시오.",
+            targetIDs: ["floor10.spell-record"],
+            placement: .bottom
+        )
     }
 
     private var descentDoorScene: some View {
@@ -203,6 +355,17 @@ struct Floor10TutorialView: View {
     private func resetPresentationOutsideDescent() {
         guard gameSession.progress.currentScene != .floor10DescentDoor else { return }
         sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+    }
+}
+
+private struct TrianglePointer: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 
