@@ -9,6 +9,7 @@ struct DescentSealStageConfiguration {
 struct DescentSealProcedureConfiguration {
     let recordSubtitle: String
     let destination: String
+    let loadingContext: LoadingScreenContext
     let stages: [DescentSealStageConfiguration]
     let accessibilityLabel: String
     let maximumAttempts: Int
@@ -17,6 +18,7 @@ struct DescentSealProcedureConfiguration {
     static let floor10 = DescentSealProcedureConfiguration(
         recordSubtitle: "제10층 봉인 해제 기록",
         destination: "제9층 기록 관리 구역",
+        loadingContext: .floor10,
         stages: [
             DescentSealStageConfiguration(
                 recordTitle: "단일 승인 문양",
@@ -32,6 +34,7 @@ struct DescentSealProcedureConfiguration {
     static let floor9 = DescentSealProcedureConfiguration(
         recordSubtitle: "제9층 이중 봉인 검수 기록",
         destination: "제8층 관측실",
+        loadingContext: .floor9,
         stages: [
             DescentSealStageConfiguration(
                 recordTitle: "1단계 · 관리 서명",
@@ -52,6 +55,7 @@ struct DescentSealProcedureConfiguration {
     static let floor8 = DescentSealProcedureConfiguration(
         recordSubtitle: "제8층 이중 봉인 검수 기록",
         destination: "제7층 미확인 구역",
+        loadingContext: .floor8,
         stages: [
             DescentSealStageConfiguration(
                 recordTitle: "1단계 · 중심 좌표",
@@ -77,6 +81,7 @@ struct DescentDoorSceneView: View {
 
     let configuration: DescentSealProcedureConfiguration
     let sceneController: RealitySceneController
+    @Binding var retryLoadingPresentation: SceneRetryLoadingPresentation?
 
     @State private var descentState: RealityDescentPresentationState = .ready
     @State private var transitionTask: Task<Void, Never>?
@@ -92,6 +97,8 @@ struct DescentDoorSceneView: View {
                     configuration: configuration,
                     onStateChanged: updateDescentState,
                     onValidationFeedback: playValidationFeedback,
+                    onRejected: presentSealRejection,
+                    onRetry: retrySeal,
                     onApproved: completeDescent
                 )
                 .transition(.opacity)
@@ -106,7 +113,9 @@ struct DescentDoorSceneView: View {
             transitionTask = nil
             isSealInterfaceVisible = true
             isCompletingDescent = false
+            retryLoadingPresentation = nil
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+            sceneController.resetDescentCamera()
             setDescentState(.ready)
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
@@ -115,6 +124,8 @@ struct DescentDoorSceneView: View {
         .onDisappear {
             transitionTask?.cancel()
             transitionTask = nil
+            retryLoadingPresentation = nil
+            sceneController.resetDescentCamera()
         }
     }
 
@@ -136,6 +147,55 @@ struct DescentDoorSceneView: View {
             cue = .descentSealStageCompleted(final: final)
         }
         gameFeedback.trigger(cue, settings: appSettings.settings)
+    }
+
+    private func presentSealRejection(exhausted: Bool) async {
+        await sceneController.playDescentSealRejectionCamera(
+            reducedMotion: appSettings.reducedMotion
+        )
+        guard !Task.isCancelled, exhausted else { return }
+        await sceneController.playDescentSealFailureCamera(
+            reducedMotion: appSettings.reducedMotion
+        )
+    }
+
+    private func retrySeal() async {
+        gameFeedback.playInterface(.confirm, settings: appSettings.settings)
+        let tip = LoadingTipCatalog.randomTip(for: configuration.loadingContext)
+
+        withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+            retryLoadingPresentation = SceneRetryLoadingPresentation(
+                context: configuration.loadingContext,
+                progress: 0.08,
+                tip: tip
+            )
+        }
+
+        guard await waitForRetryStep(milliseconds: 180) else { return }
+        retryLoadingPresentation?.progress = 0.34
+        sceneController.resetDescentCamera()
+        setDescentState(.ready)
+
+        guard await waitForRetryStep(milliseconds: 420) else { return }
+        retryLoadingPresentation?.progress = 0.82
+
+        guard await waitForRetryStep(milliseconds: 220) else { return }
+        retryLoadingPresentation?.progress = 1
+
+        guard await waitForRetryStep(milliseconds: 180) else { return }
+        withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.2)) {
+            retryLoadingPresentation = nil
+        }
+    }
+
+    private func waitForRetryStep(milliseconds: Int) async -> Bool {
+        let duration = appSettings.reducedMotion ? min(milliseconds, 80) : milliseconds
+        do {
+            try await Task.sleep(for: .milliseconds(duration))
+            return !Task.isCancelled
+        } catch {
+            return false
+        }
     }
 
     private func completeDescent() {
@@ -175,6 +235,8 @@ private struct DescentSealProcedureView: View {
     let configuration: DescentSealProcedureConfiguration
     let onStateChanged: (DoorGlyphPresentationState) -> Void
     let onValidationFeedback: (DescentSealValidationFeedback) -> Void
+    let onRejected: (Bool) async -> Void
+    let onRetry: () async -> Void
     let onApproved: () -> Void
 
     @State private var completedStageCount = 0
@@ -183,17 +245,23 @@ private struct DescentSealProcedureView: View {
     @State private var phase: DescentSealInputPhase = .ready
     @State private var remainingAttempts: Int
     @State private var isGameOver = false
+    @State private var isRetrying = false
+    @State private var validationTask: Task<Void, Never>?
 
     init(
         configuration: DescentSealProcedureConfiguration,
         onStateChanged: @escaping (DoorGlyphPresentationState) -> Void,
         onValidationFeedback: @escaping (DescentSealValidationFeedback) -> Void,
+        onRejected: @escaping (Bool) async -> Void,
+        onRetry: @escaping () async -> Void,
         onApproved: @escaping () -> Void
     ) {
         precondition(!configuration.stages.isEmpty, "A descent seal requires at least one stage")
         self.configuration = configuration
         self.onStateChanged = onStateChanged
         self.onValidationFeedback = onValidationFeedback
+        self.onRejected = onRejected
+        self.onRetry = onRetry
         self.onApproved = onApproved
         _remainingAttempts = State(initialValue: configuration.maximumAttempts)
     }
@@ -227,6 +295,10 @@ private struct DescentSealProcedureView: View {
         }
         .animation(.easeInOut(duration: 0.24), value: isGameOver)
         .onAppear { onStateChanged(.ready) }
+        .onDisappear {
+            validationTask?.cancel()
+            validationTask = nil
+        }
     }
 
     private var sealGameOverOverlay: some View {
@@ -325,6 +397,7 @@ private struct DescentSealProcedureView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .disabled(isRetrying)
                     .accessibilityLabel("봉인 검수 재시도")
                     .accessibilityHint("현재 봉인 검수 단계부터 다시 시작합니다")
                     .position(
@@ -573,12 +646,10 @@ private struct DescentSealProcedureView: View {
     private func inputGesture(in size: CGSize) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .local)
             .onChanged { value in
-                guard phase != .approved, !isGameOver else { return }
-                if phase == .failed {
-                    selectedNodes.removeAll()
-                    phase = .ready
-                    onStateChanged(.ready)
-                }
+                guard phase != .approved,
+                      phase != .failed,
+                      !isGameOver,
+                      !isRetrying else { return }
 
                 dragLocation = value.location
                 if let node = configuration.layout.nearestNode(to: value.location, in: size),
@@ -602,9 +673,7 @@ private struct DescentSealProcedureView: View {
             remainingAttempts = attemptsLeft
             onStateChanged(.failed)
             onValidationFeedback(.rejected(exhausted: attemptsLeft == 0))
-            if attemptsLeft == 0 {
-                isGameOver = true
-            }
+            presentRejectedInput(exhausted: attemptsLeft == 0)
             return
         }
 
@@ -631,12 +700,42 @@ private struct DescentSealProcedureView: View {
     }
 
     private func retrySeal() {
-        selectedNodes.removeAll()
-        dragLocation = nil
-        remainingAttempts = configuration.maximumAttempts
-        phase = .ready
-        isGameOver = false
-        onStateChanged(.ready)
+        guard !isRetrying else { return }
+        validationTask?.cancel()
+        isRetrying = true
+        withAnimation(.easeOut(duration: 0.16)) {
+            isGameOver = false
+        }
+        validationTask = Task { @MainActor in
+            await onRetry()
+            guard !Task.isCancelled else { return }
+            selectedNodes.removeAll()
+            dragLocation = nil
+            remainingAttempts = configuration.maximumAttempts
+            phase = .ready
+            isRetrying = false
+            onStateChanged(.ready)
+            validationTask = nil
+        }
+    }
+
+    private func presentRejectedInput(exhausted: Bool) {
+        validationTask?.cancel()
+        validationTask = Task { @MainActor in
+            await onRejected(exhausted)
+            guard !Task.isCancelled else { return }
+            if exhausted {
+                withAnimation(.easeIn(duration: 0.2)) {
+                    isGameOver = true
+                }
+            } else {
+                selectedNodes.removeAll()
+                dragLocation = nil
+                phase = .ready
+                onStateChanged(.ready)
+            }
+            validationTask = nil
+        }
     }
 }
 

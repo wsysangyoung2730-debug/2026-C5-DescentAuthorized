@@ -5,6 +5,7 @@ struct Floor10TutorialView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let sceneController: RealitySceneController
+    @Binding var retryLoadingPresentation: SceneRetryLoadingPresentation?
 
     var body: some View {
         Group {
@@ -145,7 +146,8 @@ struct Floor10TutorialView: View {
     private var descentDoorScene: some View {
         DescentDoorSceneView(
             configuration: .floor10,
-            sceneController: sceneController
+            sceneController: sceneController,
+            retryLoadingPresentation: $retryLoadingPresentation
         )
     }
 

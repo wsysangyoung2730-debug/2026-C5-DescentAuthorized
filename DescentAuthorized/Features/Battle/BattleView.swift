@@ -189,18 +189,12 @@ private struct BattleUIPresentation {
     }
 }
 
-struct BattleRestartLoadingPresentation: Equatable {
-    let context: LoadingScreenContext
-    var progress: Double
-    let tip: String
-}
-
 struct BattleView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
     @ObservedObject var realityController: RealitySceneController
-    @Binding var restartLoadingPresentation: BattleRestartLoadingPresentation?
+    @Binding var restartLoadingPresentation: SceneRetryLoadingPresentation?
 
     @State private var selectedSpellID: SpellID?
     @State private var enemyHitFlash = false
@@ -1594,7 +1588,7 @@ struct BattleView: View {
 
         withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
             isDefeatPanelVisible = false
-            restartLoadingPresentation = BattleRestartLoadingPresentation(
+            restartLoadingPresentation = SceneRetryLoadingPresentation(
                 context: loadingContext,
                 progress: 0.08,
                 tip: loadingTip

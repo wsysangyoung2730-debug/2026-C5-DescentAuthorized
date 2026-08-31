@@ -57,6 +57,7 @@ final class RealitySceneController: ObservableObject {
     private var sceneLoadGeneration: UInt64 = 0
     private var cameraTransitionGeneration: UInt64 = 0
     private var battleCameraImpactGeneration: UInt64 = 0
+    private var descentCameraEffectGeneration: UInt64 = 0
     private var requestedSceneID: FloorSceneID?
     private var requestedCameraPreset: RealityCameraPreset = .main
     private var activeCameraName: String?
@@ -358,6 +359,121 @@ final class RealitySceneController: ObservableObject {
         }
     }
 
+    func playDescentSealRejectionCamera(reducedMotion: Bool) async {
+        cancelDescentCameraEffect(restoreCamera: true)
+        guard requestedCameraPreset == .descentInput,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        descentCameraEffectGeneration &+= 1
+        let generation = descentCameraEffectGeneration
+        defer {
+            if generation == descentCameraEffectGeneration {
+                restoreDescentCamera(snapshot: snapshot, cameraEntity: cameraEntity)
+            }
+        }
+
+        if reducedMotion {
+            try? await Task.sleep(for: .milliseconds(280))
+            return
+        }
+
+        let baseTransform = Transform(matrix: snapshot.transformMatrix)
+        let keyframes: [(rollDegrees: Float, verticalOffset: Float, milliseconds: Int64)] = [
+            (-2.6, -0.015, 48),
+            (3.1, 0.012, 66),
+            (-1.5, -0.008, 70),
+            (0.6, 0.004, 76),
+            (0, 0, 88)
+        ]
+
+        for keyframe in keyframes {
+            guard !Task.isCancelled,
+                  generation == descentCameraEffectGeneration else { return }
+            let transform = descentCameraTransform(
+                from: baseTransform,
+                roll: keyframe.rollDegrees * (.pi / 180),
+                pitch: 0,
+                verticalDrop: -keyframe.verticalOffset
+            )
+            cameraEntity.move(
+                to: transform,
+                relativeTo: nil,
+                duration: Double(keyframe.milliseconds) / 1_000,
+                timingFunction: .easeInOut
+            )
+            do {
+                try await Task.sleep(for: .milliseconds(keyframe.milliseconds))
+            } catch {
+                return
+            }
+        }
+    }
+
+    func playDescentSealFailureCamera(reducedMotion: Bool) async {
+        cancelDescentCameraEffect(restoreCamera: true)
+        guard requestedCameraPreset == .descentInput,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        descentCameraEffectGeneration &+= 1
+        let generation = descentCameraEffectGeneration
+        let baseTransform = Transform(matrix: snapshot.transformMatrix)
+        let settledTransform = descentCameraTransform(
+            from: baseTransform,
+            roll: .pi * 5 / 180,
+            pitch: -.pi * 2 / 180,
+            verticalDrop: 0.08
+        )
+        let fallenTransform = descentCameraTransform(
+            from: baseTransform,
+            roll: .pi * 30 / 180,
+            pitch: -.pi * 7 / 180,
+            verticalDrop: 0.46
+        )
+
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.camera = snapshot.camera
+
+        if reducedMotion {
+            cameraEntity.setTransformMatrix(fallenTransform.matrix, relativeTo: nil)
+            try? await Task.sleep(for: .milliseconds(220))
+            return
+        }
+
+        cameraEntity.move(
+            to: settledTransform,
+            relativeTo: nil,
+            duration: 0.14,
+            timingFunction: .easeIn
+        )
+        do {
+            try await Task.sleep(for: .milliseconds(140))
+        } catch {
+            return
+        }
+        guard !Task.isCancelled,
+              generation == descentCameraEffectGeneration else { return }
+
+        cameraEntity.move(
+            to: fallenTransform,
+            relativeTo: nil,
+            duration: 0.48,
+            timingFunction: .easeIn
+        )
+        do {
+            try await Task.sleep(for: .milliseconds(480))
+        } catch {
+            return
+        }
+    }
+
+    func resetDescentCamera() {
+        cancelDescentCameraEffect(restoreCamera: true)
+    }
+
     private func transitionCamera(to preset: RealityCameraPreset) {
         guard
             let descriptor = registry.descriptor,
@@ -372,6 +488,7 @@ final class RealitySceneController: ObservableObject {
         }
 
         cancelBattleCameraImpact(restoreCamera: false)
+        cancelDescentCameraEffect(restoreCamera: false)
         cameraTransitionTask?.cancel()
         cameraTransitionGeneration &+= 1
         let transitionGeneration = cameraTransitionGeneration
@@ -527,6 +644,40 @@ final class RealitySceneController: ObservableObject {
         return transform
     }
 
+    private func descentCameraTransform(
+        from baseTransform: Transform,
+        roll: Float,
+        pitch: Float,
+        verticalDrop: Float
+    ) -> Transform {
+        var transform = baseTransform
+        let rollRotation = simd_quatf(angle: roll, axis: SIMD3<Float>(0, 0, 1))
+        let pitchRotation = simd_quatf(angle: pitch, axis: SIMD3<Float>(1, 0, 0))
+        transform.rotation = baseTransform.rotation * rollRotation * pitchRotation
+        transform.translation.y -= verticalDrop
+        return transform
+    }
+
+    private func cancelDescentCameraEffect(restoreCamera: Bool) {
+        descentCameraEffectGeneration &+= 1
+        guard restoreCamera,
+              requestedCameraPreset == .descentInput,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+        restoreDescentCamera(snapshot: snapshot, cameraEntity: cameraEntity)
+    }
+
+    private func restoreDescentCamera(
+        snapshot: AuthoredCameraSnapshot,
+        cameraEntity: PerspectiveCamera
+    ) {
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+        cameraEntity.camera = snapshot.camera
+        scheduleBoardProjectionRefresh()
+    }
+
     private func clamp(_ value: Float, minimum: Float, maximum: Float) -> Float {
         min(max(value, minimum), maximum)
     }
@@ -639,6 +790,7 @@ final class RealitySceneController: ObservableObject {
         actorLoadCancellable = nil
         stopEnemyIdleMotion(resetTransform: true)
         cancelBattleCameraImpact(restoreCamera: false)
+        cancelDescentCameraEffect(restoreCamera: false)
         cancelCameraTransition()
         if let sceneAnchor, let arView {
             arView.scene.removeAnchor(sceneAnchor)

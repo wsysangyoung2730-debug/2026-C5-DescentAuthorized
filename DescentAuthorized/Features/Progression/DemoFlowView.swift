@@ -10,7 +10,7 @@ struct DemoFlowView: View {
 
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
-    @State private var battleRestartLoadingPresentation: BattleRestartLoadingPresentation?
+    @State private var retryLoadingPresentation: SceneRetryLoadingPresentation?
     @StateObject private var sceneController = RealitySceneController()
 
     private let topHUDRailSourceSize = CGSize(width: 1774, height: 887)
@@ -62,7 +62,7 @@ struct DemoFlowView: View {
                 .allowsHitTesting(false)
                 .animation(.easeInOut(duration: 0.18), value: sceneController.cameraFadeOpacity)
 
-            if let loading = battleRestartLoadingPresentation {
+            if let loading = retryLoadingPresentation {
                 ZStack {
                     LoadingScreenView(
                         context: loading.context,
@@ -114,7 +114,7 @@ struct DemoFlowView: View {
         .onChange(of: gameSession.progress.currentScene) { _, _ in
             synchronizeFloorMusic()
         }
-        .onChange(of: battleRestartLoadingPresentation) { _, loading in
+        .onChange(of: retryLoadingPresentation) { _, loading in
             if loading == nil {
                 synchronizeFloorMusic()
             } else {
@@ -140,7 +140,7 @@ struct DemoFlowView: View {
         gameFeedback.synchronizeFloorMusic(
             floor: gameSession.progress.currentFloor,
             isPresentationReady: isFloorModelReady
-                && battleRestartLoadingPresentation == nil,
+                && retryLoadingPresentation == nil,
             keepsOutcomeMusic: keepsBattleOutcomeMusic,
             settings: appSettings.settings
         )
@@ -473,7 +473,10 @@ struct DemoFlowView: View {
     private var sceneView: some View {
         switch gameSession.presentation.experience {
         case .floor10Tutorial:
-            Floor10TutorialView(sceneController: sceneController)
+            Floor10TutorialView(
+                sceneController: sceneController,
+                retryLoadingPresentation: $retryLoadingPresentation
+            )
         case .floor9Entrance:
             Floor9EntranceView(sceneController: sceneController)
         case let .narrative(sequence):
@@ -496,7 +499,7 @@ struct DemoFlowView: View {
         case .battle:
             BattleView(
                 realityController: sceneController,
-                restartLoadingPresentation: $battleRestartLoadingPresentation
+                restartLoadingPresentation: $retryLoadingPresentation
             )
         case let .reward(floor):
             RewardSelectionView(floor: floor, sceneController: sceneController)
@@ -504,9 +507,15 @@ struct DemoFlowView: View {
             Floor8ExplorationView(sceneController: sceneController)
         case let .descent(floor):
             if floor == .floor9 {
-                Floor9DescentDoorView(sceneController: sceneController)
+                Floor9DescentDoorView(
+                    sceneController: sceneController,
+                    retryLoadingPresentation: $retryLoadingPresentation
+                )
             } else {
-                Floor8DescentDoorView(sceneController: sceneController)
+                Floor8DescentDoorView(
+                    sceneController: sceneController,
+                    retryLoadingPresentation: $retryLoadingPresentation
+                )
             }
         case .completion:
             DemoCompleteView(onReturnToTitle: onExit)
