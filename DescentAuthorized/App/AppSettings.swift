@@ -16,11 +16,19 @@ final class AppSettings: ObservableObject {
         settings.inputPreference
     }
 
+    var drawingPadPosition: DrawingPadPosition {
+        settings.drawingPadPosition
+    }
+
     var reducedFlashes: Bool { settings.reducedFlashes }
     var reducedMotion: Bool { settings.reducedMotion }
 
     func setInputPreference(_ preference: DrawingInputPreference) {
         update { try $0.setInputPreference(preference) }
+    }
+
+    func setDrawingPadPosition(_ position: DrawingPadPosition) {
+        update { try $0.setDrawingPadPosition(position) }
     }
 
     func setSoundEffectsEnabled(_ isEnabled: Bool) {

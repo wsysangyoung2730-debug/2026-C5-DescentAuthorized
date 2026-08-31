@@ -49,12 +49,15 @@ final class DemoGameSessionTests: XCTestCase {
             }
         }
 
-        XCTAssertEqual(session.progress.currentScene, .floor9RewardVault)
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsDefeated)
         XCTAssertTrue(session.progress.defeatedEnemies.contains(.recordsAdministrator))
         XCTAssertGreaterThan(
             session.progress.spellMastery[.riftSeverance]?.successfulCasts ?? 0,
             0
         )
+
+        _ = try session.handle(.continueAfterRecordsDefeat)
+        XCTAssertEqual(session.progress.currentScene, .floor9RewardVault)
     }
 
     func testDefeatCanRestartEncounterAtFullHP() throws {
@@ -186,6 +189,7 @@ final class DemoGameSessionTests: XCTestCase {
         ))
         _ = try session.handle(.approveDescentDoor)
         _ = try session.handle(.enterRecordsBattle)
+        _ = try session.handle(.beginRecordsBattle)
         return session
     }
 

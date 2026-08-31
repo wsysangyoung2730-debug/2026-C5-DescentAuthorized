@@ -1,0 +1,255 @@
+{
+  "valid": true,
+  "assetCount": 19,
+  "validCount": 19,
+  "invalidCount": 0,
+  "results": [
+    {
+      "id": "floor10_closed_office",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 260,
+      "meshCount": 150,
+      "materialCount": 103,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "floor09_archive_redesign",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 351,
+      "meshCount": 238,
+      "materialCount": 171,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "floor08_residue_isolation",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 54,
+      "meshCount": 30,
+      "materialCount": 15,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "floor08_administrator_observatory",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 316,
+      "meshCount": 203,
+      "materialCount": 163,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "record_administrator",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 171,
+      "meshCount": 167,
+      "materialCount": 167,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "observation_residue",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 170,
+      "meshCount": 167,
+      "materialCount": 167,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "observation_administrator",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 260,
+      "meshCount": 256,
+      "materialCount": 256,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "hit_normal",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 3,
+      "meshCount": 1,
+      "materialCount": 1,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "hit_heavy",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 3,
+      "meshCount": 1,
+      "materialCount": 1,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "hit_critical",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 3,
+      "meshCount": 1,
+      "materialCount": 1,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "hit_shield",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 3,
+      "meshCount": 1,
+      "materialCount": 1,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "intent_attack",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 3,
+      "meshCount": 1,
+      "materialCount": 1,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "intent_heavy_attack",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 3,
+      "meshCount": 1,
+      "materialCount": 1,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "intent_shield",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 3,
+      "meshCount": 1,
+      "materialCount": 1,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "intent_absolute_shield",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 3,
+      "meshCount": 1,
+      "materialCount": 1,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "erasure_square",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 3,
+      "meshCount": 1,
+      "materialCount": 1,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "erasure_ink_large",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 3,
+      "meshCount": 1,
+      "materialCount": 1,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "erasure_ink_medium",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 3,
+      "meshCount": 1,
+      "materialCount": 1,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    },
+    {
+      "id": "erasure_ink_small",
+      "valid": true,
+      "importResult": [
+        "FINISHED"
+      ],
+      "objectCount": 3,
+      "meshCount": 1,
+      "materialCount": 1,
+      "missingAliases": [],
+      "missingDoorTransitionEntities": [],
+      "checksumValid": true
+    }
+  ]
+}

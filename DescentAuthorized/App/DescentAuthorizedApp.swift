@@ -1,7 +1,41 @@
 import SwiftUI
+import UIKit
+
+final class LandscapeAppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        supportedInterfaceOrientationsFor window: UIWindow?
+    ) -> UIInterfaceOrientationMask {
+        .landscape
+    }
+}
+
+enum LandscapeOrientationController {
+    @MainActor
+    static func requestLandscape() {
+        for case let windowScene as UIWindowScene in UIApplication.shared.connectedScenes {
+            applyLandscape(to: windowScene)
+
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(250))
+                applyLandscape(to: windowScene)
+            }
+        }
+    }
+
+    @MainActor
+    private static func applyLandscape(to windowScene: UIWindowScene) {
+        windowScene.windows.first?.rootViewController?
+            .setNeedsUpdateOfSupportedInterfaceOrientations()
+        windowScene.requestGeometryUpdate(
+            .iOS(interfaceOrientations: .landscapeRight)
+        )
+    }
+}
 
 @main
 struct DescentAuthorizedApp: App {
+    @UIApplicationDelegateAdaptor(LandscapeAppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var appSettings = AppSettings()
     @StateObject private var gameCenter: GameCenterManager
@@ -23,6 +57,7 @@ struct DescentAuthorizedApp: App {
             HomeView()
                 .environmentObject(appSettings)
                 .environmentObject(gameCenter)
+                .environmentObject(gameFeedback)
                 .environmentObject(gameSession)
                 .alert(item: $gameSession.presentedError) { error in
                     Alert(
@@ -32,10 +67,14 @@ struct DescentAuthorizedApp: App {
                     )
                 }
                 .onChange(of: scenePhase) { _, phase in
-                    guard phase == .inactive || phase == .background else { return }
-                    gameSession.saveForLifecycleTransition()
+                    if phase == .active {
+                        LandscapeOrientationController.requestLandscape()
+                    } else if phase == .inactive || phase == .background {
+                        gameSession.saveForLifecycleTransition()
+                    }
                 }
                 .task {
+                    LandscapeOrientationController.requestLandscape()
                     gameCenter.authenticate()
                     gameFeedback.apply(settings: appSettings.settings)
                 }

@@ -1,8 +1,200 @@
 import SwiftUI
 
+private struct BattleUICombatantState {
+    let name: String
+    let hp: Int
+    let maxHP: Int
+    let normalBarrier: Int
+    let absoluteBarrierCharges: Int
+
+    init(_ combatant: CombatantState) {
+        name = combatant.name
+        hp = combatant.hp
+        maxHP = combatant.maxHP
+        normalBarrier = combatant.normalBarrier
+        absoluteBarrierCharges = combatant.absoluteBarrierCharges
+    }
+}
+
+private struct BattleUIResourceState {
+    let mana: Double
+    let maximumMana: Double
+    let strokes: Int
+    let maximumStrokes: Int
+}
+
+private struct BattleUISpellState: Identifiable {
+    let spell: SpellDefinition
+    let isSelected: Bool
+    let isAffordable: Bool
+    let isPermitted: Bool
+    let canInteract: Bool
+
+    var id: SpellID { spell.id }
+
+    var visualState: BattleSpellCardVisualState {
+        guard canInteract else { return .disabled }
+        return isSelected ? .selected : .available
+    }
+}
+
+private enum BattleSpellCardVisualState {
+    case available
+    case selected
+    case disabled
+
+    var overlayAssetName: String? {
+        switch self {
+        case .available: nil
+        case .selected: "BattleCardFrameSelected"
+        case .disabled: "BattleCardFrameDisabled"
+        }
+    }
+}
+
+private struct BattleTurnEndButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        ZStack {
+            Image(backgroundAssetName(isPressed: configuration.isPressed))
+                .resizable()
+                .scaledToFill()
+
+            configuration.label
+                .foregroundStyle(isEnabled ? DAColor.body : DAColor.secondary)
+        }
+        .contentShape(Rectangle())
+    }
+
+    private func backgroundAssetName(isPressed: Bool) -> String {
+        guard isEnabled else { return "BattleTurnEndDisabled" }
+        return isPressed ? "BattleTurnEndPressed" : "BattleTurnEndDefault"
+    }
+}
+
+private extension SpellDefinition {
+    var battleCardFrameAssetName: String {
+        switch category {
+        case .attack: "BattleCardFrameAttack"
+        case .defense: "BattleCardFrameDefense"
+        case .dispel: "BattleCardFrameSeal"
+        }
+    }
+
+    var battleGlyphAssetName: String {
+        switch id {
+        case .afterglowErasure: "BattleGlyphAfterglowErasure"
+        case .riftSeverance: "BattleGlyphRiftSeverance"
+        case .barrierPiercing: "BattleGlyphBarrierPiercing"
+        case .basicBarrier: "BattleGlyphBasicBarrier"
+        case .sealRelease: "BattleGlyphSealRelease"
+        }
+    }
+
+    var battleScrollBadgeAssetName: String {
+        switch tier {
+        case .worn: "BattleScrollBadgeWorn"
+        case .engraved: "BattleScrollBadgeEngraved"
+        case .sealed: "BattleScrollBadgeSealed"
+        case .forbidden: "BattleScrollBadgeForbidden"
+        }
+    }
+
+    var battleScrollTierTitle: String {
+        switch tier {
+        case .worn: "낡은 주문서"
+        case .engraved: "각인 주문서"
+        case .sealed: "봉인 주문서"
+        case .forbidden: "금서"
+        }
+    }
+
+    var battleEffectRangeTitle: String {
+        let range = effect.range
+        switch category {
+        case .attack: return "공격 \(range.lowerBound)~\(range.upperBound)"
+        case .defense: return "방벽 \(range.lowerBound)~\(range.upperBound)"
+        case .dispel: return "해제 \(range.lowerBound)~\(range.upperBound)"
+        }
+    }
+
+    var battleCategoryTitle: String {
+        switch category {
+        case .attack: return "공격"
+        case .defense: return "방어"
+        case .dispel: return "해제"
+        }
+    }
+
+    var battleDetailEffectTitle: String {
+        switch category {
+        case .attack: return "피해"
+        case .defense: return "방벽"
+        case .dispel: return "해제 횟수"
+        }
+    }
+
+    var battleDifficultyTitle: String {
+        switch glyph.difficulty {
+        case .easy: return "하"
+        case .normal: return "중"
+        case .hard: return "상"
+        }
+    }
+
+    var battleRequiredPointTitle: String {
+        guard let firstStroke = glyph.strokes.first else { return "-" }
+        let nodes = firstStroke.requiredNodes.indices.map { "N\($0 + 1)" }
+        return (["S"] + nodes + ["E"]).joined(separator: " · ")
+    }
+
+    var battleToleranceTitle: String {
+        let tolerance = glyph.strokes
+            .map { max($0.nodeRadius, $0.pathRadius) }
+            .max() ?? 0
+        return "±\(Int(tolerance.rounded()))%"
+    }
+
+    var battleDetailDescription: String {
+        switch id {
+        case .afterglowErasure:
+            return "잔류 관측광을 지워 대상에게 피해를 줍니다."
+        case .riftSeverance:
+            return "균열을 절단해 대상에게 강한 피해를 줍니다."
+        case .barrierPiercing:
+            return "일반 방벽을 관통하고 제거한 뒤 대상에게 피해를 줍니다."
+        case .basicBarrier:
+            return "봉인관에게 피해를 흡수하는 일반 방벽을 부여합니다."
+        case .sealRelease:
+            return "대상에게 적용된 절대 방벽의 충전을 해제합니다."
+        }
+    }
+}
+
+private struct BattleUIPresentation {
+    let phase: BattlePhase
+    let turnNumber: Int
+    let player: BattleUICombatantState
+    let enemy: BattleUICombatantState
+    let resources: BattleUIResourceState
+    let currentEnemyIntent: EnemyAction?
+    let activeErasureZones: [ErasureZone]
+    let castsThisTurn: [SpellID]
+    let spells: [BattleUISpellState]
+    let recentLogEntries: [String]
+
+    var selectedSpell: SpellDefinition? {
+        spells.first(where: \.isSelected)?.spell
+    }
+}
+
 struct BattleView: View {
     @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
+    @ObservedObject var realityController: RealitySceneController
+    @Binding var restartLoadingPresentation: SceneRetryLoadingPresentation?
 
     @State private var selectedSpellID: SpellID?
     @State private var enemyHitFlash = false
@@ -15,13 +207,37 @@ struct BattleView: View {
     @State private var enemyPulseTask: Task<Void, Never>?
     @State private var playerPulseTask: Task<Void, Never>?
     @State private var feedbackTask: Task<Void, Never>?
+    @State private var battleLogEntries: [String] = []
+    @State private var lastLoggedEventSequence: UInt64?
+    @State private var previewMana: Double?
+    @State private var previewStrokes: Int?
+    @State private var detailedSpell: SpellDefinition?
+    @State private var detailPressTask: Task<Void, Never>?
+    @State private var pressedSpellID: SpellID?
+    @State private var detailPressWasCancelled = false
+    @State private var isCameraLooking = false
+    @State private var isCameraZooming = false
+    @State private var cameraLookTranslationOrigin: CGSize?
+    @State private var isDefeatPanelVisible = false
+    @State private var defeatPresentationTask: Task<Void, Never>?
+    @State private var restartTask: Task<Void, Never>?
+
+    private var isRestartLoading: Bool {
+        restartLoadingPresentation != nil
+    }
 
     var body: some View {
         ZStack {
-            battleBackground
+            if realitySceneID != nil {
+                Color.black.opacity(0.2)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            } else {
+                battleBackground
+            }
 
             if let battle = gameSession.battleState {
-                battleContent(battle)
+                battleContent(presentation(for: battle))
             } else {
                 encounterStandby
             }
@@ -44,262 +260,752 @@ struct BattleView: View {
                     .allowsHitTesting(false)
             }
 
+            if let detailedSpell {
+                spellDetailOverlay(detailedSpell)
+                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                    .zIndex(20)
+            }
+
             if showsFirstTurnBriefing {
                 battleBriefing
                     .transition(.opacity)
             }
 
-            if gameSession.battleState?.phase == .defeat {
+            if gameSession.battleState?.phase == .defeat,
+               isDefeatPanelVisible {
                 defeatOverlay
+                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                    .zIndex(30)
             }
+
         }
         .task(id: gameSession.progress.currentScene) {
+            battleLogEntries = []
+            lastLoggedEventSequence = nil
+            previewMana = nil
+            previewStrokes = nil
+            detailedSpell = nil
             startEncounterIfNeeded()
+            appendBattleLog(
+                gameSession.latestEvents,
+                sequence: gameSession.eventSequence
+            )
             selectAvailableSpell()
             if shouldShowFirstTurnBriefing,
                gameSession.battleState?.turnNumber == 1 {
                 showsFirstTurnBriefing = true
             }
+            realityController.synchronizeCombatState(
+                gameSession.battleState,
+                reducedMotion: appSettings.reducedMotion
+            )
+            realityController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+            realityController.setBattleCameraInteractionEnabled(isBattleScene)
+            if isBattleScene {
+                realityController.resetBattleCamera(animated: false)
+            }
+            updateDefeatPresentation(for: gameSession.battleState?.phase)
         }
         .onChange(of: gameSession.eventSequence) { _, _ in
+            appendBattleLog(
+                gameSession.latestEvents,
+                sequence: gameSession.eventSequence
+            )
             present(gameSession.latestEvents)
             selectAvailableSpell()
             autoFinishPlayerTurnIfNeeded()
+            updateDefeatPresentation(for: gameSession.battleState?.phase)
         }
         .onDisappear {
             enemyPulseTask?.cancel()
             playerPulseTask?.cancel()
             feedbackTask?.cancel()
+            detailPressTask?.cancel()
+            defeatPresentationTask?.cancel()
+            defeatPresentationTask = nil
+            restartTask?.cancel()
+            restartTask = nil
+            isCameraLooking = false
+            isCameraZooming = false
+            cameraLookTranslationOrigin = nil
+            isDefeatPanelVisible = false
+            restartLoadingPresentation = nil
+            realityController.setBattleCameraInteractionEnabled(false)
         }
         .preferredColorScheme(.dark)
     }
 
-    private func battleContent(_ battle: BattleState) -> some View {
+    private func battleContent(_ presentation: BattleUIPresentation) -> some View {
         GeometryReader { proxy in
-            VStack(spacing: 10) {
-                combatHeader(battle)
-                    .frame(height: 54)
+            let isDefeated = presentation.phase == .defeat
+            let bottomBarHeight: CGFloat = isDefeated ? 0 : 242
+            let horizontalContentInset: CGFloat = 18
+            let contentWidth = max(0, proxy.size.width - (horizontalContentInset * 2))
+            let inputPanelWidth = min(520, max(390, contentWidth * 0.36))
+            let inputPanelHeight = min(390, max(280, inputPanelWidth * 0.76))
+            let stageHeight = proxy.size.height - bottomBarHeight
+            let inputPanelCenterY = min(
+                stageHeight * 0.55,
+                stageHeight - (inputPanelHeight / 2) - 12
+            )
 
-                enemyStage(battle)
-                    .frame(height: max(150, proxy.size.height * 0.24))
+            ZStack(alignment: .bottom) {
+                enemyStage(presentation)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.bottom, bottomBarHeight)
 
-                if let spell = selectedSpell(in: battle) {
-                    GlyphCastingPanel(
-                        spell: spell,
-                        inputPreference: appSettings.inputPreference,
-                        availableMana: battle.resources.remainingMana,
-                        availableStrokes: battle.resources.remainingStrokes,
-                        erasureZones: battle.activeErasureZones,
-                        onCast: { submission in
-                            gameSession.send(.castSpell(
-                                spell: spell.id,
-                                strokes: submission.strokes,
-                                inputMethod: submission.inputMethod
-                            ))
-                        }
+                if !isDefeated {
+                    if isBattleScene, realitySceneID != nil {
+                        battleCameraInteractionSurface(
+                            viewportSize: CGSize(
+                                width: contentWidth,
+                                height: max(stageHeight, 1)
+                            )
+                        )
+                        .frame(width: contentWidth, height: max(stageHeight, 1))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    }
+
+                    if isBattleScene,
+                       realitySceneID != nil,
+                       realityController.isBattleCameraAdjusted {
+                        battleCameraResetButton
+                            .padding(.top, 14)
+                            .padding(.trailing, 16)
+                            .frame(
+                                width: contentWidth,
+                                height: max(stageHeight, 1),
+                                alignment: .topTrailing
+                            )
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                            .transition(.opacity.combined(with: .scale(scale: 0.94)))
+                            .zIndex(4)
+                    }
+
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: Color.black.opacity(0.16), location: 0.34),
+                            .init(color: Color.black.opacity(0.68), location: 1)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
-                    .frame(maxWidth: 760, maxHeight: 380)
-                    .padding(.horizontal, 20)
-                } else {
-                    Text("시전할 수 있는 주문이 없습니다")
-                        .foregroundStyle(.secondary)
-                        .frame(maxHeight: .infinity)
-                }
+                    .frame(height: bottomBarHeight + 74)
+                    .allowsHitTesting(false)
 
-                spellBar(battle)
-                    .frame(height: 76)
+                    glyphInputPanel(presentation)
+                        .frame(width: inputPanelWidth, height: inputPanelHeight)
+                        .position(
+                            x: inputPanelX(
+                                availableWidth: contentWidth,
+                                panelWidth: inputPanelWidth
+                            ),
+                            y: inputPanelCenterY
+                        )
+
+                    spellBar(presentation)
+                        .frame(height: 218)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 12)
+                }
             }
-            .padding(.horizontal, 18)
+            .overlay {
+                Rectangle()
+                    .stroke(DAColor.gold.opacity(0.28), lineWidth: 1)
+                    .allowsHitTesting(false)
+            }
+            .padding(.horizontal, horizontalContentInset)
             .padding(.vertical, 10)
         }
     }
 
-    private func combatHeader(_ battle: BattleState) -> some View {
-        HStack(spacing: 20) {
-            vitalityBlock(
-                name: battle.player.name,
-                combatant: battle.player,
-                accent: .cyan,
-                alignment: .leading
+    private func battleCameraInteractionSurface(viewportSize: CGSize) -> some View {
+        Color.clear
+            .contentShape(Rectangle())
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 4)
+                    .onChanged { value in
+                        guard !isCameraZooming else { return }
+                        if !isCameraLooking {
+                            isCameraLooking = true
+                            cameraLookTranslationOrigin = value.translation
+                            realityController.beginBattleCameraLook()
+                        }
+                        let origin = cameraLookTranslationOrigin ?? .zero
+                        realityController.updateBattleCameraLook(
+                            translation: CGSize(
+                                width: value.translation.width - origin.width,
+                                height: value.translation.height - origin.height
+                            ),
+                            viewportSize: viewportSize
+                        )
+                    }
+                    .onEnded { _ in
+                        isCameraLooking = false
+                        cameraLookTranslationOrigin = nil
+                    }
             )
-
-            Spacer()
-
-            VStack(spacing: 3) {
-                Text("TURN \(battle.turnNumber)")
-                    .font(.caption.monospacedDigit().weight(.bold))
-                    .foregroundStyle(.secondary)
-                Text(phaseTitle(battle.phase))
-                    .font(.subheadline.weight(.semibold))
-            }
-
-            Spacer()
-
-            vitalityBlock(
-                name: battle.enemy.name,
-                combatant: battle.enemy,
-                accent: .red,
-                alignment: .trailing
+            .simultaneousGesture(
+                MagnifyGesture(minimumScaleDelta: 0.01)
+                    .onChanged { value in
+                        if !isCameraZooming {
+                            isCameraZooming = true
+                            isCameraLooking = false
+                            cameraLookTranslationOrigin = nil
+                            realityController.beginBattleCameraZoom()
+                        }
+                        realityController.updateBattleCameraZoom(
+                            magnification: value.magnification
+                        )
+                    }
+                    .onEnded { _ in
+                        isCameraZooming = false
+                    }
             )
-        }
+            .accessibilityHidden(true)
     }
 
-    private func vitalityBlock(
-        name: String,
-        combatant: CombatantState,
-        accent: Color,
-        alignment: HorizontalAlignment
-    ) -> some View {
-        VStack(alignment: alignment, spacing: 4) {
-            HStack(spacing: 8) {
-                if alignment == .trailing { barrierBadges(combatant) }
-                Text(name)
-                    .font(.subheadline.weight(.semibold))
-                    .lineLimit(1)
-                if alignment == .leading { barrierBadges(combatant) }
+    private var battleCameraResetButton: some View {
+        Button {
+            withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+                realityController.resetBattleCamera(animated: !appSettings.reducedMotion)
             }
-            ProgressView(value: Double(combatant.hp), total: Double(combatant.maxHP))
-                .tint(accent)
-                .frame(width: 260)
-            Text("\(combatant.hp) / \(combatant.maxHP)")
-                .font(.caption2.monospacedDigit())
-                .foregroundStyle(.secondary)
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: "viewfinder")
+                Text("기본 시점")
+            }
+            .font(.system(size: 13, weight: .semibold, design: .serif))
+            .foregroundStyle(DAColor.body)
+            .padding(.horizontal, 13)
+            .frame(height: 38)
+            .background(Color.black.opacity(0.76))
+            .clipShape(RoundedRectangle(cornerRadius: 5))
+            .overlay {
+                RoundedRectangle(cornerRadius: 5)
+                    .stroke(DAColor.gold.opacity(0.72), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.55), radius: 8, y: 3)
         }
-        .accessibilityElement(children: .combine)
+        .buttonStyle(.plain)
+        .accessibilityLabel("전투 카메라 기본 시점으로 복귀")
+        .accessibilityHint("블렌더에 저장된 전투 시점으로 돌아갑니다")
     }
 
     @ViewBuilder
-    private func barrierBadges(_ combatant: CombatantState) -> some View {
-        if combatant.normalBarrier > 0 {
-            Label("\(combatant.normalBarrier)", systemImage: "shield.fill")
-                .font(.caption2.monospacedDigit().weight(.bold))
-                .foregroundStyle(.cyan)
-        }
-        if combatant.absoluteBarrierCharges > 0 {
-            Label("\(combatant.absoluteBarrierCharges)", systemImage: "shield.checkered")
-                .font(.caption2.monospacedDigit().weight(.bold))
-                .foregroundStyle(.yellow)
+    private func glyphInputPanel(_ presentation: BattleUIPresentation) -> some View {
+        if let spell = presentation.selectedSpell {
+            GlyphCastingPanel(
+                spell: spell,
+                inputPreference: appSettings.inputPreference,
+                availableMana: presentation.resources.mana,
+                availableStrokes: presentation.resources.strokes,
+                erasureZones: presentation.activeErasureZones,
+                showsResourceHeader: false,
+                surfaceOpacity: 0.76,
+                usesBattleArtwork: true,
+                onResourcePreviewChanged: { mana, strokes in
+                    previewMana = mana
+                    previewStrokes = strokes
+                },
+                onCast: { submission in
+                    gameSession.send(.castSpell(
+                        spell: spell.id,
+                        strokes: submission.strokes,
+                        inputMethod: submission.inputMethod
+                    ))
+                }
+            )
+        } else {
+            Text("시전할 수 있는 주문이 없습니다")
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(DAColor.background.opacity(0.94))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
         }
     }
 
-    private func enemyStage(_ battle: BattleState) -> some View {
+    private func inputPanelX(
+        availableWidth: CGFloat,
+        panelWidth: CGFloat
+    ) -> CGFloat {
+        let edgeInset: CGFloat = 16
+        switch appSettings.drawingPadPosition {
+        case .left:
+            return (panelWidth / 2) + edgeInset
+        case .right:
+            return availableWidth - (panelWidth / 2) - edgeInset
+        }
+    }
+
+    private func enemyStage(_ presentation: BattleUIPresentation) -> some View {
         ZStack {
-            stageGrid
+            if realitySceneID == nil {
+                stageGrid
+            }
 
             VStack(spacing: 8) {
-                ZStack {
-                    Image(systemName: enemySymbol)
-                        .font(.system(size: 104, weight: .thin))
-                        .foregroundStyle(Color.purple.opacity(0.18))
-                        .offset(x: -7, y: 4)
-                    Image(systemName: enemySymbol)
-                        .font(.system(size: 104, weight: .thin))
-                        .foregroundStyle(.white.opacity(0.82))
-                        .shadow(color: .purple.opacity(0.85), radius: enemyHitFlash ? 28 : 12)
-                        .scaleEffect(enemyHitFlash ? 1.08 : 1)
-                }
-
-                if let intent = battle.currentEnemyIntent {
-                    intentLabel(intent)
+                if realitySceneID == nil {
+                    ZStack {
+                        Image(systemName: enemySymbol)
+                            .font(.system(size: 104, weight: .thin))
+                            .foregroundStyle(Color.purple.opacity(0.18))
+                            .offset(x: -7, y: 4)
+                        Image(systemName: enemySymbol)
+                            .font(.system(size: 104, weight: .thin))
+                            .foregroundStyle(.white.opacity(0.82))
+                            .shadow(color: .purple.opacity(0.85), radius: enemyHitFlash ? 28 : 12)
+                            .scaleEffect(enemyHitFlash ? 1.08 : 1)
+                    }
+                } else {
+                    Spacer(minLength: 74)
                 }
             }
         }
-        .overlay(alignment: .topLeading) {
-            Text(floorLabel)
-                .font(.caption.monospaced().weight(.bold))
-                .foregroundStyle(.secondary)
-                .padding(10)
+        .background(realitySceneID == nil ? Color.black.opacity(0.28) : Color.clear)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(DAColor.gold.opacity(0.22))
+                .frame(height: 1)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    private func spellBar(_ presentation: BattleUIPresentation) -> some View {
+        HStack(alignment: .bottom, spacing: 28) {
+            battleLogPanel(presentation)
+                .frame(width: 248, height: 176)
+
+            VStack(alignment: .leading, spacing: 8) {
+                battleResourceBar(presentation)
+                    .frame(height: 42)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(presentation.spells) { spellState in
+                            spellCard(spellState)
+                        }
+                    }
+                }
+                .frame(height: 176)
+            }
+
+            turnEndControl(presentation)
+                .frame(width: 184, height: 94, alignment: .bottomTrailing)
+        }
+    }
+
+    private func battleResourceBar(_ presentation: BattleUIPresentation) -> some View {
+        let maximumMana = max(presentation.resources.maximumMana, 1)
+        let displayedMana = previewMana ?? presentation.resources.mana
+        let displayedStrokes = previewStrokes ?? presentation.resources.strokes
+        let manaRatio = min(max(displayedMana / maximumMana, 0), 1)
+
+        return HStack(spacing: 10) {
+            Text("마나 \(Int((manaRatio * 100).rounded()))%")
+                .font(.caption.monospacedDigit().weight(.semibold))
+                .foregroundStyle(DAColor.magicGlow)
+
+            manaMeter(ratio: manaRatio)
+                .frame(minWidth: 280, idealWidth: 460, maxWidth: 560)
+                .frame(height: 18)
+
+            Text(resourceSummary(presentation, strokes: displayedStrokes))
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(DAColor.body.opacity(0.84))
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 12)
+        .background(DAColor.card.opacity(0.9))
         .overlay {
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            Rectangle()
+                .stroke(DAColor.gold.opacity(0.28), lineWidth: 1)
         }
-    }
-
-    private func intentLabel(_ intent: EnemyAction) -> some View {
-        HStack(spacing: 7) {
-            Image(systemName: intentSymbol(intent))
-            VStack(alignment: .leading, spacing: 1) {
-                Text(intent.name)
-                    .font(.caption.weight(.bold))
-                Text(intentDetail(intent))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(.black.opacity(0.7))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .foregroundStyle(intentColor(intent))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("적 의도 \(intent.name), \(intentDetail(intent))")
     }
 
-    private func spellBar(_ battle: BattleState) -> some View {
-        HStack(spacing: 10) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(availableSpells(in: battle), id: \.id) { spell in
-                        spellCard(spell, battle: battle)
+    private func manaMeter(ratio: Double) -> some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let height = proxy.size.height
+            let markerWidth: CGFloat = 3
+            let fillWidth = width * ratio
+            let markerX = min(
+                max(fillWidth - (markerWidth / 2), 0),
+                max(width - markerWidth, 0)
+            )
+
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.white.opacity(0.07))
+
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [DAColor.magic.opacity(0.72), DAColor.magicGlow],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: fillWidth)
+                    .clipShape(RoundedRectangle(cornerRadius: 2))
+
+                ForEach(1..<4, id: \.self) { division in
+                    Rectangle()
+                        .fill(Color.black.opacity(0.48))
+                        .frame(width: 2, height: height)
+                        .position(
+                            x: width * CGFloat(division) / 4,
+                            y: height / 2
+                        )
+                }
+
+                Rectangle()
+                    .fill(Color.white)
+                    .frame(width: markerWidth, height: height)
+                    .offset(x: markerX)
+                    .shadow(color: .white.opacity(0.75), radius: 2)
+
+                RoundedRectangle(cornerRadius: 2)
+                    .stroke(DAColor.gold.opacity(0.38), lineWidth: 1)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 2))
+            .animation(.easeOut(duration: 0.24), value: ratio)
+        }
+    }
+
+    private func resourceSummary(
+        _ presentation: BattleUIPresentation,
+        strokes: Int
+    ) -> String {
+        let strokeSummary = "잔여 획 \(strokes) / \(presentation.resources.maximumStrokes)"
+        guard let selectedSpell = presentation.selectedSpell else { return strokeSummary }
+        return "\(strokeSummary) · \(selectedSpell.name)"
+    }
+
+    private func turnEndControl(_ presentation: BattleUIPresentation) -> some View {
+        VStack(alignment: .trailing, spacing: 8) {
+            Text("손패 \(presentation.spells.count) · 남은 획 \(presentation.resources.strokes)")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(DAColor.secondary)
+
+            Button {
+                gameFeedback.playInterface(.confirm, settings: appSettings.settings)
+                gameSession.send(.finishTurn)
+            } label: {
+                Text("턴 종료")
+                    .font(.system(size: 18, weight: .semibold, design: .serif))
+                    .frame(width: 176, height: 60)
+            }
+            .buttonStyle(BattleTurnEndButtonStyle())
+            .disabled(presentation.phase != .playerTurn)
+            .accessibilityHint("현재 봉인관 차례를 종료합니다")
+        }
+    }
+
+    private func battleLogPanel(_ presentation: BattleUIPresentation) -> some View {
+        ZStack {
+            Image("BattleLogPanelFrame")
+                .resizable()
+                .scaledToFill()
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("전투 기록")
+                    .font(.system(size: 15, weight: .semibold, design: .serif))
+                    .foregroundStyle(DAColor.body)
+
+                Rectangle()
+                    .fill(DAColor.gold.opacity(0.32))
+                    .frame(height: 1)
+
+                ScrollViewReader { proxy in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(alignment: .leading, spacing: 6) {
+                            if presentation.recentLogEntries.isEmpty {
+                                Text("· 전투 기록 대기")
+                                    .foregroundStyle(DAColor.secondary)
+                            } else {
+                                ForEach(
+                                    Array(presentation.recentLogEntries.enumerated()),
+                                    id: \.offset
+                                ) { index, entry in
+                                    Text("· \(entry)")
+                                        .foregroundStyle(logColor(for: entry))
+                                        .lineLimit(1)
+                                        .id(index)
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .mask(alignment: .top) {
+                        VStack(spacing: 0) {
+                            LinearGradient(
+                                colors: presentation.recentLogEntries.count > 5
+                                    ? [.clear, .black]
+                                    : [.black, .black],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(height: 14)
+
+                            Color.black
+                        }
+                    }
+                    .onAppear {
+                        scrollBattleLogToLatest(presentation.recentLogEntries, proxy: proxy)
+                    }
+                    .onChange(of: presentation.recentLogEntries.count) { _, _ in
+                        scrollBattleLogToLatest(presentation.recentLogEntries, proxy: proxy)
                     }
                 }
             }
+            .font(.caption)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 18)
+        }
+        .clipped()
+        .accessibilityElement(children: .combine)
+    }
 
-            Divider()
-                .frame(height: 48)
+    private func logColor(for entry: String) -> Color {
+        if entry.contains("피해") || entry.contains("취소") || entry.contains("거부") {
+            return DAColor.attack.opacity(0.95)
+        }
+        if entry.contains("방벽") {
+            return DAColor.defense.opacity(0.95)
+        }
+        return DAColor.body.opacity(0.86)
+    }
 
-            Button {
-                gameSession.send(.finishTurn)
-            } label: {
-                Label("턴 종료", systemImage: "forward.end.fill")
-                    .frame(minWidth: 88)
+    private func spellCard(_ state: BattleUISpellState) -> some View {
+        let spell = state.spell
+
+        return ZStack {
+            Image(spell.battleCardFrameAssetName)
+                .resizable()
+                .scaledToFill()
+
+            if let overlayAssetName = state.visualState.overlayAssetName {
+                Image(overlayAssetName)
+                    .resizable()
+                    .scaledToFill()
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.gray.opacity(0.7))
-            .disabled(battle.phase != .playerTurn)
+
+            VStack(spacing: 5) {
+                Spacer(minLength: 30)
+
+                Image(spell.battleGlyphAssetName)
+                    .resizable()
+                    .scaledToFit()
+                    .blendMode(.screen)
+                    .frame(width: 76, height: 76)
+
+                Spacer(minLength: 2)
+
+                Text(spell.name)
+                    .font(.system(size: 14, weight: .semibold, design: .serif))
+                    .foregroundStyle(DAColor.body)
+                    .lineLimit(1)
+
+                Text("\(spell.battleEffectRangeTitle) · \(spell.requiredStrokes)획")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(DAColor.body.opacity(0.82))
+                    .lineLimit(1)
+
+                Spacer(minLength: 10)
+            }
+            .padding(.horizontal, 12)
+
+            VStack {
+                HStack {
+                    Spacer()
+                    Image(spell.battleScrollBadgeAssetName)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 34, height: 34)
+                        .clipShape(Circle())
+                        .overlay {
+                            Circle()
+                                .stroke(DAColor.gold.opacity(0.7), lineWidth: 1)
+                        }
+                        .accessibilityLabel(spell.battleScrollTierTitle)
+                }
+                Spacer()
+            }
+            .padding(10)
+        }
+        .frame(width: 132, height: 176)
+        .clipped()
+        .contentShape(Rectangle())
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    updateSpellCardPress(spell, translation: value.translation)
+                }
+                .onEnded { _ in
+                    finishSpellCardPress(spell, canSelect: state.canInteract)
+                }
+        )
+        .accessibilityLabel(
+            "\(spell.name), \(spell.battleScrollTierTitle), "
+                + "\(spell.battleEffectRangeTitle), \(spell.requiredStrokes)획"
+        )
+        .accessibilityHint("길게 누르면 주문 상세 정보를 표시합니다")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction {
+            if state.canInteract {
+                selectSpellFromUser(spell.id)
+            }
         }
     }
 
-    private func spellCard(_ spell: SpellDefinition, battle: BattleState) -> some View {
-        let isSelected = selectedSpellID == spell.id
-        let isAffordable = spell.requiredStrokes <= battle.resources.remainingStrokes
-        let isPermitted = isSpellPermitted(spell, battle: battle)
+    private func updateSpellCardPress(_ spell: SpellDefinition, translation: CGSize) {
+        let distance = hypot(translation.width, translation.height)
 
-        return Button {
-            selectedSpellID = spell.id
-        } label: {
-            VStack(alignment: .leading, spacing: 5) {
-                HStack {
-                    Image(systemName: spellSymbol(spell.category))
-                    Spacer()
-                    Text("\(spell.requiredStrokes)획")
-                        .font(.caption2.monospacedDigit())
-                }
-                Text(spell.name)
-                    .font(.caption.weight(.semibold))
-                    .lineLimit(1)
-                Text(categoryTitle(spell.category))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+        if distance > 24 {
+            detailPressWasCancelled = true
+            detailPressTask?.cancel()
+            if detailedSpell?.id == spell.id {
+                gameFeedback.playInterface(.back, settings: appSettings.settings)
+                detailedSpell = nil
             }
-            .padding(8)
-            .frame(width: 126, height: 64, alignment: .leading)
-            .background(isSelected ? spellColor(spell.category).opacity(0.22) : Color.white.opacity(0.05))
-            .overlay {
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(
-                        isSelected ? spellColor(spell.category) : Color.white.opacity(0.1),
-                        lineWidth: isSelected ? 2 : 1
-                    )
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            return
         }
-        .buttonStyle(.plain)
-        .disabled(!isAffordable || !isPermitted || battle.phase != .playerTurn)
-        .opacity(isAffordable && isPermitted ? 1 : 0.4)
-        .accessibilityLabel("\(spell.name), \(categoryTitle(spell.category)), \(spell.requiredStrokes)획")
+
+        guard pressedSpellID == nil else { return }
+        pressedSpellID = spell.id
+        detailPressWasCancelled = false
+        detailPressTask?.cancel()
+        detailPressTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 450_000_000)
+            guard !Task.isCancelled,
+                  pressedSpellID == spell.id,
+                  !detailPressWasCancelled else { return }
+            gameFeedback.trigger(
+                .recordOpened,
+                settings: appSettings.settings,
+                includesHaptic: false
+            )
+            withAnimation(.easeOut(duration: 0.16)) {
+                detailedSpell = spell
+            }
+        }
+    }
+
+    private func finishSpellCardPress(_ spell: SpellDefinition, canSelect: Bool) {
+        let showedDetails = detailedSpell?.id == spell.id
+        let shouldSelect = !showedDetails && !detailPressWasCancelled && canSelect
+
+        detailPressTask?.cancel()
+        detailPressTask = nil
+        pressedSpellID = nil
+        detailPressWasCancelled = false
+
+        if showedDetails {
+            gameFeedback.playInterface(.back, settings: appSettings.settings)
+            withAnimation(.easeOut(duration: 0.14)) {
+                detailedSpell = nil
+            }
+        } else if shouldSelect {
+            selectSpellFromUser(spell.id)
+        }
+    }
+
+    private func selectSpellFromUser(_ spellID: SpellID) {
+        gameFeedback.playInterface(.select, settings: appSettings.settings)
+        selectedSpellID = spellID
+    }
+
+    private func spellDetailOverlay(_ spell: SpellDefinition) -> some View {
+        GeometryReader { proxy in
+            let panelWidth = min(760, proxy.size.width * 0.58)
+            let panelHeight = panelWidth * 0.75
+            let effectRange = spell.effect.range
+
+            ZStack {
+                Color.black.opacity(0.42)
+                    .ignoresSafeArea()
+
+                ZStack {
+                    Image("BattleSpellDetailPanel")
+                        .resizable()
+                        .scaledToFit()
+
+                    HStack(alignment: .firstTextBaseline, spacing: 16) {
+                        Text(spell.name)
+                            .font(.system(size: 26, weight: .semibold, design: .serif))
+                            .foregroundStyle(DAColor.body)
+                            .fixedSize(horizontal: true, vertical: false)
+
+                        Text("\(spell.battleCategoryTitle) 주문 · \(spell.battleScrollTierTitle) · \(spell.requiredStrokes)획")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(DAColor.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+
+                        Spacer(minLength: 0)
+                    }
+                    .frame(width: panelWidth * 0.86, height: panelHeight * 0.12, alignment: .leading)
+                    .position(x: panelWidth * 0.50, y: panelHeight * 0.135)
+
+                    Image(spell.battleGlyphAssetName)
+                        .resizable()
+                        .scaledToFit()
+                        .blendMode(.screen)
+                        .frame(width: panelWidth * 0.20, height: panelHeight * 0.25)
+                        .position(x: panelWidth * 0.228, y: panelHeight * 0.46)
+
+                    VStack(spacing: 0) {
+                        spellDetailRow(
+                            spell.battleDetailEffectTitle,
+                            "\(effectRange.lowerBound)~\(effectRange.upperBound)"
+                        )
+                        spellDetailRow("소모 마나", "\(Int(spell.recommendedMana.rounded()))%")
+                        spellDetailRow("필요 획", "\(spell.requiredStrokes)")
+                        spellDetailRow("구현 난이도", spell.battleDifficultyTitle)
+                        spellDetailRow("필수 핵심점", spell.battleRequiredPointTitle)
+                        spellDetailRow("허용 오차", spell.battleToleranceTitle)
+                    }
+                    .frame(width: panelWidth * 0.50, height: panelHeight * 0.35)
+                    .position(x: panelWidth * 0.66, y: panelHeight * 0.465)
+
+                    Text(spell.battleDetailDescription)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(DAColor.body.opacity(0.9))
+                        .frame(width: panelWidth * 0.86, height: panelHeight * 0.08, alignment: .leading)
+                        .position(x: panelWidth * 0.50, y: panelHeight * 0.77)
+
+                    Text("누르는 동안 상세 표시 · 손을 떼면 닫힘")
+                        .font(.caption)
+                        .foregroundStyle(DAColor.secondary.opacity(0.86))
+                        .frame(width: panelWidth * 0.82, alignment: .trailing)
+                        .position(x: panelWidth * 0.50, y: panelHeight * 0.85)
+                }
+                .frame(width: panelWidth, height: panelHeight)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(spell.name) 주문 상세 정보")
+    }
+
+    private func spellDetailRow(_ title: String, _ value: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(title)
+                .foregroundStyle(DAColor.secondary)
+            Spacer(minLength: 8)
+            Text(value)
+                .foregroundStyle(DAColor.body)
+                .multilineTextAlignment(.trailing)
+                .lineLimit(2)
+                .minimumScaleFactor(0.72)
+        }
+        .font(.system(size: 15, weight: .medium).monospacedDigit())
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 4)
+        .offset(y: -14)
     }
 
     private var encounterStandby: some View {
@@ -308,6 +1014,7 @@ struct BattleView: View {
             Text("층 관리자 전투 절차를 준비 중입니다")
                 .font(.headline)
             Button("전투 시작") {
+                gameFeedback.playInterface(.confirm, settings: appSettings.settings)
                 startEncounterIfNeeded()
             }
             .buttonStyle(.borderedProminent)
@@ -317,14 +1024,112 @@ struct BattleView: View {
     private var battleBackground: some View {
         LinearGradient(
             colors: [
-                Color(red: 0.025, green: 0.03, blue: 0.04),
-                Color(red: 0.07, green: 0.035, blue: 0.075),
+                DAColor.background,
+                DAColor.panel,
                 Color.black
             ],
             startPoint: .top,
             endPoint: .bottom
         )
         .ignoresSafeArea()
+    }
+
+    private func presentation(for battle: BattleState) -> BattleUIPresentation {
+        let spellStates = availableSpells(in: battle).map { spell in
+            let isAffordable = spell.requiredStrokes <= battle.resources.remainingStrokes
+            let isPermitted = isSpellPermitted(spell, battle: battle)
+            return BattleUISpellState(
+                spell: spell,
+                isSelected: selectedSpellID == spell.id,
+                isAffordable: isAffordable,
+                isPermitted: isPermitted,
+                canInteract: battle.phase == .playerTurn && isAffordable && isPermitted
+            )
+        }
+
+        return BattleUIPresentation(
+            phase: battle.phase,
+            turnNumber: battle.turnNumber,
+            player: BattleUICombatantState(battle.player),
+            enemy: BattleUICombatantState(battle.enemy),
+            resources: BattleUIResourceState(
+                mana: battle.resources.remainingMana,
+                maximumMana: battle.resources.maximumMana,
+                strokes: battle.resources.remainingStrokes,
+                maximumStrokes: battle.resources.maximumStrokes
+            ),
+            currentEnemyIntent: battle.currentEnemyIntent,
+            activeErasureZones: battle.activeErasureZones,
+            castsThisTurn: battle.castsThisTurn,
+            spells: spellStates,
+            recentLogEntries: battleLogEntries
+        )
+    }
+
+    private func appendBattleLog(_ events: [DemoSessionEvent], sequence: UInt64) {
+        guard lastLoggedEventSequence != sequence else { return }
+        lastLoggedEventSequence = sequence
+
+        let beginsNewBattle = events.contains { event in
+            guard case let .combat(combatEvent) = event else { return false }
+            guard case .battleStarted = combatEvent else { return false }
+            return true
+        }
+        if beginsNewBattle {
+            battleLogEntries.removeAll(keepingCapacity: true)
+        }
+
+        let newEntries = events.compactMap(combatLogEntry)
+        guard !newEntries.isEmpty else { return }
+
+        battleLogEntries.append(contentsOf: newEntries)
+        if battleLogEntries.count > 50 {
+            battleLogEntries.removeFirst(battleLogEntries.count - 50)
+        }
+    }
+
+    private func scrollBattleLogToLatest(
+        _ entries: [String],
+        proxy: ScrollViewProxy
+    ) {
+        guard let lastIndex = entries.indices.last else { return }
+        withAnimation(.easeOut(duration: 0.2)) {
+            proxy.scrollTo(lastIndex, anchor: .bottom)
+        }
+    }
+
+    private func combatLogEntry(for event: DemoSessionEvent) -> String? {
+        guard case let .combat(event) = event else { return nil }
+        switch event {
+        case let .turnStarted(number, intent):
+            return "TURN \(number) · \(intent.name) 예고"
+        case let .spellResolved(spell, grade):
+            return "\(SpellCatalog.spell(spell).name) · \(gradeTitle(grade))"
+        case let .spellRejected(spell, reason):
+            return "\(SpellCatalog.spell(spell).name) · \(failureTitle(reason))"
+        case let .resourcesChanged(mana, strokes):
+            return "마나 \(Int(mana.rounded())) · 남은 획 \(strokes)"
+        case let .damageApplied(target, amount, _):
+            return target == .player ? "플레이어 피해 \(amount)" : "관리자 피해 \(amount)"
+        case let .normalBarrierChanged(target, amount):
+            return target == .player ? "플레이어 방벽 \(amount)" : "관리자 방벽 \(amount)"
+        case let .absoluteBarrierChanged(_, charges):
+            return "절대 방벽 \(charges)회"
+        case .attackNegatedByAbsoluteBarrier:
+            return "절대 방벽으로 공격 무효화"
+        case .erasureZoneAdded:
+            return "말소 구역 발생"
+        case let .enemyActionStarted(action):
+            return "관리자 행동 · \(action.name)"
+        case .enemyActionCancelled:
+            return "관리자 행동 취소"
+        case .battleStarted:
+            return "전투 개시"
+        case .victory:
+            return "관리자 무력화"
+        case .defeat:
+            return "하강 봉인 절차 중단"
+        }
     }
 
     private var stageGrid: some View {
@@ -391,13 +1196,6 @@ struct BattleView: View {
         gameSession.send(.finishTurn)
     }
 
-    private func selectedSpell(in battle: BattleState) -> SpellDefinition? {
-        guard let selectedSpellID, battle.learnedSpells.contains(selectedSpellID) else {
-            return nil
-        }
-        return SpellCatalog.spell(selectedSpellID)
-    }
-
     private func availableSpells(in battle: BattleState) -> [SpellDefinition] {
         SpellID.allCases
             .filter(battle.learnedSpells.contains)
@@ -405,8 +1203,14 @@ struct BattleView: View {
     }
 
     private func present(_ events: [DemoSessionEvent]) {
+        realityController.presentCombat(
+            events: events,
+            battleState: gameSession.battleState,
+            reducedMotion: appSettings.reducedMotion
+        )
         var enemyWasHit = false
         var playerWasHit = false
+        var playerBarrierWasHit = false
         var strongAttack = false
         var banner: (String, Color)?
 
@@ -428,7 +1232,9 @@ struct BattleView: View {
                 banner = ("절대 방벽으로 무효화", .yellow)
                 didExperienceAbsoluteBarrier = true
             case let .normalBarrierChanged(target, amount):
-                if case .enemy = target, amount > 0 {
+                if case .player = target {
+                    playerBarrierWasHit = true
+                } else if case .enemy = target, amount > 0 {
                     banner = ("문서 방벽 전개", .cyan)
                 }
             case .erasureZoneAdded:
@@ -444,6 +1250,12 @@ struct BattleView: View {
 
         if enemyWasHit { pulseEnemy() }
         if playerWasHit { pulsePlayer(strong: strongAttack) }
+        if strongAttack, playerWasHit || playerBarrierWasHit {
+            realityController.playStrongAttackCameraImpact(
+                guarded: playerBarrierWasHit && !playerWasHit,
+                reducedMotion: appSettings.reducedMotion
+            )
+        }
         if let banner { showFeedback(banner.0, color: banner.1) }
     }
 
@@ -506,6 +1318,10 @@ struct BattleView: View {
         }
     }
 
+    private var realitySceneID: FloorSceneID? {
+        gameSession.presentation.floorSceneID
+    }
+
     private var isRecordsBattle: Bool {
         gameSession.progress.currentScene == .floor9RecordsBattle
     }
@@ -560,6 +1376,7 @@ struct BattleView: View {
                 )
 
                 Button("전투 시작") {
+                    gameFeedback.playInterface(.confirm, settings: appSettings.settings)
                     withAnimation(.easeOut(duration: 0.2)) {
                         showsFirstTurnBriefing = false
                     }
@@ -595,25 +1412,247 @@ struct BattleView: View {
     }
 
     private var defeatOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.76)
-                .ignoresSafeArea()
-            VStack(spacing: 14) {
-                Image(systemName: "exclamationmark.octagon.fill")
-                    .font(.largeTitle)
-                    .foregroundStyle(.red)
-                Text("하강 봉인 절차 중단")
-                    .font(.title2.weight(.semibold))
-                Text("전투 진입 직전 상태에서 다시 시작합니다.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Button("전투 재시작") {
-                    gameSession.send(.restartEncounter)
+        GeometryReader { proxy in
+            let panelWidth = min(760, proxy.size.width * 0.58)
+            let panelHeight = panelWidth * (2.0 / 3.0)
+            let retryButtonWidth = panelWidth * 0.7
+            let retryButtonHeight = panelHeight * 0.19
+            let retryIconCenterXRatio = 326.5 / 1_774.0
+            let retryLabelCenterXRatio = (0.24 + 0.96) / 2.0
+
+            ZStack {
+                Color.black.opacity(0.68)
+                    .ignoresSafeArea()
+
+                ZStack {
+                    Image("BattleDefeatPanel")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: panelWidth, height: panelHeight)
+
+                    Image("BattleDefeatSeal")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: panelWidth * 0.37, height: panelWidth * 0.37)
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.085
+                        )
+                        .shadow(color: .black.opacity(0.66), radius: 12, y: 6)
+
+                    Image("BattleDefeatTitle")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: panelWidth * 0.64, height: panelHeight * 0.13)
+                        .clipped()
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.345
+                        )
+
+                    Rectangle()
+                        .fill(DAColor.gold.opacity(0.42))
+                        .frame(width: panelWidth * 0.67, height: 1)
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.43
+                        )
+
+                    Text("생체 반응이 한계치 아래로 감소했습니다.")
+                        .font(.system(size: 17, weight: .semibold, design: .serif))
+                        .foregroundStyle(DAColor.attack)
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.495
+                        )
+
+                    Text("전투 진입 직전의 기록으로 복원하여 다시 시작합니다.")
+                        .font(.system(size: 14, weight: .medium, design: .serif))
+                        .foregroundStyle(DAColor.body.opacity(0.86))
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.56
+                        )
+
+                    Button {
+                        restartDefeatedBattle()
+                    } label: {
+                        ZStack {
+                            Image("BattleDefeatRetryButton")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(
+                                    width: retryButtonWidth,
+                                    height: retryButtonHeight
+                                )
+                                .clipped()
+
+                            Image("BattleDefeatRetryIcon")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 56, height: 56)
+                                .position(
+                                    x: retryButtonWidth * retryIconCenterXRatio,
+                                    y: retryButtonHeight * 0.5
+                                )
+
+                            Text("전투 재시작")
+                                .font(.system(size: 24, weight: .semibold, design: .serif))
+                                .foregroundStyle(DAColor.body)
+                                .position(
+                                    x: retryButtonWidth * retryLabelCenterXRatio - 15,
+                                    y: retryButtonHeight * 0.5
+                                )
+                        }
+                        .frame(width: retryButtonWidth, height: retryButtonHeight)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("전투 재시작")
+                    .accessibilityHint("전투 진입 직전 상태로 복원합니다")
+                    .position(
+                        x: panelWidth * 0.5,
+                        y: panelHeight * 0.73
+                    )
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
+                .frame(width: panelWidth, height: panelHeight)
+                .shadow(color: .black.opacity(0.78), radius: 22, y: 10)
             }
         }
+    }
+
+    private func updateDefeatPresentation(for phase: BattlePhase?) {
+        guard phase == .defeat else {
+            let wasPresentingDefeat = defeatPresentationTask != nil || isDefeatPanelVisible
+            defeatPresentationTask?.cancel()
+            defeatPresentationTask = nil
+            if isDefeatPanelVisible {
+                withAnimation(.easeOut(duration: 0.16)) {
+                    isDefeatPanelVisible = false
+                }
+            }
+            if wasPresentingDefeat,
+               isBattleScene,
+               !isRestartLoading {
+                realityController.resetBattleCamera(animated: false)
+                realityController.setBattleCameraInteractionEnabled(true)
+            }
+            return
+        }
+
+        guard defeatPresentationTask == nil,
+              !isDefeatPanelVisible else { return }
+
+        enemyPulseTask?.cancel()
+        playerPulseTask?.cancel()
+        feedbackTask?.cancel()
+        detailPressTask?.cancel()
+        clearTransientBattleEffects()
+        detailedSpell = nil
+        feedbackText = nil
+        showsFirstTurnBriefing = false
+        isCameraLooking = false
+        isCameraZooming = false
+        cameraLookTranslationOrigin = nil
+        realityController.setBattleCameraInteractionEnabled(false)
+
+        defeatPresentationTask = Task { @MainActor in
+            defer { defeatPresentationTask = nil }
+            await realityController.playBattleDefeatCamera(
+                reducedMotion: appSettings.reducedMotion
+            )
+            guard !Task.isCancelled,
+                  gameSession.battleState?.phase == .defeat else { return }
+            withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.24)) {
+                isDefeatPanelVisible = true
+            }
+        }
+    }
+
+    private var restartLoadingContext: LoadingScreenContext {
+        guard let realitySceneID else { return .floor9 }
+        return LoadingScreenContext(sceneID: realitySceneID)
+    }
+
+    private func restartDefeatedBattle() {
+        guard !isRestartLoading else { return }
+        gameFeedback.playInterface(.confirm, settings: appSettings.settings)
+
+        defeatPresentationTask?.cancel()
+        defeatPresentationTask = nil
+        restartTask?.cancel()
+        clearTransientBattleEffects()
+        let loadingContext = restartLoadingContext
+        let loadingTip = LoadingTipCatalog.randomTip(for: loadingContext)
+        realityController.setBattleCameraInteractionEnabled(false)
+
+        withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+            isDefeatPanelVisible = false
+            restartLoadingPresentation = SceneRetryLoadingPresentation(
+                context: loadingContext,
+                progress: 0.08,
+                tip: loadingTip
+            )
+        }
+
+        restartTask = Task { @MainActor in
+            defer { restartTask = nil }
+
+            guard await waitForRestartStep(milliseconds: 180) else { return }
+            restartLoadingPresentation?.progress = 0.34
+
+            gameSession.send(.restartEncounter)
+            guard gameSession.battleState?.phase != .defeat else {
+                restoreDefeatPanelAfterRestartFailure()
+                return
+            }
+
+            battleLogEntries.removeAll(keepingCapacity: true)
+            clearTransientBattleEffects()
+            previewMana = nil
+            previewStrokes = nil
+            detailedSpell = nil
+            selectedSpellID = nil
+            realityController.resetBattleCamera(animated: false)
+            realityController.synchronizeCombatState(
+                gameSession.battleState,
+                reducedMotion: appSettings.reducedMotion
+            )
+            restartLoadingPresentation?.progress = 0.82
+
+            guard await waitForRestartStep(milliseconds: 420) else { return }
+            selectAvailableSpell()
+            restartLoadingPresentation?.progress = 1
+
+            guard await waitForRestartStep(milliseconds: 180) else { return }
+            realityController.setBattleCameraInteractionEnabled(isBattleScene)
+            withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.2)) {
+                restartLoadingPresentation = nil
+            }
+        }
+    }
+
+    private func waitForRestartStep(milliseconds: Int) async -> Bool {
+        guard !appSettings.reducedMotion else { return !Task.isCancelled }
+        do {
+            try await Task.sleep(for: .milliseconds(milliseconds))
+            return !Task.isCancelled
+        } catch {
+            return false
+        }
+    }
+
+    private func restoreDefeatPanelAfterRestartFailure() {
+        withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+            restartLoadingPresentation = nil
+            isDefeatPanelVisible = true
+        }
+    }
+
+    private func clearTransientBattleEffects() {
+        enemyHitFlash = false
+        playerHitFlash = false
+        strongAttackFlash = false
     }
 
     private var residualBriefing: some View {
@@ -656,6 +1695,7 @@ struct BattleView: View {
                     briefingRow(icon: row.0, title: row.1, detail: row.2)
                 }
                 Button("전투 시작") {
+                    gameFeedback.playInterface(.confirm, settings: appSettings.settings)
                     withAnimation(.easeOut(duration: 0.2)) {
                         showsFirstTurnBriefing = false
                     }
@@ -683,55 +1723,11 @@ struct BattleView: View {
         return true
     }
 
-    private var floorLabel: String {
-        "B\(gameSession.progress.currentFloor.rawValue) · 하강 봉인 절차"
-    }
-
     private var enemySymbol: String {
         switch gameSession.progress.currentScene {
         case .floor8ResidualBattle: "eye.trianglebadge.exclamationmark"
         case .floor8AdministratorBattle: "eye.circle.fill"
         default: "person.text.rectangle.fill"
-        }
-    }
-
-    private func phaseTitle(_ phase: BattlePhase) -> String {
-        switch phase {
-        case .preparing: "절차 준비"
-        case .playerTurn: "봉인관 차례"
-        case .resolvingPlayerSpell: "주문 해석"
-        case .resolvingEnemyAction: "관리자 차례"
-        case .victory: "관리자 무력화"
-        case .defeat: "절차 중단"
-        }
-    }
-
-    private func intentSymbol(_ action: EnemyAction) -> String {
-        switch action {
-        case .attack(_, _, true): "exclamationmark.triangle.fill"
-        case .attack: "burst.fill"
-        case .grantNormalBarrier: "shield.fill"
-        case .grantAbsoluteBarrier: "shield.checkered"
-        case .telegraph: "scope"
-        }
-    }
-
-    private func intentDetail(_ action: EnemyAction) -> String {
-        switch action {
-        case let .attack(_, damage, isStrong): isStrong ? "강공격 · 피해 \(damage)" : "공격 · 피해 \(damage)"
-        case let .grantNormalBarrier(_, amount): "일반 방벽 \(amount)"
-        case let .grantAbsoluteBarrier(_, charges): "절대 방벽 \(charges)회"
-        case let .telegraph(_, upcoming): "다음 행동: \(upcoming)"
-        }
-    }
-
-    private func intentColor(_ action: EnemyAction) -> Color {
-        switch action {
-        case .attack(_, _, true): .red
-        case .attack: .orange
-        case .grantNormalBarrier: .cyan
-        case .grantAbsoluteBarrier: .yellow
-        case .telegraph: .purple
         }
     }
 
@@ -745,9 +1741,9 @@ struct BattleView: View {
 
     private func spellColor(_ category: SpellCategory) -> Color {
         switch category {
-        case .attack: Color(red: 0.86, green: 0.2, blue: 0.38)
-        case .defense: Color(red: 0.2, green: 0.72, blue: 0.92)
-        case .dispel: Color(red: 0.94, green: 0.68, blue: 0.18)
+        case .attack: DAColor.attack
+        case .defense: DAColor.defense
+        case .dispel: DAColor.dispel
         }
     }
 

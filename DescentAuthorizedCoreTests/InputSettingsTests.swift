@@ -5,6 +5,7 @@ import XCTest
 final class InputSettingsTests: XCTestCase {
     func testDefaultSettingsUseAutomaticInput() {
         XCTAssertEqual(GameSettings.defaults.inputPreference, .automatic)
+        XCTAssertEqual(GameSettings.defaults.drawingPadPosition, .left)
         XCTAssertEqual(GameSettings.defaults.saveVersion, GameSettings.currentVersion)
         XCTAssertTrue(GameSettings.defaults.soundEffectsEnabled)
         XCTAssertTrue(GameSettings.defaults.musicEnabled)
@@ -95,6 +96,7 @@ final class InputSettingsTests: XCTestCase {
 
         XCTAssertEqual(decoded.saveVersion, 1)
         XCTAssertEqual(decoded.inputPreference, .fingerOnly)
+        XCTAssertEqual(decoded.drawingPadPosition, .left)
         XCTAssertTrue(decoded.soundEffectsEnabled)
         XCTAssertTrue(decoded.musicEnabled)
         XCTAssertTrue(decoded.hapticsEnabled)
@@ -128,6 +130,16 @@ final class InputSettingsTests: XCTestCase {
 
         XCTAssertEqual(manager.settings.inputPreference, .fingerOnly)
         XCTAssertEqual(store.load().inputPreference, .fingerOnly)
+    }
+
+    func testSettingsManagerPersistsDrawingPadPosition() throws {
+        let store = InMemoryGameSettingsStore()
+        var manager = GameSettingsManager(store: store)
+
+        try manager.setDrawingPadPosition(.right)
+
+        XCTAssertEqual(manager.settings.drawingPadPosition, .right)
+        XCTAssertEqual(store.load().drawingPadPosition, .right)
     }
 
     func testSettingsManagerPersistsFeedbackAndAccessibilityOptions() throws {

@@ -7,11 +7,18 @@ struct GlyphCastSubmission {
 }
 
 struct GlyphCastingPanel: View {
+    @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
+
     let spell: SpellDefinition
     let inputPreference: DrawingInputPreference
     let availableMana: Double
     let availableStrokes: Int
     let erasureZones: [ErasureZone]
+    let showsResourceHeader: Bool
+    let surfaceOpacity: Double
+    let usesBattleArtwork: Bool
+    let onResourcePreviewChanged: ((Double, Int) -> Void)?
     let onCast: (GlyphCastSubmission) -> Void
 
     @State private var drawingState = RuneDrawingState.empty
@@ -20,14 +27,52 @@ struct GlyphCastingPanel: View {
     @State private var feedback: CastingEvaluation?
     @State private var rejectionMessage: String?
     @State private var canvasController = RuneDrawingCanvasController()
+    @State private var resetAfterCastTask: Task<Void, Never>?
 
     private let manaEstimator = GlyphManaEstimator()
 
+    init(
+        spell: SpellDefinition,
+        inputPreference: DrawingInputPreference,
+        availableMana: Double,
+        availableStrokes: Int,
+        erasureZones: [ErasureZone],
+        showsResourceHeader: Bool = true,
+        surfaceOpacity: Double = 1,
+        usesBattleArtwork: Bool = false,
+        onResourcePreviewChanged: ((Double, Int) -> Void)? = nil,
+        onCast: @escaping (GlyphCastSubmission) -> Void
+    ) {
+        self.spell = spell
+        self.inputPreference = inputPreference
+        self.availableMana = availableMana
+        self.availableStrokes = availableStrokes
+        self.erasureZones = erasureZones
+        self.showsResourceHeader = showsResourceHeader
+        self.surfaceOpacity = surfaceOpacity
+        self.usesBattleArtwork = usesBattleArtwork
+        self.onResourcePreviewChanged = onResourcePreviewChanged
+        self.onCast = onCast
+    }
+
     var body: some View {
-        VStack(spacing: 12) {
-            resourceHeader
-            drawingSurface
-            actionBar
+        Group {
+            if usesBattleArtwork {
+                battleArtworkPanel
+            } else {
+                VStack(spacing: 12) {
+                    if showsResourceHeader {
+                        resourceHeader
+                    }
+                    drawingSurface
+                    actionBar
+                }
+            }
+        }
+        .onAppear { publishResourcePreview(for: drawingState) }
+        .onDisappear {
+            resetAfterCastTask?.cancel()
+            onResourcePreviewChanged?(availableMana, availableStrokes)
         }
         .onChange(of: spell.id) { _, _ in resetDrawing() }
         .onChange(of: availableMana) { _, _ in resetDrawing() }
@@ -64,8 +109,45 @@ struct GlyphCastingPanel: View {
     private var drawingSurface: some View {
         ZStack {
             Color(red: 0.025, green: 0.03, blue: 0.045)
+                .opacity(surfaceOpacity)
             grid
+            canvasContent
+        }
+        .aspectRatio(1.62, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .overlay {
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(categoryColor.opacity(0.35), lineWidth: 1)
+        }
+        .accessibilityElement(children: .contain)
+    }
 
+    private var battleArtworkPanel: some View {
+        GeometryReader { proxy in
+            let size = proxy.size
+
+            ZStack {
+                Image("BattleGlyphInputFrame")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: size.width, height: size.height)
+                    .allowsHitTesting(false)
+
+                canvasContent
+                    .frame(width: size.width * 0.89, height: size.height * 0.63)
+                    .position(x: size.width * 0.5, y: size.height * 0.36)
+
+                battleArtworkActionBar
+                    .frame(width: size.width * 0.86, height: size.height * 0.18)
+                    .position(x: size.width * 0.5, y: size.height * 0.868)
+            }
+        }
+        .aspectRatio(1331 / 994, contentMode: .fit)
+        .accessibilityElement(children: .contain)
+    }
+
+    private var canvasContent: some View {
+        ZStack {
             RuneDrawingCanvas(
                 inputPreference: inputPreference,
                 maximumStrokeCount: spell.requiredStrokes,
@@ -79,6 +161,7 @@ struct GlyphCastingPanel: View {
                 onDrawingChanged: updateDrawing,
                 onInputRejected: handleInputRejection
             )
+            .allowsHitTesting(feedback == nil)
 
             if let result = feedback {
                 resultOverlay(result)
@@ -93,13 +176,57 @@ struct GlyphCastingPanel: View {
                     .allowsHitTesting(false)
             }
         }
-        .aspectRatio(1.62, contentMode: .fit)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .overlay {
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(categoryColor.opacity(0.35), lineWidth: 1)
+    }
+
+    private var battleArtworkActionBar: some View {
+        GeometryReader { proxy in
+            let size = proxy.size
+
+            Button {
+                gameFeedback.playInterface(.back, settings: appSettings.settings)
+                canvasController.undoLastStroke()
+                feedback = nil
+            } label: {
+                Image("BattleGlyphUndoButton")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: size.width * 0.25, height: size.height)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .opacity(completedStrokes.isEmpty || feedback != nil ? 0.42 : 1)
+            .help("마지막 획 취소")
+            .accessibilityLabel("마지막 획 취소")
+            .disabled(completedStrokes.isEmpty || feedback != nil)
+            .position(x: size.width * 0.22, y: size.height * 0.5)
+
+            Rectangle()
+                .fill(DAColor.gold.opacity(0.58))
+                .frame(width: 1, height: size.height * 0.62)
+                .position(x: size.width * 0.42, y: size.height * 0.5)
+                .allowsHitTesting(false)
+
+            Button {
+                cast()
+            } label: {
+                ZStack {
+                    Image("BattleGlyphCastButton")
+                        .resizable()
+                        .scaledToFit()
+                    Text("시전")
+                        .font(.system(size: 20, weight: .semibold, design: .serif))
+                        .foregroundStyle(Color.white.opacity(0.94))
+                        .shadow(color: .black.opacity(0.8), radius: 2, y: 1)
+                }
+                .frame(width: size.width * 0.44, height: size.height)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .opacity(!canCast || feedback != nil ? 0.42 : 1)
+            .accessibilityLabel("시전")
+            .disabled(!canCast || feedback != nil)
+            .position(x: size.width * 0.7, y: size.height * 0.5)
         }
-        .accessibilityElement(children: .contain)
     }
 
     private var actionBar: some View {
@@ -107,7 +234,7 @@ struct GlyphCastingPanel: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(spell.name)
                     .font(.headline)
-                Text("\(categoryTitle) · \(spell.requiredStrokes)획")
+                Text("\(effectRangeTitle) · \(spell.requiredStrokes)획")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -115,6 +242,7 @@ struct GlyphCastingPanel: View {
             Spacer()
 
             Button {
+                gameFeedback.playInterface(.back, settings: appSettings.settings)
                 canvasController.undoLastStroke()
                 feedback = nil
             } label: {
@@ -123,24 +251,14 @@ struct GlyphCastingPanel: View {
             .buttonStyle(.bordered)
             .help("마지막 획 취소")
             .accessibilityLabel("마지막 획 취소")
-            .disabled(completedStrokes.isEmpty)
-
-            Button {
-                resetDrawing()
-            } label: {
-                Image(systemName: "trash")
-            }
-            .buttonStyle(.bordered)
-            .help("마법진 지우기")
-            .accessibilityLabel("마법진 지우기")
-            .disabled(drawingState.previewStrokes.isEmpty)
+            .disabled(completedStrokes.isEmpty || feedback != nil)
 
             Button("시전") {
                 cast()
             }
             .buttonStyle(.borderedProminent)
             .tint(categoryColor)
-            .disabled(!canCast)
+            .disabled(!canCast || feedback != nil)
         }
     }
 
@@ -223,13 +341,20 @@ struct GlyphCastingPanel: View {
         }
     }
 
+    private var effectRangeTitle: String {
+        let range = spell.effect.range
+        return "\(categoryTitle) \(range.lowerBound)~\(range.upperBound)"
+    }
+
     private func updateDrawing(_ state: RuneDrawingState) {
         drawingState = state
         feedback = nil
         rejectionMessage = nil
+        publishResourcePreview(for: state)
     }
 
     private func handleInputRejection(_ error: StrokeCaptureError) {
+        gameFeedback.playInterface(.error, settings: appSettings.settings)
         switch error {
         case .inputRejected:
             rejectionMessage = "설정에서 허용한 입력 도구를 사용해 주세요"
@@ -244,6 +369,7 @@ struct GlyphCastingPanel: View {
 
     private func cast() {
         guard let method = lastInputMethod else { return }
+        gameFeedback.playInterface(.confirm, settings: appSettings.settings)
         let evaluation = GlyphEvaluator(maximumMana: availableMana).evaluate(
             spell: spell,
             strokes: completedStrokes,
@@ -256,15 +382,45 @@ struct GlyphCastingPanel: View {
             inputMethod: method,
             evaluation: evaluation
         ))
+        scheduleResetAfterCast()
+    }
+
+    private func scheduleResetAfterCast() {
+        resetAfterCastTask?.cancel()
+        resetAfterCastTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(900))
+            guard !Task.isCancelled else { return }
+            resetAfterCastTask = nil
+            clearDrawingState()
+        }
     }
 
     private func resetDrawing() {
+        resetAfterCastTask?.cancel()
+        resetAfterCastTask = nil
+        clearDrawingState()
+    }
+
+    private func clearDrawingState() {
         canvasController.clear()
         drawingState = .empty
         completedStrokes = []
         lastInputMethod = nil
         feedback = nil
         rejectionMessage = nil
+        onResourcePreviewChanged?(availableMana, availableStrokes)
+    }
+
+    private func publishResourcePreview(for state: RuneDrawingState) {
+        let estimate = manaEstimator.estimate(
+            spell: spell,
+            strokes: state.previewStrokes,
+            erasureZones: erasureZones
+        )
+        onResourcePreviewChanged?(
+            max(0, availableMana - estimate.total),
+            availableStrokes - state.previewStrokes.count
+        )
     }
 
     private func gradeTitle(_ grade: CastingGrade) -> String {

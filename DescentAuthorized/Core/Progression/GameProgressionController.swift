@@ -147,7 +147,20 @@ struct GameProgressionController: Sendable {
         progress.tutorials.formUnion([.mana, .strokeCount, .enemyIntent, .hp])
         return [
             .checkpointChanged(.recordsBattle),
-            .sceneChanged(setScene(.floor9RecordsBattle))
+            .sceneChanged(setScene(.floor9RecordsEncounter))
+        ]
+    }
+
+    mutating func beginRecordsBattle() throws -> [ProgressionEvent] {
+        try requireScene(.floor9RecordsEncounter)
+        return [.sceneChanged(setScene(.floor9RecordsBattle))]
+    }
+
+    mutating func continueAfterRecordsDefeat() throws -> [ProgressionEvent] {
+        try requireScene(.floor9RecordsDefeated)
+        return [
+            .sceneChanged(setScene(.floor9RewardVault)),
+            .rewardCandidates(RewardCatalog.candidates(for: .floor9))
         ]
     }
 
@@ -180,8 +193,18 @@ struct GameProgressionController: Sendable {
             .trainingCompleted(spell: .basicBarrier, grade: grade),
             updateMastery(spell: .basicBarrier, grade: grade),
             .checkpointChanged(.residualBattle),
-            .sceneChanged(setScene(.floor8ResidualBattle))
+            .sceneChanged(setScene(.floor8ResidualEncounter))
         ]
+    }
+
+    mutating func beginResidualBattle() throws -> [ProgressionEvent] {
+        try requireScene(.floor8ResidualEncounter)
+        return [.sceneChanged(setScene(.floor8ResidualBattle))]
+    }
+
+    mutating func continueAfterResidualDefeat() throws -> [ProgressionEvent] {
+        try requireScene(.floor8ResidualDefeated)
+        return [.sceneChanged(setScene(.floor8SealedDoor))]
     }
 
     mutating func releaseObservationDoor() throws -> [ProgressionEvent] {
@@ -193,7 +216,20 @@ struct GameProgressionController: Sendable {
         progress.tutorials.formUnion([.absoluteBarrier, .dispel, .strongAttack])
         return [
             .checkpointChanged(.observationBattle),
-            .sceneChanged(setScene(.floor8AdministratorBattle))
+            .sceneChanged(setScene(.floor8AdministratorEncounter))
+        ]
+    }
+
+    mutating func beginAdministratorBattle() throws -> [ProgressionEvent] {
+        try requireScene(.floor8AdministratorEncounter)
+        return [.sceneChanged(setScene(.floor8AdministratorBattle))]
+    }
+
+    mutating func continueAfterAdministratorDefeat() throws -> [ProgressionEvent] {
+        try requireScene(.floor8AdministratorDefeated)
+        return [
+            .sceneChanged(setScene(.floor8Reward)),
+            .rewardCandidates(RewardCatalog.candidates(for: .floor8))
         ]
     }
 
@@ -259,8 +295,7 @@ struct GameProgressionController: Sendable {
             return [
                 .enemyDefeated(enemy),
                 .checkpointChanged(.recordsDefeated),
-                .sceneChanged(setScene(.floor9RewardVault)),
-                .rewardCandidates(RewardCatalog.candidates(for: .floor9))
+                .sceneChanged(setScene(.floor9RecordsDefeated))
             ]
 
         case .observationResidual:
@@ -272,7 +307,7 @@ struct GameProgressionController: Sendable {
                 .spellLearned(.sealRelease),
                 recovery,
                 .checkpointChanged(.residualDefeated),
-                .sceneChanged(setScene(.floor8SealedDoor))
+                .sceneChanged(setScene(.floor8ResidualDefeated))
             ]
 
         case .observationAdministrator:
@@ -280,8 +315,7 @@ struct GameProgressionController: Sendable {
             return [
                 .enemyDefeated(enemy),
                 .checkpointChanged(.observationDefeated),
-                .sceneChanged(setScene(.floor8Reward)),
-                .rewardCandidates(RewardCatalog.candidates(for: .floor8))
+                .sceneChanged(setScene(.floor8AdministratorDefeated))
             ]
         }
     }
