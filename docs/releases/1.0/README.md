@@ -9,3 +9,4 @@
 - `SCOPE.md`: 출시 범위와 제외 범위
 - `GAP_ANALYSIS.md`: 현재 구현과 출시 목표의 차이
 - `RELEASE_CHECKLIST.md`: 출시 준비 상태
+- `FLOORS_7_5_PROVISIONAL.md`: 사용자 확정 기획 반영 전까지 보존하는 7·6·5층 임시 콘텐츠 초안. 확정 내용 이관 후 삭제
