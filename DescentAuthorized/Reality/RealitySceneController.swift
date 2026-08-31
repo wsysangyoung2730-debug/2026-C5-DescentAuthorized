@@ -379,24 +379,22 @@ final class RealitySceneController: ObservableObject {
             return
         }
 
-        let baseTransform = Transform(matrix: snapshot.transformMatrix)
-        let keyframes: [(rollDegrees: Float, verticalOffset: Float, milliseconds: Int64)] = [
-            (-2.6, -0.015, 48),
-            (3.1, 0.012, 66),
-            (-1.5, -0.008, 70),
-            (0.6, 0.004, 76),
-            (0, 0, 88)
+        let baseMatrix = snapshot.transformMatrix
+        let keyframes: [(horizontalOffset: Float, milliseconds: Int64)] = [
+            (-0.045, 48),
+            (0.052, 66),
+            (-0.028, 70),
+            (0.013, 76),
+            (0, 88)
         ]
 
         for keyframe in keyframes {
             guard !Task.isCancelled,
                   generation == descentCameraEffectGeneration else { return }
-            let transform = descentCameraTransform(
-                from: baseTransform,
-                roll: keyframe.rollDegrees * (.pi / 180),
-                pitch: 0,
-                verticalDrop: -keyframe.verticalOffset
-            )
+            let transform = Transform(matrix: descentRejectionCameraMatrix(
+                from: baseMatrix,
+                horizontalOffset: keyframe.horizontalOffset
+            ))
             cameraEntity.move(
                 to: transform,
                 relativeTo: nil,
@@ -656,6 +654,24 @@ final class RealitySceneController: ObservableObject {
         transform.rotation = baseTransform.rotation * rollRotation * pitchRotation
         transform.translation.y -= verticalDrop
         return transform
+    }
+
+    private func descentRejectionCameraMatrix(
+        from baseMatrix: simd_float4x4,
+        horizontalOffset: Float
+    ) -> simd_float4x4 {
+        let cameraRight = normalizedAxis(
+            baseMatrix.columns.0,
+            fallback: SIMD3<Float>(1, 0, 0)
+        )
+        var matrix = baseMatrix
+        let translatedPosition = SIMD3<Float>(
+            baseMatrix.columns.3.x,
+            baseMatrix.columns.3.y,
+            baseMatrix.columns.3.z
+        ) + cameraRight * horizontalOffset
+        matrix.columns.3 = SIMD4<Float>(translatedPosition, baseMatrix.columns.3.w)
+        return matrix
     }
 
     private func cancelDescentCameraEffect(restoreCamera: Bool) {
