@@ -20,6 +20,13 @@ enum ProgressionEvent: Equatable, Sendable {
     case checkpointChanged(CheckpointID)
     case recordRead(String)
     case masteryUpdated(spell: SpellID, mastery: SpellMastery)
+    case tutorialStarted(sequence: TutorialSequenceID, step: TutorialStepID)
+    case tutorialStepCompleted(TutorialStepID)
+    case tutorialCompleted(TutorialSequenceID)
+    case tutorialSkipped(TutorialSequenceID)
+    case tutorialFailureRecorded(mechanic: TutorialMechanicID, count: Int)
+    case tutorialReplayRequested(TutorialSequenceID)
+    case tutorialsReset
     case demoCompleted
 }
 
@@ -375,6 +382,52 @@ struct GameProgressionController: Sendable {
     mutating func readRecord(id: String) -> ProgressionEvent? {
         let inserted = progress.readRecordIDs.insert(id).inserted
         return inserted ? .recordRead(id) : nil
+    }
+
+    mutating func beginTutorial(
+        _ sequence: TutorialSequenceID,
+        at step: TutorialStepID
+    ) -> ProgressionEvent? {
+        guard progress.tutorialProgress.shouldPresent(sequence) else { return nil }
+        progress.tutorialProgress.begin(sequence, at: step)
+        return .tutorialStarted(sequence: sequence, step: step)
+    }
+
+    mutating func completeTutorialStep(
+        _ step: TutorialStepID,
+        next: TutorialStepID?
+    ) -> ProgressionEvent {
+        progress.tutorialProgress.completeStep(step, next: next)
+        return .tutorialStepCompleted(step)
+    }
+
+    mutating func completeTutorial(_ sequence: TutorialSequenceID) -> ProgressionEvent {
+        progress.tutorialProgress.complete(sequence)
+        return .tutorialCompleted(sequence)
+    }
+
+    mutating func skipTutorial(_ sequence: TutorialSequenceID) -> ProgressionEvent {
+        progress.tutorialProgress.skip(sequence)
+        return .tutorialSkipped(sequence)
+    }
+
+    mutating func recordTutorialFailure(
+        _ mechanic: TutorialMechanicID
+    ) -> ProgressionEvent {
+        let count = progress.tutorialProgress.recordFailure(mechanic)
+        return .tutorialFailureRecorded(mechanic: mechanic, count: count)
+    }
+
+    mutating func requestTutorialReplay(
+        _ sequence: TutorialSequenceID
+    ) -> ProgressionEvent {
+        progress.tutorialProgress.requestReplay(sequence)
+        return .tutorialReplayRequested(sequence)
+    }
+
+    mutating func resetTutorials() -> ProgressionEvent {
+        progress.tutorialProgress.reset()
+        return .tutorialsReset
     }
 
     private mutating func updateMastery(

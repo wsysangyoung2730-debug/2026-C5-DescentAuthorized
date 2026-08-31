@@ -69,6 +69,8 @@
 		100000000000000000000051 /* GameFeedbackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000051 /* GameFeedbackManager.swift */; };
 		100000000000000000000052 /* AVFAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 200000000000000000000052 /* AVFAudio.framework */; };
 		100000000000000000000053 /* PauseMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000053 /* PauseMenuView.swift */; };
+		100000000000000000000068 /* TutorialModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000068 /* TutorialModels.swift */; };
+		100000000000000000000069 /* TutorialCoachOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000069 /* TutorialCoachOverlay.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -136,6 +138,8 @@
 		200000000000000000000051 /* GameFeedbackManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFeedbackManager.swift; sourceTree = "<group>"; };
 		200000000000000000000052 /* AVFAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFAudio.framework; path = System/Library/Frameworks/AVFAudio.framework; sourceTree = SDKROOT; };
 		200000000000000000000053 /* PauseMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PauseMenuView.swift; sourceTree = "<group>"; };
+		200000000000000000000068 /* TutorialModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TutorialModels.swift; sourceTree = "<group>"; };
+		200000000000000000000069 /* TutorialCoachOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TutorialCoachOverlay.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -266,6 +270,7 @@
 			children = (
 				200000000000000000000010 /* DomainModels.swift */,
 				200000000000000000000021 /* InputSettingsModels.swift */,
+				200000000000000000000068 /* TutorialModels.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -353,6 +358,7 @@
 				200000000000000000000041 /* Floor8ExplorationView.swift */,
 				200000000000000000000042 /* Floor8DescentDoorView.swift */,
 				200000000000000000000043 /* DemoCompleteView.swift */,
+				200000000000000000000069 /* TutorialCoachOverlay.swift */,
 			);
 			path = Progression;
 			sourceTree = "<group>";
@@ -522,6 +528,8 @@
 				100000000000000000000050 /* GameFeedback.swift in Sources */,
 				100000000000000000000051 /* GameFeedbackManager.swift in Sources */,
 				100000000000000000000053 /* PauseMenuView.swift in Sources */,
+				100000000000000000000068 /* TutorialModels.swift in Sources */,
+				100000000000000000000069 /* TutorialCoachOverlay.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

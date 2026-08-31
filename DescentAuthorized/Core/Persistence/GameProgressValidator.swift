@@ -9,6 +9,7 @@ enum GameProgressValidationError: Error, Equatable, Sendable {
     case unknownReward(String)
     case duplicateReward(String)
     case invalidMastery(SpellID)
+    case invalidTutorialState(String)
     case completionStateMismatch
 }
 
@@ -29,6 +30,7 @@ struct GameProgressValidator: Sendable {
 
         try validateLocation(progress)
         try validateCollectionIntegrity(progress)
+        try validateTutorialState(progress.tutorialProgress)
         try validateProgressionRequirements(progress)
     }
 
@@ -89,6 +91,31 @@ struct GameProgressValidator: Sendable {
             guard count <= 1 else {
                 throw GameProgressValidationError.duplicateReward("floor\(floor.rawValue)")
             }
+        }
+    }
+
+    private func validateTutorialState(_ tutorial: TutorialProgress) throws {
+        guard tutorial.completedSequences.isDisjoint(with: tutorial.skippedSequences) else {
+            throw GameProgressValidationError.invalidTutorialState(
+                "completed and skipped sequences must be disjoint"
+            )
+        }
+        guard (tutorial.activeSequence == nil) == (tutorial.activeStep == nil) else {
+            throw GameProgressValidationError.invalidTutorialState(
+                "active sequence and step must be stored together"
+            )
+        }
+        if let activeSequence = tutorial.activeSequence,
+           tutorial.completedSequences.contains(activeSequence)
+            || tutorial.skippedSequences.contains(activeSequence) {
+            throw GameProgressValidationError.invalidTutorialState(
+                "finished sequence cannot remain active"
+            )
+        }
+        guard tutorial.failureCounts.values.allSatisfy({ $0 >= 0 }) else {
+            throw GameProgressValidationError.invalidTutorialState(
+                "failure count cannot be negative"
+            )
         }
     }
 

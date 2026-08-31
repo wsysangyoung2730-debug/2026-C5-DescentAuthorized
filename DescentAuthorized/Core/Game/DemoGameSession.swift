@@ -26,6 +26,13 @@ enum DemoCommand: Sendable {
     case finishTurn
     case restartEncounter
     case restartEncounterFromCheckpoint
+    case beginTutorial(sequence: TutorialSequenceID, step: TutorialStepID)
+    case completeTutorialStep(step: TutorialStepID, next: TutorialStepID?)
+    case completeTutorial(TutorialSequenceID)
+    case skipTutorial(TutorialSequenceID)
+    case recordTutorialFailure(TutorialMechanicID)
+    case requestTutorialReplay(TutorialSequenceID)
+    case resetTutorials
 }
 
 enum DemoSessionEvent: Equatable, Sendable {
@@ -130,6 +137,28 @@ struct DemoGameSession: Sendable {
 
         case .restartEncounterFromCheckpoint:
             return try restartActiveEncounterFromCheckpoint()
+
+        case let .beginTutorial(sequence, step):
+            guard let event = progression.beginTutorial(sequence, at: step) else { return [] }
+            return [.progression(event)]
+
+        case let .completeTutorialStep(step, next):
+            return [.progression(progression.completeTutorialStep(step, next: next))]
+
+        case let .completeTutorial(sequence):
+            return [.progression(progression.completeTutorial(sequence))]
+
+        case let .skipTutorial(sequence):
+            return [.progression(progression.skipTutorial(sequence))]
+
+        case let .recordTutorialFailure(mechanic):
+            return [.progression(progression.recordTutorialFailure(mechanic))]
+
+        case let .requestTutorialReplay(sequence):
+            return [.progression(progression.requestTutorialReplay(sequence))]
+
+        case .resetTutorials:
+            return [.progression(progression.resetTutorials())]
         }
     }
 

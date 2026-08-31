@@ -429,6 +429,8 @@ struct SpellMastery: Codable, Equatable, Sendable {
 }
 
 struct GameProgress: Codable, Equatable, Sendable {
+    static let currentSaveVersion = 2
+
     var saveVersion: Int
     var currentFloor: FloorID
     var currentScene: SceneID
@@ -438,13 +440,46 @@ struct GameProgress: Codable, Equatable, Sendable {
     var defeatedEnemies: Set<EnemyID>
     var readRecordIDs: Set<String>
     var tutorials: Set<TutorialFlag>
+    var tutorialProgress: TutorialProgress
     var spellMastery: [SpellID: SpellMastery]
     var completedTrainingSpells: Set<SpellID>
     var selectedRewardIDs: [String]
     var isDemoComplete: Bool
 
+    init(
+        saveVersion: Int,
+        currentFloor: FloorID,
+        currentScene: SceneID,
+        checkpoint: CheckpointID,
+        playerHP: Int,
+        learnedSpells: Set<SpellID>,
+        defeatedEnemies: Set<EnemyID>,
+        readRecordIDs: Set<String>,
+        tutorials: Set<TutorialFlag>,
+        tutorialProgress: TutorialProgress = .empty,
+        spellMastery: [SpellID: SpellMastery],
+        completedTrainingSpells: Set<SpellID>,
+        selectedRewardIDs: [String],
+        isDemoComplete: Bool
+    ) {
+        self.saveVersion = saveVersion
+        self.currentFloor = currentFloor
+        self.currentScene = currentScene
+        self.checkpoint = checkpoint
+        self.playerHP = playerHP
+        self.learnedSpells = learnedSpells
+        self.defeatedEnemies = defeatedEnemies
+        self.readRecordIDs = readRecordIDs
+        self.tutorials = tutorials
+        self.tutorialProgress = tutorialProgress
+        self.spellMastery = spellMastery
+        self.completedTrainingSpells = completedTrainingSpells
+        self.selectedRewardIDs = selectedRewardIDs
+        self.isDemoComplete = isDemoComplete
+    }
+
     static let newGame = GameProgress(
-        saveVersion: 1,
+        saveVersion: currentSaveVersion,
         currentFloor: .floor10,
         currentScene: .floor10MeetingRoom,
         checkpoint: .floor10Start,
@@ -453,9 +488,84 @@ struct GameProgress: Codable, Equatable, Sendable {
         defeatedEnemies: [],
         readRecordIDs: [],
         tutorials: [],
+        tutorialProgress: .empty,
         spellMastery: [:],
         completedTrainingSpells: [],
         selectedRewardIDs: [],
         isDemoComplete: false
     )
+
+    private enum CodingKeys: String, CodingKey {
+        case saveVersion
+        case currentFloor
+        case currentScene
+        case checkpoint
+        case playerHP
+        case learnedSpells
+        case defeatedEnemies
+        case readRecordIDs
+        case tutorials
+        case tutorialProgress
+        case spellMastery
+        case completedTrainingSpells
+        case selectedRewardIDs
+        case isDemoComplete
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let decodedVersion = try container.decodeIfPresent(Int.self, forKey: .saveVersion) ?? 1
+        currentFloor = try container.decode(FloorID.self, forKey: .currentFloor)
+        currentScene = try container.decode(SceneID.self, forKey: .currentScene)
+        checkpoint = try container.decode(CheckpointID.self, forKey: .checkpoint)
+        playerHP = try container.decode(Int.self, forKey: .playerHP)
+        learnedSpells = try container.decodeIfPresent(Set<SpellID>.self, forKey: .learnedSpells) ?? []
+        defeatedEnemies = try container.decodeIfPresent(Set<EnemyID>.self, forKey: .defeatedEnemies) ?? []
+        readRecordIDs = try container.decodeIfPresent(Set<String>.self, forKey: .readRecordIDs) ?? []
+        tutorials = try container.decodeIfPresent(Set<TutorialFlag>.self, forKey: .tutorials) ?? []
+        spellMastery = try container.decodeIfPresent(
+            [SpellID: SpellMastery].self,
+            forKey: .spellMastery
+        ) ?? [:]
+        completedTrainingSpells = try container.decodeIfPresent(
+            Set<SpellID>.self,
+            forKey: .completedTrainingSpells
+        ) ?? []
+        selectedRewardIDs = try container.decodeIfPresent([String].self, forKey: .selectedRewardIDs) ?? []
+        isDemoComplete = try container.decodeIfPresent(Bool.self, forKey: .isDemoComplete) ?? false
+
+        if let decodedProgress = try container.decodeIfPresent(
+            TutorialProgress.self,
+            forKey: .tutorialProgress
+        ) {
+            tutorialProgress = decodedProgress
+        } else {
+            tutorialProgress = .migratedLegacy(
+                floor: currentFloor,
+                scene: currentScene,
+                checkpoint: checkpoint,
+                learnedSpells: learnedSpells,
+                legacyFlags: tutorials
+            )
+        }
+        saveVersion = max(decodedVersion, Self.currentSaveVersion)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(Self.currentSaveVersion, forKey: .saveVersion)
+        try container.encode(currentFloor, forKey: .currentFloor)
+        try container.encode(currentScene, forKey: .currentScene)
+        try container.encode(checkpoint, forKey: .checkpoint)
+        try container.encode(playerHP, forKey: .playerHP)
+        try container.encode(learnedSpells, forKey: .learnedSpells)
+        try container.encode(defeatedEnemies, forKey: .defeatedEnemies)
+        try container.encode(readRecordIDs, forKey: .readRecordIDs)
+        try container.encode(tutorials, forKey: .tutorials)
+        try container.encode(tutorialProgress, forKey: .tutorialProgress)
+        try container.encode(spellMastery, forKey: .spellMastery)
+        try container.encode(completedTrainingSpells, forKey: .completedTrainingSpells)
+        try container.encode(selectedRewardIDs, forKey: .selectedRewardIDs)
+        try container.encode(isDemoComplete, forKey: .isDemoComplete)
+    }
 }
