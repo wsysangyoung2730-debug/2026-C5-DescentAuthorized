@@ -1,10 +1,9 @@
 # 주문 및 마법진 명세
 
-> 문서 상태: 현재 구현 기준 정리 중
+> 문서 상태: MVP 기준선 보관본 · 내용 수정 금지
 > 기준 구현: `develop @ dd2f8e2` (`#74` 포함)
-> 출시 목표: 1.0 · 1층~10층 완결판(상세 범위 추후 확장)
-> 마지막 갱신: 2026-09-01
-> MVP 기준선: [`archive/mvp-baseline/SPELL_GLYPH_SPEC.md`](archive/mvp-baseline/SPELL_GLYPH_SPEC.md)
+> 보관일: 2026-09-01
+> 최신 문서: [`../../SPELL_GLYPH_SPEC.md`](../../SPELL_GLYPH_SPEC.md)
 
 ## 1. 문서 목적
 
