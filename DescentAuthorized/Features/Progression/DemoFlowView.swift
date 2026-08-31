@@ -39,7 +39,13 @@ struct DemoFlowView: View {
             }
 
             if isPresentationReady {
-                if isNarrativePresentation {
+                if showsFloor10Opening {
+                    Floor10OpeningExperienceView(
+                        sceneController: sceneController,
+                        isSceneReady: isPresentationReady
+                    )
+                    .transition(.opacity)
+                } else if isNarrativePresentation {
                     sceneView
                         .id(gameSession.presentation.progressSceneID)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -183,6 +189,11 @@ struct DemoFlowView: View {
         default:
             return false
         }
+    }
+
+    private var showsFloor10Opening: Bool {
+        gameSession.progress.currentScene == .floor10MeetingRoom
+            && gameSession.progress.tutorialProgress.shouldPresent(.floor10Intro)
     }
 
     private var descentTopHUDConfiguration: DescentTopHUDConfiguration? {

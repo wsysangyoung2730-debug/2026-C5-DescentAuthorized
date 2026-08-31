@@ -18,6 +18,15 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     )
 }
 
+enum Floor10OpeningCameraFocus: Equatable, Sendable {
+    case rising
+    case trainingTarget
+    case surroundingDesk(Int)
+    case damagedRoom
+    case lockedDoor
+    case settled
+}
+
 @MainActor
 final class RealitySceneController: ObservableObject {
     private struct AuthoredCameraSnapshot {
@@ -59,6 +68,7 @@ final class RealitySceneController: ObservableObject {
     private var cameraTransitionGeneration: UInt64 = 0
     private var battleCameraImpactGeneration: UInt64 = 0
     private var descentCameraEffectGeneration: UInt64 = 0
+    private var floor10OpeningCameraGeneration: UInt64 = 0
     private var requestedSceneID: FloorSceneID?
     private var requestedCameraPreset: RealityCameraPreset = .main
     private var activeCameraName: String?
@@ -154,6 +164,98 @@ final class RealitySceneController: ObservableObject {
     func applyCameraPreset(_ preset: RealityCameraPreset) {
         requestedCameraPreset = preset
         transitionCamera(to: preset)
+    }
+
+    func prepareFloor10FallenCamera(reducedMotion: Bool) {
+        guard requestedSceneID == .floor10ClosedOffice,
+              requestedCameraPreset == .tutorial,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        floor10OpeningCameraGeneration &+= 1
+        cameraEntity.stopAllAnimations(recursive: false)
+        let fallen = floor10OpeningTransform(
+            from: snapshot,
+            yaw: -0.12,
+            pitch: 0.2,
+            roll: -0.28,
+            verticalOffset: reducedMotion ? -0.18 : -0.72,
+            forwardOffset: -0.08
+        )
+        cameraEntity.setTransformMatrix(fallen.matrix, relativeTo: nil)
+        scheduleBoardProjectionRefresh()
+    }
+
+    func restoreFloor10OpeningCamera() {
+        floor10OpeningCameraGeneration &+= 1
+        guard requestedSceneID == .floor10ClosedOffice,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+        cameraEntity.camera = snapshot.camera
+        scheduleBoardProjectionRefresh()
+    }
+
+    func playFloor10OpeningCamera(
+        reducedMotion: Bool,
+        onFocus: @escaping @MainActor (Floor10OpeningCameraFocus) -> Void
+    ) async {
+        guard requestedSceneID == .floor10ClosedOffice,
+              requestedCameraPreset == .tutorial,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        floor10OpeningCameraGeneration &+= 1
+        let generation = floor10OpeningCameraGeneration
+        let movementDuration = reducedMotion ? 0.01 : 0.72
+        let holdDuration = reducedMotion ? 0.04 : 0.72
+
+        @MainActor
+        func move(
+            focus: Floor10OpeningCameraFocus,
+            yaw: Float = 0,
+            pitch: Float = 0,
+            roll: Float = 0,
+            verticalOffset: Float = 0,
+            forwardOffset: Float = 0
+        ) async -> Bool {
+            guard generation == floor10OpeningCameraGeneration,
+                  !Task.isCancelled else { return false }
+            onFocus(focus)
+            let transform = floor10OpeningTransform(
+                from: snapshot,
+                yaw: yaw,
+                pitch: pitch,
+                roll: roll,
+                verticalOffset: verticalOffset,
+                forwardOffset: forwardOffset
+            )
+            cameraEntity.move(
+                to: transform,
+                relativeTo: nil,
+                duration: movementDuration,
+                timingFunction: .easeInOut
+            )
+            try? await Task.sleep(for: .seconds(movementDuration + holdDuration))
+            return generation == floor10OpeningCameraGeneration && !Task.isCancelled
+        }
+
+        guard await move(focus: .rising) else { return }
+        guard await move(focus: .trainingTarget, yaw: -0.34, pitch: -0.04) else { return }
+        guard await move(focus: .surroundingDesk(1), yaw: 0.28, pitch: 0.05) else { return }
+        guard await move(focus: .surroundingDesk(2), yaw: -0.08, pitch: 0.1) else { return }
+        guard await move(focus: .damagedRoom, yaw: 0.16, pitch: -0.14) else { return }
+        guard await move(focus: .lockedDoor, yaw: 0.02, forwardOffset: 0.34) else { return }
+        guard await move(focus: .settled) else { return }
+
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+        cameraEntity.camera = snapshot.camera
+        scheduleBoardProjectionRefresh()
     }
 
     func setBattleCameraInteractionEnabled(_ isEnabled: Bool) {
@@ -646,6 +748,29 @@ final class RealitySceneController: ObservableObject {
         return adjustedMatrix
     }
 
+    private func floor10OpeningTransform(
+        from snapshot: AuthoredCameraSnapshot,
+        yaw: Float,
+        pitch: Float,
+        roll: Float,
+        verticalOffset: Float,
+        forwardOffset: Float
+    ) -> Transform {
+        var transform = Transform(matrix: snapshot.transformMatrix)
+        let yawRotation = simd_quatf(angle: yaw, axis: SIMD3<Float>(0, 1, 0))
+        let pitchRotation = simd_quatf(angle: pitch, axis: SIMD3<Float>(1, 0, 0))
+        let rollRotation = simd_quatf(angle: roll, axis: SIMD3<Float>(0, 0, 1))
+        transform.rotation = transform.rotation * yawRotation * pitchRotation * rollRotation
+
+        let forward = -normalizedAxis(
+            snapshot.transformMatrix.columns.2,
+            fallback: SIMD3<Float>(0, 0, -1)
+        )
+        transform.translation += forward * forwardOffset
+        transform.translation.y += verticalOffset
+        return transform
+    }
+
     private func cancelBattleCameraImpact(restoreCamera: Bool) {
         guard battleCameraImpactTask != nil else { return }
         battleCameraImpactTask?.cancel()
@@ -844,6 +969,7 @@ final class RealitySceneController: ObservableObject {
 
     func unload() {
         sceneLoadGeneration &+= 1
+        floor10OpeningCameraGeneration &+= 1
         loadCancellable?.cancel()
         loadCancellable = nil
         actorLoadCancellable?.cancel()
