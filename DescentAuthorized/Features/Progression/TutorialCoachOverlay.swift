@@ -78,6 +78,7 @@ struct TutorialCoachOverlay: View {
     let onSkip: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @EnvironmentObject private var appSettings: AppSettings
     @State private var isVisible = false
 
     var body: some View {
@@ -110,7 +111,10 @@ struct TutorialCoachOverlay: View {
                     .padding(.vertical, 30)
             }
             .opacity(isVisible ? 1 : 0)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: isVisible)
+            .animation(
+                reduceMotion || appSettings.reducedMotion ? nil : .easeOut(duration: 0.2),
+                value: isVisible
+            )
             .onAppear { isVisible = true }
         }
         .ignoresSafeArea()

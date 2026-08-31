@@ -324,6 +324,11 @@ private struct DescentSealProcedureView: View {
             validationTask?.cancel()
             validationTask = nil
         }
+        .onChange(of: gameSession.progress.tutorialProgress.requestedReplay) { _, replay in
+            if replay == .floor10DescentSeal {
+                resumeCoachIfNeeded()
+            }
+        }
     }
 
     private var sealGameOverOverlay: some View {

@@ -57,6 +57,11 @@ struct Floor10InvestigationHubView: View {
         .onDisappear {
             sceneController.setLimitedCameraInteractionEnabled(false)
         }
+        .onChange(of: gameSession.progress.tutorialProgress.requestedReplay) { _, replay in
+            if replay == .floor10Investigation {
+                resumeCoach()
+            }
+        }
         .accessibilityElement(children: .contain)
     }
 

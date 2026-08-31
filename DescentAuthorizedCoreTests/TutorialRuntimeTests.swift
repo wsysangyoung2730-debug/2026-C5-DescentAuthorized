@@ -67,4 +67,54 @@ final class TutorialRuntimeTests: XCTestCase {
 
         XCTAssertThrowsError(try GameProgressValidator().validate(progress))
     }
+
+    func testReplayRequestOverridesCompletedAndSkippedSequence() throws {
+        var session = DemoGameSession()
+        _ = try session.handle(.skipTutorial(.recordsBattleBasics))
+        XCTAssertFalse(session.progress.tutorialProgress.shouldPresent(.recordsBattleBasics))
+
+        _ = try session.handle(.requestTutorialReplay(.recordsBattleBasics))
+        XCTAssertTrue(session.progress.tutorialProgress.shouldPresent(.recordsBattleBasics))
+        XCTAssertEqual(session.progress.tutorialProgress.requestedReplay, .recordsBattleBasics)
+
+        _ = try session.handle(.beginTutorial(
+            sequence: .recordsBattleBasics,
+            step: .battlePlayerHP
+        ))
+        _ = try session.handle(.completeTutorial(.recordsBattleBasics))
+        XCTAssertNil(session.progress.tutorialProgress.requestedReplay)
+        XCTAssertTrue(session.progress.tutorialProgress.completedSequences.contains(.recordsBattleBasics))
+        XCTAssertFalse(session.progress.tutorialProgress.skippedSequences.contains(.recordsBattleBasics))
+    }
+
+    func testResetTutorialsKeepsGameplayProgress() throws {
+        var progress = GameProgress.newGame
+        progress.playerHP = 73
+        progress.learnedSpells.insert(.afterglowErasure)
+        progress.readRecordIDs.insert("floor10.clue.training-target")
+        progress.tutorialProgress.completedSequences.insert(.floor10Intro)
+        progress.tutorialProgress.failureCounts[.afterglowDrawing] = 2
+        var session = DemoGameSession(progress: progress)
+
+        _ = try session.handle(.resetTutorials)
+
+        XCTAssertEqual(session.progress.playerHP, 73)
+        XCTAssertTrue(session.progress.learnedSpells.contains(.afterglowErasure))
+        XCTAssertTrue(session.progress.readRecordIDs.contains("floor10.clue.training-target"))
+        XCTAssertEqual(session.progress.tutorialProgress, .empty)
+    }
+
+    func testActiveStepPersistsAcrossSaveRestore() throws {
+        let store = InMemoryGameSaveStore()
+        var session = DemoGameSession()
+        _ = try session.handle(.beginTutorial(
+            sequence: .floor10DescentSeal,
+            step: .descentInformation
+        ))
+        try session.save(to: store)
+
+        let restored = try DemoGameSession.restore(from: store)
+        XCTAssertEqual(restored.progress.tutorialProgress.activeSequence, .floor10DescentSeal)
+        XCTAssertEqual(restored.progress.tutorialProgress.activeStep, .descentInformation)
+    }
 }

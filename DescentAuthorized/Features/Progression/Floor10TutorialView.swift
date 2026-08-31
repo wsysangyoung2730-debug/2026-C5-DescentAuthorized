@@ -103,6 +103,11 @@ struct Floor10TutorialView: View {
         .onAppear {
             beginSpellTutorialIfNeeded(spell.id, step: tutorialInspectStep(for: spell.id))
         }
+        .onChange(of: gameSession.progress.tutorialProgress.requestedReplay) { _, replay in
+            if replay == tutorialSequence(for: spell.id) {
+                beginSpellTutorialIfNeeded(spell.id, step: tutorialInspectStep(for: spell.id))
+            }
+        }
         .tutorialCoach(
             step: discoveryCoachStep(for: spell),
             nextTitle: "기록 확인",
@@ -160,6 +165,11 @@ struct Floor10TutorialView: View {
         }
         .onAppear {
             beginSpellTutorialIfNeeded(spell.id, step: tutorialTrainingStep(for: spell.id))
+        }
+        .onChange(of: gameSession.progress.tutorialProgress.requestedReplay) { _, replay in
+            if replay == tutorialSequence(for: spell.id) {
+                beginSpellTutorialIfNeeded(spell.id, step: tutorialTrainingStep(for: spell.id))
+            }
         }
     }
 
