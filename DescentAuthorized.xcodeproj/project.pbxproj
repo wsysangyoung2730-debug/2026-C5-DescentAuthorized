@@ -72,6 +72,7 @@
 		100000000000000000000068 /* TutorialModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000068 /* TutorialModels.swift */; };
 		100000000000000000000069 /* TutorialCoachOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000069 /* TutorialCoachOverlay.swift */; };
 		100000000000000000000070 /* Floor10OpeningExperienceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000070 /* Floor10OpeningExperienceView.swift */; };
+		100000000000000000000071 /* Floor10InvestigationHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000071 /* Floor10InvestigationHubView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -142,6 +143,7 @@
 		200000000000000000000068 /* TutorialModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TutorialModels.swift; sourceTree = "<group>"; };
 		200000000000000000000069 /* TutorialCoachOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TutorialCoachOverlay.swift; sourceTree = "<group>"; };
 		200000000000000000000070 /* Floor10OpeningExperienceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Floor10OpeningExperienceView.swift; sourceTree = "<group>"; };
+		200000000000000000000071 /* Floor10InvestigationHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Floor10InvestigationHubView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -362,6 +364,7 @@
 				200000000000000000000043 /* DemoCompleteView.swift */,
 				200000000000000000000069 /* TutorialCoachOverlay.swift */,
 				200000000000000000000070 /* Floor10OpeningExperienceView.swift */,
+				200000000000000000000071 /* Floor10InvestigationHubView.swift */,
 			);
 			path = Progression;
 			sourceTree = "<group>";
@@ -534,6 +537,7 @@
 				100000000000000000000068 /* TutorialModels.swift in Sources */,
 				100000000000000000000069 /* TutorialCoachOverlay.swift in Sources */,
 				100000000000000000000070 /* Floor10OpeningExperienceView.swift in Sources */,
+				100000000000000000000071 /* Floor10InvestigationHubView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -16,6 +16,14 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
         minimumFieldOfViewScale: 0.85,
         maximumFieldOfViewScale: 1.10
     )
+
+    static let floorExploration = BattleCameraInteractionConfiguration(
+        maximumYaw: .pi * 24 / 180,
+        maximumUpwardPitch: .pi * 10 / 180,
+        maximumDownwardPitch: .pi * 12 / 180,
+        minimumFieldOfViewScale: 1,
+        maximumFieldOfViewScale: 1
+    )
 }
 
 enum Floor10OpeningCameraFocus: Equatable, Sendable {
@@ -266,6 +274,10 @@ final class RealitySceneController: ObservableObject {
         }
     }
 
+    func setLimitedCameraInteractionEnabled(_ isEnabled: Bool) {
+        setBattleCameraInteractionEnabled(isEnabled)
+    }
+
     func beginBattleCameraLook() {
         guard canAdjustBattleCamera else { return }
         cancelBattleCameraImpact(restoreCamera: true)
@@ -331,7 +343,7 @@ final class RealitySceneController: ObservableObject {
         battleCameraZoomStartFieldOfViewScale = 1
         isBattleCameraAdjusted = false
 
-        guard requestedCameraPreset == .battle,
+        guard [.battle, .tutorial].contains(requestedCameraPreset),
               let activeCameraName,
               let snapshot = authoredCameraSnapshots[activeCameraName],
               let cameraEntity else { return }
@@ -692,7 +704,7 @@ final class RealitySceneController: ObservableObject {
 
     private var canAdjustBattleCamera: Bool {
         isBattleCameraInteractionEnabled
-            && requestedCameraPreset == .battle
+            && [.battle, .tutorial].contains(requestedCameraPreset)
             && !isCameraTransitioning
             && activeCameraName != nil
             && cameraEntity != nil

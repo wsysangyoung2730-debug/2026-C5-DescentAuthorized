@@ -10,10 +10,7 @@ struct Floor10TutorialView: View {
     var body: some View {
         Group {
             if gameSession.progress.currentScene == .floor10MeetingRoom {
-                FloorEntrancePanel(
-                    configuration: .floor10,
-                    action: { gameSession.send(.leaveMeetingRoom) }
-                )
+                Floor10InvestigationHubView(sceneController: sceneController)
             } else if gameSession.progress.currentScene == .floor10DescentDoor {
                 descentDoorScene
             } else {
