@@ -115,6 +115,7 @@ struct BattleTopHUDView: View {
                 alignment: .leading
             )
             .frame(maxHeight: .infinity, alignment: .center)
+            .tutorialTarget("battle.player-health")
 
             Spacer(minLength: 8)
 
@@ -138,6 +139,7 @@ struct BattleTopHUDView: View {
             }
             .frame(width: 194)
             .frame(maxHeight: .infinity, alignment: .center)
+            .tutorialTarget("battle.turn")
 
             Spacer(minLength: 8)
 
@@ -148,10 +150,12 @@ struct BattleTopHUDView: View {
                     alignment: .trailing
                 )
                 .frame(maxHeight: .infinity, alignment: .center)
+                .tutorialTarget("battle.enemy-health")
 
                 nextActionBlock
                     .frame(width: 142)
                     .frame(maxHeight: .infinity, alignment: .center)
+                    .tutorialTarget("battle.next-action")
             }
             .frame(maxHeight: .infinity, alignment: .center)
         }

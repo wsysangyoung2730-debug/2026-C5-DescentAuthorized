@@ -517,6 +517,7 @@ struct BattleView: View {
                     ))
                 }
             )
+            .tutorialTarget("battle.input")
         } else {
             Text("시전할 수 있는 주문이 없습니다")
                 .foregroundStyle(.secondary)
@@ -569,16 +570,19 @@ struct BattleView: View {
                 .fill(DAColor.gold.opacity(0.22))
                 .frame(height: 1)
         }
+        .tutorialTarget("battle.intent-symbol")
     }
 
     private func spellBar(_ presentation: BattleUIPresentation) -> some View {
         HStack(alignment: .bottom, spacing: 28) {
             battleLogPanel(presentation)
                 .frame(width: 248, height: 176)
+                .tutorialTarget("battle.log")
 
             VStack(alignment: .leading, spacing: 8) {
                 battleResourceBar(presentation)
                     .frame(height: 42)
+                    .tutorialTarget("battle.resources")
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
@@ -588,10 +592,12 @@ struct BattleView: View {
                     }
                 }
                 .frame(height: 176)
+                .tutorialTarget("battle.spells")
             }
 
             turnEndControl(presentation)
                 .frame(width: 184, height: 94, alignment: .bottomTrailing)
+                .tutorialTarget("battle.turn-end")
         }
     }
 
@@ -1335,7 +1341,7 @@ struct BattleView: View {
     }
 
     private var shouldShowFirstTurnBriefing: Bool {
-        isRecordsBattle || isResidualBattle || isObservationBattle
+        isResidualBattle || isObservationBattle
     }
 
     @ViewBuilder

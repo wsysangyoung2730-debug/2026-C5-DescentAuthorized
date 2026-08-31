@@ -11,6 +11,7 @@ struct DemoFlowView: View {
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
     @State private var retryLoadingPresentation: SceneRetryLoadingPresentation?
+    @State private var battleTutorialStep: TutorialCoachStep?
     @StateObject private var sceneController = RealitySceneController()
 
     private let topHUDRailSourceSize = CGSize(width: 1774, height: 887)
@@ -91,6 +92,11 @@ struct DemoFlowView: View {
                 .zIndex(50)
             }
         }
+        .tutorialCoach(
+            step: battleTutorialStep,
+            onNext: advanceBattleTutorial,
+            onSkip: skipBattleTutorial
+        )
         .ignoresSafeArea(edges: .top)
         .sheet(isPresented: $isShowingPauseMenu) {
             PauseMenuView(onExitToTitle: onExit)
@@ -101,6 +107,7 @@ struct DemoFlowView: View {
         .onAppear {
             reportSystemOverlayVisibility()
             synchronizeFloorMusic()
+            synchronizeRecordsBattleTutorial()
         }
         .onDisappear {
             onSystemOverlayVisibilityChange(false)
@@ -126,6 +133,10 @@ struct DemoFlowView: View {
         }
         .onChange(of: gameSession.progress.currentScene) { _, _ in
             synchronizeFloorMusic()
+            synchronizeRecordsBattleTutorial()
+        }
+        .onChange(of: gameSession.eventSequence) { _, _ in
+            synchronizeRecordsBattleTutorial()
         }
         .onChange(of: retryLoadingPresentation) { _, loading in
             if loading == nil {
@@ -157,6 +168,108 @@ struct DemoFlowView: View {
             keepsOutcomeMusic: keepsBattleOutcomeMusic,
             settings: appSettings.settings
         )
+    }
+
+    private func synchronizeRecordsBattleTutorial() {
+        guard gameSession.progress.currentScene == .floor9RecordsBattle,
+              gameSession.battleState != nil else {
+            battleTutorialStep = nil
+            return
+        }
+
+        let progress = gameSession.progress.tutorialProgress
+        guard progress.shouldPresent(.recordsBattleBasics) else {
+            battleTutorialStep = nil
+            return
+        }
+        let step = progress.activeSequence == .recordsBattleBasics
+            ? (progress.activeStep ?? .battlePlayerHP)
+            : .battlePlayerHP
+        if progress.activeSequence != .recordsBattleBasics {
+            gameSession.send(.beginTutorial(sequence: .recordsBattleBasics, step: step))
+        }
+        battleTutorialStep = recordsBattleCoach(for: step)
+    }
+
+    private func recordsBattleCoach(for step: TutorialStepID) -> TutorialCoachStep? {
+        switch step {
+        case .battlePlayerHP:
+            TutorialCoachStep(
+                id: step,
+                title: "봉인관의 체력",
+                message: "왼쪽 상단은 현재 체력과 방벽입니다. 방벽이 있으면 체력보다 먼저 피해를 흡수합니다.",
+                targetIDs: ["battle.player-health"],
+                placement: .bottom
+            )
+        case .battleTurnAndEnemyHP:
+            TutorialCoachStep(
+                id: step,
+                title: "라운드와 관리자 상태",
+                message: "가운데에서 현재 턴을, 오른쪽에서 관리자의 체력과 방벽을 확인합니다. 관리자 체력을 0으로 만들면 전투가 끝납니다.",
+                targetIDs: ["battle.turn", "battle.enemy-health"],
+                placement: .bottom
+            )
+        case .battleIntent:
+            TutorialCoachStep(
+                id: step,
+                title: "다음 행동 예고",
+                message: "관리자 머리 위 심볼과 오른쪽 예고는 같은 행동을 가리킵니다. 붉은 공격은 일반 피해, 강하게 점멸하는 공격은 강공격, 푸른 방패는 일반 방벽, 금빛 방패는 절대 방벽, 보라색 예고는 다음 행동 준비입니다.",
+                targetIDs: ["battle.next-action", "battle.intent-symbol"],
+                placement: .bottom
+            )
+        case .battleResourcesAndSpells:
+            TutorialCoachStep(
+                id: step,
+                title: "마나와 마법 선택",
+                message: "마나는 선의 길이에 따라 줄고, 잔여 획은 이번 턴에 그릴 수 있는 횟수입니다. 아래 주문을 눌러 선택하고 길게 눌러 상세 정보를 확인할 수 있습니다.",
+                targetIDs: ["battle.resources", "battle.spells"],
+                placement: .top
+            )
+        case .battleInput:
+            TutorialCoachStep(
+                id: step,
+                title: "문양 입력 패드",
+                message: "선택한 주문의 시작점과 핵심점을 따라 문양을 그린 뒤 시전하십시오. 입력 중 예상 마나와 남은 획이 바로 반영됩니다.",
+                targetIDs: ["battle.input"],
+                placement: .top
+            )
+        case .battleLogAndEndTurn:
+            TutorialCoachStep(
+                id: step,
+                title: "전투 기록과 턴 종료",
+                message: "왼쪽 기록에서 피해와 방벽 변화를 확인합니다. 더 행동하지 않으려면 오른쪽 턴 종료를 눌러 관리자의 차례로 넘기십시오.",
+                targetIDs: ["battle.log", "battle.turn-end"],
+                placement: .top
+            )
+        default:
+            nil
+        }
+    }
+
+    private func advanceBattleTutorial() {
+        guard let step = battleTutorialStep?.id else { return }
+        let next: TutorialStepID?
+        switch step {
+        case .battlePlayerHP: next = .battleTurnAndEnemyHP
+        case .battleTurnAndEnemyHP: next = .battleIntent
+        case .battleIntent: next = .battleResourcesAndSpells
+        case .battleResourcesAndSpells: next = .battleInput
+        case .battleInput: next = .battleLogAndEndTurn
+        case .battleLogAndEndTurn: next = nil
+        default: next = nil
+        }
+        gameSession.send(.completeTutorialStep(step: step, next: next))
+        if let next {
+            battleTutorialStep = recordsBattleCoach(for: next)
+        } else {
+            gameSession.send(.completeTutorial(.recordsBattleBasics))
+            battleTutorialStep = nil
+        }
+    }
+
+    private func skipBattleTutorial() {
+        gameSession.send(.skipTutorial(.recordsBattleBasics))
+        battleTutorialStep = nil
     }
 
     private var keepsBattleOutcomeMusic: Bool {
