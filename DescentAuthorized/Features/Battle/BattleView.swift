@@ -354,6 +354,8 @@ struct BattleView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.bottom, bottomBarHeight)
 
+                intentTutorialTarget(in: proxy)
+
                 if !isDefeated {
                     if isBattleScene, realitySceneID != nil {
                         battleCameraInteractionSurface(
@@ -570,7 +572,27 @@ struct BattleView: View {
                 .fill(DAColor.gold.opacity(0.22))
                 .frame(height: 1)
         }
-        .tutorialTarget("battle.intent-symbol")
+    }
+
+    @ViewBuilder
+    private func intentTutorialTarget(in proxy: GeometryProxy) -> some View {
+        if let projectedFrame = realityController.projectedEnemyIntentFrame {
+            let globalFrame = proxy.frame(in: .global)
+            Color.clear
+                .frame(width: projectedFrame.width, height: projectedFrame.height)
+                .position(
+                    x: projectedFrame.midX - globalFrame.minX,
+                    y: projectedFrame.midY - globalFrame.minY
+                )
+                .tutorialTarget("battle.intent-symbol")
+                .allowsHitTesting(false)
+        } else if realitySceneID == nil {
+            Color.clear
+                .frame(width: 126, height: 126)
+                .position(x: proxy.size.width / 2, y: 108)
+                .tutorialTarget("battle.intent-symbol")
+                .allowsHitTesting(false)
+        }
     }
 
     private func spellBar(_ presentation: BattleUIPresentation) -> some View {

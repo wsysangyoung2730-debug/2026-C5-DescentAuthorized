@@ -52,6 +52,7 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var loadState: LoadState = .idle
     @Published private(set) var missingEntityRoles: [RealityEntityRole] = []
     @Published private(set) var projectedMagicBoard: RealityProjectedBoard?
+    @Published private(set) var projectedEnemyIntentFrame: CGRect?
     @Published private(set) var cameraFadeOpacity: Double = 0
     @Published private(set) var isCameraTransitioning = false
     @Published private(set) var isBattleCameraInteractionEnabled = false
@@ -99,6 +100,9 @@ final class RealitySceneController: ObservableObject {
     private let progressionVFXRenderer = RealityProgressionVFXRenderer()
 
     func attach(to arView: ARView) {
+        combatVFXRenderer.onIntentLayoutChanged = { [weak self] in
+            self?.scheduleBoardProjectionRefresh()
+        }
         guard self.arView !== arView else {
             scheduleBoardProjectionRefresh()
             return
@@ -1002,6 +1006,7 @@ final class RealitySceneController: ObservableObject {
         registry.reset()
         missingEntityRoles = []
         projectedMagicBoard = nil
+        projectedEnemyIntentFrame = nil
         combatVFXRenderer.reset()
         progressionVFXRenderer.reset()
         requestedSceneID = nil
@@ -1290,7 +1295,21 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func scheduleBoardProjectionRefresh() {
-        DispatchQueue.main.async { [weak self] in self?.refreshBoardProjection() }
+        DispatchQueue.main.async { [weak self] in
+            self?.refreshBoardProjection()
+            self?.refreshEnemyIntentProjection()
+        }
+    }
+
+    private func refreshEnemyIntentProjection() {
+        guard let arView else {
+            projectedEnemyIntentFrame = nil
+            return
+        }
+        let nextFrame = combatVFXRenderer.projectedIntentFrame(in: arView)
+        if projectedEnemyIntentFrame != nextFrame {
+            projectedEnemyIntentFrame = nextFrame
+        }
     }
 
     private func refreshBoardProjection() {
