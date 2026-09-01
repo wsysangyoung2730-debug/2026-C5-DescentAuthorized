@@ -64,6 +64,8 @@ extension View {
                         onNext: onNext,
                         onSkip: onSkip
                     )
+                    .id(step.id)
+                    .transition(.identity)
                 }
             }
         }
