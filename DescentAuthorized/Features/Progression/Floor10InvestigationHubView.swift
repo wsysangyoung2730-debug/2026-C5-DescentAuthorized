@@ -73,7 +73,7 @@ struct Floor10InvestigationHubView: View {
             Text("시야를 드래그해 주변을 살피고 표시된 지점을 조사하십시오.")
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.7))
-            Text("조사 (inspectedClueIDs.count) / (clues.count)")
+            Text("조사 \(inspectedClueIDs.count) / \(clues.count)")
                 .font(.caption.monospaced().weight(.bold))
                 .foregroundStyle(.purple.opacity(0.92))
         }
