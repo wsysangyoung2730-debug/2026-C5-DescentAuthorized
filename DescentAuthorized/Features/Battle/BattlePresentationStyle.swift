@@ -149,13 +149,19 @@ struct BattleTopHUDView: View {
                 )
                 .frame(maxHeight: .infinity, alignment: .center)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .frame(height: 66)
             .tutorialTarget("battle.status")
+            .frame(maxHeight: .infinity, alignment: .center)
 
             nextActionBlock
                 .frame(width: 142)
+                .overlay {
+                    Color.clear
+                        .tutorialTarget("battle.next-action")
+                        .padding(10)
+                }
                 .frame(maxHeight: .infinity, alignment: .center)
-                .tutorialTarget("battle.next-action")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }

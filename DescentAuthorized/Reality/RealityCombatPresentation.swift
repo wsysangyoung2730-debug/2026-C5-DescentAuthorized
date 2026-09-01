@@ -177,10 +177,17 @@ final class RealityCombatVFXRenderer {
             width: maxX - minX,
             height: maxY - minY
         )
-        let minimumTargetSize: CGFloat = 76
+        let minimumTargetSize: CGFloat = 64
+        let maximumTargetSize = CGSize(width: 148, height: 176)
         let targetSize = CGSize(
-            width: max(rawFrame.width + 20, minimumTargetSize),
-            height: max(rawFrame.height + 20, minimumTargetSize)
+            width: min(
+                max(rawFrame.width + 8, minimumTargetSize),
+                maximumTargetSize.width
+            ),
+            height: min(
+                max(rawFrame.height + 8, minimumTargetSize),
+                maximumTargetSize.height
+            )
         )
         let targetFrame = CGRect(
             x: rawFrame.midX - targetSize.width / 2,

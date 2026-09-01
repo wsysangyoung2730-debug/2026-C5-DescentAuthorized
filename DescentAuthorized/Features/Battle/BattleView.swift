@@ -604,7 +604,6 @@ struct BattleView: View {
             VStack(alignment: .leading, spacing: 8) {
                 battleResourceBar(presentation)
                     .frame(height: 42)
-                    .tutorialTarget("battle.resources")
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
@@ -614,8 +613,8 @@ struct BattleView: View {
                     }
                 }
                 .frame(height: 176)
-                .tutorialTarget("battle.spells")
             }
+            .tutorialTarget("battle.resources-and-spells")
 
             turnEndControl(presentation)
                 .frame(width: 184, height: 94, alignment: .bottomTrailing)

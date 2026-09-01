@@ -223,7 +223,7 @@ struct DemoFlowView: View {
                 id: step,
                 title: "마나와 마법 선택",
                 message: "마나는 선의 길이에 따라 줄고, 잔여 획은 이번 턴에 그릴 수 있는 횟수입니다. 아래 주문을 눌러 선택하고 길게 눌러 상세 정보를 확인할 수 있습니다.",
-                targetIDs: ["battle.resources", "battle.spells"],
+                targetIDs: ["battle.resources-and-spells"],
                 placement: .top
             )
         case .battleInput:

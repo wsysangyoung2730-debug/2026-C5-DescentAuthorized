@@ -83,11 +83,16 @@ struct TutorialCoachOverlay: View {
 
     var body: some View {
         GeometryReader { proxy in
+            let resolvedHighlightFrames = containedHighlightFrames(in: proxy.size)
+
             ZStack {
-                spotlightMask(size: proxy.size)
+                spotlightMask(
+                    size: proxy.size,
+                    highlightFrames: resolvedHighlightFrames
+                )
 
                 if step.advancesOnTargetTap {
-                    ForEach(Array(highlightFrames.enumerated()), id: \.offset) { _, frame in
+                    ForEach(Array(resolvedHighlightFrames.enumerated()), id: \.offset) { _, frame in
                         Button(action: onNext) {
                             Color.clear
                                 .contentShape(RoundedRectangle(cornerRadius: 12))
@@ -122,7 +127,22 @@ struct TutorialCoachOverlay: View {
         .accessibilityAddTraits(.isModal)
     }
 
-    private func spotlightMask(size: CGSize) -> some View {
+    private func containedHighlightFrames(in size: CGSize) -> [CGRect] {
+        let visibleBounds = CGRect(origin: .zero, size: size)
+            .insetBy(dx: 3, dy: 3)
+        return highlightFrames.compactMap { frame in
+            let containedFrame = frame.intersection(visibleBounds)
+            guard containedFrame.width >= 12, containedFrame.height >= 12 else {
+                return nil
+            }
+            return containedFrame
+        }
+    }
+
+    private func spotlightMask(
+        size: CGSize,
+        highlightFrames: [CGRect]
+    ) -> some View {
         Canvas { context, _ in
             var path = Path(CGRect(origin: .zero, size: size))
             for frame in highlightFrames {
