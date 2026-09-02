@@ -10,10 +10,12 @@ struct FloorEntranceInvestigationLayer: View {
 
     let configuration: FloorEntranceInvestigationConfiguration
     let trailingReservedWidth: CGFloat
+    let onCompletion: (() -> Void)?
 
     @State private var detailClueID: String?
     @State private var cameraLookOrigin: CGSize?
     @State private var isAnchorPulseActive = false
+    @State private var completesWhenRecordCloses = false
 
     private let sceneProjectionTopInset: CGFloat = 96
     private let markerSize = CGSize(width: 76, height: 110)
@@ -378,6 +380,10 @@ struct FloorEntranceInvestigationLayer: View {
     }
 
     private func reveal(_ clue: FloorEntranceInvestigationClue) {
+        let isNewClue = !inspectedClueIDs.contains(clue.recordID)
+        let willCompleteInvestigation = isNewClue
+            && inspectedClueIDs.count == configuration.clues.count - 1
+
         if inspectedClueIDs.contains(clue.recordID) {
             gameFeedback.trigger(
                 .recordOpened,
@@ -388,6 +394,8 @@ struct FloorEntranceInvestigationLayer: View {
             gameSession.send(.readRecord(clue.recordID))
         }
 
+        completesWhenRecordCloses = willCompleteInvestigation
+
         withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.86)) {
             detailClueID = clue.id
         }
@@ -397,6 +405,14 @@ struct FloorEntranceInvestigationLayer: View {
         gameFeedback.playInterface(.back, settings: appSettings.settings)
         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.18)) {
             detailClueID = nil
+        }
+
+        guard completesWhenRecordCloses else { return }
+        completesWhenRecordCloses = false
+
+        let completionDelay = reduceMotion ? 0 : 0.2
+        DispatchQueue.main.asyncAfter(deadline: .now() + completionDelay) {
+            onCompletion?()
         }
     }
 

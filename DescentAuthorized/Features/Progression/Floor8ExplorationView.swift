@@ -3,27 +3,42 @@ import SwiftUI
 struct Floor8ExplorationView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
+
+    @State private var isEntrancePanelPresented = false
+
     let sceneController: RealitySceneController
 
     var body: some View {
         Group {
             if gameSession.progress.currentScene == .floor8Antechamber {
                 GeometryReader { proxy in
-                    let panelWidth = min(max(proxy.size.width * 0.42, 540), 680)
-
                     ZStack {
-                        FloorEntrancePanel(
-                            configuration: .floor8,
-                            action: { gameSession.send(.enterProtectionRoom) }
-                        )
-
-                        FloorEntranceInvestigationLayer(
-                            sceneController: sceneController,
-                            configuration: .floor8,
-                            trailingReservedWidth: panelWidth
-                        )
-                        .zIndex(4)
+                        if isEntrancePanelPresented {
+                            FloorEntrancePanel(
+                                configuration: .floor8,
+                                action: { gameSession.send(.enterProtectionRoom) }
+                            )
+                            .transition(
+                                .move(edge: .trailing)
+                                    .combined(with: .opacity)
+                            )
+                            .zIndex(2)
+                        } else {
+                            FloorEntranceInvestigationLayer(
+                                sceneController: sceneController,
+                                configuration: .floor8,
+                                trailingReservedWidth: 0,
+                                onCompletion: presentEntrancePanel
+                            )
+                            .transition(
+                                .opacity
+                                    .combined(with: .move(edge: .leading))
+                            )
+                            .zIndex(1)
+                        }
                     }
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .clipped()
                 }
             } else {
                 ZStack {
@@ -49,6 +64,9 @@ struct Floor8ExplorationView: View {
         }
         .onAppear {
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+            if gameSession.progress.currentScene == .floor8Antechamber {
+                isEntrancePanelPresented = hasCompletedEntranceInvestigation
+            }
         }
     }
 
@@ -156,6 +174,21 @@ struct Floor8ExplorationView: View {
 
     private var stageColor: Color {
         gameSession.progress.currentScene == .floor8SealedDoor ? .yellow : .cyan
+    }
+
+    private var hasCompletedEntranceInvestigation: Bool {
+        let recordIDs = Set(FloorEntranceInvestigationConfiguration.floor8.clues.map(\.recordID))
+        return recordIDs.isSubset(of: gameSession.progress.readRecordIDs)
+    }
+
+    private func presentEntrancePanel() {
+        withAnimation(
+            appSettings.reducedMotion
+                ? nil
+                : .easeInOut(duration: 0.72)
+        ) {
+            isEntrancePanelPresented = true
+        }
     }
 
     private var contentWidth: CGFloat {

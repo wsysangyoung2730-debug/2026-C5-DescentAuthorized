@@ -18,7 +18,8 @@ struct Floor9EntranceView: View {
                 FloorEntranceInvestigationLayer(
                     sceneController: sceneController,
                     configuration: .floor9,
-                    trailingReservedWidth: panelWidth
+                    trailingReservedWidth: panelWidth,
+                    onCompletion: nil
                 )
                 .zIndex(4)
             }
