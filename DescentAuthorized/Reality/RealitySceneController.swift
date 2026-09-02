@@ -34,7 +34,7 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     )
 
     static let floor9EntranceInvestigation = BattleCameraInteractionConfiguration(
-        maximumYaw: .pi * 105 / 180,
+        maximumYaw: .pi * 100 / 180,
         maximumUpwardPitch: .pi * 10 / 180,
         maximumDownwardPitch: .pi * 12 / 180,
         minimumFieldOfViewScale: 1,
@@ -122,7 +122,6 @@ final class RealitySceneController: ObservableObject {
     private var requestedBattleState: BattleState?
     private var requestedReducedMotion = false
     private var requestedEnemyPreviewVisibility = true
-    private var requestedEnemyPreviewOffset = SIMD3<Float>.zero
     private var requestedDescentState: RealityDescentPresentationState = .inactive
     private var requestedRewardState: RealityRewardPresentationState = .inactive
     private var pendingCombatCues: [RealityCombatCue] = []
@@ -313,27 +312,49 @@ final class RealitySceneController: ObservableObject {
         setBattleCameraInteractionEnabled(isEnabled)
     }
 
-    func setEnemyPreviewVisible(
-        _ isVisible: Bool,
-        offset: SIMD3<Float> = .zero
-    ) {
+    func setEnemyPreviewVisible(_ isVisible: Bool) {
         requestedEnemyPreviewVisibility = isVisible
-        requestedEnemyPreviewOffset = offset
         registry.setEnabled(isVisible, for: .enemyActor)
-        registry.entity(for: .enemyActor)?.position = offset
     }
 
     func centerAndLockEntranceCamera(
+        previewYaw: Float,
         reducedMotion: Bool,
         completion: @escaping @MainActor () -> Void
     ) {
         isBattleCameraInteractionEnabled = false
-        resetBattleCamera(animated: !reducedMotion)
+        cancelBattleCameraImpact(restoreCamera: false)
+        clearBattleCameraAdjustmentState()
 
-        guard !reducedMotion,
-              [.main, .battle, .tutorial].contains(requestedCameraPreset),
-              activeCameraName != nil,
-              cameraEntity != nil else {
+        guard [.main, .battle, .tutorial].contains(requestedCameraPreset),
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else {
+            completion()
+            return
+        }
+
+        let targetMatrix = adjustedBattleCameraMatrix(
+            from: snapshot,
+            transientYaw: previewYaw
+        )
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.camera = snapshot.camera
+
+        if reducedMotion {
+            cameraEntity.setTransformMatrix(targetMatrix, relativeTo: nil)
+        } else {
+            cameraEntity.move(
+                to: Transform(matrix: targetMatrix),
+                relativeTo: nil,
+                duration: 0.28,
+                timingFunction: .easeInOut
+            )
+        }
+        isBattleCameraAdjusted = abs(previewYaw) > 0.001
+        scheduleBoardProjectionRefresh()
+
+        guard !reducedMotion else {
             completion()
             return
         }
@@ -1189,7 +1210,6 @@ final class RealitySceneController: ObservableObject {
                         self.requestedEnemyPreviewVisibility,
                         for: .enemyActor
                     )
-                    actorContainer.position = self.requestedEnemyPreviewOffset
                     self.prepareEnemyIdleMotion(
                         spawn,
                         targetHeight: actor.targetHeight,
@@ -1417,7 +1437,7 @@ final class RealitySceneController: ObservableObject {
                 ),
                 .init(
                     id: "floor9.entrance.erased-monitor",
-                    entityName: "SmallWallMonitor",
+                    entityName: "F09_SetDress_Monitor_Right",
                     normalizedPosition: SIMD3(0.5, 0.5, 0.9)
                 )
             ]
