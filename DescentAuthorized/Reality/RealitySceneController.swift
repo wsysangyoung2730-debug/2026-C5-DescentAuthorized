@@ -114,6 +114,7 @@ final class RealitySceneController: ObservableObject {
     private var requestedBattleState: BattleState?
     private var requestedReducedMotion = false
     private var requestedEnemyPreviewVisibility = true
+    private var requestedEnemyPreviewOffset = SIMD3<Float>.zero
     private var requestedDescentState: RealityDescentPresentationState = .inactive
     private var requestedRewardState: RealityRewardPresentationState = .inactive
     private var pendingCombatCues: [RealityCombatCue] = []
@@ -304,9 +305,14 @@ final class RealitySceneController: ObservableObject {
         setBattleCameraInteractionEnabled(isEnabled)
     }
 
-    func setEnemyPreviewVisible(_ isVisible: Bool) {
+    func setEnemyPreviewVisible(
+        _ isVisible: Bool,
+        offset: SIMD3<Float> = .zero
+    ) {
         requestedEnemyPreviewVisibility = isVisible
+        requestedEnemyPreviewOffset = offset
         registry.setEnabled(isVisible, for: .enemyActor)
+        registry.entity(for: .enemyActor)?.position = offset
     }
 
     func centerAndLockEntranceCamera(
@@ -1175,6 +1181,7 @@ final class RealitySceneController: ObservableObject {
                         self.requestedEnemyPreviewVisibility,
                         for: .enemyActor
                     )
+                    actorContainer.position = self.requestedEnemyPreviewOffset
                     self.prepareEnemyIdleMotion(
                         spawn,
                         targetHeight: actor.targetHeight,

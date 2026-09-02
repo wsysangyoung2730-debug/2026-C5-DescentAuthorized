@@ -46,7 +46,10 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
         }
         .onAppear {
             isEntrancePresented = hasCompletedInvestigation
-            sceneController.setEnemyPreviewVisible(hasCompletedInvestigation)
+            sceneController.setEnemyPreviewVisible(
+                hasCompletedInvestigation,
+                offset: configuration.enemyPreviewOffset
+            )
 
             if hasCompletedInvestigation {
                 sceneController.setLimitedCameraInteractionEnabled(false)
@@ -62,7 +65,10 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
         sceneController.centerAndLockEntranceCamera(
             reducedMotion: appSettings.reducedMotion
         ) {
-            sceneController.setEnemyPreviewVisible(true)
+            sceneController.setEnemyPreviewVisible(
+                true,
+                offset: configuration.enemyPreviewOffset
+            )
             withAnimation(
                 appSettings.reducedMotion
                     ? nil
@@ -546,12 +552,14 @@ struct FloorEntranceInvestigationConfiguration {
     let areaTitle: String
     let recordTitle: String
     let accent: Color
+    let enemyPreviewOffset: SIMD3<Float>
     let clues: [FloorEntranceInvestigationClue]
 
     static let floor9 = FloorEntranceInvestigationConfiguration(
         areaTitle: "제9층 · 중앙 기록실 입구",
         recordTitle: "제9층 입구 조사 기록",
         accent: Color(red: 0.76, green: 0.56, blue: 0.3),
+        enemyPreviewOffset: SIMD3(-4.2, 0, 0),
         clues: [
             .init(
                 id: "approval-document",
@@ -590,6 +598,7 @@ struct FloorEntranceInvestigationConfiguration {
         areaTitle: "제8층 · 균열 관측실 전초",
         recordTitle: "제8층 입구 조사 기록",
         accent: Color(red: 0.22, green: 0.78, blue: 0.96),
+        enemyPreviewOffset: .zero,
         clues: [
             .init(
                 id: "warning-tags",
