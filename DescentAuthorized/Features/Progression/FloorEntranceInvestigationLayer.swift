@@ -10,6 +10,7 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
     let entranceContent: EntranceContent
 
     @State private var isEntrancePresented = false
+    @State private var isInvestigationPresented = true
 
     init(
         sceneController: RealitySceneController,
@@ -21,6 +22,8 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
         self.configuration = configuration
         self.hasCompletedInvestigation = hasCompletedInvestigation
         self.entranceContent = entranceContent()
+        _isEntrancePresented = State(initialValue: hasCompletedInvestigation)
+        _isInvestigationPresented = State(initialValue: !hasCompletedInvestigation)
     }
 
     var body: some View {
@@ -30,14 +33,13 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
                     entranceContent
                         .transition(.move(edge: .trailing).combined(with: .opacity))
                         .zIndex(2)
-                } else {
+                } else if isInvestigationPresented {
                     FloorEntranceInvestigationLayer(
                         sceneController: sceneController,
                         configuration: configuration,
                         trailingReservedWidth: 0,
                         onCompletion: completeInvestigation
                     )
-                    .transition(.opacity.combined(with: .move(edge: .leading)))
                     .zIndex(1)
                 }
             }
@@ -46,6 +48,7 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
         }
         .onAppear {
             isEntrancePresented = hasCompletedInvestigation
+            isInvestigationPresented = !hasCompletedInvestigation
             sceneController.setEnemyPreviewVisible(hasCompletedInvestigation)
 
             if hasCompletedInvestigation {
@@ -63,6 +66,12 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
     }
 
     private func completeInvestigation() {
+        var immediateRemoval = Transaction(animation: nil)
+        immediateRemoval.disablesAnimations = true
+        withTransaction(immediateRemoval) {
+            isInvestigationPresented = false
+        }
+
         sceneController.centerAndLockEntranceCamera(
             previewYaw: configuration.enemyPreviewCameraYaw,
             reducedMotion: appSettings.reducedMotion

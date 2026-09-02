@@ -109,13 +109,8 @@ struct Floor9EntranceView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 10) {
-                Text("9-A / 중앙 기록실 입구")
-                    .font(.caption.monospaced().weight(.bold))
-                    .foregroundStyle(DAColor.magicGlow)
-
-                Spacer(minLength: 12)
-
+            HStack {
+                Spacer()
                 statusBadge
             }
 
