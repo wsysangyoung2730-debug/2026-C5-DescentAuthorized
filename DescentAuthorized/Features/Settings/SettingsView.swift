@@ -343,8 +343,8 @@ private extension TutorialSequenceID {
         switch self {
         case .floor10Intro: "10층 시작·기상 연출"
         case .floor10Investigation: "10층 탐색과 조사"
-        case .afterglowDiscovery: "잔광 말소 발견·훈련"
-        case .riftDiscovery: "균열 절단 발견·훈련"
+        case .afterglowDiscovery: "떨어진 두루마리 주문 학습"
+        case .riftDiscovery: "이전 균열 절단 발견 안내"
         case .floor10DescentSeal: "10층 하강 봉인문"
         case .recordsBattleBasics: "9층 첫 전투"
         }

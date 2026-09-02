@@ -63,6 +63,55 @@ struct GameProgressionController: Sendable {
         ]
     }
 
+    mutating func completeScrollLearning(
+        spell: SpellID,
+        grade: CastingGrade
+    ) throws -> [ProgressionEvent] {
+        guard grade != .rejected else {
+            throw ProgressionError.requirementMissing("successful scroll tracing")
+        }
+
+        let destination: SceneID?
+        switch spell {
+        case .afterglowErasure:
+            try requireScene(.floor10Office)
+            progress.tutorials.formUnion([.cardSelection, .drawing])
+            destination = .floor10GlyphArchive
+
+        case .riftSeverance:
+            try requireScene(.floor10GlyphArchive)
+            guard progress.completedTrainingSpells.contains(.afterglowErasure) else {
+                throw ProgressionError.requirementMissing("afterglow scroll learning")
+            }
+            destination = .floor10DescentDoor
+
+        case .basicBarrier:
+            try requireScene(.floor8Antechamber)
+            progress.tutorials.insert(.defense)
+            destination = nil
+
+        case .sealRelease:
+            try requireScene(.floor8SealedDoor)
+            destination = nil
+
+        case .barrierPiercing:
+            throw ProgressionError.unexpectedSpell(spell)
+        }
+
+        progress.learnedSpells.insert(spell)
+        progress.completedTrainingSpells.insert(spell)
+
+        var events: [ProgressionEvent] = [
+            .spellLearned(spell),
+            .trainingCompleted(spell: spell, grade: grade),
+            updateMastery(spell: spell, grade: grade)
+        ]
+        if let destination {
+            events.append(.sceneChanged(setScene(destination)))
+        }
+        return events
+    }
+
     mutating func completeTraining(
         spell: SpellID,
         grade: CastingGrade
@@ -173,6 +222,13 @@ struct GameProgressionController: Sendable {
 
     mutating func enterProtectionRoom() throws -> [ProgressionEvent] {
         try requireScene(.floor8Antechamber)
+        if progress.completedTrainingSpells.contains(.basicBarrier) {
+            progress.checkpoint = .residualBattle
+            return [
+                .checkpointChanged(.residualBattle),
+                .sceneChanged(setScene(.floor8ResidualEncounter))
+            ]
+        }
         return move(to: .floor8ProtectionRoom)
     }
 
@@ -306,12 +362,10 @@ struct GameProgressionController: Sendable {
             ]
 
         case .observationResidual:
-            progress.learnedSpells.insert(.sealRelease)
             let recovery = restoreHP(by: 20, minimum: 60)
             progress.checkpoint = .residualDefeated
             return [
                 .enemyDefeated(enemy),
-                .spellLearned(.sealRelease),
                 recovery,
                 .checkpointChanged(.residualDefeated),
                 .sceneChanged(setScene(.floor8ResidualDefeated))

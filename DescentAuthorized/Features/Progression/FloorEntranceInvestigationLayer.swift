@@ -7,10 +7,13 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
 
     let configuration: FloorEntranceInvestigationConfiguration
     let hasCompletedInvestigation: Bool
+    let hasCompletedPostInvestigation: Bool
+    let postInvestigationContent: ((@escaping () -> Void) -> AnyView)?
     let entranceContent: EntranceContent
 
     @State private var isEntrancePresented = false
     @State private var isInvestigationPresented = true
+    @State private var isPostInvestigationPresented = false
     @State private var isBossRevealTransition = false
 
     init(
@@ -22,9 +25,38 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
         self.sceneController = sceneController
         self.configuration = configuration
         self.hasCompletedInvestigation = hasCompletedInvestigation
+        hasCompletedPostInvestigation = true
+        postInvestigationContent = nil
         self.entranceContent = entranceContent()
         _isEntrancePresented = State(initialValue: hasCompletedInvestigation)
         _isInvestigationPresented = State(initialValue: !hasCompletedInvestigation)
+        _isPostInvestigationPresented = State(initialValue: false)
+    }
+
+    init<PostInvestigationContent: View>(
+        sceneController: RealitySceneController,
+        configuration: FloorEntranceInvestigationConfiguration,
+        hasCompletedInvestigation: Bool,
+        hasCompletedPostInvestigation: Bool,
+        @ViewBuilder postInvestigationContent: @escaping (@escaping () -> Void) -> PostInvestigationContent,
+        @ViewBuilder entranceContent: () -> EntranceContent
+    ) {
+        self.sceneController = sceneController
+        self.configuration = configuration
+        self.hasCompletedInvestigation = hasCompletedInvestigation
+        self.hasCompletedPostInvestigation = hasCompletedPostInvestigation
+        self.postInvestigationContent = { completion in
+            AnyView(postInvestigationContent(completion))
+        }
+        self.entranceContent = entranceContent()
+
+        let shouldPresentPostInvestigation = hasCompletedInvestigation
+            && !hasCompletedPostInvestigation
+        _isEntrancePresented = State(
+            initialValue: hasCompletedInvestigation && !shouldPresentPostInvestigation
+        )
+        _isInvestigationPresented = State(initialValue: !hasCompletedInvestigation)
+        _isPostInvestigationPresented = State(initialValue: shouldPresentPostInvestigation)
     }
 
     var body: some View {
@@ -33,6 +65,11 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
                 if isEntrancePresented {
                     entranceContent
                         .transition(.move(edge: .trailing).combined(with: .opacity))
+                        .zIndex(2)
+                } else if isPostInvestigationPresented,
+                          let postInvestigationContent {
+                    postInvestigationContent(completePostInvestigation)
+                        .transition(.opacity)
                         .zIndex(2)
                 } else if isInvestigationPresented {
                     FloorEntranceInvestigationLayer(
@@ -60,11 +97,15 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
             value: isBossRevealTransition
         )
         .onAppear {
-            isEntrancePresented = hasCompletedInvestigation
+            let shouldPresentPostInvestigation = hasCompletedInvestigation
+                && !hasCompletedPostInvestigation
+                && postInvestigationContent != nil
+            isEntrancePresented = hasCompletedInvestigation && !shouldPresentPostInvestigation
             isInvestigationPresented = !hasCompletedInvestigation
-            sceneController.setEnemyPreviewVisible(hasCompletedInvestigation)
+            isPostInvestigationPresented = shouldPresentPostInvestigation
+            sceneController.setEnemyPreviewVisible(isEntrancePresented)
 
-            if hasCompletedInvestigation {
+            if isEntrancePresented {
                 sceneController.centerAndLockEntranceCamera(
                     previewYaw: configuration.enemyPreviewCameraYaw,
                     reducedMotion: true,
@@ -85,6 +126,29 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
             isInvestigationPresented = false
         }
 
+        if !hasCompletedPostInvestigation,
+           postInvestigationContent != nil {
+            sceneController.setEnemyPreviewVisible(false)
+            withAnimation(appSettings.reducedMotion ? nil : .easeInOut(duration: 0.3)) {
+                isPostInvestigationPresented = true
+            }
+            return
+        }
+
+        presentEntrance()
+    }
+
+    private func completePostInvestigation() {
+        var immediateRemoval = Transaction(animation: nil)
+        immediateRemoval.disablesAnimations = true
+        withTransaction(immediateRemoval) {
+            isPostInvestigationPresented = false
+        }
+
+        presentEntrance()
+    }
+
+    private func presentEntrance() {
         sceneController.centerAndLockEntranceCamera(
             previewYaw: configuration.enemyPreviewCameraYaw,
             reducedMotion: appSettings.reducedMotion

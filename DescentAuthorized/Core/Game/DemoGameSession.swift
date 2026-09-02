@@ -3,6 +3,7 @@ import Foundation
 enum DemoCommand: Sendable {
     case leaveMeetingRoom
     case learnSpell(SpellID)
+    case completeScrollLearning(spell: SpellID, grade: CastingGrade)
     case completeTraining(spell: SpellID, grade: CastingGrade)
     case completeProtectionTraining(grade: CastingGrade)
     case approveDescentDoor
@@ -79,6 +80,9 @@ struct DemoGameSession: Sendable {
                 throw ProgressionError.unexpectedSpell(spell)
             }
             return wrap(events)
+
+        case let .completeScrollLearning(spell, grade):
+            return wrap(try progression.completeScrollLearning(spell: spell, grade: grade))
 
         case let .completeTraining(spell, grade):
             return wrap(try progression.completeTraining(spell: spell, grade: grade))

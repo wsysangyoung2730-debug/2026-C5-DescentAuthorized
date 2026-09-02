@@ -7,6 +7,16 @@ enum TutorialSequenceID: String, Codable, CaseIterable, Hashable, Sendable {
     case riftDiscovery
     case floor10DescentSeal
     case recordsBattleBasics
+
+    // riftDiscovery는 기존 저장 데이터 복원을 위해 enum에는 남기되,
+    // 새 튜토리얼 목록에서는 최초 두루마리 학습 안내로 통합한다.
+    static let allCases: [TutorialSequenceID] = [
+        .floor10Intro,
+        .floor10Investigation,
+        .afterglowDiscovery,
+        .floor10DescentSeal,
+        .recordsBattleBasics
+    ]
 }
 
 enum TutorialStepID: String, Codable, CaseIterable, Hashable, Sendable {

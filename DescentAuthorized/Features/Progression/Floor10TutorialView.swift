@@ -13,6 +13,10 @@ struct Floor10TutorialView: View {
                 Floor10InvestigationHubView(sceneController: sceneController)
             } else if gameSession.progress.currentScene == .floor10DescentDoor {
                 descentDoorScene
+            } else if gameSession.progress.currentScene == .floor10Office
+                        || gameSession.progress.currentScene == .floor10GlyphArchive {
+                sceneContent
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ZStack {
                     LinearGradient(
@@ -77,50 +81,16 @@ struct Floor10TutorialView: View {
         code: String,
         body: String
     ) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            sceneCode(code)
-            discoverySpeechBubble(spell: spell, body: body)
-                .tutorialTarget("floor10.spell-record")
-
-            glyphPreview(spell)
-                .frame(maxHeight: 260)
-
-            Spacer()
-
-            Button {
-                gameSession.send(.completeTutorialStep(
-                    step: tutorialInspectStep(for: spell.id),
-                    next: tutorialTrainingStep(for: spell.id)
-                ))
-                gameSession.send(.learnSpell(spell.id))
-            } label: {
-                Label("문양 해독 후 \(spell.name) 익히기", systemImage: "scroll.fill")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.purple)
+        ScrollSpellLearningView(
+            spell: spell,
+            sourceCode: code,
+            discoveryText: body,
+            presentation: .floor10,
+            tutorialSequence: spell.id == .afterglowErasure ? .afterglowDiscovery : nil,
+            failureMechanic: tutorialMechanic(for: spell.id)
+        ) { grade in
+            gameSession.send(.completeScrollLearning(spell: spell.id, grade: grade))
         }
-        .onAppear {
-            beginSpellTutorialIfNeeded(spell.id, step: tutorialInspectStep(for: spell.id))
-        }
-        .onChange(of: gameSession.progress.tutorialProgress.requestedReplay) { _, replay in
-            if replay == tutorialSequence(for: spell.id) {
-                beginSpellTutorialIfNeeded(spell.id, step: tutorialInspectStep(for: spell.id))
-            }
-        }
-        .tutorialCoach(
-            step: discoveryCoachStep(for: spell),
-            nextTitle: "기록 확인",
-            onNext: {
-                gameSession.send(.completeTutorialStep(
-                    step: tutorialInspectStep(for: spell.id),
-                    next: tutorialInspectStep(for: spell.id)
-                ))
-            },
-            onSkip: {
-                gameSession.send(.skipTutorial(tutorialSequence(for: spell.id)))
-            }
-        )
     }
 
     private var trainingScene: some View {
@@ -170,39 +140,6 @@ struct Floor10TutorialView: View {
             if replay == tutorialSequence(for: spell.id) {
                 beginSpellTutorialIfNeeded(spell.id, step: tutorialTrainingStep(for: spell.id))
             }
-        }
-    }
-
-    private func discoverySpeechBubble(spell: SpellDefinition, body: String) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label("조사한 흔적이 반응한다", systemImage: "sparkles")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.purple)
-            Text("“\(body)”")
-                .font(.system(size: 17, design: .serif))
-                .foregroundStyle(.white.opacity(0.9))
-                .lineSpacing(4)
-            HStack {
-                Text("복원 후보")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text(spell.name)
-                    .font(.headline)
-                    .foregroundStyle(DAColor.gold)
-            }
-        }
-        .padding(18)
-        .background(DAColor.card.opacity(0.94), in: RoundedRectangle(cornerRadius: 12))
-        .overlay(alignment: .bottomLeading) {
-            TrianglePointer()
-                .fill(DAColor.card.opacity(0.94))
-                .frame(width: 22, height: 12)
-                .offset(x: 28, y: 11)
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(DAColor.gold.opacity(0.42), lineWidth: 1)
         }
     }
 
@@ -256,10 +193,6 @@ struct Floor10TutorialView: View {
         spell == .afterglowErasure ? .afterglowDiscovery : .riftDiscovery
     }
 
-    private func tutorialInspectStep(for spell: SpellID) -> TutorialStepID {
-        spell == .afterglowErasure ? .afterglowInspect : .riftInspect
-    }
-
     private func tutorialTrainingStep(for spell: SpellID) -> TutorialStepID {
         spell == .afterglowErasure ? .afterglowTraining : .riftTraining
     }
@@ -285,23 +218,6 @@ struct Floor10TutorialView: View {
         gameSession.send(.completeTutorial(sequence))
     }
 
-    private func discoveryCoachStep(for spell: SpellDefinition) -> TutorialCoachStep? {
-        let sequence = tutorialSequence(for: spell.id)
-        let progress = gameSession.progress.tutorialProgress
-        guard progress.activeSequence == sequence,
-              progress.activeStep == tutorialInspectStep(for: spell.id),
-              !progress.completedSteps.contains(tutorialInspectStep(for: spell.id)) else {
-            return nil
-        }
-        return TutorialCoachStep(
-            id: tutorialInspectStep(for: spell.id),
-            title: "주문 흔적 발견",
-            message: "조사 중 발견한 마력 흔적과 이 기록이 같은 문양으로 반응합니다. 기록을 확인한 뒤 직접 익혀 보십시오.",
-            targetIDs: ["floor10.spell-record"],
-            placement: .bottom
-        )
-    }
-
     private var descentDoorScene: some View {
         DescentDoorSceneView(
             configuration: .floor10,
@@ -316,37 +232,6 @@ struct Floor10TutorialView: View {
             return SpellCatalog.riftSeverance
         }
         return SpellCatalog.afterglowErasure
-    }
-
-    private func glyphPreview(_ spell: SpellDefinition) -> some View {
-        Canvas { context, size in
-            for stroke in spell.glyph.strokes {
-                var path = Path()
-                guard let first = stroke.referencePath.first else { continue }
-                path.move(to: canvasPoint(first, size: size))
-                for point in stroke.referencePath.dropFirst() {
-                    path.addLine(to: canvasPoint(point, size: size))
-                }
-                context.stroke(
-                    path,
-                    with: .color(.purple.opacity(0.9)),
-                    style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
-                )
-            }
-        }
-        .background(Color.black.opacity(0.35))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .overlay {
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(Color.purple.opacity(0.25), lineWidth: 1)
-        }
-    }
-
-    private func canvasPoint(_ point: NormalizedPoint, size: CGSize) -> CGPoint {
-        CGPoint(
-            x: size.width * point.x / 100,
-            y: size.height * point.y / 100
-        )
     }
 
     private func sceneCode(_ text: String) -> some View {
@@ -365,17 +250,6 @@ struct Floor10TutorialView: View {
     private func resetPresentationOutsideDescent() {
         guard gameSession.progress.currentScene != .floor10DescentDoor else { return }
         sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
-    }
-}
-
-private struct TrianglePointer: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
-        path.closeSubpath()
-        return path
     }
 }
 
