@@ -343,6 +343,8 @@ struct FloorEntranceInvestigationLayer: View {
         GeometryReader { proxy in
             let recordHeight = min(proxy.size.height * 0.82, 700)
             let recordWidth = recordHeight * (1086 / 1448)
+            let parchmentSideInsetRatio: CGFloat = 0.155
+            let recordContentWidth = recordWidth * (1 - (parchmentSideInsetRatio * 2))
 
             ZStack {
                 Color.black.opacity(0.86)
@@ -418,12 +420,12 @@ struct FloorEntranceInvestigationLayer: View {
                         )
                         .buttonStyle(.plain)
                     }
-                    // The parchment's vertical ornaments sit near 15.5% from each edge.
-                    // Keep every glyph inside them, including serif overhangs.
-                    .padding(.horizontal, recordWidth * 0.155)
                     .padding(.top, recordHeight * 0.205)
                     .padding(.bottom, recordHeight * 0.12)
-                    .frame(width: recordWidth, height: recordHeight)
+                    // The parchment ornament margins are computed from the asset width,
+                    // then centered explicitly for stable text alignment.
+                    .frame(width: recordContentWidth, height: recordHeight)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .frame(width: recordWidth, height: recordHeight)
                 .shadow(color: .black.opacity(0.76), radius: 28, y: 12)
