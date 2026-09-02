@@ -241,18 +241,19 @@ struct Floor10InvestigationHubView: View {
                         .frame(width: recordWidth, height: recordHeight)
                         .allowsHitTesting(false)
 
-                    VStack(spacing: 18) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "doc.text.magnifyingglass")
-                            Text("제10층 조사 기록")
-                        }
-                        .font(.system(size: 16, weight: .bold, design: .serif))
-                        .foregroundStyle(Floor10InvestigationPalette.ink.opacity(0.78))
+                    VStack(spacing: 16) {
+                        Text("제10층 조사 기록")
+                            .font(.system(size: 15, weight: .bold, design: .serif))
+                            .tracking(1.1)
+                            .foregroundStyle(Floor10InvestigationPalette.ink.opacity(0.72))
+                            .lineLimit(1)
 
                         Text(clue.title)
                             .font(.system(size: 29, weight: .semibold, design: .serif))
                             .foregroundStyle(Floor10InvestigationPalette.ink)
                             .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.86)
 
                         HStack(spacing: 8) {
                             Rectangle()
@@ -310,7 +311,9 @@ struct Floor10InvestigationHubView: View {
                         .accessibilityHint("조사 기록을 닫고 공간 탐색으로 돌아갑니다")
                     }
                     .padding(.horizontal, recordWidth * 0.14)
-                    .padding(.top, recordHeight * 0.14)
+                    // The parchment's top rule and diamond sit around 14% high.
+                    // Keep the copy below them so glyphs never break the ornament.
+                    .padding(.top, recordHeight * 0.205)
                     .padding(.bottom, recordHeight * 0.12)
                     .frame(width: recordWidth, height: recordHeight)
                 }
