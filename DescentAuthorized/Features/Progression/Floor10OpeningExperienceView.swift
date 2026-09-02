@@ -69,6 +69,7 @@ struct Floor10OpeningExperienceView: View {
 
                     CRTBootNoiseOverlay(isOnline: terminalIsOnline, reducedMotion: reducesMotion)
                     CRTScanlineOverlay(reducedMotion: reducesMotion)
+                    CRTInterferenceSweepOverlay(reducedMotion: reducesMotion)
 
                     Image("Floor10CRTGlassDamage")
                         .resizable()
@@ -1048,6 +1049,71 @@ private struct CRTScanlineOverlay: View {
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+}
+
+private struct CRTInterferenceSweepOverlay: View {
+    let reducedMotion: Bool
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: reducedMotion ? 1 : 1 / 30)) { context in
+            GeometryReader { proxy in
+                let elapsed = context.date.timeIntervalSinceReferenceDate
+                let tick = Int(elapsed * 18)
+                let sweepPhase: CGFloat = reducedMotion
+                    ? 0.68
+                    : CGFloat((sin(elapsed * Double.pi * 2 / 5.8) + 1) / 2)
+                let sweepY = proxy.size.height * (0.08 + (sweepPhase * 0.84))
+
+                ZStack {
+                    interferenceLine(
+                        width: proxy.size.width * 1.08,
+                        height: max(72, proxy.size.height * 0.105),
+                        opacity: reducedMotion ? 0.16 : 0.44
+                    )
+                    .position(x: proxy.size.width / 2, y: sweepY)
+
+                    if !reducedMotion {
+                        ForEach(0..<4, id: \.self) { index in
+                            let verticalSeed = (tick * (index + 5) * 17 + index * 13) % 19
+                            let horizontalSeed = (tick * (index + 3) * 11 + index * 23) % 31
+                            let verticalJitter = CGFloat(verticalSeed - 9)
+                            let horizontalJitter = CGFloat(horizontalSeed - 15)
+                            let bandRatio = 0.58 + CGFloat(index) * 0.055
+                            let lowerBandY = proxy.size.height * bandRatio
+                            let lineWidth = proxy.size.width * (0.54 + CGFloat(index) * 0.11)
+                            let lineOpacity = 0.2 + Double(index) * 0.035
+                            let isVisible = (tick + index * 7) % 11 > 2
+
+                            interferenceLine(
+                                width: lineWidth,
+                                height: max(30, proxy.size.height * 0.045),
+                                opacity: isVisible ? lineOpacity : 0.035
+                            )
+                            .offset(x: horizontalJitter)
+                            .position(
+                                x: proxy.size.width / 2,
+                                y: lowerBandY + verticalJitter
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        .blendMode(.screen)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    private func interferenceLine(
+        width: CGFloat,
+        height: CGFloat,
+        opacity: Double
+    ) -> some View {
+        Image("Floor10CRTInterferenceLine")
+            .resizable()
+            .frame(width: width, height: height)
+            .opacity(opacity)
     }
 }
 
