@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct Floor10OpeningExperienceView: View {
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
 
@@ -12,6 +13,16 @@ struct Floor10OpeningExperienceView: View {
     @State private var openingTask: Task<Void, Never>?
     @State private var focus: Floor10OpeningCameraFocus = .rising
     @State private var showsRiseButton = false
+    @State private var eyelidOpening: CGFloat = 0.015
+    @State private var focusRecovery: CGFloat = 0
+    @State private var showsAwakeningEffects = true
+    @State private var isAwakeningSequenceRunning = false
+    @State private var isRiseButtonPulsing = false
+    @State private var isBeginningSurvey = false
+
+    private var reducesMotion: Bool {
+        appSettings.reducedMotion || accessibilityReduceMotion
+    }
 
     var body: some View {
         ZStack {
@@ -112,18 +123,17 @@ struct Floor10OpeningExperienceView: View {
                 )
                 .allowsHitTesting(false)
 
+                if showsAwakeningEffects {
+                    AwakeningFocusRecoveryOverlay(recovery: focusRecovery)
+                        .transition(.opacity)
+
+                    AwakeningEyelidOverlay(opening: eyelidOpening)
+                        .transition(.opacity)
+                }
+
                 if showsRiseButton {
-                    Button(action: beginSurvey) {
-                        Label("몸 일으키기", systemImage: "figure.stand")
-                            .font(.system(size: 19, weight: .semibold, design: .serif))
-                            .padding(.horizontal, 28)
-                            .frame(height: 58)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.purple.opacity(0.82))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                    .padding(.bottom, 62)
-                    .accessibilityHint("선택하면 몸을 일으킨 뒤 방 안을 자동으로 둘러봅니다")
+                    riseButton
+                        .transition(.opacity.combined(with: .scale(scale: 0.94)))
                 } else if focus != .rising {
                     focusCaption
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
@@ -136,6 +146,43 @@ struct Floor10OpeningExperienceView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             }
         }
+    }
+
+    private var riseButton: some View {
+        Button(action: beginSurvey) {
+            ZStack {
+                Image("Floor10RiseButtonPlate")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 420, height: 92)
+                    .clipped()
+                    .accessibilityHidden(true)
+
+                Text("몸 일으키기")
+                    .font(.system(size: 22, weight: .medium, design: .serif))
+                    .tracking(0.8)
+                    .foregroundStyle(Color(red: 0.94, green: 0.91, blue: 0.86))
+                    .shadow(color: .black.opacity(0.9), radius: 2, y: 1)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(width: 420, height: 92)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(Floor10RiseButtonStyle(reducedMotion: reducesMotion))
+        .scaleEffect(isRiseButtonPulsing ? 1.012 : 1)
+        .shadow(
+            color: Color.purple.opacity(isRiseButtonPulsing ? 0.6 : 0.28),
+            radius: isRiseButtonPulsing ? 18 : 9
+        )
+        .disabled(isBeginningSurvey)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .padding(.bottom, 54)
+        .onAppear(perform: startRiseButtonPulse)
+        .onDisappear {
+            isRiseButtonPulsing = false
+        }
+        .accessibilityLabel("몸 일으키기")
+        .accessibilityHint("선택하면 몸을 일으킨 뒤 방 안을 자동으로 둘러봅니다")
     }
 
     private var focusCaption: some View {
@@ -183,11 +230,19 @@ struct Floor10OpeningExperienceView: View {
         }
 
         if step == .terminalBoot {
+            resetAwakeningVisuals()
             presentation = .terminal
             runTerminal()
         } else {
             presentation = .awakening
             showsRiseButton = step == .rise
+            if step == .awaken {
+                resetAwakeningVisuals()
+            } else if step == .rise {
+                presentFullyAwake()
+            } else {
+                showsAwakeningEffects = false
+            }
             prepareAwakeningIfNeeded()
         }
     }
@@ -198,15 +253,16 @@ struct Floor10OpeningExperienceView: View {
             terminalLineCount = 0
             for index in terminalLines.indices {
                 guard !Task.isCancelled else { return }
-                withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.16)) {
+                withAnimation(.easeOut(duration: reducesMotion ? 0 : 0.16)) {
                     terminalLineCount = index + 1
                 }
-                try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 30 : 430))
+                try? await Task.sleep(for: .milliseconds(reducesMotion ? 30 : 430))
             }
-            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 50 : 850))
+            try? await Task.sleep(for: .milliseconds(reducesMotion ? 50 : 850))
             guard !Task.isCancelled else { return }
             gameSession.send(.completeTutorialStep(step: .terminalBoot, next: .awaken))
-            withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.48)) {
+            resetAwakeningVisuals()
+            withAnimation(.easeInOut(duration: reducesMotion ? 0 : 0.48)) {
                 presentation = .awakening
             }
             prepareAwakeningIfNeeded()
@@ -217,25 +273,84 @@ struct Floor10OpeningExperienceView: View {
         guard isSceneReady else { return }
         if let step = gameSession.progress.tutorialProgress.activeStep,
            [.surveyTarget, .surveyDesk, .surveyDamage, .surveyDoor].contains(step) {
+            showsAwakeningEffects = false
+            showsRiseButton = false
             startSurveyCamera()
             return
         }
-        sceneController.prepareFloor10FallenCamera(reducedMotion: appSettings.reducedMotion)
-        guard gameSession.progress.tutorialProgress.activeStep == .awaken else { return }
+        sceneController.prepareFloor10FallenCamera(reducedMotion: reducesMotion)
+
+        if gameSession.progress.tutorialProgress.activeStep == .rise {
+            presentFullyAwake()
+            return
+        }
+
+        guard gameSession.progress.tutorialProgress.activeStep == .awaken,
+              !isAwakeningSequenceRunning else { return }
 
         openingTask?.cancel()
+        isAwakeningSequenceRunning = true
         openingTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 80 : 900))
+            if reducesMotion {
+                presentFullyAwake()
+                try? await Task.sleep(for: .milliseconds(80))
+            } else {
+                try? await Task.sleep(for: .milliseconds(180))
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeOut(duration: 0.45)) {
+                    eyelidOpening = 0.1
+                    focusRecovery = 0.06
+                }
+
+                try? await Task.sleep(for: .milliseconds(650))
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeInOut(duration: 0.78)) {
+                    eyelidOpening = 0.62
+                    focusRecovery = 0.46
+                }
+
+                try? await Task.sleep(for: .milliseconds(960))
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeIn(duration: 0.14)) {
+                    eyelidOpening = 0.44
+                    focusRecovery = 0.34
+                }
+
+                try? await Task.sleep(for: .milliseconds(160))
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeOut(duration: 0.68)) {
+                    eyelidOpening = 0.94
+                    focusRecovery = 1
+                }
+
+                try? await Task.sleep(for: .milliseconds(760))
+            }
+
             guard !Task.isCancelled else { return }
+            guard gameSession.progress.tutorialProgress.activeStep == .awaken else { return }
             gameSession.send(.completeTutorialStep(step: .awaken, next: .rise))
-            withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.25)) {
+            withAnimation(
+                reducesMotion
+                    ? .linear(duration: 0)
+                    : .spring(response: 0.42, dampingFraction: 0.84)
+            ) {
                 showsRiseButton = true
             }
+            isAwakeningSequenceRunning = false
         }
     }
 
     private func beginSurvey() {
-        showsRiseButton = false
+        guard !isBeginningSurvey else { return }
+        isBeginningSurvey = true
+        openingTask?.cancel()
+        isAwakeningSequenceRunning = false
+        withAnimation(.easeOut(duration: reducesMotion ? 0 : 0.28)) {
+            showsRiseButton = false
+            showsAwakeningEffects = false
+            eyelidOpening = 1
+            focusRecovery = 1
+        }
         gameSession.send(.completeTutorialStep(step: .rise, next: .surveyTarget))
         startSurveyCamera()
     }
@@ -244,9 +359,9 @@ struct Floor10OpeningExperienceView: View {
         openingTask?.cancel()
         openingTask = Task { @MainActor in
             await sceneController.playFloor10OpeningCamera(
-                reducedMotion: appSettings.reducedMotion
+                reducedMotion: reducesMotion
             ) { newFocus in
-                withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+                withAnimation(.easeOut(duration: reducesMotion ? 0 : 0.18)) {
                     focus = newFocus
                 }
                 persist(newFocus)
@@ -282,9 +397,180 @@ struct Floor10OpeningExperienceView: View {
         gameSession.send(.skipTutorial(.floor10Intro))
     }
 
+    private func resetAwakeningVisuals() {
+        eyelidOpening = 0.015
+        focusRecovery = 0
+        showsAwakeningEffects = true
+        showsRiseButton = false
+        isAwakeningSequenceRunning = false
+        isRiseButtonPulsing = false
+        isBeginningSurvey = false
+    }
+
+    private func presentFullyAwake() {
+        eyelidOpening = 0.94
+        focusRecovery = 1
+        showsAwakeningEffects = true
+    }
+
+    private func startRiseButtonPulse() {
+        guard !reducesMotion else {
+            isRiseButtonPulsing = false
+            return
+        }
+        isRiseButtonPulsing = false
+        withAnimation(.easeInOut(duration: 1.35).repeatForever(autoreverses: true)) {
+            isRiseButtonPulsing = true
+        }
+    }
+
     private enum Presentation {
         case terminal
         case awakening
+    }
+}
+
+private struct AwakeningFocusRecoveryOverlay: View {
+    let recovery: CGFloat
+
+    private var unresolved: Double {
+        Double(1 - min(max(recovery, 0), 1))
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let shortestEdge = min(proxy.size.width, proxy.size.height)
+
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .opacity(unresolved * 0.42)
+
+                LinearGradient(
+                    colors: [
+                        Color.cyan.opacity(unresolved * 0.12),
+                        .clear,
+                        Color.purple.opacity(unresolved * 0.14)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .blendMode(.screen)
+
+                RadialGradient(
+                    colors: [
+                        .clear,
+                        Color.black.opacity(0.5 + (unresolved * 0.34))
+                    ],
+                    center: .center,
+                    startRadius: shortestEdge * 0.2,
+                    endRadius: max(proxy.size.width, proxy.size.height) * 0.67
+                )
+
+                RadialGradient(
+                    colors: [
+                        Color.purple.opacity(0.1 + (unresolved * 0.11)),
+                        .clear
+                    ],
+                    center: UnitPoint(x: 0.78, y: 0.52),
+                    startRadius: 0,
+                    endRadius: shortestEdge * 0.55
+                )
+                .blendMode(.screen)
+            }
+        }
+        .environment(\.colorScheme, .dark)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+private struct AwakeningEyelidOverlay: View {
+    let opening: CGFloat
+
+    var body: some View {
+        ZStack {
+            AwakeningEyelidShape(opening: opening)
+                .fill(Color.black.opacity(0.96))
+                .blur(radius: 11)
+
+            AwakeningEyelidShape(opening: opening)
+                .fill(Color.black)
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+private struct AwakeningEyelidShape: Shape {
+    var opening: CGFloat
+
+    var animatableData: CGFloat {
+        get { opening }
+        set { opening = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let progress = min(max(opening, 0), 1)
+        let centerY = rect.height * 0.515
+        let centerHalfOpening = max(1.5, rect.height * 0.49 * progress)
+        let sideHalfOpening = centerHalfOpening * (0.7 + (progress * 0.06))
+        let upperCenter = centerY - centerHalfOpening
+        let lowerCenter = centerY + centerHalfOpening
+        let upperLeading = centerY - (sideHalfOpening * 0.94)
+        let upperTrailing = centerY - sideHalfOpening
+        let lowerLeading = centerY + sideHalfOpening
+        let lowerTrailing = centerY + (sideHalfOpening * 0.93)
+
+        var path = Path()
+
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: upperTrailing))
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: upperCenter),
+            control1: CGPoint(x: rect.width * 0.82, y: upperTrailing),
+            control2: CGPoint(x: rect.width * 0.67, y: upperCenter - (rect.height * 0.008))
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.minX, y: upperLeading),
+            control1: CGPoint(x: rect.width * 0.31, y: upperCenter + (rect.height * 0.006)),
+            control2: CGPoint(x: rect.width * 0.14, y: upperLeading)
+        )
+        path.closeSubpath()
+
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: lowerTrailing))
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: lowerCenter),
+            control1: CGPoint(x: rect.width * 0.84, y: lowerTrailing),
+            control2: CGPoint(x: rect.width * 0.68, y: lowerCenter + (rect.height * 0.008))
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.minX, y: lowerLeading),
+            control1: CGPoint(x: rect.width * 0.32, y: lowerCenter - (rect.height * 0.004)),
+            control2: CGPoint(x: rect.width * 0.15, y: lowerLeading)
+        )
+        path.closeSubpath()
+
+        return path
+    }
+}
+
+private struct Floor10RiseButtonStyle: ButtonStyle {
+    let reducedMotion: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !reducedMotion ? 0.975 : 1)
+            .brightness(configuration.isPressed ? -0.07 : 0)
+            .opacity(configuration.isPressed ? 0.9 : 1)
+            .animation(
+                reducedMotion ? nil : .easeOut(duration: 0.12),
+                value: configuration.isPressed
+            )
     }
 }
 
