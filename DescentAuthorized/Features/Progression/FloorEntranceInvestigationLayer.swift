@@ -563,19 +563,19 @@ struct FloorEntranceInvestigationConfiguration {
         cameraInteraction: .floor9EntranceInvestigation,
         clues: [
             .init(
-                id: "approval-document",
+                id: "broken-cable-coil",
                 recordID: "9-entrance-01",
-                markerTitle: "검은 제본 승인서",
-                title: "이름이 지워진 승인서",
-                detectionText: "기억침식 흔적 감지",
-                body: "승인자 서명이 자신의 필체와 닮아 있다.\n이름 칸만 반복해서 긁어낸 듯 비어 있고,\n종이 가장자리에는 방금 마른\n잉크 냄새가 남아 있다.",
-                icon: "doc.text.magnifyingglass",
+                markerTitle: "끊어진 케이블 코일",
+                title: "의도적으로 끊긴 연결",
+                detectionText: "비정상 신호 잔류 감지",
+                body: "케이블 피복은 충격으로 찢긴 것이 아니라\n일정한 간격으로 잘려 있다.\n중앙 기록실로 향하던 신호를 누군가\n의도적으로 차단한 흔적으로 보인다.",
+                icon: "cable.connector.horizontal",
                 accent: Color(red: 0.77, green: 0.56, blue: 0.3),
                 distanceScale: 0.92,
                 panelHorizontalDirection: 1,
-                panelVerticalOffset: -18,
-                recordTag: "기록 소실 반응",
-                tagIcon: "text.badge.xmark"
+                panelVerticalOffset: -28,
+                recordTag: "통신 차단 흔적",
+                tagIcon: "bolt.slash.fill"
             ),
             .init(
                 id: "erased-monitor",

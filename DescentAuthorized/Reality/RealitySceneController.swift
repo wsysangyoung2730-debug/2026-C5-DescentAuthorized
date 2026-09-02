@@ -34,7 +34,7 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     )
 
     static let floor9EntranceInvestigation = BattleCameraInteractionConfiguration(
-        maximumYaw: .pi * 100 / 180,
+        maximumYaw: .pi * 65 / 180,
         maximumUpwardPitch: .pi * 10 / 180,
         maximumDownwardPitch: .pi * 12 / 180,
         minimumFieldOfViewScale: 1,
@@ -1432,8 +1432,8 @@ final class RealitySceneController: ObservableObject {
             definitions = [
                 .init(
                     id: "9-entrance-01",
-                    entityName: "BlackBoundDocuments_L",
-                    normalizedPosition: SIMD3(0.5, 0.72, 0.52)
+                    entityName: "F09_SetDress_CableCoil_LeftRear",
+                    normalizedPosition: SIMD3(0.5, 0.62, 0.55)
                 ),
                 .init(
                     id: "floor9.entrance.erased-monitor",
