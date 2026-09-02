@@ -32,6 +32,14 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
         minimumFieldOfViewScale: 1,
         maximumFieldOfViewScale: 1
     )
+
+    static let floor9EntranceInvestigation = BattleCameraInteractionConfiguration(
+        maximumYaw: .pi * 105 / 180,
+        maximumUpwardPitch: .pi * 10 / 180,
+        maximumDownwardPitch: .pi * 12 / 180,
+        minimumFieldOfViewScale: 1,
+        maximumFieldOfViewScale: 1
+    )
 }
 
 struct RealityProjectedInvestigationAnchor: Equatable, Sendable {

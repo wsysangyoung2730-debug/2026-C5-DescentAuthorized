@@ -441,7 +441,7 @@ struct FloorEntranceInvestigationLayer: View {
                                 height: value.translation.height - origin.height
                             ),
                             viewportSize: viewportSize,
-                            configuration: .floorEntranceInvestigation
+                            configuration: configuration.cameraInteraction
                         )
                     }
                     .onEnded { _ in
@@ -553,6 +553,7 @@ struct FloorEntranceInvestigationConfiguration {
     let recordTitle: String
     let accent: Color
     let enemyPreviewOffset: SIMD3<Float>
+    let cameraInteraction: BattleCameraInteractionConfiguration
     let clues: [FloorEntranceInvestigationClue]
 
     static let floor9 = FloorEntranceInvestigationConfiguration(
@@ -560,6 +561,7 @@ struct FloorEntranceInvestigationConfiguration {
         recordTitle: "제9층 입구 조사 기록",
         accent: Color(red: 0.76, green: 0.56, blue: 0.3),
         enemyPreviewOffset: SIMD3(-4.2, 0, 0),
+        cameraInteraction: .floor9EntranceInvestigation,
         clues: [
             .init(
                 id: "approval-document",
@@ -599,6 +601,7 @@ struct FloorEntranceInvestigationConfiguration {
         recordTitle: "제8층 입구 조사 기록",
         accent: Color(red: 0.22, green: 0.78, blue: 0.96),
         enemyPreviewOffset: .zero,
+        cameraInteraction: .floorEntranceInvestigation,
         clues: [
             .init(
                 id: "warning-tags",
