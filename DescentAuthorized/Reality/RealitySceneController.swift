@@ -97,16 +97,20 @@ final class RealitySceneController: ObservableObject {
     private var cameraTransitionTask: Task<Void, Never>?
     private var battleCameraImpactTask: Task<Void, Never>?
     private var actorIdleMotionTask: Task<Void, Never>?
+    private var enemyPreviewRevealTask: Task<Void, Never>?
     private var investigationAnchorEntities: [String: Entity] = [:]
     private var isProjectionRefreshScheduled = false
     private weak var animatedEnemyAnchor: Entity?
+    private weak var revealingEnemyPreviewActor: Entity?
     private var enemyAnchorRestingTransform: Transform?
+    private var enemyPreviewFinalTransform: Transform?
     private var enemyIdleMotionAmplitude: Float = 0
     private var sceneLoadGeneration: UInt64 = 0
     private var cameraTransitionGeneration: UInt64 = 0
     private var battleCameraImpactGeneration: UInt64 = 0
     private var descentCameraEffectGeneration: UInt64 = 0
     private var floor10OpeningCameraGeneration: UInt64 = 0
+    private var enemyPreviewRevealGeneration: UInt64 = 0
     private var requestedSceneID: FloorSceneID?
     private var requestedCameraPreset: RealityCameraPreset = .main
     private var activeCameraName: String?
@@ -313,8 +317,72 @@ final class RealitySceneController: ObservableObject {
     }
 
     func setEnemyPreviewVisible(_ isVisible: Bool) {
+        cancelEnemyPreviewReveal(restoreActor: true)
         requestedEnemyPreviewVisibility = isVisible
         registry.setEnabled(isVisible, for: .enemyActor)
+    }
+
+    func revealEnemyPreview(reducedMotion: Bool) {
+        requestedEnemyPreviewVisibility = true
+        cancelEnemyPreviewReveal(restoreActor: true)
+
+        guard let actor = registry.entity(for: .enemyActor) else {
+            registry.setEnabled(true, for: .enemyActor)
+            return
+        }
+        guard !reducedMotion else {
+            actor.components.set(OpacityComponent(opacity: 1))
+            registry.setEnabled(true, for: .enemyActor)
+            return
+        }
+
+        enemyPreviewRevealGeneration &+= 1
+        let generation = enemyPreviewRevealGeneration
+        let finalTransform = actor.transform
+        revealingEnemyPreviewActor = actor
+        enemyPreviewFinalTransform = finalTransform
+        var concealedTransform = finalTransform
+        concealedTransform.scale *= 0.96
+
+        actor.stopAllAnimations(recursive: false)
+        actor.transform = concealedTransform
+        actor.components.set(OpacityComponent(opacity: 0))
+        registry.setEnabled(true, for: .enemyActor)
+        actor.move(
+            to: finalTransform,
+            relativeTo: actor.parent,
+            duration: 0.72,
+            timingFunction: .easeInOut
+        )
+
+        let opacitySteps: [Float]
+        let stepDuration: Duration
+        if requestedSceneID == .floor08ResidueIsolation {
+            // 잔류체는 신호가 끊겼다 이어지듯 잠깐 흔들린 뒤 응집된다.
+            opacitySteps = [0.08, 0.2, 0.11, 0.34, 0.28, 0.52, 0.68, 0.84, 1]
+            stepDuration = .milliseconds(72)
+        } else {
+            opacitySteps = [0.08, 0.18, 0.31, 0.46, 0.62, 0.78, 0.91, 1]
+            stepDuration = .milliseconds(82)
+        }
+
+        enemyPreviewRevealTask = Task { @MainActor [weak self, weak actor] in
+            guard let self, let actor else { return }
+            for opacity in opacitySteps {
+                do {
+                    try await Task.sleep(for: stepDuration)
+                } catch {
+                    return
+                }
+                guard generation == self.enemyPreviewRevealGeneration else { return }
+                actor.components.set(OpacityComponent(opacity: opacity))
+            }
+            guard generation == self.enemyPreviewRevealGeneration else { return }
+            actor.transform = finalTransform
+            self.revealingEnemyPreviewActor = nil
+            self.enemyPreviewFinalTransform = nil
+            self.enemyPreviewRevealTask = nil
+        }
     }
 
     func centerAndLockEntranceCamera(
@@ -1073,6 +1141,7 @@ final class RealitySceneController: ObservableObject {
         loadCancellable = nil
         actorLoadCancellable?.cancel()
         actorLoadCancellable = nil
+        cancelEnemyPreviewReveal(restoreActor: false)
         stopEnemyIdleMotion(resetTransform: true)
         cancelBattleCameraImpact(restoreCamera: false)
         cancelDescentCameraEffect(restoreCamera: false)
@@ -1314,6 +1383,22 @@ final class RealitySceneController: ObservableObject {
         animatedEnemyAnchor = nil
         enemyAnchorRestingTransform = nil
         enemyIdleMotionAmplitude = 0
+    }
+
+    private func cancelEnemyPreviewReveal(restoreActor: Bool) {
+        enemyPreviewRevealGeneration &+= 1
+        enemyPreviewRevealTask?.cancel()
+        enemyPreviewRevealTask = nil
+        if restoreActor,
+           let actor = revealingEnemyPreviewActor ?? registry.entity(for: .enemyActor) {
+            actor.stopAllAnimations(recursive: false)
+            if let enemyPreviewFinalTransform {
+                actor.transform = enemyPreviewFinalTransform
+            }
+            actor.components.set(OpacityComponent(opacity: 1))
+        }
+        revealingEnemyPreviewActor = nil
+        enemyPreviewFinalTransform = nil
     }
 
     private func completeInstallation(descriptor: RealitySceneDescriptor) {

@@ -46,7 +46,7 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
 
                 if isBossRevealTransition {
                     Color.black
-                        .opacity(0.32)
+                        .opacity(0.12)
                         .ignoresSafeArea()
                         .allowsHitTesting(false)
                         .transition(.opacity)
@@ -91,24 +91,26 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
         ) {
             if appSettings.reducedMotion {
                 isEntrancePresented = true
-                sceneController.setEnemyPreviewVisible(true)
+                sceneController.revealEnemyPreview(reducedMotion: true)
                 return
             }
 
-            withAnimation(.easeOut(duration: 0.2)) {
+            withAnimation(.easeOut(duration: 0.16)) {
                 isBossRevealTransition = true
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                sceneController.setEnemyPreviewVisible(true)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                sceneController.revealEnemyPreview(reducedMotion: false)
             }
 
-            withAnimation(.easeOut(duration: 0.74)) {
-                isEntrancePresented = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) {
+                withAnimation(.easeOut(duration: 0.58)) {
+                    isEntrancePresented = true
+                }
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.26) {
-                withAnimation(.easeIn(duration: 0.32)) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                withAnimation(.easeIn(duration: 0.38)) {
                     isBossRevealTransition = false
                 }
             }
