@@ -79,6 +79,10 @@ struct Floor10OpeningExperienceView: View {
                         .allowsHitTesting(false)
 
                     CRTCurvatureOverlay()
+
+                    Color.black
+                        .opacity(Double(max(0, 1 - terminalPower)))
+                        .allowsHitTesting(false)
                 }
                 .frame(width: screenWidth, height: screenHeight)
                 .clipShape(RoundedRectangle(cornerRadius: screenCornerRadius, style: .continuous))
@@ -86,8 +90,6 @@ struct Floor10OpeningExperienceView: View {
                     RoundedRectangle(cornerRadius: screenCornerRadius, style: .continuous)
                         .stroke(Color.cyan.opacity(terminalIsOnline ? 0.2 : 0.06), lineWidth: 1.2)
                 }
-                .scaleEffect(y: max(0.004, terminalPower), anchor: .center)
-                .opacity(terminalPower > 0.01 ? 1 : 0)
                 .shadow(color: .cyan.opacity(0.15 * Double(terminalPower)), radius: 28)
 
                 if terminalPower < 0.16 {
@@ -153,12 +155,13 @@ struct Floor10OpeningExperienceView: View {
     }
 
     private var terminalLog: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Spacer(minLength: 0)
+        GeometryReader { proxy in
+            let rowHeight = max(20, proxy.size.height / CGFloat(terminalLines.count + 1))
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 0) {
                 ForEach(Array(terminalLines.prefix(terminalLineCount).enumerated()), id: \.offset) { index, line in
                     terminalLine(line, index: index)
+                        .frame(height: rowHeight, alignment: .leading)
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
 
@@ -169,7 +172,10 @@ struct Floor10OpeningExperienceView: View {
                             .foregroundStyle(.green.opacity(0.95))
                             .modifier(TerminalCursorBlink(reducedMotion: reducesMotion))
                     }
+                    .frame(height: rowHeight, alignment: .leading)
                 }
+
+                Spacer(minLength: 0)
             }
             .animation(reducesMotion ? nil : .easeOut(duration: 0.22), value: terminalLineCount)
         }
@@ -312,6 +318,10 @@ struct Floor10OpeningExperienceView: View {
         ]
     }
 
+    private var initiallyVisibleTerminalLineCount: Int {
+        min(14, terminalLines.count)
+    }
+
     private var terminalCurrentLine: String {
         guard terminalLineCount < terminalLines.count else { return "" }
         return String(terminalLines[terminalLineCount].prefix(terminalCharacterCount))
@@ -319,11 +329,14 @@ struct Floor10OpeningExperienceView: View {
 
     private var terminalProgress: CGFloat {
         guard !terminalLines.isEmpty else { return 1 }
-        let completed = CGFloat(terminalLineCount)
         guard terminalLineCount < terminalLines.count else { return 1 }
+
+        let dynamicLineCount = max(terminalLines.count - initiallyVisibleTerminalLineCount, 1)
+        let completed = CGFloat(max(terminalLineCount - initiallyVisibleTerminalLineCount, 0))
         let lineLength = max(terminalLines[terminalLineCount].count, 1)
         let partial = CGFloat(terminalCharacterCount) / CGFloat(lineLength)
-        return min(1, (completed + partial) / CGFloat(terminalLines.count))
+        let dynamicProgress = min(1, (completed + partial) / CGFloat(dynamicLineCount))
+        return 0.31 + (dynamicProgress * 0.69)
     }
 
     private var terminalStatusTitle: String {
@@ -367,7 +380,9 @@ struct Floor10OpeningExperienceView: View {
     private func runTerminal() {
         openingTask?.cancel()
         openingTask = Task { @MainActor in
-            terminalLineCount = 0
+            terminalLineCount = reducesMotion
+                ? terminalLines.count
+                : initiallyVisibleTerminalLineCount
             terminalCharacterCount = 0
             terminalPower = reducesMotion ? 1 : 0
             terminalIsOnline = reducesMotion
@@ -398,20 +413,20 @@ struct Floor10OpeningExperienceView: View {
                 guard !Task.isCancelled else { return }
                 terminalIsOnline = true
 
-                for index in terminalLines.indices {
+                for index in terminalLines.indices.dropFirst(initiallyVisibleTerminalLineCount) {
                     let line = terminalLines[index]
                     terminalCharacterCount = 0
 
                     for characterCount in 1...line.count {
                         guard !Task.isCancelled else { return }
                         terminalCharacterCount = characterCount
-                        let delay = line.contains("[WARN]") || line.contains("[CRIT]") ? 24 : 17
+                        let delay = line.contains("[WARN]") || line.contains("[CRIT]") ? 36 : 28
                         try? await Task.sleep(for: .milliseconds(delay))
                     }
 
                     try? await Task.sleep(
                         for: .milliseconds(
-                            line.contains("[WARN]") || line.contains("[CRIT]") ? 380 : 190
+                            line.contains("[WARN]") || line.contains("[CRIT]") ? 600 : 360
                         )
                     )
                     guard !Task.isCancelled else { return }
