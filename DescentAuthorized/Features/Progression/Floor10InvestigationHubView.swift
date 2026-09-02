@@ -18,6 +18,8 @@ struct Floor10InvestigationHubView: View {
     private let anchorMarkerHitboxSize = CGSize(width: 132, height: 186)
     private let anchorPanelBaseWidth: CGFloat = 430
     private let anchorPanelFloorRiseConnectionRatio: CGFloat = 0.22
+    private let floorRiseClueYOffset: CGFloat = -34
+    private let archiveClueYOffset: CGFloat = 34
 
     var body: some View {
         GeometryReader { proxy in
@@ -453,22 +455,29 @@ struct Floor10InvestigationHubView: View {
         let panelWidth = anchorPanelBaseWidth * scale
         let panelHeight = panelWidth / 2.196
         let markerHeight = anchorMarkerHitboxSize.height * scale
+        let specialYOffset: CGFloat = {
+            switch clue.recordID {
+            case "floor10.clue.broken-desk": floorRiseClueYOffset
+            case "floor10.clue.glyph-archive": archiveClueYOffset
+            default: 0
+            }
+        }()
 
         switch clue.presentation {
         case .floorRise:
             return CGPoint(
                 x: projection.point.x,
-                y: projection.point.y - markerHeight * anchorPanelFloorRiseConnectionRatio
+                y: projection.point.y - markerHeight * anchorPanelFloorRiseConnectionRatio + specialYOffset
             )
         case .surfaceReveal:
             return CGPoint(
                 x: projection.point.x + clue.panelHorizontalDirection * (panelWidth * 0.57),
-                y: projection.point.y - (24 * projection.scale)
+                y: projection.point.y - (24 * projection.scale) + specialYOffset
             )
         case .sideUnfold:
             return CGPoint(
                 x: projection.point.x + clue.panelHorizontalDirection * (panelWidth * 0.59),
-                y: projection.point.y - (18 * projection.scale)
+                y: projection.point.y - (18 * projection.scale) + specialYOffset
             )
         }
     }
