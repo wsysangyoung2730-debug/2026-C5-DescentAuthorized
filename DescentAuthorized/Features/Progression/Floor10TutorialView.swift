@@ -413,9 +413,11 @@ struct FloorEntrancePanel: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text(configuration.code)
-                        .font(.caption.monospaced().weight(.bold))
-                        .foregroundStyle(configuration.accent)
+                    if let code = configuration.code {
+                        Text(code)
+                            .font(.caption.monospaced().weight(.bold))
+                            .foregroundStyle(configuration.accent)
+                    }
 
                     Text(configuration.title)
                         .font(.system(size: 34, weight: .semibold, design: .serif))
@@ -592,7 +594,7 @@ struct FloorEntrancePanel: View {
 }
 
 struct FloorEntranceConfiguration {
-    let code: String
+    let code: String?
     let title: String
     let summary: String
     let accent: Color
@@ -621,7 +623,7 @@ struct FloorEntranceConfiguration {
     )
 
     static let floor8 = FloorEntranceConfiguration(
-        code: "8-A / 균열 관측실 전초",
+        code: nil,
         title: "제0균열 관측 구역",
         summary: "깨진 모니터마다 기억침식 수치가 다른 값으로 반복된다.\n관측 본실은 금색 봉인문 뒤에 있고, 보호 절차실의 비상등만 켜져 있다.",
         accent: Color(red: 0.22, green: 0.78, blue: 0.96),

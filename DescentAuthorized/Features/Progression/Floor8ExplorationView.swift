@@ -3,15 +3,22 @@ import SwiftUI
 struct Floor8ExplorationView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
+
     let sceneController: RealitySceneController
 
     var body: some View {
         Group {
             if gameSession.progress.currentScene == .floor8Antechamber {
-                FloorEntrancePanel(
+                FloorEntranceInvestigationFlow(
+                    sceneController: sceneController,
                     configuration: .floor8,
-                    action: { gameSession.send(.enterProtectionRoom) }
-                )
+                    hasCompletedInvestigation: hasCompletedEntranceInvestigation
+                ) {
+                    FloorEntrancePanel(
+                        configuration: .floor8,
+                        action: { gameSession.send(.enterProtectionRoom) }
+                    )
+                }
             } else {
                 ZStack {
                     LinearGradient(
@@ -143,6 +150,11 @@ struct Floor8ExplorationView: View {
 
     private var stageColor: Color {
         gameSession.progress.currentScene == .floor8SealedDoor ? .yellow : .cyan
+    }
+
+    private var hasCompletedEntranceInvestigation: Bool {
+        let recordIDs = Set(FloorEntranceInvestigationConfiguration.floor8.clues.map(\.recordID))
+        return recordIDs.isSubset(of: gameSession.progress.readRecordIDs)
     }
 
     private var contentWidth: CGFloat {

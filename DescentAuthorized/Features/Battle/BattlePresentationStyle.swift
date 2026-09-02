@@ -108,56 +108,60 @@ struct BattleTopHUDView: View {
     let enemyToNextActionSpacing: CGFloat
 
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
-            combatantBlock(
-                battle.player,
-                barrierAccent: DAColor.defense,
-                alignment: .leading
-            )
-            .frame(maxHeight: .infinity, alignment: .center)
-            .tutorialTarget("battle.player-health")
+        HStack(alignment: .center, spacing: enemyToNextActionSpacing) {
+            HStack(alignment: .center, spacing: 14) {
+                combatantBlock(
+                    battle.player,
+                    barrierAccent: DAColor.defense,
+                    alignment: .leading
+                )
+                .frame(maxHeight: .infinity, alignment: .center)
 
-            Spacer(minLength: 8)
+                Spacer(minLength: 8)
 
-            VStack(spacing: 1) {
-                FloorTitleAssetView(floor: floor, size: .battle)
+                VStack(spacing: 1) {
+                    FloorTitleAssetView(floor: floor, size: .battle)
 
-                HStack(spacing: 5) {
-                    Text("TURN \(battle.turnNumber)")
-                        .font(.caption.monospacedDigit().weight(.bold))
-                        .foregroundStyle(DAColor.body)
+                    HStack(spacing: 5) {
+                        Text("TURN \(battle.turnNumber)")
+                            .font(.caption.monospacedDigit().weight(.bold))
+                            .foregroundStyle(DAColor.body)
 
-                    Text("·")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(DAColor.secondary)
+                        Text("·")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(DAColor.secondary)
 
-                    Text(phaseTitle)
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(DAColor.secondary)
+                        Text(phaseTitle)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(DAColor.secondary)
+                    }
+                    .lineLimit(1)
                 }
-                .lineLimit(1)
-            }
-            .frame(width: 194)
-            .frame(maxHeight: .infinity, alignment: .center)
-            .tutorialTarget("battle.turn")
+                .frame(width: 194)
+                .frame(maxHeight: .infinity, alignment: .center)
 
-            Spacer(minLength: 8)
+                Spacer(minLength: 8)
 
-            HStack(alignment: .center, spacing: enemyToNextActionSpacing) {
                 combatantBlock(
                     battle.enemy,
                     barrierAccent: DAColor.magic,
                     alignment: .trailing
                 )
                 .frame(maxHeight: .infinity, alignment: .center)
-                .tutorialTarget("battle.enemy-health")
-
-                nextActionBlock
-                    .frame(width: 142)
-                    .frame(maxHeight: .infinity, alignment: .center)
-                    .tutorialTarget("battle.next-action")
             }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .frame(height: 66)
+            .tutorialTarget("battle.status")
             .frame(maxHeight: .infinity, alignment: .center)
+
+            nextActionBlock
+                .frame(width: 142)
+                .overlay {
+                    Color.clear
+                        .tutorialTarget("battle.next-action")
+                        .padding(4)
+                }
+                .frame(maxHeight: .infinity, alignment: .center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }

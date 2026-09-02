@@ -464,12 +464,6 @@ private struct DescentSealProcedureView: View {
                         }
 
                         recordPattern(stage: currentStageIndex)
-
-                        if configuration.stages.count == 1 {
-                            Text("기록된 순서를 따라 핵심점을 연결하십시오.")
-                                .font(.caption2)
-                                .multilineTextAlignment(.center)
-                        }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     .id(completedStageCount)

@@ -24,6 +24,26 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
         minimumFieldOfViewScale: 1,
         maximumFieldOfViewScale: 1
     )
+
+    static let floorEntranceInvestigation = BattleCameraInteractionConfiguration(
+        maximumYaw: .pi * 28 / 180,
+        maximumUpwardPitch: .pi * 10 / 180,
+        maximumDownwardPitch: .pi * 12 / 180,
+        minimumFieldOfViewScale: 1,
+        maximumFieldOfViewScale: 1
+    )
+
+    static let floor9EntranceInvestigation = BattleCameraInteractionConfiguration(
+        maximumYaw: .pi * 65 / 180,
+        maximumUpwardPitch: .pi * 10 / 180,
+        maximumDownwardPitch: .pi * 12 / 180,
+        minimumFieldOfViewScale: 1,
+        maximumFieldOfViewScale: 1
+    )
+}
+
+struct RealityProjectedInvestigationAnchor: Equatable, Sendable {
+    let point: CGPoint
 }
 
 enum Floor10OpeningCameraFocus: Equatable, Sendable {
@@ -42,6 +62,12 @@ final class RealitySceneController: ObservableObject {
         let camera: PerspectiveCameraComponent
     }
 
+    private struct InvestigationAnchorDefinition {
+        let id: String
+        let entityName: String
+        let normalizedPosition: SIMD3<Float>
+    }
+
     enum LoadState: Equatable {
         case idle
         case loading(FloorSceneID)
@@ -52,6 +78,8 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var loadState: LoadState = .idle
     @Published private(set) var missingEntityRoles: [RealityEntityRole] = []
     @Published private(set) var projectedMagicBoard: RealityProjectedBoard?
+    @Published private(set) var projectedEnemyIntentFrame: CGRect?
+    @Published private(set) var projectedInvestigationAnchors: [String: RealityProjectedInvestigationAnchor] = [:]
     @Published private(set) var cameraFadeOpacity: Double = 0
     @Published private(set) var isCameraTransitioning = false
     @Published private(set) var isBattleCameraInteractionEnabled = false
@@ -69,14 +97,20 @@ final class RealitySceneController: ObservableObject {
     private var cameraTransitionTask: Task<Void, Never>?
     private var battleCameraImpactTask: Task<Void, Never>?
     private var actorIdleMotionTask: Task<Void, Never>?
+    private var enemyPreviewRevealTask: Task<Void, Never>?
+    private var investigationAnchorEntities: [String: Entity] = [:]
+    private var isProjectionRefreshScheduled = false
     private weak var animatedEnemyAnchor: Entity?
+    private weak var revealingEnemyPreviewActor: Entity?
     private var enemyAnchorRestingTransform: Transform?
+    private var enemyPreviewFinalTransform: Transform?
     private var enemyIdleMotionAmplitude: Float = 0
     private var sceneLoadGeneration: UInt64 = 0
     private var cameraTransitionGeneration: UInt64 = 0
     private var battleCameraImpactGeneration: UInt64 = 0
     private var descentCameraEffectGeneration: UInt64 = 0
     private var floor10OpeningCameraGeneration: UInt64 = 0
+    private var enemyPreviewRevealGeneration: UInt64 = 0
     private var requestedSceneID: FloorSceneID?
     private var requestedCameraPreset: RealityCameraPreset = .main
     private var activeCameraName: String?
@@ -91,6 +125,7 @@ final class RealitySceneController: ObservableObject {
     private var requestedErasureZones: [ErasureZone] = []
     private var requestedBattleState: BattleState?
     private var requestedReducedMotion = false
+    private var requestedEnemyPreviewVisibility = true
     private var requestedDescentState: RealityDescentPresentationState = .inactive
     private var requestedRewardState: RealityRewardPresentationState = .inactive
     private var pendingCombatCues: [RealityCombatCue] = []
@@ -99,6 +134,9 @@ final class RealitySceneController: ObservableObject {
     private let progressionVFXRenderer = RealityProgressionVFXRenderer()
 
     func attach(to arView: ARView) {
+        combatVFXRenderer.onIntentLayoutChanged = { [weak self] in
+            self?.scheduleBoardProjectionRefresh()
+        }
         guard self.arView !== arView else {
             scheduleBoardProjectionRefresh()
             return
@@ -220,7 +258,7 @@ final class RealitySceneController: ObservableObject {
         floor10OpeningCameraGeneration &+= 1
         let generation = floor10OpeningCameraGeneration
         let movementDuration = reducedMotion ? 0.01 : 0.72
-        let holdDuration = reducedMotion ? 0.04 : 0.72
+        let holdDuration = reducedMotion ? 0.04 : 1.05
 
         @MainActor
         func move(
@@ -276,6 +314,123 @@ final class RealitySceneController: ObservableObject {
 
     func setLimitedCameraInteractionEnabled(_ isEnabled: Bool) {
         setBattleCameraInteractionEnabled(isEnabled)
+    }
+
+    func setEnemyPreviewVisible(_ isVisible: Bool) {
+        cancelEnemyPreviewReveal(restoreActor: true)
+        requestedEnemyPreviewVisibility = isVisible
+        registry.setEnabled(isVisible, for: .enemyActor)
+    }
+
+    func revealEnemyPreview(reducedMotion: Bool) {
+        requestedEnemyPreviewVisibility = true
+        cancelEnemyPreviewReveal(restoreActor: true)
+
+        guard let actor = registry.entity(for: .enemyActor) else {
+            registry.setEnabled(true, for: .enemyActor)
+            return
+        }
+        guard !reducedMotion else {
+            actor.components.set(OpacityComponent(opacity: 1))
+            registry.setEnabled(true, for: .enemyActor)
+            return
+        }
+
+        enemyPreviewRevealGeneration &+= 1
+        let generation = enemyPreviewRevealGeneration
+        let finalTransform = actor.transform
+        revealingEnemyPreviewActor = actor
+        enemyPreviewFinalTransform = finalTransform
+        var concealedTransform = finalTransform
+        concealedTransform.scale *= 0.96
+
+        actor.stopAllAnimations(recursive: false)
+        actor.transform = concealedTransform
+        actor.components.set(OpacityComponent(opacity: 0))
+        registry.setEnabled(true, for: .enemyActor)
+        actor.move(
+            to: finalTransform,
+            relativeTo: actor.parent,
+            duration: 0.72,
+            timingFunction: .easeInOut
+        )
+
+        let opacitySteps: [Float]
+        let stepDuration: Duration
+        if requestedSceneID == .floor08ResidueIsolation {
+            // 잔류체는 신호가 끊겼다 이어지듯 잠깐 흔들린 뒤 응집된다.
+            opacitySteps = [0.08, 0.2, 0.11, 0.34, 0.28, 0.52, 0.68, 0.84, 1]
+            stepDuration = .milliseconds(72)
+        } else {
+            opacitySteps = [0.08, 0.18, 0.31, 0.46, 0.62, 0.78, 0.91, 1]
+            stepDuration = .milliseconds(82)
+        }
+
+        enemyPreviewRevealTask = Task { @MainActor [weak self, weak actor] in
+            guard let self, let actor else { return }
+            for opacity in opacitySteps {
+                do {
+                    try await Task.sleep(for: stepDuration)
+                } catch {
+                    return
+                }
+                guard generation == self.enemyPreviewRevealGeneration else { return }
+                actor.components.set(OpacityComponent(opacity: opacity))
+            }
+            guard generation == self.enemyPreviewRevealGeneration else { return }
+            actor.transform = finalTransform
+            self.revealingEnemyPreviewActor = nil
+            self.enemyPreviewFinalTransform = nil
+            self.enemyPreviewRevealTask = nil
+        }
+    }
+
+    func centerAndLockEntranceCamera(
+        previewYaw: Float,
+        reducedMotion: Bool,
+        completion: @escaping @MainActor () -> Void
+    ) {
+        isBattleCameraInteractionEnabled = false
+        cancelBattleCameraImpact(restoreCamera: false)
+        clearBattleCameraAdjustmentState()
+
+        guard [.main, .battle, .tutorial].contains(requestedCameraPreset),
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else {
+            completion()
+            return
+        }
+
+        let targetMatrix = adjustedBattleCameraMatrix(
+            from: snapshot,
+            transientYaw: previewYaw
+        )
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.camera = snapshot.camera
+
+        if reducedMotion {
+            cameraEntity.setTransformMatrix(targetMatrix, relativeTo: nil)
+        } else {
+            cameraEntity.move(
+                to: Transform(matrix: targetMatrix),
+                relativeTo: nil,
+                duration: 0.28,
+                timingFunction: .easeInOut
+            )
+        }
+        isBattleCameraAdjusted = abs(previewYaw) > 0.001
+        scheduleBoardProjectionRefresh()
+
+        guard !reducedMotion else {
+            completion()
+            return
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(280))
+            completion()
+        }
     }
 
     func beginBattleCameraLook() {
@@ -343,7 +498,7 @@ final class RealitySceneController: ObservableObject {
         battleCameraZoomStartFieldOfViewScale = 1
         isBattleCameraAdjusted = false
 
-        guard [.battle, .tutorial].contains(requestedCameraPreset),
+        guard [.main, .battle, .tutorial].contains(requestedCameraPreset),
               let activeCameraName,
               let snapshot = authoredCameraSnapshots[activeCameraName],
               let cameraEntity else { return }
@@ -704,7 +859,7 @@ final class RealitySceneController: ObservableObject {
 
     private var canAdjustBattleCamera: Bool {
         isBattleCameraInteractionEnabled
-            && [.battle, .tutorial].contains(requestedCameraPreset)
+            && [.main, .battle, .tutorial].contains(requestedCameraPreset)
             && !isCameraTransitioning
             && activeCameraName != nil
             && cameraEntity != nil
@@ -986,6 +1141,7 @@ final class RealitySceneController: ObservableObject {
         loadCancellable = nil
         actorLoadCancellable?.cancel()
         actorLoadCancellable = nil
+        cancelEnemyPreviewReveal(restoreActor: false)
         stopEnemyIdleMotion(resetTransform: true)
         cancelBattleCameraImpact(restoreCamera: false)
         cancelDescentCameraEffect(restoreCamera: false)
@@ -1002,6 +1158,10 @@ final class RealitySceneController: ObservableObject {
         registry.reset()
         missingEntityRoles = []
         projectedMagicBoard = nil
+        projectedEnemyIntentFrame = nil
+        projectedInvestigationAnchors = [:]
+        investigationAnchorEntities = [:]
+        isProjectionRefreshScheduled = false
         combatVFXRenderer.reset()
         progressionVFXRenderer.reset()
         requestedSceneID = nil
@@ -1038,6 +1198,11 @@ final class RealitySceneController: ObservableObject {
         sceneAnchor = anchor
         cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
+        installInvestigationAnchors(
+            in: root,
+            sceneAnchor: anchor,
+            descriptor: descriptor
+        )
         loadingProgress = 0.9
         registry.setDoorOpen(false)
         // The authored entities are the inactive barrier pylons. They remain
@@ -1110,6 +1275,10 @@ final class RealitySceneController: ObservableObject {
                     )
                     spawn.addChild(actorContainer)
                     self.registry.register(actorContainer, for: .enemyActor)
+                    self.registry.setEnabled(
+                        self.requestedEnemyPreviewVisibility,
+                        for: .enemyActor
+                    )
                     self.prepareEnemyIdleMotion(
                         spawn,
                         targetHeight: actor.targetHeight,
@@ -1216,6 +1385,22 @@ final class RealitySceneController: ObservableObject {
         enemyIdleMotionAmplitude = 0
     }
 
+    private func cancelEnemyPreviewReveal(restoreActor: Bool) {
+        enemyPreviewRevealGeneration &+= 1
+        enemyPreviewRevealTask?.cancel()
+        enemyPreviewRevealTask = nil
+        if restoreActor,
+           let actor = revealingEnemyPreviewActor ?? registry.entity(for: .enemyActor) {
+            actor.stopAllAnimations(recursive: false)
+            if let enemyPreviewFinalTransform {
+                actor.transform = enemyPreviewFinalTransform
+            }
+            actor.components.set(OpacityComponent(opacity: 1))
+        }
+        revealingEnemyPreviewActor = nil
+        enemyPreviewFinalTransform = nil
+    }
+
     private func completeInstallation(descriptor: RealitySceneDescriptor) {
         setErasureZones(requestedErasureZones)
         combatVFXRenderer.attach(to: registry)
@@ -1290,7 +1475,135 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func scheduleBoardProjectionRefresh() {
-        DispatchQueue.main.async { [weak self] in self?.refreshBoardProjection() }
+        guard !isProjectionRefreshScheduled else { return }
+        isProjectionRefreshScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            self?.isProjectionRefreshScheduled = false
+            self?.refreshBoardProjection()
+            self?.refreshEnemyIntentProjection()
+            self?.refreshInvestigationProjections()
+        }
+    }
+
+    private func installInvestigationAnchors(
+        in root: Entity,
+        sceneAnchor: AnchorEntity,
+        descriptor: RealitySceneDescriptor
+    ) {
+        investigationAnchorEntities = [:]
+        projectedInvestigationAnchors = [:]
+
+        let definitions: [InvestigationAnchorDefinition]
+        switch descriptor.sceneID {
+        case .floor10ClosedOffice:
+            definitions = [
+                .init(
+                    id: "floor10.clue.training-target",
+                    entityName: "TargetPanel_R",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.94)
+                ),
+                .init(
+                    id: "floor10.clue.impact-scar",
+                    entityName: "BrokenMonitor_R",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.88)
+                ),
+                .init(
+                    id: "floor10.clue.glyph-archive",
+                    entityName: "BeginnerSpellCabinet",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.9)
+                )
+            ]
+        case .floor09ArchiveRedesign:
+            definitions = [
+                .init(
+                    id: "9-entrance-01",
+                    entityName: "F09_SetDress_CableCoil_LeftRear",
+                    normalizedPosition: SIMD3(0.5, 0.62, 0.55)
+                ),
+                .init(
+                    id: "floor9.entrance.erased-monitor",
+                    entityName: "F09_SetDress_Monitor_Right",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.9)
+                )
+            ]
+        case .floor08ResidueIsolation:
+            definitions = [
+                .init(
+                    id: "floor8.entrance.warning-tags",
+                    entityName: "IsolationWarningTags",
+                    normalizedPosition: SIMD3(0.5, 0.55, 0.9)
+                ),
+                .init(
+                    id: "floor8.entrance.floor-anchor",
+                    entityName: "Anchor_0",
+                    normalizedPosition: SIMD3(0.5, 0.72, 0.5)
+                )
+            ]
+        case .floor08AdministratorObservatory:
+            definitions = []
+        }
+
+        for definition in definitions {
+            guard let target = root.findEntity(named: definition.entityName) else { continue }
+            let bounds = target.visualBounds(relativeTo: nil)
+            let size = bounds.max - bounds.min
+            guard size.x > 0.001, size.y > 0.001, size.z > 0.001 else { continue }
+
+            let worldPosition = bounds.min + (size * definition.normalizedPosition)
+            let anchor = Entity()
+            anchor.name = "DA_INVESTIGATION_\(definition.id)"
+            sceneAnchor.addChild(anchor)
+            anchor.setPosition(worldPosition, relativeTo: nil)
+            investigationAnchorEntities[definition.id] = anchor
+        }
+    }
+
+    private func refreshInvestigationProjections() {
+        guard requestedSceneID != nil,
+              let arView,
+              let cameraEntity else {
+            projectedInvestigationAnchors = [:]
+            return
+        }
+
+        let cameraMatrix = cameraEntity.transformMatrix(relativeTo: nil)
+        let cameraPosition = SIMD3<Float>(
+            cameraMatrix.columns.3.x,
+            cameraMatrix.columns.3.y,
+            cameraMatrix.columns.3.z
+        )
+        let cameraForward = simd_normalize(-SIMD3<Float>(
+            cameraMatrix.columns.2.x,
+            cameraMatrix.columns.2.y,
+            cameraMatrix.columns.2.z
+        ))
+        let extendedViewport = arView.bounds.insetBy(dx: -640, dy: -480)
+
+        var next: [String: RealityProjectedInvestigationAnchor] = [:]
+        for (id, anchor) in investigationAnchorEntities {
+            let worldPosition = anchor.position(relativeTo: nil)
+            let direction = worldPosition - cameraPosition
+            guard simd_length_squared(direction) > 0.0001,
+                  simd_dot(simd_normalize(direction), cameraForward) > 0,
+                  let point = arView.project(worldPosition),
+                  extendedViewport.contains(point) else { continue }
+            next[id] = RealityProjectedInvestigationAnchor(point: point)
+        }
+
+        if projectedInvestigationAnchors != next {
+            projectedInvestigationAnchors = next
+        }
+    }
+
+    private func refreshEnemyIntentProjection() {
+        guard let arView else {
+            projectedEnemyIntentFrame = nil
+            return
+        }
+        let nextFrame = combatVFXRenderer.projectedIntentFrame(in: arView)
+        if projectedEnemyIntentFrame != nextFrame {
+            projectedEnemyIntentFrame = nextFrame
+        }
     }
 
     private func refreshBoardProjection() {

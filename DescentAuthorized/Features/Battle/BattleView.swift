@@ -354,6 +354,8 @@ struct BattleView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.bottom, bottomBarHeight)
 
+                intentTutorialTarget(in: proxy)
+
                 if !isDefeated {
                     if isBattleScene, realitySceneID != nil {
                         battleCameraInteractionSurface(
@@ -570,7 +572,30 @@ struct BattleView: View {
                 .fill(DAColor.gold.opacity(0.22))
                 .frame(height: 1)
         }
-        .tutorialTarget("battle.intent-symbol")
+    }
+
+    @ViewBuilder
+    private func intentTutorialTarget(in proxy: GeometryProxy) -> some View {
+        if realitySceneID != nil {
+            let stageHeight = max(0, proxy.size.height - 242)
+            let focusWidth = min(440, max(300, proxy.size.width * 0.42))
+            let focusHeight = max(320, stageHeight - 96)
+
+            Color.clear
+                .frame(width: focusWidth, height: focusHeight)
+                .position(
+                    x: proxy.size.width / 2,
+                    y: 64 + (focusHeight / 2)
+                )
+                .tutorialTarget("battle.intent-symbol")
+                .allowsHitTesting(false)
+        } else if realitySceneID == nil {
+            Color.clear
+                .frame(width: 126, height: 126)
+                .position(x: proxy.size.width / 2, y: 108)
+                .tutorialTarget("battle.intent-symbol")
+                .allowsHitTesting(false)
+        }
     }
 
     private func spellBar(_ presentation: BattleUIPresentation) -> some View {
@@ -582,7 +607,6 @@ struct BattleView: View {
             VStack(alignment: .leading, spacing: 8) {
                 battleResourceBar(presentation)
                     .frame(height: 42)
-                    .tutorialTarget("battle.resources")
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
@@ -592,8 +616,8 @@ struct BattleView: View {
                     }
                 }
                 .frame(height: 176)
-                .tutorialTarget("battle.spells")
             }
+            .tutorialTarget("battle.resources-and-spells")
 
             turnEndControl(presentation)
                 .frame(width: 184, height: 94, alignment: .bottomTrailing)

@@ -196,17 +196,18 @@ struct DemoFlowView: View {
         case .battlePlayerHP:
             TutorialCoachStep(
                 id: step,
-                title: "봉인관의 체력",
-                message: "왼쪽 상단은 현재 체력과 방벽입니다. 방벽이 있으면 체력보다 먼저 피해를 흡수합니다.",
-                targetIDs: ["battle.player-health"],
+                title: "전투 현황",
+                message: "상단에서 전투의 전체 상태를 확인합니다. 왼쪽은 봉인관의 체력과 방벽, 가운데는 현재 턴, 오른쪽은 관리자의 체력과 방벽입니다. 방벽은 체력보다 먼저 피해를 흡수합니다.",
+                targetIDs: ["battle.status"],
                 placement: .bottom
             )
         case .battleTurnAndEnemyHP:
+            // 이전 버전에서 이 단계에 머문 저장 데이터도 통합 안내로 안전하게 복구한다.
             TutorialCoachStep(
                 id: step,
-                title: "라운드와 관리자 상태",
-                message: "가운데에서 현재 턴을, 오른쪽에서 관리자의 체력과 방벽을 확인합니다. 관리자 체력을 0으로 만들면 전투가 끝납니다.",
-                targetIDs: ["battle.turn", "battle.enemy-health"],
+                title: "전투 현황",
+                message: "상단에서 전투의 전체 상태를 확인합니다. 왼쪽은 봉인관의 체력과 방벽, 가운데는 현재 턴, 오른쪽은 관리자의 체력과 방벽입니다. 관리자 체력을 0으로 만들면 전투가 끝납니다.",
+                targetIDs: ["battle.status"],
                 placement: .bottom
             )
         case .battleIntent:
@@ -222,7 +223,7 @@ struct DemoFlowView: View {
                 id: step,
                 title: "마나와 마법 선택",
                 message: "마나는 선의 길이에 따라 줄고, 잔여 획은 이번 턴에 그릴 수 있는 횟수입니다. 아래 주문을 눌러 선택하고 길게 눌러 상세 정보를 확인할 수 있습니다.",
-                targetIDs: ["battle.resources", "battle.spells"],
+                targetIDs: ["battle.resources-and-spells"],
                 placement: .top
             )
         case .battleInput:
@@ -250,7 +251,7 @@ struct DemoFlowView: View {
         guard let step = battleTutorialStep?.id else { return }
         let next: TutorialStepID?
         switch step {
-        case .battlePlayerHP: next = .battleTurnAndEnemyHP
+        case .battlePlayerHP: next = .battleIntent
         case .battleTurnAndEnemyHP: next = .battleIntent
         case .battleIntent: next = .battleResourcesAndSpells
         case .battleResourcesAndSpells: next = .battleInput
