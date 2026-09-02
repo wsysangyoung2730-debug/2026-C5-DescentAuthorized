@@ -339,9 +339,9 @@ struct Floor10InvestigationHubView: View {
                         .buttonStyle(.plain)
                         .accessibilityHint("조사 기록을 닫고 공간 탐색으로 돌아갑니다")
                     }
-                    // The parchment's vertical ornaments sit near 14.5% from each edge.
+                    // The parchment's vertical ornaments sit near 16% from each edge.
                     // Keep every glyph inside them, including serif overhangs.
-                    .padding(.horizontal, recordWidth * 0.145)
+                    .padding(.horizontal, recordWidth * 0.16)
                     // The parchment's top rule and diamond sit around 14% high.
                     // Keep the copy below them so glyphs never break the ornament.
                     .padding(.top, recordHeight * 0.205)
