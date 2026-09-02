@@ -1416,16 +1416,6 @@ final class RealitySceneController: ObservableObject {
                     id: "floor10.clue.training-target",
                     entityName: "TargetPanel_R",
                     normalizedPosition: SIMD3(0.5, 0.5, 0.94)
-                ),
-                .init(
-                    id: "floor10.clue.impact-scar",
-                    entityName: "BrokenMonitor_R",
-                    normalizedPosition: SIMD3(0.5, 0.5, 0.88)
-                ),
-                .init(
-                    id: "floor10.clue.glyph-archive",
-                    entityName: "BeginnerSpellCabinet",
-                    normalizedPosition: SIMD3(0.5, 0.5, 0.9)
                 )
             ]
         case .floor09ArchiveRedesign:

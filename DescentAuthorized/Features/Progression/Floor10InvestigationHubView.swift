@@ -18,7 +18,6 @@ struct Floor10InvestigationHubView: View {
     private let anchorMarkerHitboxSize = CGSize(width: 132, height: 186)
     private let anchorPanelBaseWidth: CGFloat = 430
     private let anchorPanelFloorRiseConnectionRatio: CGFloat = 0.22
-    private let archiveClueYOffset: CGFloat = 34
 
     var body: some View {
         GeometryReader { proxy in
@@ -453,28 +452,21 @@ struct Floor10InvestigationHubView: View {
     ) -> CGPoint {
         let panelWidth = anchorPanelBaseWidth * scale
         let markerHeight = anchorMarkerHitboxSize.height * scale
-        let specialYOffset: CGFloat = {
-            switch clue.recordID {
-            case "floor10.clue.glyph-archive": archiveClueYOffset
-            default: 0
-            }
-        }()
-
         switch clue.presentation {
         case .floorRise:
             return CGPoint(
                 x: projection.point.x,
-                y: projection.point.y - markerHeight * anchorPanelFloorRiseConnectionRatio + specialYOffset
+                y: projection.point.y - markerHeight * anchorPanelFloorRiseConnectionRatio
             )
         case .surfaceReveal:
             return CGPoint(
                 x: projection.point.x + clue.panelHorizontalDirection * (panelWidth * 0.57),
-                y: projection.point.y - (24 * projection.scale) + specialYOffset
+                y: projection.point.y - (24 * projection.scale)
             )
         case .sideUnfold:
             return CGPoint(
                 x: projection.point.x + clue.panelHorizontalDirection * (panelWidth * 0.59),
-                y: projection.point.y - (18 * projection.scale) + specialYOffset
+                y: projection.point.y - (18 * projection.scale)
             )
         }
     }
@@ -588,35 +580,6 @@ private struct Floor10InvestigationClue: Identifiable, CaseIterable {
         presentation: .surfaceReveal,
         kind: .spellTrace
     )
-    static let impact = Floor10InvestigationClue(
-        id: "impact",
-        recordID: "floor10.clue.impact-scar",
-        markerTitle: "충격 흔적",
-        title: "벽면의 균열",
-        detectionText: "구조 손상 반응 감지",
-        body: "금속 벽면이 바깥이 아니라\n방 안쪽으로 움푹 패였다.\n이 층에서 무언가가 깨어난 뒤\n빠져나간 것 같다.",
-        icon: "burst",
-        accent: .orange,
-        distanceScale: 0.76,
-        panelHorizontalDirection: -1,
-        presentation: .surfaceReveal,
-        kind: .environment
-    )
-    static let archive = Floor10InvestigationClue(
-        id: "archive",
-        recordID: "floor10.clue.glyph-archive",
-        markerTitle: "중앙 기록실 단말",
-        title: "해독 가능한 기록",
-        detectionText: "봉인 기록 반응 감지",
-        body: "잉크가 번진 기록 사이에서\n두 개의 문양만 선명하게 반응한다.\n기억에는 없지만 손끝은\n획의 시작점을 알아본다.",
-        icon: "doc.text.magnifyingglass",
-        accent: .purple,
-        distanceScale: 0.72,
-        panelHorizontalDirection: 1,
-        presentation: .sideUnfold,
-        kind: .spellTrace
-    )
-
     let id: String
     let recordID: String
     let markerTitle: String
@@ -630,7 +593,7 @@ private struct Floor10InvestigationClue: Identifiable, CaseIterable {
     let presentation: Floor10InvestigationPresentation
     let kind: Floor10InvestigationKind
 
-    static let allCases: [Floor10InvestigationClue] = [.target, .impact, .archive]
+    static let allCases: [Floor10InvestigationClue] = [.target]
 }
 
 private enum Floor10InvestigationPalette {
