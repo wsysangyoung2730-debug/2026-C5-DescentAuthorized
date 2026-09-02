@@ -4,17 +4,15 @@ struct Floor10InvestigationHubView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var gameSession: GameSessionStore
 
-    let sceneController: RealitySceneController
+    @ObservedObject var sceneController: RealitySceneController
 
-    @State private var selectedClueID: String?
     @State private var detailClueID: String?
     @State private var cameraLookOrigin: CGSize?
-    @State private var cameraLookStartOffset = CGSize.zero
-    @State private var cameraLookOffset = CGSize.zero
     @State private var coachStep: TutorialCoachStep?
     @State private var isAnchorPulseActive = false
 
     private let clues = Floor10InvestigationClue.allCases
+    private let sceneProjectionTopInset: CGFloat = 96
 
     var body: some View {
         GeometryReader { proxy in
@@ -22,27 +20,17 @@ struct Floor10InvestigationHubView: View {
                 limitedLookSurface(viewportSize: proxy.size)
 
                 ForEach(clues) { clue in
-                    let projection = projection(for: clue, in: proxy.size)
-
-                    if projection.isVisible {
+                    if let projection = projection(for: clue, in: proxy.size) {
                         investigationMarker(clue, projection: projection)
                             .position(projection.point)
-                            .zIndex(clue.id == selectedClueID ? 4 : projection.scale)
+                            .zIndex(Double(projection.scale))
+
+                        spatialCluePanel(clue)
+                            .scaleEffect(max(0.82, projection.scale))
+                            .position(panelPosition(for: clue, projection: projection))
+                            .transition(panelTransition(for: clue))
+                            .zIndex(4 + Double(projection.scale))
                     }
-                }
-
-                if let clue = selectedClue,
-                   projection(for: clue, in: proxy.size).isVisible {
-                    let projection = projection(for: clue, in: proxy.size)
-
-                    spatialCluePanel(
-                        clue,
-                        isShowingDetail: detailClueID == clue.id
-                    )
-                    .scaleEffect(max(0.86, projection.scale))
-                    .position(panelPosition(for: clue, projection: projection, in: proxy.size))
-                    .transition(panelTransition(for: clue))
-                    .zIndex(6)
                 }
 
                 areaHeader
@@ -52,16 +40,21 @@ struct Floor10InvestigationHubView: View {
                     .zIndex(8)
 
                 if inspectedClueIDs.count == clues.count,
-                   selectedClueID == nil {
+                   detailClueID == nil {
                     continueButton
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                         .padding(.bottom, 34)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                         .zIndex(8)
                 }
+
+                if let clue = detailClue {
+                    clueRecordOverlay(clue)
+                        .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                        .zIndex(20)
+                }
             }
             .clipped()
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.22), value: selectedClueID)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: detailClueID)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.28), value: inspectedClueIDs.count)
         }
@@ -112,59 +105,44 @@ struct Floor10InvestigationHubView: View {
         projection: Floor10InvestigationProjection
     ) -> some View {
         let isCompleted = inspectedClueIDs.contains(clue.recordID)
-        let isSelected = selectedClueID == clue.id
 
         return Button {
-            select(clue)
+            reveal(clue)
         } label: {
-            ZStack {
-                Image(
-                    isCompleted
-                        ? "Floor10InvestigationAnchorCompleted"
-                        : "Floor10InvestigationAnchorAvailable"
-                )
-                .resizable()
-                .scaledToFit()
-                .frame(width: 82, height: 119)
-                .opacity(isCompleted ? 0.98 : (isAnchorPulseActive ? 1 : 0.78))
-                .scaleEffect(
-                    isCompleted || reduceMotion
-                        ? 1
-                        : (isAnchorPulseActive ? 1.035 : 0.98)
-                )
-                .shadow(
-                    color: isCompleted
-                        ? Color.cyan.opacity(0.25)
-                        : Color.purple.opacity(isAnchorPulseActive ? 0.66 : 0.3),
-                    radius: isCompleted ? 7 : 12
-                )
-
-                if isSelected {
-                    Circle()
-                        .stroke(DAColor.gold.opacity(0.9), lineWidth: 1.5)
-                        .frame(width: 52, height: 28)
-                        .offset(y: 42)
-                        .transition(.scale.combined(with: .opacity))
-                }
-            }
+            Image(
+                isCompleted
+                    ? "Floor10InvestigationAnchorCompleted"
+                    : "Floor10InvestigationAnchorAvailable"
+            )
+            .resizable()
+            .scaledToFit()
+            .frame(width: 82, height: 119)
+            .opacity(isCompleted ? 0.98 : (isAnchorPulseActive ? 1 : 0.78))
+            .scaleEffect(
+                isCompleted || reduceMotion
+                    ? 1
+                    : (isAnchorPulseActive ? 1.035 : 0.98)
+            )
+            .shadow(
+                color: isCompleted
+                    ? Color.cyan.opacity(0.25)
+                    : Color.purple.opacity(isAnchorPulseActive ? 0.66 : 0.3),
+                radius: isCompleted ? 7 : 12
+            )
             .frame(width: 94, height: 130)
             .contentShape(Rectangle())
         }
         .buttonStyle(InvestigationAnchorButtonStyle())
         .scaleEffect(projection.scale)
         .opacity(projection.opacity)
-        .tutorialTarget(TutorialTargetID(clue.recordID))
         .accessibilityLabel("조사 지점, \(clue.markerTitle)")
         .accessibilityValue(isCompleted ? "조사 완료, 다시 열어볼 수 있음" : "미조사")
         .accessibilityHint("두 번 탭하여 조사 정보 패널 열기")
     }
 
-    private func spatialCluePanel(
-        _ clue: Floor10InvestigationClue,
-        isShowingDetail: Bool
-    ) -> some View {
+    private func spatialCluePanel(_ clue: Floor10InvestigationClue) -> some View {
         let isCompleted = inspectedClueIDs.contains(clue.recordID)
-        let width: CGFloat = isShowingDetail ? 500 : 430
+        let width: CGFloat = 390
         let height = width / 2.196
 
         return ZStack {
@@ -174,76 +152,36 @@ struct Floor10InvestigationHubView: View {
                 .frame(width: width, height: height)
                 .allowsHitTesting(false)
 
-            VStack(alignment: .leading, spacing: isShowingDetail ? 12 : 9) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 10) {
                     Image(systemName: isCompleted ? "checkmark.seal.fill" : clue.icon)
                         .foregroundStyle(isCompleted ? Color.cyan.opacity(0.9) : clue.accent)
 
-                    Text(isShowingDetail ? clue.title : clue.markerTitle)
-                        .font(.system(size: isShowingDetail ? 19 : 21, weight: .semibold, design: .serif))
+                    Text(clue.markerTitle)
+                        .font(.system(size: 19, weight: .semibold, design: .serif))
                         .foregroundStyle(DAColor.gold)
                         .lineLimit(1)
+                }
+
+                Text(clue.detectionText)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.72))
+                    .lineLimit(1)
+
+                HStack(spacing: 10) {
+                    Label(
+                        isCompleted ? "조사 완료" : "미조사 · 반응 확인 필요",
+                        systemImage: isCompleted ? "checkmark.circle.fill" : "waveform.path.ecg"
+                    )
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(isCompleted ? Color.cyan.opacity(0.88) : Color.purple.opacity(0.94))
 
                     Spacer(minLength: 8)
 
-                    Button {
-                        closeCluePanel()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 13, weight: .bold))
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.white.opacity(0.72))
-                    .accessibilityLabel("조사 창 닫기")
-                }
-
-                if isShowingDetail {
-                    Text(clue.body)
-                        .font(.system(size: 16, design: .serif))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .lineSpacing(4)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    HStack(spacing: 9) {
-                        Label("조사 완료", systemImage: "checkmark.circle.fill")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Color.cyan.opacity(0.9))
-
-                        if clue.kind == .spellTrace {
-                            Label("주문 기록과 연결", systemImage: "sparkles")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.purple.opacity(0.92))
-                        }
-
-                        Spacer()
-
-                        investigationPlateButton(title: "닫기") {
-                            closeCluePanel()
-                        }
-                    }
-                } else {
-                    Text(clue.detectionText)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.72))
-                        .lineLimit(1)
-
-                    HStack(spacing: 12) {
-                        Label(
-                            isCompleted ? "조사 완료 · 기록 보존됨" : "미조사 · 반응 확인 필요",
-                            systemImage: isCompleted ? "checkmark.circle.fill" : "waveform.path.ecg"
-                        )
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(isCompleted ? Color.cyan.opacity(0.88) : Color.purple.opacity(0.94))
-
-                        Spacer()
-
-                        investigationPlateButton(
-                            title: isCompleted ? "다시 보기" : "조사하기"
-                        ) {
-                            reveal(clue)
-                        }
+                    investigationPlateButton(
+                        title: isCompleted ? "다시 보기" : "조사하기"
+                    ) {
+                        reveal(clue)
                     }
                 }
             }
@@ -257,6 +195,7 @@ struct Floor10InvestigationHubView: View {
         .shadow(color: Color.purple.opacity(0.22), radius: 12)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(clue.markerTitle) 조사 패널")
+        .tutorialTarget(TutorialTargetID(clue.recordID))
     }
 
     private func investigationPlateButton(
@@ -285,6 +224,104 @@ struct Floor10InvestigationHubView: View {
         )
     }
 
+    private func clueRecordOverlay(_ clue: Floor10InvestigationClue) -> some View {
+        GeometryReader { proxy in
+            let recordHeight = min(proxy.size.height * 0.82, 700)
+            let recordWidth = recordHeight * (1086 / 1448)
+
+            ZStack {
+                Color.black.opacity(0.84)
+                    .ignoresSafeArea()
+                    .onTapGesture { closeClueRecord() }
+
+                ZStack {
+                    Image("Floor10DescentRecordParchment")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: recordWidth, height: recordHeight)
+                        .allowsHitTesting(false)
+
+                    VStack(spacing: 18) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "doc.text.magnifyingglass")
+                            Text("제10층 조사 기록")
+                        }
+                        .font(.system(size: 16, weight: .bold, design: .serif))
+                        .foregroundStyle(Floor10InvestigationPalette.ink.opacity(0.78))
+
+                        Text(clue.title)
+                            .font(.system(size: 29, weight: .semibold, design: .serif))
+                            .foregroundStyle(Floor10InvestigationPalette.ink)
+                            .multilineTextAlignment(.center)
+
+                        HStack(spacing: 8) {
+                            Rectangle()
+                                .fill(Floor10InvestigationPalette.ink.opacity(0.38))
+                                .frame(height: 1)
+                            Image(systemName: clue.icon)
+                                .font(.caption.weight(.bold))
+                            Rectangle()
+                                .fill(Floor10InvestigationPalette.ink.opacity(0.38))
+                                .frame(height: 1)
+                        }
+                        .foregroundStyle(Floor10InvestigationPalette.ink.opacity(0.62))
+
+                        Text(clue.body)
+                            .font(.system(size: 19, weight: .medium, design: .serif))
+                            .foregroundStyle(Floor10InvestigationPalette.ink.opacity(0.92))
+                            .lineSpacing(8)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        if clue.kind == .spellTrace {
+                            Label("주문 기록과 연결되는 마력 반응", systemImage: "sparkles")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Floor10InvestigationPalette.magicInk)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 9)
+                                .background(
+                                    Floor10InvestigationPalette.magicInk.opacity(0.09),
+                                    in: Capsule()
+                                )
+                        }
+
+                        Spacer(minLength: 4)
+
+                        Label("조사 완료 · 기록 보존됨", systemImage: "checkmark.seal.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Floor10InvestigationPalette.sealInk)
+
+                        Button("기록 닫기") {
+                            closeClueRecord()
+                        }
+                        .font(.system(size: 17, weight: .semibold, design: .serif))
+                        .foregroundStyle(Color(red: 0.88, green: 0.79, blue: 0.59))
+                        .padding(.horizontal, 26)
+                        .frame(height: 48)
+                        .background(
+                            Floor10InvestigationPalette.ink.opacity(0.9),
+                            in: RoundedRectangle(cornerRadius: 5)
+                        )
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(Floor10InvestigationPalette.sealInk.opacity(0.7), lineWidth: 1)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("조사 기록을 닫고 공간 탐색으로 돌아갑니다")
+                    }
+                    .padding(.horizontal, recordWidth * 0.14)
+                    .padding(.top, recordHeight * 0.14)
+                    .padding(.bottom, recordHeight * 0.12)
+                    .frame(width: recordWidth, height: recordHeight)
+                }
+                .frame(width: recordWidth, height: recordHeight)
+                .shadow(color: .black.opacity(0.76), radius: 28, y: 12)
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityAddTraits(.isModal)
+    }
+
     private var continueButton: some View {
         Button {
             gameSession.send(.leaveMeetingRoom)
@@ -307,7 +344,6 @@ struct Floor10InvestigationHubView: View {
                     .onChanged { value in
                         if cameraLookOrigin == nil {
                             cameraLookOrigin = value.translation
-                            cameraLookStartOffset = cameraLookOffset
                             sceneController.beginBattleCameraLook()
                         }
 
@@ -315,14 +351,6 @@ struct Floor10InvestigationHubView: View {
                         let translation = CGSize(
                             width: value.translation.width - origin.width,
                             height: value.translation.height - origin.height
-                        )
-
-                        cameraLookOffset = clampedCameraOffset(
-                            CGSize(
-                                width: cameraLookStartOffset.width + translation.width,
-                                height: cameraLookStartOffset.height + translation.height
-                            ),
-                            viewportSize: viewportSize
                         )
 
                         sceneController.updateBattleCameraLook(
@@ -338,24 +366,13 @@ struct Floor10InvestigationHubView: View {
             .accessibilityHidden(true)
     }
 
-    private var selectedClue: Floor10InvestigationClue? {
-        guard let selectedClueID else { return nil }
-        return clues.first { $0.id == selectedClueID }
+    private var detailClue: Floor10InvestigationClue? {
+        guard let detailClueID else { return nil }
+        return clues.first { $0.id == detailClueID }
     }
 
     private var inspectedClueIDs: Set<String> {
         Set(clues.map(\.recordID)).intersection(gameSession.progress.readRecordIDs)
-    }
-
-    private func select(_ clue: Floor10InvestigationClue) {
-        withAnimation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.82)) {
-            if selectedClueID == clue.id {
-                closeCluePanel()
-            } else {
-                selectedClueID = clue.id
-                detailClueID = nil
-            }
-        }
     }
 
     private func reveal(_ clue: Floor10InvestigationClue) {
@@ -368,74 +385,59 @@ struct Floor10InvestigationHubView: View {
         }
     }
 
-    private func closeCluePanel() {
+    private func closeClueRecord() {
         detailClueID = nil
-        selectedClueID = nil
     }
 
     private func projection(
         for clue: Floor10InvestigationClue,
         in viewportSize: CGSize
-    ) -> Floor10InvestigationProjection {
-        let x = (viewportSize.width * clue.panoramaPosition.x)
-            + (cameraLookOffset.width * clue.horizontalParallax)
-        let y = (viewportSize.height * clue.panoramaPosition.y)
-            + (cameraLookOffset.height * clue.verticalParallax)
+    ) -> Floor10InvestigationProjection? {
+        guard let worldProjection = sceneController
+            .projectedFloor10InvestigationAnchors[clue.recordID] else { return nil }
+
+        let x = worldProjection.point.x
+        let y = worldProjection.point.y - sceneProjectionTopInset
         let point = CGPoint(x: x, y: y)
         let centerDistance = min(1, abs(x - viewportSize.width * 0.5) / (viewportSize.width * 0.5))
         let centerEmphasis = 1 - (centerDistance * 0.08)
         let scale = clue.distanceScale * centerEmphasis
-        let margin = 72 * scale
-        let isVisible = x > -margin
-            && x < viewportSize.width + margin
-            && y > -margin
-            && y < viewportSize.height + margin
         let edgeFade = max(0.56, 1 - centerDistance * 0.28)
+        let extendedViewport = CGRect(origin: .zero, size: viewportSize)
+            .insetBy(dx: -460, dy: -300)
+        guard extendedViewport.contains(point) else { return nil }
 
         return Floor10InvestigationProjection(
             point: point,
             scale: scale,
-            opacity: edgeFade,
-            isVisible: isVisible
+            opacity: edgeFade
         )
     }
 
     private func panelPosition(
         for clue: Floor10InvestigationClue,
-        projection: Floor10InvestigationProjection,
-        in viewportSize: CGSize
+        projection: Floor10InvestigationProjection
     ) -> CGPoint {
-        let isDetail = detailClueID == clue.id
-        let panelWidth: CGFloat = (isDetail ? 500 : 430) * max(0.86, projection.scale)
+        let panelWidth: CGFloat = 390 * max(0.82, projection.scale)
         let panelHeight = panelWidth / 2.196
-        let horizontalInset = panelWidth * 0.5 + 22
-        let verticalInset = panelHeight * 0.5 + 22
 
-        let proposedPoint: CGPoint
         switch clue.presentation {
         case .floorRise:
-            proposedPoint = CGPoint(
+            return CGPoint(
                 x: projection.point.x,
                 y: projection.point.y - (96 * projection.scale) - panelHeight * 0.5
             )
         case .surfaceReveal:
-            let direction: CGFloat = projection.point.x > viewportSize.width * 0.55 ? -1 : 1
-            proposedPoint = CGPoint(
-                x: projection.point.x + direction * (panelWidth * 0.57),
+            return CGPoint(
+                x: projection.point.x + clue.panelHorizontalDirection * (panelWidth * 0.57),
                 y: projection.point.y - (24 * projection.scale)
             )
         case .sideUnfold:
-            let direction: CGFloat = projection.point.x > viewportSize.width * 0.5 ? -1 : 1
-            proposedPoint = CGPoint(
-                x: projection.point.x + direction * (panelWidth * 0.59),
+            return CGPoint(
+                x: projection.point.x + clue.panelHorizontalDirection * (panelWidth * 0.59),
                 y: projection.point.y - (18 * projection.scale)
             )
         }
-
-        return CGPoint(
-            x: min(max(proposedPoint.x, horizontalInset), viewportSize.width - horizontalInset),
-            y: min(max(proposedPoint.y, verticalInset + 10), viewportSize.height - verticalInset - 12)
-        )
     }
 
     private func panelTransition(for clue: Floor10InvestigationClue) -> AnyTransition {
@@ -446,19 +448,9 @@ struct Floor10InvestigationHubView: View {
             .opacity.combined(with: .scale(scale: 0.82, anchor: .center))
         case .sideUnfold:
             .opacity.combined(
-                with: .offset(x: clue.panoramaPosition.x > 0.5 ? 34 : -34)
+                with: .offset(x: clue.panelHorizontalDirection > 0 ? -34 : 34)
             )
         }
-    }
-
-    private func clampedCameraOffset(
-        _ offset: CGSize,
-        viewportSize: CGSize
-    ) -> CGSize {
-        CGSize(
-            width: min(max(offset.width, -viewportSize.width * 0.5), viewportSize.width * 0.5),
-            height: min(max(offset.height, -viewportSize.height * 0.46), viewportSize.height * 0.54)
-        )
     }
 
     private func startAnchorPulse() {
@@ -498,7 +490,7 @@ struct Floor10InvestigationHubView: View {
             TutorialCoachStep(
                 id: step,
                 title: "조사 가능한 지점",
-                message: "공간에 떠오른 표식을 눌러 조사 패널을 여십시오. 완료된 지점도 다시 확인할 수 있습니다.",
+                message: "공간에 열린 패널의 조사하기를 누르십시오. 완료된 지점도 다시 확인할 수 있습니다.",
                 targetIDs: clues.map { TutorialTargetID($0.recordID) },
                 placement: .bottom
             )
@@ -529,7 +521,6 @@ private struct Floor10InvestigationProjection {
     let point: CGPoint
     let scale: CGFloat
     let opacity: CGFloat
-    let isVisible: Bool
 }
 
 private enum Floor10InvestigationKind: Equatable {
@@ -553,10 +544,8 @@ private struct Floor10InvestigationClue: Identifiable, CaseIterable {
         body: "표적의 외피가 안쪽에서부터 갈라져 있다. 누군가 이곳에서 반복해서 같은 문양을 시험한 듯하다.",
         icon: "scope",
         accent: .red,
-        panoramaPosition: CGPoint(x: 0.73, y: 0.45),
         distanceScale: 0.86,
-        horizontalParallax: 0.92,
-        verticalParallax: 0.55,
+        panelHorizontalDirection: -1,
         presentation: .surfaceReveal,
         kind: .spellTrace
     )
@@ -569,10 +558,8 @@ private struct Floor10InvestigationClue: Identifiable, CaseIterable {
         body: "의자와 책상이 한 방향으로 쓰러져 있다. 단순한 사고라기보다 무언가가 방 전체를 밀어낸 흔적에 가깝다.",
         icon: "chair.lounge",
         accent: DAColor.gold,
-        panoramaPosition: CGPoint(x: 0.28, y: 0.72),
         distanceScale: 1,
-        horizontalParallax: 1.08,
-        verticalParallax: 0.72,
+        panelHorizontalDirection: 0,
         presentation: .floorRise,
         kind: .environment
     )
@@ -585,10 +572,8 @@ private struct Floor10InvestigationClue: Identifiable, CaseIterable {
         body: "금속 벽면이 바깥이 아니라 방 안쪽으로 움푹 패였다. 이 층에서 무언가가 깨어난 뒤 빠져나간 것 같다.",
         icon: "burst",
         accent: .orange,
-        panoramaPosition: CGPoint(x: 0.46, y: 0.31),
         distanceScale: 0.76,
-        horizontalParallax: 0.78,
-        verticalParallax: 0.46,
+        panelHorizontalDirection: -1,
         presentation: .surfaceReveal,
         kind: .environment
     )
@@ -601,10 +586,8 @@ private struct Floor10InvestigationClue: Identifiable, CaseIterable {
         body: "잉크가 번진 기록 사이에서 두 개의 문양만 선명하게 반응한다. 기억에는 없지만 손끝은 획의 시작점을 알아본다.",
         icon: "doc.text.magnifyingglass",
         accent: .purple,
-        panoramaPosition: CGPoint(x: 1.14, y: 0.48),
         distanceScale: 0.72,
-        horizontalParallax: 1,
-        verticalParallax: 0.5,
+        panelHorizontalDirection: 1,
         presentation: .sideUnfold,
         kind: .spellTrace
     )
@@ -617,14 +600,18 @@ private struct Floor10InvestigationClue: Identifiable, CaseIterable {
     let body: String
     let icon: String
     let accent: Color
-    let panoramaPosition: CGPoint
     let distanceScale: CGFloat
-    let horizontalParallax: CGFloat
-    let verticalParallax: CGFloat
+    let panelHorizontalDirection: CGFloat
     let presentation: Floor10InvestigationPresentation
     let kind: Floor10InvestigationKind
 
     static let allCases: [Floor10InvestigationClue] = [.target, .desk, .impact, .archive]
+}
+
+private enum Floor10InvestigationPalette {
+    static let ink = Color(red: 0.19, green: 0.13, blue: 0.08)
+    static let magicInk = Color(red: 0.33, green: 0.16, blue: 0.42)
+    static let sealInk = Color(red: 0.48, green: 0.15, blue: 0.12)
 }
 
 private struct InvestigationAnchorButtonStyle: ButtonStyle {

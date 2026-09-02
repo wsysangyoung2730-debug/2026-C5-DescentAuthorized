@@ -26,6 +26,10 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     )
 }
 
+struct RealityProjectedInvestigationAnchor: Equatable, Sendable {
+    let point: CGPoint
+}
+
 enum Floor10OpeningCameraFocus: Equatable, Sendable {
     case rising
     case trainingTarget
@@ -42,6 +46,12 @@ final class RealitySceneController: ObservableObject {
         let camera: PerspectiveCameraComponent
     }
 
+    private struct Floor10InvestigationAnchorDefinition {
+        let id: String
+        let entityName: String
+        let normalizedPosition: SIMD3<Float>
+    }
+
     enum LoadState: Equatable {
         case idle
         case loading(FloorSceneID)
@@ -53,6 +63,7 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var missingEntityRoles: [RealityEntityRole] = []
     @Published private(set) var projectedMagicBoard: RealityProjectedBoard?
     @Published private(set) var projectedEnemyIntentFrame: CGRect?
+    @Published private(set) var projectedFloor10InvestigationAnchors: [String: RealityProjectedInvestigationAnchor] = [:]
     @Published private(set) var cameraFadeOpacity: Double = 0
     @Published private(set) var isCameraTransitioning = false
     @Published private(set) var isBattleCameraInteractionEnabled = false
@@ -70,6 +81,8 @@ final class RealitySceneController: ObservableObject {
     private var cameraTransitionTask: Task<Void, Never>?
     private var battleCameraImpactTask: Task<Void, Never>?
     private var actorIdleMotionTask: Task<Void, Never>?
+    private var floor10InvestigationAnchorEntities: [String: Entity] = [:]
+    private var isProjectionRefreshScheduled = false
     private weak var animatedEnemyAnchor: Entity?
     private var enemyAnchorRestingTransform: Transform?
     private var enemyIdleMotionAmplitude: Float = 0
@@ -1007,6 +1020,9 @@ final class RealitySceneController: ObservableObject {
         missingEntityRoles = []
         projectedMagicBoard = nil
         projectedEnemyIntentFrame = nil
+        projectedFloor10InvestigationAnchors = [:]
+        floor10InvestigationAnchorEntities = [:]
+        isProjectionRefreshScheduled = false
         combatVFXRenderer.reset()
         progressionVFXRenderer.reset()
         requestedSceneID = nil
@@ -1043,6 +1059,11 @@ final class RealitySceneController: ObservableObject {
         sceneAnchor = anchor
         cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
+        installFloor10InvestigationAnchors(
+            in: root,
+            sceneAnchor: anchor,
+            descriptor: descriptor
+        )
         loadingProgress = 0.9
         registry.setDoorOpen(false)
         // The authored entities are the inactive barrier pylons. They remain
@@ -1295,9 +1316,97 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func scheduleBoardProjectionRefresh() {
+        guard !isProjectionRefreshScheduled else { return }
+        isProjectionRefreshScheduled = true
         DispatchQueue.main.async { [weak self] in
+            self?.isProjectionRefreshScheduled = false
             self?.refreshBoardProjection()
             self?.refreshEnemyIntentProjection()
+            self?.refreshFloor10InvestigationProjections()
+        }
+    }
+
+    private func installFloor10InvestigationAnchors(
+        in root: Entity,
+        sceneAnchor: AnchorEntity,
+        descriptor: RealitySceneDescriptor
+    ) {
+        floor10InvestigationAnchorEntities = [:]
+        projectedFloor10InvestigationAnchors = [:]
+        guard descriptor.sceneID == .floor10ClosedOffice else { return }
+
+        let definitions = [
+            Floor10InvestigationAnchorDefinition(
+                id: "floor10.clue.training-target",
+                entityName: "TargetPanel_R",
+                normalizedPosition: SIMD3(0.5, 0.5, 0.94)
+            ),
+            Floor10InvestigationAnchorDefinition(
+                id: "floor10.clue.broken-desk",
+                entityName: "InstructorDesk",
+                normalizedPosition: SIMD3(0.46, 0.52, 0.9)
+            ),
+            Floor10InvestigationAnchorDefinition(
+                id: "floor10.clue.impact-scar",
+                entityName: "BrokenMonitor_R",
+                normalizedPosition: SIMD3(0.5, 0.5, 0.88)
+            ),
+            Floor10InvestigationAnchorDefinition(
+                id: "floor10.clue.glyph-archive",
+                entityName: "BeginnerSpellCabinet",
+                normalizedPosition: SIMD3(0.5, 0.5, 0.9)
+            )
+        ]
+
+        for definition in definitions {
+            guard let target = root.findEntity(named: definition.entityName) else { continue }
+            let bounds = target.visualBounds(relativeTo: nil)
+            let size = bounds.max - bounds.min
+            guard size.x > 0.001, size.y > 0.001, size.z > 0.001 else { continue }
+
+            let worldPosition = bounds.min + (size * definition.normalizedPosition)
+            let anchor = Entity()
+            anchor.name = "DA_F10_INVESTIGATION_\(definition.id)"
+            sceneAnchor.addChild(anchor)
+            anchor.setPosition(worldPosition, relativeTo: nil)
+            floor10InvestigationAnchorEntities[definition.id] = anchor
+        }
+    }
+
+    private func refreshFloor10InvestigationProjections() {
+        guard requestedSceneID == .floor10ClosedOffice,
+              let arView,
+              let cameraEntity else {
+            projectedFloor10InvestigationAnchors = [:]
+            return
+        }
+
+        let cameraMatrix = cameraEntity.transformMatrix(relativeTo: nil)
+        let cameraPosition = SIMD3<Float>(
+            cameraMatrix.columns.3.x,
+            cameraMatrix.columns.3.y,
+            cameraMatrix.columns.3.z
+        )
+        let cameraForward = simd_normalize(-SIMD3<Float>(
+            cameraMatrix.columns.2.x,
+            cameraMatrix.columns.2.y,
+            cameraMatrix.columns.2.z
+        ))
+        let extendedViewport = arView.bounds.insetBy(dx: -640, dy: -480)
+
+        var next: [String: RealityProjectedInvestigationAnchor] = [:]
+        for (id, anchor) in floor10InvestigationAnchorEntities {
+            let worldPosition = anchor.position(relativeTo: nil)
+            let direction = worldPosition - cameraPosition
+            guard simd_length_squared(direction) > 0.0001,
+                  simd_dot(simd_normalize(direction), cameraForward) > 0,
+                  let point = arView.project(worldPosition),
+                  extendedViewport.contains(point) else { continue }
+            next[id] = RealityProjectedInvestigationAnchor(point: point)
+        }
+
+        if projectedFloor10InvestigationAnchors != next {
+            projectedFloor10InvestigationAnchors = next
         }
     }
 
