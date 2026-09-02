@@ -257,8 +257,7 @@ struct Floor10InvestigationHubView: View {
         GeometryReader { proxy in
             let recordHeight = min(proxy.size.height * 0.82, 700)
             let recordWidth = recordHeight * (1086 / 1448)
-            let parchmentSideInsetRatio: CGFloat = 0.155
-            let recordContentWidth = recordWidth * (1 - (parchmentSideInsetRatio * 2))
+            let parchmentSideInsetRatio: CGFloat = 0.17
 
             ZStack {
                 Color.black.opacity(0.84)
@@ -341,13 +340,11 @@ struct Floor10InvestigationHubView: View {
                         .buttonStyle(.plain)
                         .accessibilityHint("조사 기록을 닫고 공간 탐색으로 돌아갑니다")
                     }
-                    // The parchment ornament margins are computed from the asset width,
-                    // then centered explicitly for stable text alignment.
-                    // Keep the copy below them so glyphs never break the ornament.
+                    // The parchment's vertical ornaments sit near 17% from each edge.
+                    .padding(.horizontal, recordWidth * parchmentSideInsetRatio)
                     .padding(.top, recordHeight * 0.205)
                     .padding(.bottom, recordHeight * 0.12)
-                    .frame(width: recordContentWidth, height: recordHeight)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    .frame(height: recordHeight)
                 }
                 .frame(width: recordWidth, height: recordHeight)
                 .shadow(color: .black.opacity(0.76), radius: 28, y: 12)
