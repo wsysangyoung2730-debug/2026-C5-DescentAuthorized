@@ -11,6 +11,7 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
 
     @State private var isEntrancePresented = false
     @State private var isInvestigationPresented = true
+    @State private var isBossRevealTransition = false
 
     init(
         sceneController: RealitySceneController,
@@ -42,10 +43,22 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
                     )
                     .zIndex(1)
                 }
+
+                if isBossRevealTransition {
+                    Color.black
+                        .opacity(0.32)
+                        .ignoresSafeArea()
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
             .clipped()
         }
+        .animation(
+            appSettings.reducedMotion ? nil : .easeInOut(duration: 0.22),
+            value: isBossRevealTransition
+        )
         .onAppear {
             isEntrancePresented = hasCompletedInvestigation
             isInvestigationPresented = !hasCompletedInvestigation
@@ -76,13 +89,28 @@ struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
             previewYaw: configuration.enemyPreviewCameraYaw,
             reducedMotion: appSettings.reducedMotion
         ) {
-            sceneController.setEnemyPreviewVisible(true)
-            withAnimation(
-                appSettings.reducedMotion
-                    ? nil
-                    : .easeInOut(duration: 0.72)
-            ) {
+            if appSettings.reducedMotion {
                 isEntrancePresented = true
+                sceneController.setEnemyPreviewVisible(true)
+                return
+            }
+
+            withAnimation(.easeOut(duration: 0.2)) {
+                isBossRevealTransition = true
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                sceneController.setEnemyPreviewVisible(true)
+            }
+
+            withAnimation(.easeOut(duration: 0.74)) {
+                isEntrancePresented = true
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.26) {
+                withAnimation(.easeIn(duration: 0.32)) {
+                    isBossRevealTransition = false
+                }
             }
         }
     }
