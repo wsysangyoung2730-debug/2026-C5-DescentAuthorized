@@ -1352,11 +1352,6 @@ final class RealitySceneController: ObservableObject {
                     normalizedPosition: SIMD3(0.5, 0.5, 0.94)
                 ),
                 .init(
-                    id: "floor10.clue.broken-desk",
-                    entityName: "InstructorDesk",
-                    normalizedPosition: SIMD3(0.46, 0.52, 0.9)
-                ),
-                .init(
                     id: "floor10.clue.impact-scar",
                     entityName: "BrokenMonitor_R",
                     normalizedPosition: SIMD3(0.5, 0.5, 0.88)

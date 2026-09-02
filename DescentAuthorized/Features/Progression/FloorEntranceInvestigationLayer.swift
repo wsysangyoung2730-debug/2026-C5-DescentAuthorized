@@ -297,6 +297,8 @@ struct FloorEntranceInvestigationLayer: View {
                             .font(.system(size: 18, weight: .medium, design: .serif))
                             .foregroundStyle(FloorEntranceRecordPalette.ink.opacity(0.92))
                             .lineSpacing(7)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .fixedSize(horizontal: false, vertical: true)
 
                         Label(clue.recordTag, systemImage: clue.tagIcon)
@@ -483,7 +485,7 @@ struct FloorEntranceInvestigationConfiguration {
                 markerTitle: "검은 제본 승인서",
                 title: "이름이 지워진 승인서",
                 detectionText: "기억침식 흔적 감지",
-                body: "승인자 서명이 자신의 필체와 닮아 있다. 이름 칸만 반복해서 긁어낸 듯 비어 있고, 종이 가장자리에는 방금 마른 잉크 냄새가 남아 있다.",
+                body: "승인자 서명이 자신의 필체와 닮아 있다.\n이름 칸만 반복해서 긁어낸 듯 비어 있고,\n종이 가장자리에는 방금 마른\n잉크 냄새가 남아 있다.",
                 icon: "doc.text.magnifyingglass",
                 accent: Color(red: 0.77, green: 0.56, blue: 0.3),
                 distanceScale: 0.92,
@@ -498,7 +500,7 @@ struct FloorEntranceInvestigationConfiguration {
                 markerTitle: "손상된 벽면 모니터",
                 title: "반려 기록의 반복",
                 detectionText: "관리자 집행 로그 감지",
-                body: "깨진 화면에는 동일한 승인 요청이 열두 번 반려된 기록이 남아 있다. 마지막 반려 시각은 현재보다 몇 분 뒤로 표시되어 있다.",
+                body: "깨진 화면에는 동일한 승인 요청이\n열두 번 반려된 기록이 남아 있다.\n마지막 반려 시각은 현재보다\n몇 분 뒤로 표시되어 있다.",
                 icon: "display.trianglebadge.exclamationmark",
                 accent: Color(red: 0.62, green: 0.32, blue: 0.88),
                 distanceScale: 0.82,
@@ -521,7 +523,7 @@ struct FloorEntranceInvestigationConfiguration {
                 markerTitle: "격리 경고표 묶음",
                 title: "중단된 격리 절차",
                 detectionText: "비상 격리 이력 감지",
-                body: "경고표마다 서로 다른 폐쇄 시각이 적혀 있지만 서명은 모두 같은 손으로 쓰였다. 마지막 표에는 ‘보호 절차 없이 진입 금지’라는 문장만 남아 있다.",
+                body: "경고표마다 서로 다른 폐쇄 시각이 적혀 있지만\n서명은 모두 같은 손으로 쓰였다.\n마지막 표에는 ‘보호 절차 없이 진입 금지’라는\n문장만 남아 있다.",
                 icon: "exclamationmark.triangle.fill",
                 accent: Color(red: 0.94, green: 0.58, blue: 0.2),
                 distanceScale: 0.9,
@@ -536,7 +538,7 @@ struct FloorEntranceInvestigationConfiguration {
                 markerTitle: "바닥 격리 앵커",
                 title: "불안정한 격리 문양",
                 detectionText: "잔류 마력 고정 반응 감지",
-                body: "바닥의 격리 앵커가 일정한 박자를 잃고 미세하게 떨린다. 중심 문양에는 바깥에서 들어온 흔적이 아니라, 안쪽의 무언가가 밀어낸 흔적이 겹쳐 있다.",
+                body: "바닥의 격리 앵커가 일정한 박자를 잃고\n미세하게 떨린다.\n중심 문양에는 바깥에서 들어온 흔적이 아니라,\n안쪽의 무언가가 밀어낸 흔적이 겹쳐 있다.",
                 icon: "scope",
                 accent: Color(red: 0.26, green: 0.84, blue: 0.94),
                 distanceScale: 0.9,

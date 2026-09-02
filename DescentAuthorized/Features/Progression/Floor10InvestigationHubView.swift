@@ -18,7 +18,6 @@ struct Floor10InvestigationHubView: View {
     private let anchorMarkerHitboxSize = CGSize(width: 132, height: 186)
     private let anchorPanelBaseWidth: CGFloat = 430
     private let anchorPanelFloorRiseConnectionRatio: CGFloat = 0.22
-    private let floorRiseClueYOffset: CGFloat = -34
     private let archiveClueYOffset: CGFloat = 34
 
     var body: some View {
@@ -453,11 +452,9 @@ struct Floor10InvestigationHubView: View {
         scale: CGFloat
     ) -> CGPoint {
         let panelWidth = anchorPanelBaseWidth * scale
-        let panelHeight = panelWidth / 2.196
         let markerHeight = anchorMarkerHitboxSize.height * scale
         let specialYOffset: CGFloat = {
             switch clue.recordID {
-            case "floor10.clue.broken-desk": floorRiseClueYOffset
             case "floor10.clue.glyph-archive": archiveClueYOffset
             default: 0
             }
@@ -583,7 +580,7 @@ private struct Floor10InvestigationClue: Identifiable, CaseIterable {
         markerTitle: "파손된 훈련 표적",
         title: "멈춘 훈련 표적",
         detectionText: "잔류 마력 반응 감지",
-        body: "표적의 외피가 안쪽에서부터 갈라져 있다. 누군가 이곳에서 반복해서 같은 문양을 시험한 듯하다.",
+        body: "표적의 외피가 안쪽에서부터 갈라져 있다.\n누군가 이곳에서 반복해서 같은 문양을\n시험한 듯하다.",
         icon: "scope",
         accent: .red,
         distanceScale: 0.86,
@@ -591,27 +588,13 @@ private struct Floor10InvestigationClue: Identifiable, CaseIterable {
         presentation: .surfaceReveal,
         kind: .spellTrace
     )
-    static let desk = Floor10InvestigationClue(
-        id: "desk",
-        recordID: "floor10.clue.broken-desk",
-        markerTitle: "뒤집힌 책상",
-        title: "부서진 집기",
-        detectionText: "충격 패턴 감지",
-        body: "의자와 책상이 한 방향으로 쓰러져 있다. 단순한 사고라기보다 무언가가 방 전체를 밀어낸 흔적에 가깝다.",
-        icon: "chair.lounge",
-        accent: DAColor.gold,
-        distanceScale: 1,
-        panelHorizontalDirection: 0,
-        presentation: .floorRise,
-        kind: .environment
-    )
     static let impact = Floor10InvestigationClue(
         id: "impact",
         recordID: "floor10.clue.impact-scar",
         markerTitle: "충격 흔적",
         title: "벽면의 균열",
         detectionText: "구조 손상 반응 감지",
-        body: "금속 벽면이 바깥이 아니라 방 안쪽으로 움푹 패였다. 이 층에서 무언가가 깨어난 뒤 빠져나간 것 같다.",
+        body: "금속 벽면이 바깥이 아니라\n방 안쪽으로 움푹 패였다.\n이 층에서 무언가가 깨어난 뒤\n빠져나간 것 같다.",
         icon: "burst",
         accent: .orange,
         distanceScale: 0.76,
@@ -625,7 +608,7 @@ private struct Floor10InvestigationClue: Identifiable, CaseIterable {
         markerTitle: "중앙 기록실 단말",
         title: "해독 가능한 기록",
         detectionText: "봉인 기록 반응 감지",
-        body: "잉크가 번진 기록 사이에서 두 개의 문양만 선명하게 반응한다. 기억에는 없지만 손끝은 획의 시작점을 알아본다.",
+        body: "잉크가 번진 기록 사이에서\n두 개의 문양만 선명하게 반응한다.\n기억에는 없지만 손끝은\n획의 시작점을 알아본다.",
         icon: "doc.text.magnifyingglass",
         accent: .purple,
         distanceScale: 0.72,
@@ -647,7 +630,7 @@ private struct Floor10InvestigationClue: Identifiable, CaseIterable {
     let presentation: Floor10InvestigationPresentation
     let kind: Floor10InvestigationKind
 
-    static let allCases: [Floor10InvestigationClue] = [.target, .desk, .impact, .archive]
+    static let allCases: [Floor10InvestigationClue] = [.target, .impact, .archive]
 }
 
 private enum Floor10InvestigationPalette {
