@@ -46,7 +46,7 @@ final class RealitySceneController: ObservableObject {
         let camera: PerspectiveCameraComponent
     }
 
-    private struct Floor10InvestigationAnchorDefinition {
+    private struct InvestigationAnchorDefinition {
         let id: String
         let entityName: String
         let normalizedPosition: SIMD3<Float>
@@ -63,7 +63,7 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var missingEntityRoles: [RealityEntityRole] = []
     @Published private(set) var projectedMagicBoard: RealityProjectedBoard?
     @Published private(set) var projectedEnemyIntentFrame: CGRect?
-    @Published private(set) var projectedFloor10InvestigationAnchors: [String: RealityProjectedInvestigationAnchor] = [:]
+    @Published private(set) var projectedInvestigationAnchors: [String: RealityProjectedInvestigationAnchor] = [:]
     @Published private(set) var cameraFadeOpacity: Double = 0
     @Published private(set) var isCameraTransitioning = false
     @Published private(set) var isBattleCameraInteractionEnabled = false
@@ -81,7 +81,7 @@ final class RealitySceneController: ObservableObject {
     private var cameraTransitionTask: Task<Void, Never>?
     private var battleCameraImpactTask: Task<Void, Never>?
     private var actorIdleMotionTask: Task<Void, Never>?
-    private var floor10InvestigationAnchorEntities: [String: Entity] = [:]
+    private var investigationAnchorEntities: [String: Entity] = [:]
     private var isProjectionRefreshScheduled = false
     private weak var animatedEnemyAnchor: Entity?
     private var enemyAnchorRestingTransform: Transform?
@@ -1020,8 +1020,8 @@ final class RealitySceneController: ObservableObject {
         missingEntityRoles = []
         projectedMagicBoard = nil
         projectedEnemyIntentFrame = nil
-        projectedFloor10InvestigationAnchors = [:]
-        floor10InvestigationAnchorEntities = [:]
+        projectedInvestigationAnchors = [:]
+        investigationAnchorEntities = [:]
         isProjectionRefreshScheduled = false
         combatVFXRenderer.reset()
         progressionVFXRenderer.reset()
@@ -1059,7 +1059,7 @@ final class RealitySceneController: ObservableObject {
         sceneAnchor = anchor
         cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
-        installFloor10InvestigationAnchors(
+        installInvestigationAnchors(
             in: root,
             sceneAnchor: anchor,
             descriptor: descriptor
@@ -1322,41 +1322,72 @@ final class RealitySceneController: ObservableObject {
             self?.isProjectionRefreshScheduled = false
             self?.refreshBoardProjection()
             self?.refreshEnemyIntentProjection()
-            self?.refreshFloor10InvestigationProjections()
+            self?.refreshInvestigationProjections()
         }
     }
 
-    private func installFloor10InvestigationAnchors(
+    private func installInvestigationAnchors(
         in root: Entity,
         sceneAnchor: AnchorEntity,
         descriptor: RealitySceneDescriptor
     ) {
-        floor10InvestigationAnchorEntities = [:]
-        projectedFloor10InvestigationAnchors = [:]
-        guard descriptor.sceneID == .floor10ClosedOffice else { return }
+        investigationAnchorEntities = [:]
+        projectedInvestigationAnchors = [:]
 
-        let definitions = [
-            Floor10InvestigationAnchorDefinition(
-                id: "floor10.clue.training-target",
-                entityName: "TargetPanel_R",
-                normalizedPosition: SIMD3(0.5, 0.5, 0.94)
-            ),
-            Floor10InvestigationAnchorDefinition(
-                id: "floor10.clue.broken-desk",
-                entityName: "InstructorDesk",
-                normalizedPosition: SIMD3(0.46, 0.52, 0.9)
-            ),
-            Floor10InvestigationAnchorDefinition(
-                id: "floor10.clue.impact-scar",
-                entityName: "BrokenMonitor_R",
-                normalizedPosition: SIMD3(0.5, 0.5, 0.88)
-            ),
-            Floor10InvestigationAnchorDefinition(
-                id: "floor10.clue.glyph-archive",
-                entityName: "BeginnerSpellCabinet",
-                normalizedPosition: SIMD3(0.5, 0.5, 0.9)
-            )
-        ]
+        let definitions: [InvestigationAnchorDefinition]
+        switch descriptor.sceneID {
+        case .floor10ClosedOffice:
+            definitions = [
+                .init(
+                    id: "floor10.clue.training-target",
+                    entityName: "TargetPanel_R",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.94)
+                ),
+                .init(
+                    id: "floor10.clue.broken-desk",
+                    entityName: "InstructorDesk",
+                    normalizedPosition: SIMD3(0.46, 0.52, 0.9)
+                ),
+                .init(
+                    id: "floor10.clue.impact-scar",
+                    entityName: "BrokenMonitor_R",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.88)
+                ),
+                .init(
+                    id: "floor10.clue.glyph-archive",
+                    entityName: "BeginnerSpellCabinet",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.9)
+                )
+            ]
+        case .floor09ArchiveRedesign:
+            definitions = [
+                .init(
+                    id: "9-entrance-01",
+                    entityName: "BlackBoundDocuments_L",
+                    normalizedPosition: SIMD3(0.5, 0.72, 0.52)
+                ),
+                .init(
+                    id: "floor9.entrance.erased-monitor",
+                    entityName: "SmallWallMonitor",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.9)
+                )
+            ]
+        case .floor08ResidueIsolation:
+            definitions = [
+                .init(
+                    id: "floor8.entrance.warning-tags",
+                    entityName: "IsolationWarningTags",
+                    normalizedPosition: SIMD3(0.5, 0.55, 0.9)
+                ),
+                .init(
+                    id: "floor8.entrance.isolation-monitor",
+                    entityName: "IsolationMonitor",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.9)
+                )
+            ]
+        case .floor08AdministratorObservatory:
+            definitions = []
+        }
 
         for definition in definitions {
             guard let target = root.findEntity(named: definition.entityName) else { continue }
@@ -1366,18 +1397,18 @@ final class RealitySceneController: ObservableObject {
 
             let worldPosition = bounds.min + (size * definition.normalizedPosition)
             let anchor = Entity()
-            anchor.name = "DA_F10_INVESTIGATION_\(definition.id)"
+            anchor.name = "DA_INVESTIGATION_\(definition.id)"
             sceneAnchor.addChild(anchor)
             anchor.setPosition(worldPosition, relativeTo: nil)
-            floor10InvestigationAnchorEntities[definition.id] = anchor
+            investigationAnchorEntities[definition.id] = anchor
         }
     }
 
-    private func refreshFloor10InvestigationProjections() {
-        guard requestedSceneID == .floor10ClosedOffice,
+    private func refreshInvestigationProjections() {
+        guard requestedSceneID != nil,
               let arView,
               let cameraEntity else {
-            projectedFloor10InvestigationAnchors = [:]
+            projectedInvestigationAnchors = [:]
             return
         }
 
@@ -1395,7 +1426,7 @@ final class RealitySceneController: ObservableObject {
         let extendedViewport = arView.bounds.insetBy(dx: -640, dy: -480)
 
         var next: [String: RealityProjectedInvestigationAnchor] = [:]
-        for (id, anchor) in floor10InvestigationAnchorEntities {
+        for (id, anchor) in investigationAnchorEntities {
             let worldPosition = anchor.position(relativeTo: nil)
             let direction = worldPosition - cameraPosition
             guard simd_length_squared(direction) > 0.0001,
@@ -1405,8 +1436,8 @@ final class RealitySceneController: ObservableObject {
             next[id] = RealityProjectedInvestigationAnchor(point: point)
         }
 
-        if projectedFloor10InvestigationAnchors != next {
-            projectedFloor10InvestigationAnchors = next
+        if projectedInvestigationAnchors != next {
+            projectedInvestigationAnchors = next
         }
     }
 

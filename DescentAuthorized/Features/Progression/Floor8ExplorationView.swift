@@ -8,10 +8,23 @@ struct Floor8ExplorationView: View {
     var body: some View {
         Group {
             if gameSession.progress.currentScene == .floor8Antechamber {
-                FloorEntrancePanel(
-                    configuration: .floor8,
-                    action: { gameSession.send(.enterProtectionRoom) }
-                )
+                GeometryReader { proxy in
+                    let panelWidth = min(max(proxy.size.width * 0.42, 540), 680)
+
+                    ZStack {
+                        FloorEntrancePanel(
+                            configuration: .floor8,
+                            action: { gameSession.send(.enterProtectionRoom) }
+                        )
+
+                        FloorEntranceInvestigationLayer(
+                            sceneController: sceneController,
+                            configuration: .floor8,
+                            trailingReservedWidth: panelWidth
+                        )
+                        .zIndex(4)
+                    }
+                }
             } else {
                 ZStack {
                     LinearGradient(

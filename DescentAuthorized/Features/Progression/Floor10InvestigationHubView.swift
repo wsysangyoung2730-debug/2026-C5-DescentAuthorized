@@ -427,7 +427,7 @@ struct Floor10InvestigationHubView: View {
         in viewportSize: CGSize
     ) -> Floor10InvestigationProjection? {
         guard let worldProjection = sceneController
-            .projectedFloor10InvestigationAnchors[clue.recordID] else { return nil }
+            .projectedInvestigationAnchors[clue.recordID] else { return nil }
 
         let x = worldProjection.point.x
         let y = worldProjection.point.y - sceneProjectionTopInset
