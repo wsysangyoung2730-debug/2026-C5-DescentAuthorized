@@ -312,7 +312,7 @@ struct Floor10OpeningExperienceView: View {
                 try? await Task.sleep(for: .milliseconds(960))
                 guard !Task.isCancelled else { return }
                 withAnimation(.easeIn(duration: 0.14)) {
-                    eyelidOpening = 0.44
+                    eyelidOpening = 0.1
                     focusRecovery = 0.34
                 }
 
