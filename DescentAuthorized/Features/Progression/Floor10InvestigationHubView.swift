@@ -13,6 +13,11 @@ struct Floor10InvestigationHubView: View {
 
     private let clues = Floor10InvestigationClue.allCases
     private let sceneProjectionTopInset: CGFloat = 96
+    private let anchorMinProjectionScale: CGFloat = 0.9
+    private let anchorMarkerImageSize = CGSize(width: 112, height: 162)
+    private let anchorMarkerHitboxSize = CGSize(width: 132, height: 186)
+    private let anchorPanelBaseWidth: CGFloat = 430
+    private let anchorPanelFloorRiseConnectionRatio: CGFloat = 0.22
 
     var body: some View {
         GeometryReader { proxy in
@@ -21,13 +26,18 @@ struct Floor10InvestigationHubView: View {
 
                 ForEach(clues) { clue in
                     if let projection = projection(for: clue, in: proxy.size) {
-                        investigationMarker(clue, projection: projection)
+                        let effectiveScale = max(anchorMinProjectionScale, projection.scale)
+
+                        investigationMarker(
+                            clue,
+                            projection: projection,
+                            visualScale: effectiveScale
+                        )
                             .position(projection.point)
                             .zIndex(Double(projection.scale))
 
-                        spatialCluePanel(clue)
-                            .scaleEffect(max(0.82, projection.scale))
-                            .position(panelPosition(for: clue, projection: projection))
+                        spatialCluePanel(clue, scale: effectiveScale)
+                            .position(panelPosition(for: clue, projection: projection, scale: effectiveScale))
                             .transition(panelTransition(for: clue))
                             .zIndex(4 + Double(projection.scale))
                     }
@@ -102,47 +112,65 @@ struct Floor10InvestigationHubView: View {
 
     private func investigationMarker(
         _ clue: Floor10InvestigationClue,
-        projection: Floor10InvestigationProjection
+        projection: Floor10InvestigationProjection,
+        visualScale: CGFloat
     ) -> some View {
         let isCompleted = inspectedClueIDs.contains(clue.recordID)
+        let glowColor = isCompleted
+            ? Color.cyan.opacity(0.3)
+            : DAColor.gold.opacity(isAnchorPulseActive ? 0.2 : 0.12)
+        let markerSize = CGSize(
+            width: anchorMarkerImageSize.width * visualScale,
+            height: anchorMarkerImageSize.height * visualScale
+        )
+        let hitboxSize = CGSize(
+            width: anchorMarkerHitboxSize.width * visualScale,
+            height: anchorMarkerHitboxSize.height * visualScale
+        )
 
         return Button {
             reveal(clue)
         } label: {
-            Image(
-                isCompleted
-                    ? "Floor10InvestigationAnchorCompleted"
-                    : "Floor10InvestigationAnchorAvailable"
-            )
-            .resizable()
-            .scaledToFit()
-            .frame(width: 82, height: 119)
-            .opacity(isCompleted ? 0.98 : (isAnchorPulseActive ? 1 : 0.78))
-            .scaleEffect(
-                isCompleted || reduceMotion
-                    ? 1
-                    : (isAnchorPulseActive ? 1.035 : 0.98)
-            )
-            .shadow(
-                color: isCompleted
-                    ? Color.cyan.opacity(0.25)
-                    : Color.purple.opacity(isAnchorPulseActive ? 0.66 : 0.3),
-                radius: isCompleted ? 7 : 12
-            )
-            .frame(width: 94, height: 130)
+            ZStack {
+                RoundedRectangle(cornerRadius: 22)
+                    .fill(glowColor)
+                    .frame(width: hitboxSize.width, height: hitboxSize.height)
+                    .blur(radius: 18)
+
+                Image(
+                    isCompleted
+                        ? "Floor10InvestigationAnchorCompleted"
+                        : "Floor10InvestigationAnchorAvailable"
+                )
+                .resizable()
+                .scaledToFit()
+                .frame(width: markerSize.width, height: markerSize.height)
+                .opacity(isCompleted ? 0.98 : (isAnchorPulseActive ? 1 : 0.82))
+                .scaleEffect(
+                    isCompleted || reduceMotion
+                        ? 1
+                        : (isAnchorPulseActive ? 1.022 : 0.992)
+                )
+                .shadow(
+                    color: isCompleted
+                        ? Color.cyan.opacity(0.28)
+                        : Color.purple.opacity(isAnchorPulseActive ? 0.56 : 0.34),
+                    radius: isCompleted ? 9 : 12
+                )
+            }
+            .frame(width: hitboxSize.width, height: hitboxSize.height)
             .contentShape(Rectangle())
         }
         .buttonStyle(InvestigationAnchorButtonStyle())
-        .scaleEffect(projection.scale)
         .opacity(projection.opacity)
         .accessibilityLabel("조사 지점, \(clue.markerTitle)")
         .accessibilityValue(isCompleted ? "조사 완료, 다시 열어볼 수 있음" : "미조사")
         .accessibilityHint("두 번 탭하여 조사 정보 패널 열기")
     }
 
-    private func spatialCluePanel(_ clue: Floor10InvestigationClue) -> some View {
+    private func spatialCluePanel(_ clue: Floor10InvestigationClue, scale: CGFloat) -> some View {
         let isCompleted = inspectedClueIDs.contains(clue.recordID)
-        let width: CGFloat = 390
+        let width = anchorPanelBaseWidth * scale
         let height = width / 2.196
 
         return ZStack {
@@ -419,16 +447,18 @@ struct Floor10InvestigationHubView: View {
 
     private func panelPosition(
         for clue: Floor10InvestigationClue,
-        projection: Floor10InvestigationProjection
+        projection: Floor10InvestigationProjection,
+        scale: CGFloat
     ) -> CGPoint {
-        let panelWidth: CGFloat = 390 * max(0.82, projection.scale)
+        let panelWidth = anchorPanelBaseWidth * scale
         let panelHeight = panelWidth / 2.196
+        let markerHeight = anchorMarkerHitboxSize.height * scale
 
         switch clue.presentation {
         case .floorRise:
             return CGPoint(
                 x: projection.point.x,
-                y: projection.point.y - (96 * projection.scale) - panelHeight * 0.5
+                y: projection.point.y - markerHeight * anchorPanelFloorRiseConnectionRatio
             )
         case .surfaceReveal:
             return CGPoint(
