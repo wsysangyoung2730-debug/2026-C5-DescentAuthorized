@@ -81,9 +81,7 @@ struct Floor10OpeningExperienceView: View {
 
                     CRTCurvatureOverlay()
 
-                    Color.black
-                        .opacity(Double(max(0, 1 - terminalPower)))
-                        .allowsHitTesting(false)
+                    CRTPowerRevealOverlay(reveal: terminalPower)
                 }
                 .frame(width: screenWidth, height: screenHeight)
                 .clipShape(RoundedRectangle(cornerRadius: screenCornerRadius, style: .continuous))
@@ -160,25 +158,26 @@ struct Floor10OpeningExperienceView: View {
             let rowHeight = max(20, proxy.size.height / CGFloat(terminalLines.count + 1))
 
             VStack(alignment: .leading, spacing: 0) {
-                ForEach(Array(terminalLines.prefix(terminalLineCount).enumerated()), id: \.offset) { index, line in
-                    terminalLine(line, index: index)
-                        .frame(height: rowHeight, alignment: .leading)
-                        .transition(.opacity.combined(with: .move(edge: .bottom)))
-                }
-
-                if terminalLineCount < terminalLines.count {
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        terminalLine(terminalCurrentLine, index: terminalLineCount)
-                        Text("▋")
-                            .foregroundStyle(.green.opacity(0.95))
-                            .modifier(TerminalCursorBlink(reducedMotion: reducesMotion))
+                ForEach(terminalLines.indices, id: \.self) { index in
+                    Group {
+                        if index < terminalLineCount {
+                            terminalLine(terminalLines[index], index: index)
+                        } else if index == terminalLineCount {
+                            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                                terminalLine(terminalCurrentLine, index: index)
+                                Text("▋")
+                                    .foregroundStyle(.green.opacity(0.95))
+                                    .modifier(TerminalCursorBlink(reducedMotion: reducesMotion))
+                            }
+                        } else {
+                            Color.clear
+                        }
                     }
                     .frame(height: rowHeight, alignment: .leading)
                 }
 
                 Spacer(minLength: 0)
             }
-            .animation(reducesMotion ? nil : .easeOut(duration: 0.22), value: terminalLineCount)
         }
     }
 
@@ -320,7 +319,7 @@ struct Floor10OpeningExperienceView: View {
     }
 
     private var initiallyVisibleTerminalLineCount: Int {
-        min(14, terminalLines.count)
+        max(terminalLines.count - 3, 0)
     }
 
     private var terminalCurrentLine: String {
@@ -400,13 +399,13 @@ struct Floor10OpeningExperienceView: View {
 
                 try? await Task.sleep(for: .milliseconds(240))
                 guard !Task.isCancelled else { return }
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                withAnimation(.easeOut(duration: 0.18)) {
                     terminalPower = 0.13
                 }
 
                 try? await Task.sleep(for: .milliseconds(260))
                 guard !Task.isCancelled else { return }
-                withAnimation(.easeOut(duration: 0.62)) {
+                withAnimation(.easeInOut(duration: 0.52)) {
                     terminalPower = 1
                 }
 
@@ -431,10 +430,8 @@ struct Floor10OpeningExperienceView: View {
                         )
                     )
                     guard !Task.isCancelled else { return }
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        terminalLineCount = index + 1
-                        terminalCharacterCount = 0
-                    }
+                    terminalLineCount = index + 1
+                    terminalCharacterCount = 0
                 }
             }
 
@@ -969,6 +966,30 @@ private struct TerminalRecoveryFooter: View {
         .overlay {
             Rectangle().stroke(Color.cyan.opacity(0.28), lineWidth: 1)
         }
+    }
+}
+
+private struct CRTPowerRevealOverlay: View {
+    let reveal: CGFloat
+
+    var body: some View {
+        GeometryReader { proxy in
+            let clampedReveal = min(max(reveal, 0), 1)
+            let coverHeight = proxy.size.height * (1 - clampedReveal) / 2
+
+            VStack(spacing: 0) {
+                Color.black
+                    .frame(height: coverHeight)
+
+                Color.clear
+
+                Color.black
+                    .frame(height: coverHeight)
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 
