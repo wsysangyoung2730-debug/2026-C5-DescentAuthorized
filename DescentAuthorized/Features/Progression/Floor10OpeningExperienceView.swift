@@ -53,8 +53,9 @@ struct Floor10OpeningExperienceView: View {
         GeometryReader { proxy in
             let monitorWidth = min(proxy.size.width, proxy.size.height * 4 / 3)
             let monitorHeight = monitorWidth * 3 / 4
-            let screenWidth = monitorWidth * 0.77
-            let screenHeight = monitorHeight * 0.73
+            let screenWidth = monitorWidth * 0.955
+            let screenHeight = monitorHeight * 0.92
+            let screenCornerRadius = monitorHeight * 0.058
 
             ZStack {
                 Color(red: 2 / 255, green: 3 / 255, blue: 4 / 255)
@@ -63,8 +64,8 @@ struct Floor10OpeningExperienceView: View {
                     Color(red: 2 / 255, green: 10 / 255, blue: 12 / 255)
 
                     terminalContent
-                        .padding(.horizontal, max(24, screenWidth * 0.035))
-                        .padding(.vertical, max(20, screenHeight * 0.045))
+                        .padding(.horizontal, max(22, screenWidth * 0.028))
+                        .padding(.vertical, max(20, screenHeight * 0.027))
 
                     CRTBootNoiseOverlay(isOnline: terminalIsOnline, reducedMotion: reducesMotion)
                     CRTScanlineOverlay(reducedMotion: reducesMotion)
@@ -76,12 +77,14 @@ struct Floor10OpeningExperienceView: View {
                         .blendMode(.screen)
                         .opacity(0.52)
                         .allowsHitTesting(false)
+
+                    CRTCurvatureOverlay()
                 }
                 .frame(width: screenWidth, height: screenHeight)
-                .clipShape(RoundedRectangle(cornerRadius: monitorHeight * 0.075, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: screenCornerRadius, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: monitorHeight * 0.075, style: .continuous)
-                        .stroke(Color.cyan.opacity(terminalIsOnline ? 0.2 : 0.06), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: screenCornerRadius, style: .continuous)
+                        .stroke(Color.cyan.opacity(terminalIsOnline ? 0.2 : 0.06), lineWidth: 1.2)
                 }
                 .scaleEffect(y: max(0.004, terminalPower), anchor: .center)
                 .opacity(terminalPower > 0.01 ? 1 : 0)
@@ -95,15 +98,23 @@ struct Floor10OpeningExperienceView: View {
                         .opacity(terminalPower > 0 ? 0.95 : 0)
                 }
 
-                Image("Floor10CRTBezel")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: monitorWidth, height: monitorHeight)
+                RoundedRectangle(cornerRadius: screenCornerRadius + 10, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.2, green: 0.16, blue: 0.11),
+                                .black,
+                                Color(red: 0.13, green: 0.1, blue: 0.07)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 13
+                    )
+                    .frame(width: screenWidth + 15, height: screenHeight + 15)
+                    .shadow(color: .black.opacity(0.9), radius: 20)
                     .allowsHitTesting(false)
 
-                skipButton
-                    .padding(30)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -112,59 +123,30 @@ struct Floor10OpeningExperienceView: View {
     }
 
     private var terminalContent: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 10) {
-                TerminalStatusChip(label: "DESCENT AUTH", value: "RECOVERY / 10F", tint: .cyan)
-                TerminalStatusChip(label: "POWER", value: terminalIsOnline ? "AUX 43%" : "BOOT", tint: .green)
-                TerminalStatusChip(label: "RIFT", value: "CRITICAL", tint: .red)
+        VStack(spacing: 9) {
+            HStack(spacing: 8) {
+                TerminalHeaderBar(isOnline: terminalIsOnline)
+                skipButton
+                    .frame(width: 108)
             }
+            .frame(height: 38)
 
-            Rectangle()
-                .fill(Color.cyan.opacity(0.3))
-                .frame(height: 1)
+            HStack(spacing: 12) {
+                TerminalPanel(title: ">_ SYSTEM LOG") {
+                    terminalLog
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            HStack(spacing: 24) {
-                terminalLog
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-
-                TerminalDiagnosticPanel(
+                TerminalRecoveryDashboard(
                     progress: terminalProgress,
                     isOnline: terminalIsOnline,
                     reducedMotion: reducesMotion
                 )
-                .frame(width: 250)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack {
-                        Text(terminalStatusTitle)
-                        Spacer()
-                        Text("\(Int(terminalProgress * 100))%")
-                    }
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(Color.cyan.opacity(0.82))
-
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            Rectangle().fill(Color.cyan.opacity(0.09))
-                            Rectangle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.cyan.opacity(0.68), .green.opacity(0.82)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(width: geometry.size.width * terminalProgress)
-                        }
-                    }
-                    .frame(height: 5)
-                }
-
-                TerminalSignalView(progress: terminalProgress)
-                    .frame(width: 180, height: 28)
-            }
+            TerminalRecoveryFooter(progress: terminalProgress, status: terminalStatusTitle)
+                .frame(height: 82)
         }
         .foregroundStyle(.green.opacity(0.88))
         .opacity(terminalIsOnline ? 1 : min(1, terminalPower * 3.2))
@@ -172,14 +154,9 @@ struct Floor10OpeningExperienceView: View {
 
     private var terminalLog: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("SYSTEM LOG / LIVE")
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
-                .foregroundStyle(.cyan.opacity(0.72))
-                .padding(.bottom, 10)
-
             Spacer(minLength: 0)
 
-            VStack(alignment: .leading, spacing: 7) {
+            VStack(alignment: .leading, spacing: 5) {
                 ForEach(Array(terminalLines.prefix(terminalLineCount).enumerated()), id: \.offset) { index, line in
                     terminalLine(line, index: index)
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -200,11 +177,13 @@ struct Floor10OpeningExperienceView: View {
 
     private func terminalLine(_ line: String, index: Int) -> some View {
         Text(line)
-            .font(.system(size: 14, weight: .regular, design: .monospaced))
+            .font(.system(size: 12.5, weight: .regular, design: .monospaced))
             .foregroundStyle(
-                line.hasPrefix("!")
+                line.contains("[CRIT]")
                     ? Color.red.opacity(0.94)
-                    : (index.isMultiple(of: 3) ? Color.cyan.opacity(0.82) : Color.green.opacity(0.88))
+                    : (line.contains("[WARN]") || line.contains("[RUN]"))
+                        ? Color.orange.opacity(0.92)
+                        : (index.isMultiple(of: 4) ? Color.cyan.opacity(0.84) : Color.green.opacity(0.88))
             )
             .lineLimit(1)
             .minimumScaleFactor(0.78)
@@ -311,16 +290,25 @@ struct Floor10OpeningExperienceView: View {
 
     private var terminalLines: [String] {
         [
-            "> auth.recovery --sector 10F --subject UNKNOWN",
-            "[BOOT] 비상 전력 계통 우회 연결",
-            "[SYNC] 관제 채널 00 / 응답 지연 1842ms",
-            "[SCAN] 구조 손상 37% / 시야 계통 대기",
-            "! 경고: 균열 억제망 임계치 초과",
-            "[BIO] 생체 반응 감지 / 신원 대조 실패",
-            "! 기억 식별값 손상 / 승인자 서명 조회 실패",
-            "[LINK] 제10층 감시 장치 부분 복구",
-            "[LOAD] 시각 정보 복원 72%",
-            "[RUN] 시스템 관리자 00"
+            "[23:46:41] 관리자 00을 실행합니다 ................ [OK]",
+            "[23:46:41] [OK] 비상 전원 연결",
+            "[23:46:42] [OK] 생체 반응 확인",
+            "[23:46:43] [WARN] 기억 식별값 손상",
+            "[23:46:44] 코어 격리 프로토콜 초기화 ............ [OK]",
+            "[23:46:45] 심층 기억 영역 스캔 시작 ............. [10%]",
+            "[23:46:46] 손상 패턴 분석 중 .................... [23%]",
+            "[23:46:47] 외부 관제 채널 연결 .................. [10%]",
+            "[23:46:48] 승인자 서명 조회 실패 ................ [WARN]",
+            "[23:46:49] 봉인 해제 검증 루틴 .................. [OK]",
+            "[23:46:51] 데이터 재구성 버퍼 할당 .............. [OK]",
+            "[23:46:52] 시각 정보 복구 개시 .................. [RUN]",
+            "    └ 기억 단편 정렬 중 ...................... [31%]",
+            "    └ 지각 벡터 매핑 중 ...................... [17%]",
+            "    └ 이미지 데이터 복원 대기열 생성 ......... [08%]",
+            "[23:46:55] 오류 복구 시도 : 2 / 7 .............. [WARN]",
+            "[23:46:56] 이계 간섭 감지 ...................... [WARN]",
+            "[23:46:57] 보호막 출력 저하 : 12% .............. [CRIT]",
+            "[23:46:59] 복구 우선순위 재조정 ................ [OK]"
         ]
     }
 
@@ -417,12 +405,14 @@ struct Floor10OpeningExperienceView: View {
                     for characterCount in 1...line.count {
                         guard !Task.isCancelled else { return }
                         terminalCharacterCount = characterCount
-                        let delay = line.hasPrefix("!") ? 39 : 31
+                        let delay = line.contains("[WARN]") || line.contains("[CRIT]") ? 24 : 17
                         try? await Task.sleep(for: .milliseconds(delay))
                     }
 
                     try? await Task.sleep(
-                        for: .milliseconds(line.hasPrefix("!") ? 620 : 330)
+                        for: .milliseconds(
+                            line.contains("[WARN]") || line.contains("[CRIT]") ? 380 : 190
+                        )
                     )
                     guard !Task.isCancelled else { return }
                     withAnimation(.easeOut(duration: 0.2)) {
@@ -604,100 +594,177 @@ struct Floor10OpeningExperienceView: View {
     }
 }
 
-private struct TerminalStatusChip: View {
-    let label: String
-    let value: String
-    let tint: Color
+private struct TerminalHeaderBar: View {
+    let isOnline: Bool
 
     var body: some View {
-        HStack(spacing: 7) {
-            Circle()
-                .fill(tint)
-                .frame(width: 5, height: 5)
-                .shadow(color: tint, radius: 4)
+        HStack(spacing: 18) {
+            Text("DESCENT AUTHORIZATION TERMINAL")
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text(label)
-                .foregroundStyle(.white.opacity(0.5))
+            Text("RECOVERY CONSOLE / 10F")
+                .frame(maxWidth: .infinity)
 
-            Text(value)
-                .foregroundStyle(tint.opacity(0.9))
-                .lineLimit(1)
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                HStack(spacing: 12) {
+                    Text("SYS 10F-ARK")
+                    Text(context.date, format: .dateTime.hour().minute().second())
+                    HStack(spacing: 2) {
+                        Text("SIGNAL")
+                        ForEach(0..<7, id: \.self) { index in
+                            Rectangle()
+                                .fill(index < (isOnline ? 5 : 1) ? Color.cyan.opacity(0.8) : Color.cyan.opacity(0.12))
+                                .frame(width: 4, height: 9)
+                                .rotationEffect(.degrees(12))
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+            }
         }
-        .font(.system(size: 10, weight: .semibold, design: .monospaced))
-        .padding(.horizontal, 9)
-        .frame(maxWidth: .infinity, minHeight: 26, alignment: .leading)
-        .background(Color.black.opacity(0.38))
+        .font(.system(size: 11, weight: .medium, design: .monospaced))
+        .foregroundStyle(.cyan.opacity(0.78))
+        .padding(.horizontal, 14)
+        .background(Color.black.opacity(0.3))
         .overlay {
-            RoundedRectangle(cornerRadius: 2)
-                .stroke(tint.opacity(0.22), lineWidth: 1)
+            Rectangle().stroke(Color.cyan.opacity(0.26), lineWidth: 1)
         }
     }
 }
 
-private struct TerminalDiagnosticPanel: View {
+private struct TerminalPanel<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 7) {
+                Text(title)
+                Spacer()
+                Text("⊞")
+                    .opacity(0.7)
+            }
+            .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
+            .foregroundStyle(.cyan.opacity(0.78))
+
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .padding(10)
+        .background(Color.black.opacity(0.24))
+        .overlay {
+            Rectangle().stroke(Color.cyan.opacity(0.28), lineWidth: 1)
+        }
+    }
+}
+
+private struct TerminalRecoveryDashboard: View {
     let progress: CGFloat
     let isOnline: Bool
     let reducedMotion: Bool
 
     var body: some View {
-        VStack(spacing: 8) {
-            TimelineView(.animation(minimumInterval: reducedMotion ? 1 : 1 / 20)) { context in
-                let time = context.date.timeIntervalSinceReferenceDate
-                let rotation = reducedMotion ? 0 : time.truncatingRemainder(dividingBy: 36) * 10
-                let pulse = reducedMotion ? 1 : 0.98 + (sin(time * 2.4) * 0.02)
+        VStack(spacing: 9) {
+            TerminalPanel(title: "CORE RECOVERY DIAGNOSTIC") {
+                HStack(spacing: 18) {
+                    TimelineView(.animation(minimumInterval: reducedMotion ? 1 : 1 / 20)) { context in
+                        let time = context.date.timeIntervalSinceReferenceDate
+                        let rotation = reducedMotion ? 0 : time.truncatingRemainder(dividingBy: 36) * 10
+                        let pulse = reducedMotion ? 1 : 0.985 + (sin(time * 2.4) * 0.015)
 
-                ZStack {
-                    Image("Floor10CRTDiagnosticRing")
-                        .resizable()
-                        .scaledToFit()
-                        .rotationEffect(.degrees(rotation))
-                        .scaleEffect(pulse)
-                        .opacity(isOnline ? 0.76 : 0.2)
+                        ZStack {
+                            Image("Floor10CRTDiagnosticRing")
+                                .resizable()
+                                .scaledToFit()
+                                .rotationEffect(.degrees(rotation))
+                                .scaleEffect(pulse)
+                                .opacity(isOnline ? 0.72 : 0.18)
 
-                    Circle()
-                        .stroke(Color.cyan.opacity(0.28), lineWidth: 1)
-                        .frame(width: 72, height: 72)
-
-                    VStack(spacing: 1) {
-                        Text("RECOVERY")
-                            .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                        Text("\(Int(progress * 100))")
-                            .font(.system(size: 25, weight: .light, design: .monospaced))
+                            VStack(spacing: 0) {
+                                Text("RECOVERY RATE")
+                                    .font(.system(size: 7, weight: .medium, design: .monospaced))
+                                HStack(alignment: .firstTextBaseline, spacing: 1) {
+                                    Text("\(Int(progress * 100))")
+                                        .font(.system(size: 27, weight: .light, design: .monospaced))
+                                    Text("%")
+                                        .font(.system(size: 11, design: .monospaced))
+                                }
+                            }
+                            .foregroundStyle(.cyan.opacity(0.9))
+                        }
                     }
-                    .foregroundStyle(.cyan.opacity(0.88))
+                    .frame(width: 165)
+
+                    VStack(spacing: 9) {
+                        TerminalMetricBar(label: "SIGNAL STRENGTH", value: min(1, progress * 1.45))
+                        TerminalMetricBar(label: "CORE STABILITY", value: min(1, progress * 1.12))
+                        TerminalMetricBar(label: "MEMORY INTEGRITY", value: progress * 0.62, tint: .orange)
+                        TerminalMetricBar(label: "OCCULT COHERENCE", value: min(1, progress * 1.3))
+                        TerminalMetricBar(label: "VISUAL RECOVERY", value: progress)
+                    }
                 }
             }
             .frame(height: 205)
 
-            VStack(spacing: 5) {
-                DiagnosticMetric(label: "BIO SIGNAL", value: progress > 0.46 ? "DETECTED" : "SCANNING", tint: .green)
-                DiagnosticMetric(label: "IDENTITY", value: progress > 0.66 ? "DAMAGED" : "PENDING", tint: progress > 0.66 ? .red : .cyan)
-                DiagnosticMetric(label: "VISUAL LINK", value: progress > 0.82 ? "PARTIAL" : "OFFLINE", tint: progress > 0.82 ? .orange : .red)
+            HStack(spacing: 9) {
+                TerminalPanel(title: "BIOMETRIC RESPONSE") {
+                    VStack(spacing: 5) {
+                        TerminalSignalView(progress: progress)
+                        HStack {
+                            Text("HR \(72 + Int(progress * 15))")
+                            Spacer()
+                            Text("BR \(12 + Int(progress * 7))")
+                            Spacer()
+                            Text(isOnline ? "LIVE" : "WAIT")
+                                .foregroundStyle(isOnline ? .green.opacity(0.9) : .orange.opacity(0.9))
+                        }
+                        .font(.system(size: 9, design: .monospaced))
+                    }
+                }
+
+                TerminalPanel(title: "FLOOR-10 SCHEMATIC") {
+                    TerminalFloorSchematic(progress: progress)
+                }
             }
-        }
-        .padding(10)
-        .background(Color.black.opacity(0.34))
-        .overlay {
-            RoundedRectangle(cornerRadius: 3)
-                .stroke(Color.cyan.opacity(0.16), lineWidth: 1)
+            .frame(height: 137)
+
+            HStack(spacing: 9) {
+                TerminalPanel(title: "MEMORY INTEGRITY") {
+                    TerminalMemoryGrid(progress: progress)
+                }
+
+                TerminalPanel(title: "RECOVERY STACK") {
+                    TerminalRecoveryStack(progress: progress)
+                }
+            }
         }
     }
 }
 
-private struct DiagnosticMetric: View {
+private struct TerminalMetricBar: View {
     let label: String
-    let value: String
-    let tint: Color
+    let value: CGFloat
+    var tint: Color = .cyan
 
     var body: some View {
-        HStack {
+        HStack(spacing: 6) {
+            Circle()
+                .stroke(tint.opacity(0.65), lineWidth: 1)
+                .frame(width: 7, height: 7)
             Text(label)
-                .foregroundStyle(.white.opacity(0.42))
-            Spacer()
-            Text(value)
-                .foregroundStyle(tint.opacity(0.86))
+                .font(.system(size: 8, design: .monospaced))
+                .foregroundStyle(.cyan.opacity(0.72))
+                .frame(width: 92, alignment: .leading)
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(Color.cyan.opacity(0.07))
+                    Rectangle()
+                        .fill(tint.opacity(0.75))
+                        .frame(width: proxy.size.width * min(max(value, 0), 1))
+                }
+            }
+            .frame(height: 5)
         }
-        .font(.system(size: 9, weight: .medium, design: .monospaced))
     }
 }
 
@@ -727,11 +794,211 @@ private struct TerminalSignalView: View {
             }
             context.stroke(signal, with: .color(.green.opacity(0.72)), lineWidth: 1.2)
         }
-        .overlay(alignment: .topLeading) {
-            Text("BIO / LIVE")
-                .font(.system(size: 8, weight: .medium, design: .monospaced))
-                .foregroundStyle(.green.opacity(0.48))
+    }
+}
+
+private struct TerminalFloorSchematic: View {
+    let progress: CGFloat
+
+    var body: some View {
+        Canvas { context, size in
+            let center = CGPoint(x: size.width / 2, y: size.height / 2)
+            let shortest = min(size.width, size.height)
+
+            for inset in [0.08, 0.2, 0.32] as [CGFloat] {
+                let rect = CGRect(
+                    x: size.width * inset,
+                    y: size.height * inset,
+                    width: size.width * (1 - inset * 2),
+                    height: size.height * (1 - inset * 2)
+                )
+                context.stroke(Path(rect), with: .color(.cyan.opacity(0.22)), lineWidth: 1)
+            }
+
+            var crosshair = Path()
+            crosshair.move(to: CGPoint(x: center.x, y: 0))
+            crosshair.addLine(to: CGPoint(x: center.x, y: size.height))
+            crosshair.move(to: CGPoint(x: 0, y: center.y))
+            crosshair.addLine(to: CGPoint(x: size.width, y: center.y))
+            context.stroke(crosshair, with: .color(.cyan.opacity(0.16)), lineWidth: 1)
+
+            let radius = shortest * (0.12 + progress * 0.1)
+            context.stroke(
+                Path(ellipseIn: CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)),
+                with: .color(.purple.opacity(0.72)),
+                lineWidth: 1.4
+            )
         }
+    }
+}
+
+private struct TerminalMemoryGrid: View {
+    let progress: CGFloat
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 12)
+
+    var body: some View {
+        HStack(spacing: 10) {
+            LazyVGrid(columns: columns, spacing: 2) {
+                ForEach(0..<72, id: \.self) { index in
+                    let threshold = CGFloat((index * 37) % 100) / 100
+                    Rectangle()
+                        .fill(
+                            threshold < progress
+                                ? Color.cyan.opacity(index.isMultiple(of: 9) ? 0.35 : 0.68)
+                                : Color.cyan.opacity(0.08)
+                        )
+                        .aspectRatio(1, contentMode: .fit)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("TOTAL 4096")
+                Text("VERIFIED \(Int(progress * 4096))")
+                Text("DAMAGED 0672")
+                    .foregroundStyle(.orange.opacity(0.82))
+                Text("UNKNOWN \(4096 - Int(progress * 4096))")
+            }
+            .font(.system(size: 8, design: .monospaced))
+            .foregroundStyle(.cyan.opacity(0.68))
+            .frame(width: 82, alignment: .leading)
+        }
+    }
+}
+
+private struct TerminalRecoveryStack: View {
+    let progress: CGFloat
+
+    private let stages = [
+        "CORE ISOLATION",
+        "MEMORY ACQUISITION",
+        "PATTERN ANALYSIS",
+        "VISUAL RECONSTRUCTION",
+        "CONSOLIDATION"
+    ]
+
+    var body: some View {
+        VStack(spacing: 5) {
+            ForEach(Array(stages.enumerated()), id: \.offset) { index, title in
+                let lowerBound = CGFloat(index) / CGFloat(stages.count)
+                let stageProgress = min(max((progress - lowerBound) * CGFloat(stages.count), 0), 1)
+                HStack(spacing: 6) {
+                    Text("0\(index + 1).")
+                    Text(title)
+                        .frame(width: 104, alignment: .leading)
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            Rectangle().fill(Color.cyan.opacity(0.07))
+                            Rectangle()
+                                .fill(Color.cyan.opacity(0.64))
+                                .frame(width: proxy.size.width * stageProgress)
+                        }
+                    }
+                    .frame(height: 5)
+                    Text("[\(Int(stageProgress * 100))%]")
+                        .frame(width: 35, alignment: .trailing)
+                }
+                .font(.system(size: 7.5, design: .monospaced))
+                .foregroundStyle(.cyan.opacity(stageProgress > 0 ? 0.74 : 0.24))
+            }
+        }
+    }
+}
+
+private struct TerminalRecoveryFooter: View {
+    let progress: CGFloat
+    let status: String
+
+    var body: some View {
+        HStack(spacing: 22) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("시각 정보 복구 중")
+                    .font(.system(size: 23, weight: .medium, design: .monospaced))
+                Text("VISUAL RECOVERY PROGRESS")
+                    .font(.system(size: 9, design: .monospaced))
+            }
+            .foregroundStyle(.cyan.opacity(0.78))
+
+            GeometryReader { proxy in
+                HStack(spacing: 2) {
+                    ForEach(0..<32, id: \.self) { index in
+                        Rectangle()
+                            .fill(
+                                CGFloat(index) / 32 < progress
+                                    ? Color.cyan.opacity(0.75)
+                                    : Color.cyan.opacity(0.08)
+                            )
+                    }
+                }
+                .padding(5)
+                .overlay {
+                    Rectangle().stroke(Color.cyan.opacity(0.24), lineWidth: 1)
+                }
+            }
+            .frame(height: 38)
+
+            Text("\(Int(progress * 100))%")
+                .font(.system(size: 25, weight: .light, design: .monospaced))
+                .foregroundStyle(.cyan.opacity(0.84))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("CURRENT OPERATION")
+                Text(status)
+            }
+            .font(.system(size: 8.5, design: .monospaced))
+            .foregroundStyle(.cyan.opacity(0.66))
+            .frame(width: 180, alignment: .leading)
+        }
+        .padding(.horizontal, 14)
+        .background(Color.black.opacity(0.28))
+        .overlay {
+            Rectangle().stroke(Color.cyan.opacity(0.28), lineWidth: 1)
+        }
+    }
+}
+
+private struct CRTCurvatureOverlay: View {
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack {
+                RadialGradient(
+                    colors: [
+                        .clear,
+                        Color.black.opacity(0.08),
+                        Color.black.opacity(0.58)
+                    ],
+                    center: .center,
+                    startRadius: min(proxy.size.width, proxy.size.height) * 0.35,
+                    endRadius: max(proxy.size.width, proxy.size.height) * 0.7
+                )
+
+                RoundedRectangle(cornerRadius: min(proxy.size.width, proxy.size.height) * 0.065)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.07),
+                                .clear,
+                                Color.cyan.opacity(0.035)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: 8
+                    )
+                    .blur(radius: 5)
+
+                LinearGradient(
+                    colors: [
+                        Color.cyan.opacity(0.018),
+                        .clear,
+                        Color.black.opacity(0.12)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 
