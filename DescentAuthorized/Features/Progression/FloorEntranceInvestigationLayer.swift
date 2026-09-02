@@ -418,9 +418,9 @@ struct FloorEntranceInvestigationLayer: View {
                         )
                         .buttonStyle(.plain)
                     }
-                    // The parchment's vertical ornaments sit near 16% from each edge.
+                    // The parchment's vertical ornaments sit near 15.5% from each edge.
                     // Keep every glyph inside them, including serif overhangs.
-                    .padding(.horizontal, recordWidth * 0.16)
+                    .padding(.horizontal, recordWidth * 0.155)
                     .padding(.top, recordHeight * 0.205)
                     .padding(.bottom, recordHeight * 0.12)
                     .frame(width: recordWidth, height: recordHeight)
