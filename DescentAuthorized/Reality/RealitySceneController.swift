@@ -224,7 +224,7 @@ final class RealitySceneController: ObservableObject {
         floor10OpeningCameraGeneration &+= 1
         let generation = floor10OpeningCameraGeneration
         let movementDuration = reducedMotion ? 0.01 : 0.72
-        let holdDuration = reducedMotion ? 0.04 : 0.72
+        let holdDuration = reducedMotion ? 0.04 : 1.05
 
         @MainActor
         func move(
