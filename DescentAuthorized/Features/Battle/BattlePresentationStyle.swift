@@ -159,7 +159,7 @@ struct BattleTopHUDView: View {
                 .overlay {
                     Color.clear
                         .tutorialTarget("battle.next-action")
-                        .padding(10)
+                        .padding(4)
                 }
                 .frame(maxHeight: .infinity, alignment: .center)
         }

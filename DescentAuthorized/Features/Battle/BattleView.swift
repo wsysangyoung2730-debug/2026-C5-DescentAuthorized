@@ -576,13 +576,16 @@ struct BattleView: View {
 
     @ViewBuilder
     private func intentTutorialTarget(in proxy: GeometryProxy) -> some View {
-        if let projectedFrame = realityController.projectedEnemyIntentFrame {
-            let globalFrame = proxy.frame(in: .global)
+        if realitySceneID != nil {
+            let stageHeight = max(0, proxy.size.height - 242)
+            let focusWidth = min(440, max(300, proxy.size.width * 0.42))
+            let focusHeight = max(320, stageHeight - 96)
+
             Color.clear
-                .frame(width: projectedFrame.width, height: projectedFrame.height)
+                .frame(width: focusWidth, height: focusHeight)
                 .position(
-                    x: projectedFrame.midX - globalFrame.minX,
-                    y: projectedFrame.midY - globalFrame.minY
+                    x: proxy.size.width / 2,
+                    y: 64 + (focusHeight / 2)
                 )
                 .tutorialTarget("battle.intent-symbol")
                 .allowsHitTesting(false)
