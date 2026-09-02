@@ -1,5 +1,79 @@
 import SwiftUI
 
+struct FloorEntranceInvestigationFlow<EntranceContent: View>: View {
+    @EnvironmentObject private var appSettings: AppSettings
+
+    @ObservedObject var sceneController: RealitySceneController
+
+    let configuration: FloorEntranceInvestigationConfiguration
+    let hasCompletedInvestigation: Bool
+    let entranceContent: EntranceContent
+
+    @State private var isEntrancePresented = false
+
+    init(
+        sceneController: RealitySceneController,
+        configuration: FloorEntranceInvestigationConfiguration,
+        hasCompletedInvestigation: Bool,
+        @ViewBuilder entranceContent: () -> EntranceContent
+    ) {
+        self.sceneController = sceneController
+        self.configuration = configuration
+        self.hasCompletedInvestigation = hasCompletedInvestigation
+        self.entranceContent = entranceContent()
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack {
+                if isEntrancePresented {
+                    entranceContent
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                        .zIndex(2)
+                } else {
+                    FloorEntranceInvestigationLayer(
+                        sceneController: sceneController,
+                        configuration: configuration,
+                        trailingReservedWidth: 0,
+                        onCompletion: completeInvestigation
+                    )
+                    .transition(.opacity.combined(with: .move(edge: .leading)))
+                    .zIndex(1)
+                }
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .clipped()
+        }
+        .onAppear {
+            isEntrancePresented = hasCompletedInvestigation
+            sceneController.setEnemyPreviewVisible(hasCompletedInvestigation)
+
+            if hasCompletedInvestigation {
+                sceneController.setLimitedCameraInteractionEnabled(false)
+                sceneController.resetBattleCamera(animated: false)
+            }
+        }
+        .onDisappear {
+            sceneController.setEnemyPreviewVisible(true)
+        }
+    }
+
+    private func completeInvestigation() {
+        sceneController.centerAndLockEntranceCamera(
+            reducedMotion: appSettings.reducedMotion
+        ) {
+            sceneController.setEnemyPreviewVisible(true)
+            withAnimation(
+                appSettings.reducedMotion
+                    ? nil
+                    : .easeInOut(duration: 0.72)
+            ) {
+                isEntrancePresented = true
+            }
+        }
+    }
+}
+
 struct FloorEntranceInvestigationLayer: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var appSettings: AppSettings

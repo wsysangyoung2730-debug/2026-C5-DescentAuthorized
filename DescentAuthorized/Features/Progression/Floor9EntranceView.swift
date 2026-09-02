@@ -8,20 +8,18 @@ struct Floor9EntranceView: View {
     let sceneController: RealitySceneController
 
     var body: some View {
-        GeometryReader { proxy in
-            let panelWidth = min(max(proxy.size.width * 0.43, 520), 650)
+        FloorEntranceInvestigationFlow(
+            sceneController: sceneController,
+            configuration: .floor9,
+            hasCompletedInvestigation: isInvestigationComplete
+        ) {
+            GeometryReader { proxy in
+                let panelWidth = min(max(proxy.size.width * 0.43, 520), 650)
 
-            ZStack(alignment: .trailing) {
-                worldDimming(panelWidth: panelWidth)
-                recordsPanel(width: panelWidth)
-
-                FloorEntranceInvestigationLayer(
-                    sceneController: sceneController,
-                    configuration: .floor9,
-                    trailingReservedWidth: panelWidth,
-                    onCompletion: nil
-                )
-                .zIndex(4)
+                ZStack(alignment: .trailing) {
+                    worldDimming(panelWidth: panelWidth)
+                    recordsPanel(width: panelWidth)
+                }
             }
         }
         .ignoresSafeArea(edges: .bottom)
@@ -238,7 +236,7 @@ struct Floor9EntranceView: View {
                         .foregroundStyle(isInvestigationComplete ? Floor9EntrancePalette.success : DAColor.magicGlow)
                 }
 
-                Text("왼쪽 공간의 표식을 눌러 기록을 확인할 수 있습니다. 조사는 선택 사항이며 완료한 기록도 다시 열립니다.")
+                Text("입구 기록 2개를 모두 확인했습니다. 완료한 기록은 탐색 화면에서 다시 열 수 있습니다.")
                     .font(.caption)
                     .foregroundStyle(Floor9EntrancePalette.warmText)
                     .lineSpacing(3)

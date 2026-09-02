@@ -113,6 +113,7 @@ final class RealitySceneController: ObservableObject {
     private var requestedErasureZones: [ErasureZone] = []
     private var requestedBattleState: BattleState?
     private var requestedReducedMotion = false
+    private var requestedEnemyPreviewVisibility = true
     private var requestedDescentState: RealityDescentPresentationState = .inactive
     private var requestedRewardState: RealityRewardPresentationState = .inactive
     private var pendingCombatCues: [RealityCombatCue] = []
@@ -303,6 +304,32 @@ final class RealitySceneController: ObservableObject {
         setBattleCameraInteractionEnabled(isEnabled)
     }
 
+    func setEnemyPreviewVisible(_ isVisible: Bool) {
+        requestedEnemyPreviewVisibility = isVisible
+        registry.setEnabled(isVisible, for: .enemyActor)
+    }
+
+    func centerAndLockEntranceCamera(
+        reducedMotion: Bool,
+        completion: @escaping @MainActor () -> Void
+    ) {
+        isBattleCameraInteractionEnabled = false
+        resetBattleCamera(animated: !reducedMotion)
+
+        guard !reducedMotion,
+              [.main, .battle, .tutorial].contains(requestedCameraPreset),
+              activeCameraName != nil,
+              cameraEntity != nil else {
+            completion()
+            return
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(280))
+            completion()
+        }
+    }
+
     func beginBattleCameraLook() {
         guard canAdjustBattleCamera else { return }
         cancelBattleCameraImpact(restoreCamera: true)
@@ -368,7 +395,7 @@ final class RealitySceneController: ObservableObject {
         battleCameraZoomStartFieldOfViewScale = 1
         isBattleCameraAdjusted = false
 
-        guard [.battle, .tutorial].contains(requestedCameraPreset),
+        guard [.main, .battle, .tutorial].contains(requestedCameraPreset),
               let activeCameraName,
               let snapshot = authoredCameraSnapshots[activeCameraName],
               let cameraEntity else { return }
@@ -729,7 +756,7 @@ final class RealitySceneController: ObservableObject {
 
     private var canAdjustBattleCamera: Bool {
         isBattleCameraInteractionEnabled
-            && [.battle, .tutorial].contains(requestedCameraPreset)
+            && [.main, .battle, .tutorial].contains(requestedCameraPreset)
             && !isCameraTransitioning
             && activeCameraName != nil
             && cameraEntity != nil
@@ -1144,6 +1171,10 @@ final class RealitySceneController: ObservableObject {
                     )
                     spawn.addChild(actorContainer)
                     self.registry.register(actorContainer, for: .enemyActor)
+                    self.registry.setEnabled(
+                        self.requestedEnemyPreviewVisibility,
+                        for: .enemyActor
+                    )
                     self.prepareEnemyIdleMotion(
                         spawn,
                         targetHeight: actor.targetHeight,
