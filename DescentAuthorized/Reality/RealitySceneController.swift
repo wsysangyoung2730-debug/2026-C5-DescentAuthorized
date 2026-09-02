@@ -24,6 +24,14 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
         minimumFieldOfViewScale: 1,
         maximumFieldOfViewScale: 1
     )
+
+    static let floorEntranceInvestigation = BattleCameraInteractionConfiguration(
+        maximumYaw: .pi * 28 / 180,
+        maximumUpwardPitch: .pi * 10 / 180,
+        maximumDownwardPitch: .pi * 12 / 180,
+        minimumFieldOfViewScale: 1,
+        maximumFieldOfViewScale: 1
+    )
 }
 
 struct RealityProjectedInvestigationAnchor: Equatable, Sendable {
@@ -1380,9 +1388,9 @@ final class RealitySceneController: ObservableObject {
                     normalizedPosition: SIMD3(0.5, 0.55, 0.9)
                 ),
                 .init(
-                    id: "floor8.entrance.isolation-monitor",
-                    entityName: "IsolationMonitor",
-                    normalizedPosition: SIMD3(0.5, 0.5, 0.9)
+                    id: "floor8.entrance.floor-anchor",
+                    entityName: "Anchor_0",
+                    normalizedPosition: SIMD3(0.5, 0.72, 0.5)
                 )
             ]
         case .floor08AdministratorObservatory:

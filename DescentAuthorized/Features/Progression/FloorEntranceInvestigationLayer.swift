@@ -359,7 +359,7 @@ struct FloorEntranceInvestigationLayer: View {
                                 height: value.translation.height - origin.height
                             ),
                             viewportSize: viewportSize,
-                            configuration: .floorExploration
+                            configuration: .floorEntranceInvestigation
                         )
                     }
                     .onEnded { _ in
@@ -531,19 +531,19 @@ struct FloorEntranceInvestigationConfiguration {
                 tagIcon: "shield.lefthalf.filled"
             ),
             .init(
-                id: "isolation-monitor",
-                recordID: "floor8.entrance.isolation-monitor",
-                markerTitle: "관측 수치 모니터",
-                title: "증가하는 잔류 반응",
-                detectionText: "비정상 마나 파형 감지",
-                body: "멈춘 화면처럼 보이지만 파형의 끝이 아주 느리게 자라고 있다. 관측 대상은 사라진 것이 아니라 격리실 안에서 밀도를 높이고 있다.",
-                icon: "waveform.path.ecg.rectangle",
+                id: "floor-anchor",
+                recordID: "floor8.entrance.floor-anchor",
+                markerTitle: "바닥 격리 앵커",
+                title: "불안정한 격리 문양",
+                detectionText: "잔류 마력 고정 반응 감지",
+                body: "바닥의 격리 앵커가 일정한 박자를 잃고 미세하게 떨린다. 중심 문양에는 바깥에서 들어온 흔적이 아니라, 안쪽의 무언가가 밀어낸 흔적이 겹쳐 있다.",
+                icon: "scope",
                 accent: Color(red: 0.26, green: 0.84, blue: 0.94),
-                distanceScale: 0.84,
+                distanceScale: 0.9,
                 panelHorizontalDirection: -1,
                 panelVerticalOffset: 24,
-                recordTag: "잔류체 위험 예고",
-                tagIcon: "waveform.path.ecg"
+                recordTag: "격리 장치 이상 반응",
+                tagIcon: "exclamationmark.shield"
             )
         ]
     )
