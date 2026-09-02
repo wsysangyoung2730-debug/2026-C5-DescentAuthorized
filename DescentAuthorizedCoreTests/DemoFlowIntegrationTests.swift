@@ -32,6 +32,10 @@ final class DemoFlowIntegrationTests: XCTestCase {
         try winCurrentEncounter(in: &session)
 
         _ = try session.handle(.continueAfterResidualDefeat)
+        _ = try session.handle(.completeScrollLearning(
+            spell: .sealRelease,
+            grade: .perfect
+        ))
 
         _ = try session.handle(.releaseObservationDoor)
         _ = try session.handle(.beginAdministratorBattle)

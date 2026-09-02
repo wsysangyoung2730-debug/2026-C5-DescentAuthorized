@@ -48,6 +48,8 @@ final class GameProgressValidatorTests: XCTestCase {
         try assertValid(controller.progress)
         _ = try controller.continueAfterResidualDefeat()
         try assertValid(controller.progress)
+        _ = try controller.completeScrollLearning(spell: .sealRelease, grade: .approved)
+        try assertValid(controller.progress)
         _ = try controller.releaseObservationDoor()
         try assertValid(controller.progress)
         _ = try controller.beginAdministratorBattle()

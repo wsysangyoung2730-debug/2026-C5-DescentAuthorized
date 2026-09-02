@@ -3,6 +3,69 @@ import XCTest
 @testable import DescentAuthorizedCore
 
 final class ProgressionTests: XCTestCase {
+    func testScrollLearningCompletesFloor10SpellsWithoutLegacyTrainingScene() throws {
+        var controller = GameProgressionController()
+
+        _ = try controller.leaveMeetingRoom()
+        let afterglowEvents = try controller.completeScrollLearning(
+            spell: .afterglowErasure,
+            grade: .precise
+        )
+
+        XCTAssertEqual(controller.progress.currentScene, .floor10GlyphArchive)
+        XCTAssertTrue(controller.progress.learnedSpells.contains(.afterglowErasure))
+        XCTAssertTrue(controller.progress.completedTrainingSpells.contains(.afterglowErasure))
+        XCTAssertTrue(afterglowEvents.contains(.spellLearned(.afterglowErasure)))
+
+        _ = try controller.completeScrollLearning(
+            spell: .riftSeverance,
+            grade: .approved
+        )
+
+        XCTAssertEqual(controller.progress.currentScene, .floor10DescentDoor)
+        XCTAssertTrue(controller.progress.learnedSpells.contains(.riftSeverance))
+        XCTAssertTrue(controller.progress.completedTrainingSpells.contains(.riftSeverance))
+    }
+
+    func testBarrierScrollLearningHappensBeforeFloor8Entry() throws {
+        var controller = try makeFloor8AntechamberController()
+
+        _ = try controller.completeScrollLearning(
+            spell: .basicBarrier,
+            grade: .approved
+        )
+
+        XCTAssertEqual(controller.progress.currentScene, .floor8Antechamber)
+        XCTAssertTrue(controller.progress.learnedSpells.contains(.basicBarrier))
+        XCTAssertTrue(controller.progress.completedTrainingSpells.contains(.basicBarrier))
+
+        _ = try controller.enterProtectionRoom()
+
+        XCTAssertEqual(controller.progress.currentScene, .floor8ResidualEncounter)
+        XCTAssertEqual(controller.progress.checkpoint, .residualBattle)
+    }
+
+    func testSealReleaseIsLearnedFromScrollAfterResidualDefeat() throws {
+        var controller = try makeFloor8AntechamberController()
+        _ = try controller.completeScrollLearning(spell: .basicBarrier, grade: .approved)
+        _ = try controller.enterProtectionRoom()
+        _ = try controller.beginResidualBattle()
+        let victoryEvents = try controller.completeEncounter(
+            enemy: .observationResidual,
+            remainingPlayerHP: 55
+        )
+
+        XCTAssertFalse(controller.progress.learnedSpells.contains(.sealRelease))
+        XCTAssertFalse(victoryEvents.contains(.spellLearned(.sealRelease)))
+
+        _ = try controller.continueAfterResidualDefeat()
+        _ = try controller.completeScrollLearning(spell: .sealRelease, grade: .perfect)
+
+        XCTAssertEqual(controller.progress.currentScene, .floor8SealedDoor)
+        XCTAssertTrue(controller.progress.learnedSpells.contains(.sealRelease))
+        XCTAssertTrue(controller.progress.completedTrainingSpells.contains(.sealRelease))
+    }
+
     func testFullDemoProgressionReachesFloor7WithAllDemoSpells() throws {
         var controller = GameProgressionController()
 
@@ -32,6 +95,7 @@ final class ProgressionTests: XCTestCase {
             remainingPlayerHP: 25
         )
         _ = try controller.continueAfterResidualDefeat()
+        _ = try controller.completeScrollLearning(spell: .sealRelease, grade: .approved)
         _ = try controller.releaseObservationDoor()
         _ = try controller.beginAdministratorBattle()
         _ = try controller.completeEncounter(
@@ -186,6 +250,13 @@ final class ProgressionTests: XCTestCase {
             remainingPlayerHP: remainingHP
         )
         _ = try controller.continueAfterRecordsDefeat()
+        return controller
+    }
+
+    private func makeFloor8AntechamberController() throws -> GameProgressionController {
+        var controller = try makeFloor9RewardController()
+        _ = try controller.selectReward(candidateID: "floor9-worn-a")
+        _ = try controller.approveDescentDoor()
         return controller
     }
 }
