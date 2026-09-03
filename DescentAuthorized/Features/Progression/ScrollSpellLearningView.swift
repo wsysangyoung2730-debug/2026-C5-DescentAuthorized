@@ -67,7 +67,7 @@ struct ScrollSpellLearningView: View {
             step: scrollDiscoveryCoachStep,
             nextTitle: "두루마리 확인",
             onNext: beginReveal,
-            onSkip: skipDiscoveryTutorial
+            onSkip: {}
         )
         .onAppear {
             startPulse()
@@ -114,17 +114,17 @@ struct ScrollSpellLearningView: View {
                     ZStack {
                         Ellipse()
                             .fill(categoryColor.opacity(pulse ? 0.22 : 0.1))
-                            .frame(width: 460, height: 155)
+                            .frame(width: 390, height: 132)
                             .blur(radius: 28)
 
                         Image("ScrollLearningFallenScroll")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: min(size.width * 0.48, 560))
+                            .frame(width: min(size.width * 0.4, 460))
                             .scaleEffect(reduceMotion ? 1 : (pulse ? 1.025 : 0.985))
                             .shadow(color: categoryColor.opacity(0.5), radius: pulse ? 24 : 12)
                     }
-                    .frame(minWidth: 420, minHeight: 260)
+                    .frame(minWidth: 360, minHeight: 230)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -401,7 +401,8 @@ struct ScrollSpellLearningView: View {
             title: "떨어진 두루마리",
             message: "탐색 중 발견한 두루마리에는 새로운 주문 문양이 남아 있을 수 있습니다. 두루마리를 펼치고 실제 입력판에서 흔적을 따라 그리면 주문을 익힐 수 있습니다.",
             targetIDs: ["scroll-learning.fallen-scroll"],
-            placement: .top
+            placement: .top,
+            showsSkip: false
         )
     }
 
@@ -498,13 +499,6 @@ struct ScrollSpellLearningView: View {
         hasFinished = true
         gameFeedback.playInterface(.confirm, settings: appSettings.settings)
         onCompleted(completionGrade)
-    }
-
-    private func skipDiscoveryTutorial() {
-        if let tutorialSequence {
-            gameSession.send(.skipTutorial(tutorialSequence))
-        }
-        beginReveal()
     }
 
     private func gradeTitle(_ grade: CastingGrade) -> String {
