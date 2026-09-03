@@ -6,6 +6,91 @@ struct GlyphCastSubmission {
     let evaluation: CastingEvaluation
 }
 
+struct GateSealGlyphPresentation {
+    let stageTitles: [String]
+    let resetTitle: String
+    let castTitle: String
+
+    init(
+        stageTitles: [String] = ["문양 인식", "봉인 공명", "잠금 해제"],
+        resetTitle: String = "초기화",
+        castTitle: String = "봉인 해제 시전"
+    ) {
+        self.stageTitles = stageTitles
+        self.resetTitle = resetTitle
+        self.castTitle = castTitle
+    }
+}
+
+struct GateSealInteractionView: View {
+    let title: String
+    let instruction: String
+    let spell: SpellDefinition
+    let inputPreference: DrawingInputPreference
+    let availableMana: Double
+    let availableStrokes: Int
+    let presentation: GateSealGlyphPresentation
+    let onCast: (GlyphCastSubmission) -> Void
+
+    var body: some View {
+        GeometryReader { proxy in
+            let preferredWidth = max(proxy.size.width * 0.68, 520)
+            let maximumWidthForHeight = max(
+                420,
+                (proxy.size.height - 274) * 1.25 + 126
+            )
+            let contentWidth = min(
+                min(preferredWidth, 960),
+                maximumWidthForHeight
+            )
+
+            ZStack {
+                Color.black.opacity(0.34)
+                    .ignoresSafeArea()
+
+                RadialGradient(
+                    colors: [Color.purple.opacity(0.09), .clear],
+                    center: .center,
+                    startRadius: 80,
+                    endRadius: 680
+                )
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+
+                VStack(spacing: 16) {
+                    VStack(spacing: 7) {
+                        Text(title)
+                            .font(.system(size: 32, weight: .semibold, design: .serif))
+                            .foregroundStyle(DAColor.gold)
+                            .shadow(color: .black.opacity(0.85), radius: 3, y: 2)
+
+                        Text(instruction)
+                            .font(.system(size: 17, weight: .medium, design: .serif))
+                            .foregroundStyle(DAColor.body.opacity(0.86))
+                            .multilineTextAlignment(.center)
+                    }
+
+                    GlyphCastingPanel(
+                        spell: spell,
+                        inputPreference: inputPreference,
+                        availableMana: availableMana,
+                        availableStrokes: availableStrokes,
+                        erasureZones: [],
+                        showsResourceHeader: false,
+                        gateSealPresentation: presentation,
+                        onCast: onCast
+                    )
+                    .frame(width: contentWidth)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 20)
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
+
 struct GlyphCastingPanel: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
@@ -18,6 +103,7 @@ struct GlyphCastingPanel: View {
     let showsResourceHeader: Bool
     let surfaceOpacity: Double
     let usesBattleArtwork: Bool
+    let gateSealPresentation: GateSealGlyphPresentation?
     let onResourcePreviewChanged: ((Double, Int) -> Void)?
     let onCast: (GlyphCastSubmission) -> Void
 
@@ -40,6 +126,7 @@ struct GlyphCastingPanel: View {
         showsResourceHeader: Bool = true,
         surfaceOpacity: Double = 1,
         usesBattleArtwork: Bool = false,
+        gateSealPresentation: GateSealGlyphPresentation? = nil,
         onResourcePreviewChanged: ((Double, Int) -> Void)? = nil,
         onCast: @escaping (GlyphCastSubmission) -> Void
     ) {
@@ -51,13 +138,16 @@ struct GlyphCastingPanel: View {
         self.showsResourceHeader = showsResourceHeader
         self.surfaceOpacity = surfaceOpacity
         self.usesBattleArtwork = usesBattleArtwork
+        self.gateSealPresentation = gateSealPresentation
         self.onResourcePreviewChanged = onResourcePreviewChanged
         self.onCast = onCast
     }
 
     var body: some View {
         Group {
-            if usesBattleArtwork {
+            if let gateSealPresentation {
+                gateSealArtworkPanel(gateSealPresentation)
+            } else if usesBattleArtwork {
                 battleArtworkPanel
             } else {
                 VStack(spacing: 12) {
@@ -144,6 +234,231 @@ struct GlyphCastingPanel: View {
         }
         .aspectRatio(1331 / 994, contentMode: .fit)
         .accessibilityElement(children: .contain)
+    }
+
+    private func gateSealArtworkPanel(
+        _ presentation: GateSealGlyphPresentation
+    ) -> some View {
+        VStack(spacing: 14) {
+            gateSealResourceHeader
+
+            HStack(spacing: 18) {
+                gateSealDrawingSurface
+
+                gateSealStageRail(presentation.stageTitles)
+                    .frame(width: 108)
+            }
+
+            gateSealActionBar(presentation)
+                .offset(y: -28)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private var gateSealResourceHeader: some View {
+        HStack(spacing: 14) {
+            Label {
+                Text("마나 \(Int(remainingMana.rounded()))")
+                    .monospacedDigit()
+            } icon: {
+                Image(systemName: "scribble.variable")
+            }
+            .foregroundStyle(remainingMana > 0 ? categoryColor : Color.red)
+
+            ProgressView(value: remainingMana, total: max(availableMana, 1))
+                .tint(categoryColor)
+                .frame(maxWidth: 250)
+
+            Spacer(minLength: 12)
+
+            Label(
+                "남은 획 \(remainingStrokeCount)",
+                systemImage: "pencil.and.outline"
+            )
+            .monospacedDigit()
+            .foregroundStyle(remainingStrokeCount >= 0 ? .white : .red)
+        }
+        .font(.system(size: 17, weight: .semibold, design: .serif))
+        .padding(.horizontal, 18)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var gateSealDrawingSurface: some View {
+        ZStack {
+            ZStack {
+                Color(red: 0.018, green: 0.02, blue: 0.026)
+                    .opacity(0.72)
+
+                gateSealMechanism
+                    .padding(8)
+                    .opacity(0.24)
+
+                grid
+
+                canvasContent
+                    .padding(8)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .padding(.horizontal, 42)
+            .padding(.vertical, 38)
+
+            extractedArtwork("GateSealInputFrame")
+                .allowsHitTesting(false)
+        }
+        .aspectRatio(CGFloat(1402) / 1122, contentMode: .fit)
+        .shadow(color: .black.opacity(0.82), radius: 18, y: 9)
+        .accessibilityLabel("관문 봉인 해제 문양 입력판")
+    }
+
+    private var gateSealMechanism: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { timeline in
+            let rotation = appSettings.reducedMotion
+                ? 0
+                : timeline.date.timeIntervalSinceReferenceDate
+                    .truncatingRemainder(dividingBy: 42) / 42 * 360
+
+            extractedArtwork("GateSealMechanism")
+                .rotationEffect(.degrees(rotation))
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    private func gateSealStageRail(_ stageTitles: [String]) -> some View {
+        let titles = Array(stageTitles.prefix(3))
+
+        return VStack(spacing: 0) {
+            ForEach(Array(titles.enumerated()), id: \.offset) { index, title in
+                gateSealStage(title: title, index: index)
+
+                if index < titles.count - 1 {
+                    Rectangle()
+                        .fill(gateSealStageColor(index + 1).opacity(0.42))
+                        .frame(width: 1, height: 30)
+                }
+            }
+        }
+        .frame(maxHeight: .infinity, alignment: .center)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func gateSealStage(title: String, index: Int) -> some View {
+        let color = gateSealStageColor(index)
+        let isCompleted = index < gateSealStageIndex
+        let isActive = index == gateSealStageIndex
+
+        return VStack(spacing: 7) {
+            ZStack {
+                Circle()
+                    .stroke(color.opacity(isActive ? 0.9 : 0.45), lineWidth: 1)
+                    .frame(width: 42, height: 42)
+
+                Image(systemName: isCompleted ? "checkmark" : gateSealStageIcon(index))
+                    .font(.system(size: 17, weight: .semibold))
+            }
+            .shadow(color: isActive ? color.opacity(0.6) : .clear, radius: 9)
+
+            Text(title)
+                .font(.system(size: 13, weight: isActive ? .semibold : .medium, design: .serif))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+        }
+        .foregroundStyle(color)
+        .opacity(index <= gateSealStageIndex ? 1 : 0.5)
+    }
+
+    private func gateSealActionBar(
+        _ presentation: GateSealGlyphPresentation
+    ) -> some View {
+        GeometryReader { proxy in
+            let drawingBoardWidth = max(proxy.size.width - 126, 0)
+            let availableWidth = max(drawingBoardWidth - 22, 0)
+            let resetWidth = min(154, max(112, availableWidth * 0.24))
+            let castWidth = min(430, max(220, availableWidth - resetWidth))
+
+            HStack(spacing: 22) {
+                Button {
+                    gameFeedback.playInterface(.back, settings: appSettings.settings)
+                    resetDrawing()
+                } label: {
+                    Label(presentation.resetTitle, systemImage: "arrow.counterclockwise")
+                        .font(.system(size: 17, weight: .semibold, design: .serif))
+                        .foregroundStyle(DAColor.body)
+                        .frame(width: resetWidth, height: 58)
+                        .background(Color.black.opacity(0.7))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(DAColor.gold.opacity(0.62), lineWidth: 1)
+                        }
+                }
+                .buttonStyle(.plain)
+                .disabled(completedStrokes.isEmpty && drawingState.previewStrokes.isEmpty)
+                .opacity(completedStrokes.isEmpty && drawingState.previewStrokes.isEmpty ? 0.46 : 1)
+                .offset(y: -4)
+
+                Button(action: cast) {
+                    ZStack {
+                        Image("ScrollLearningContinueButtonPlate")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: castWidth, height: 92)
+                            .clipped()
+
+                        Text(presentation.castTitle)
+                            .font(.system(size: 23, weight: .semibold, design: .serif))
+                            .foregroundStyle(DAColor.gold)
+                            .shadow(color: .black.opacity(0.9), radius: 3, y: 2)
+                            .offset(y: -5)
+                    }
+                    .frame(width: castWidth, height: 92)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!canCast || feedback != nil)
+                .opacity(!canCast || feedback != nil ? 0.42 : 1)
+                .accessibilityLabel(presentation.castTitle)
+            }
+            .frame(width: drawingBoardWidth, alignment: .center)
+        }
+        .frame(height: 92)
+    }
+
+    private var gateSealStageIndex: Int {
+        if feedback?.succeeded == true || canCast {
+            return 2
+        }
+        if !drawingState.previewStrokes.isEmpty || !completedStrokes.isEmpty {
+            return 1
+        }
+        return 0
+    }
+
+    private func gateSealStageColor(_ index: Int) -> Color {
+        index <= gateSealStageIndex ? categoryColor : DAColor.body.opacity(0.55)
+    }
+
+    private func gateSealStageIcon(_ index: Int) -> String {
+        switch index {
+        case 0: "scope"
+        case 1: "waveform.path"
+        default: "lock.open"
+        }
+    }
+
+    private func extractedArtwork(_ name: String) -> some View {
+        Image(name)
+            .resizable()
+            .scaledToFit()
+            .mask {
+                Image(name)
+                    .resizable()
+                    .scaledToFit()
+                    .colorInvert()
+                    .contrast(4)
+                    .brightness(-0.12)
+                    .luminanceToAlpha()
+            }
     }
 
     private var canvasContent: some View {

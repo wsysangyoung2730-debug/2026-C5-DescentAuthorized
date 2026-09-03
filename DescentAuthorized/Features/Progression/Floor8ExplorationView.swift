@@ -52,6 +52,8 @@ struct Floor8ExplorationView: View {
                         grade: grade
                     ))
                 }
+            } else if gameSession.progress.currentScene == .floor8SealedDoor {
+                sealedDoor
             } else {
                 ZStack {
                     LinearGradient(
@@ -87,7 +89,7 @@ struct Floor8ExplorationView: View {
         case .floor8ProtectionRoom:
             protectionRoom
         case .floor8SealedDoor:
-            sealedDoor
+            EmptyView()
         default:
             EmptyView()
         }
@@ -134,29 +136,17 @@ struct Floor8ExplorationView: View {
 
     private var sealedDoor: some View {
         let spell = SpellCatalog.sealRelease
-        return VStack(alignment: .leading, spacing: 14) {
-            sceneCode("8-D / 관측 본실 봉인문")
-            Label("떨어진 두루마리에서 주문 해독 완료", systemImage: "lock.open.fill")
-                .font(.headline)
-                .foregroundStyle(.yellow)
-            Text(spell.name)
-                .font(.title2.weight(.semibold))
-            Text("공격으로는 열리지 않는 봉인이다. 금색 핵심점을 따라 해제 문양을 완성해 본실 잠금을 제거한다.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            GlyphCastingPanel(
-                spell: spell,
-                inputPreference: appSettings.inputPreference,
-                availableMana: 100,
-                availableStrokes: 2,
-                erasureZones: [],
-                onCast: { submission in
-                    guard submission.evaluation.succeeded else { return }
-                    gameSession.send(.releaseObservationDoor)
-                }
-            )
-            .frame(maxWidth: 760)
+        return GateSealInteractionView(
+            title: spell.name,
+            instruction: "금색 핵심점을 따라 해제 문양을 완성하십시오.",
+            spell: spell,
+            inputPreference: appSettings.inputPreference,
+            availableMana: 100,
+            availableStrokes: 2,
+            presentation: GateSealGlyphPresentation()
+        ) { submission in
+            guard submission.evaluation.succeeded else { return }
+            gameSession.send(.releaseObservationDoor)
         }
     }
 
@@ -197,7 +187,7 @@ struct Floor8ExplorationView: View {
 
     private var contentWidth: CGFloat {
         switch gameSession.progress.currentScene {
-        case .floor8ProtectionRoom, .floor8SealedDoor: 720
+        case .floor8ProtectionRoom: 720
         default: 500
         }
     }
