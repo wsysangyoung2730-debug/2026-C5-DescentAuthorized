@@ -56,15 +56,7 @@ struct ArcaneNavigationButton: View {
                         .shadow(color: Color.purple.opacity(isPulseActive ? 0.22 : 0.12), radius: 10)
 
                     HStack(spacing: 14) {
-                        Image(symbol.assetName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: symbol.size.width, height: symbol.size.height)
-                            .offset(
-                                x: symbol == .forward && isPulseActive ? 2 : 0,
-                                y: symbol == .inputBoard && isPulseActive ? -1.5 : 0
-                            )
-                            .shadow(color: Color.cyan.opacity(0.2), radius: 3)
+                        symbolView
 
                         Text(title)
                             .font(.system(size: 18, weight: .semibold, design: .serif))
@@ -117,8 +109,73 @@ struct ArcaneNavigationButton: View {
         .accessibilityHidden(true)
     }
 
+    @ViewBuilder
+    private var symbolView: some View {
+        if symbol == .inputBoard {
+            ZStack {
+                ArcaneSwipeTrailShape()
+                    .stroke(
+                        Color.purple.opacity(isPulseActive ? 0.48 : 0.28),
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+                    )
+                    .blur(radius: 2.2)
+
+                ArcaneSwipeTrailShape()
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.purple.opacity(0.18),
+                                Color(red: 0.82, green: 0.72, blue: 1).opacity(0.9),
+                                Color.white.opacity(0.94)
+                            ],
+                            startPoint: .bottomLeading,
+                            endPoint: .topTrailing
+                        ),
+                        style: StrokeStyle(lineWidth: 1.35, lineCap: .round, lineJoin: .round)
+                    )
+
+                Image(symbol.assetName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: symbol.size.width, height: symbol.size.height)
+                    .offset(y: isPulseActive ? -1.5 : 0)
+                    .shadow(color: Color.cyan.opacity(0.2), radius: 3)
+            }
+            .frame(width: 46, height: 42)
+            .offset(x: isPulseActive && !reducesMotion ? 1 : 0)
+            .accessibilityHidden(true)
+        } else {
+            Image(symbol.assetName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: symbol.size.width, height: symbol.size.height)
+                .offset(x: isPulseActive ? 2 : 0)
+                .shadow(color: Color.cyan.opacity(0.2), radius: 3)
+                .accessibilityHidden(true)
+        }
+    }
+
     private var reducesMotion: Bool {
         systemReduceMotion || appSettings.reducedMotion
+    }
+}
+
+private struct ArcaneSwipeTrailShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let end = CGPoint(x: rect.width * 0.9, y: rect.height * 0.14)
+
+        path.move(to: CGPoint(x: rect.width * 0.04, y: rect.height * 0.78))
+        path.addCurve(
+            to: end,
+            control1: CGPoint(x: rect.width * 0.34, y: rect.height * 0.82),
+            control2: CGPoint(x: rect.width * 0.72, y: rect.height * 0.48)
+        )
+        path.move(to: CGPoint(x: rect.width * 0.72, y: rect.height * 0.12))
+        path.addLine(to: end)
+        path.addLine(to: CGPoint(x: rect.width * 0.84, y: rect.height * 0.34))
+
+        return path
     }
 }
 
