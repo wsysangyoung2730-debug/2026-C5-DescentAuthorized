@@ -180,6 +180,57 @@ final class ProgressionTests: XCTestCase {
         XCTAssertEqual(controller.progress.currentScene, .floor9RewardVault)
     }
 
+    func testCheckpointTravelRejectsLockedDestination() {
+        var controller = GameProgressionController()
+
+        XCTAssertThrowsError(try controller.travel(to: .recordsBattle))
+        XCTAssertEqual(controller.progress.currentScene, .floor10MeetingRoom)
+        XCTAssertEqual(controller.progress.furthestCheckpoint, .floor10Start)
+    }
+
+    func testCheckpointTravelKeepsUnlockRangeAndRebuildsValidSnapshot() throws {
+        var controller = try makeFloor8AntechamberController()
+        _ = try controller.completeScrollLearning(spell: .basicBarrier, grade: .approved)
+        _ = try controller.enterProtectionRoom()
+        _ = try controller.beginResidualBattle()
+        _ = try controller.completeEncounter(
+            enemy: .observationResidual,
+            remainingPlayerHP: 55
+        )
+        _ = try controller.continueAfterResidualDefeat()
+        _ = try controller.completeScrollLearning(spell: .sealRelease, grade: .approved)
+        _ = try controller.releaseObservationDoor()
+        _ = try controller.beginAdministratorBattle()
+        _ = try controller.completeEncounter(
+            enemy: .observationAdministrator,
+            remainingPlayerHP: 45
+        )
+
+        XCTAssertEqual(controller.progress.furthestCheckpoint, .observationDefeated)
+
+        _ = try controller.travel(to: .recordsBattle)
+
+        XCTAssertEqual(controller.progress.currentFloor, .floor9)
+        XCTAssertEqual(controller.progress.currentScene, .floor9RecordsEncounter)
+        XCTAssertEqual(controller.progress.checkpoint, .recordsBattle)
+        XCTAssertEqual(controller.progress.furthestCheckpoint, .observationDefeated)
+        XCTAssertTrue(controller.progress.defeatedEnemies.isEmpty)
+        XCTAssertEqual(
+            controller.progress.learnedSpells,
+            Set([.afterglowErasure, .riftSeverance])
+        )
+        XCTAssertNoThrow(try GameProgressValidator().validate(controller.progress))
+
+        _ = try controller.travel(to: .observationDefeated)
+
+        XCTAssertEqual(controller.progress.currentFloor, .floor8)
+        XCTAssertEqual(controller.progress.currentScene, .floor8AdministratorDefeated)
+        XCTAssertEqual(controller.progress.furthestCheckpoint, .observationDefeated)
+        XCTAssertEqual(controller.progress.defeatedEnemies, Set(EnemyID.allCases))
+        XCTAssertTrue(controller.progress.learnedSpells.contains(.sealRelease))
+        XCTAssertNoThrow(try GameProgressValidator().validate(controller.progress))
+    }
+
     func testRewardCanOnlyBeSelectedOnce() throws {
         var controller = try makeFloor9RewardController()
         _ = try controller.selectReward(candidateID: "floor9-worn-b")

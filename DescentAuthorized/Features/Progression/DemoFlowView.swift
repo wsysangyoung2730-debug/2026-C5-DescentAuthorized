@@ -11,6 +11,7 @@ struct DemoFlowView: View {
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
     @State private var retryLoadingPresentation: SceneRetryLoadingPresentation?
+    @State private var checkpointTravelTask: Task<Void, Never>?
     @State private var battleTutorialStep: TutorialCoachStep?
     @State private var isNarrativeAutoAdvanceEnabled = true
     @StateObject private var sceneController = RealitySceneController()
@@ -100,7 +101,12 @@ struct DemoFlowView: View {
         )
         .ignoresSafeArea(edges: .top)
         .sheet(isPresented: $isShowingPauseMenu) {
-            PauseMenuView(onExitToTitle: onExit)
+            PauseMenuView(
+                onTravelToCheckpoint: { checkpoint in
+                    beginCheckpointTravel(to: checkpoint)
+                },
+                onExitToTitle: onExit
+            )
         }
         .sheet(isPresented: $isShowingSettings) {
             SettingsView()
@@ -111,6 +117,8 @@ struct DemoFlowView: View {
             synchronizeRecordsBattleTutorial()
         }
         .onDisappear {
+            checkpointTravelTask?.cancel()
+            checkpointTravelTask = nil
             onSystemOverlayVisibilityChange(false)
             gameFeedback.stopAllAudio()
         }
@@ -150,6 +158,68 @@ struct DemoFlowView: View {
 
     private func reportSystemOverlayVisibility() {
         onSystemOverlayVisibilityChange(isShowingPauseMenu || isShowingSettings)
+    }
+
+    private func beginCheckpointTravel(to checkpoint: CheckpointID) {
+        checkpointTravelTask?.cancel()
+        let context = checkpoint.loadingContext
+        let tip = LoadingTipCatalog.randomTip(for: context)
+
+        withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+            retryLoadingPresentation = SceneRetryLoadingPresentation(
+                context: context,
+                progress: 0.08,
+                tip: tip
+            )
+        }
+
+        checkpointTravelTask = Task { @MainActor in
+            defer { checkpointTravelTask = nil }
+
+            guard await waitForCheckpointTravel(milliseconds: 180) else { return }
+            retryLoadingPresentation?.progress = 0.3
+
+            gameSession.send(.travelToCheckpoint(checkpoint))
+            guard gameSession.progress.checkpoint == checkpoint else {
+                retryLoadingPresentation = nil
+                return
+            }
+
+            sceneController.resetProgressionPresentation(
+                reducedMotion: appSettings.reducedMotion
+            )
+            retryLoadingPresentation?.progress = 0.58
+
+            for step in 0..<24 {
+                guard !isCurrentSceneReady else { break }
+                guard await waitForCheckpointTravel(milliseconds: 100) else { return }
+                retryLoadingPresentation?.progress = min(0.92, 0.58 + Double(step + 1) * 0.014)
+            }
+
+            retryLoadingPresentation?.progress = 1
+            guard await waitForCheckpointTravel(milliseconds: 180) else { return }
+            withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.2)) {
+                retryLoadingPresentation = nil
+            }
+        }
+    }
+
+    private var isCurrentSceneReady: Bool {
+        guard let sceneID = gameSession.presentation.floorSceneID else { return true }
+        return sceneController.isReady(
+            sceneID: sceneID,
+            cameraPreset: gameSession.presentation.cameraPreset
+        )
+    }
+
+    private func waitForCheckpointTravel(milliseconds: Int) async -> Bool {
+        let duration = appSettings.reducedMotion ? min(milliseconds, 60) : milliseconds
+        do {
+            try await Task.sleep(for: .milliseconds(duration))
+            return !Task.isCancelled
+        } catch {
+            return false
+        }
     }
 
     private func synchronizeFloorMusic() {
@@ -655,6 +725,20 @@ struct DemoFlowView: View {
             }
         case .completion:
             DemoCompleteView(onReturnToTitle: onExit)
+        }
+    }
+}
+
+private extension CheckpointID {
+    var loadingContext: LoadingScreenContext {
+        switch self {
+        case .floor10Start:
+            .floor10
+        case .floor10Complete, .recordsBattle, .recordsDefeated:
+            .floor9
+        case .floor8Start, .residualBattle, .residualDefeated,
+             .observationBattle, .observationDefeated, .demoComplete:
+            .floor8
         }
     }
 }

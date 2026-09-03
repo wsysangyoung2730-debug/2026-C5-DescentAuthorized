@@ -55,6 +55,7 @@ final class TutorialRuntimeTests: XCTestCase {
         let progress = try JSONDecoder().decode(GameProgress.self, from: data)
 
         XCTAssertEqual(progress.saveVersion, GameProgress.currentSaveVersion)
+        XCTAssertEqual(progress.furthestCheckpoint, .floor10Complete)
         XCTAssertTrue(progress.tutorialProgress.completedSequences.contains(.floor10Intro))
         XCTAssertTrue(progress.tutorialProgress.completedSequences.contains(.floor10Investigation))
         XCTAssertTrue(progress.tutorialProgress.completedSequences.contains(.floor10DescentSeal))

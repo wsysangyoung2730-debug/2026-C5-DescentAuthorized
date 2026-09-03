@@ -28,6 +28,7 @@ enum DemoCommand: Sendable {
     case finishTurn
     case restartEncounter
     case restartEncounterFromCheckpoint
+    case travelToCheckpoint(CheckpointID)
     case beginTutorial(sequence: TutorialSequenceID, step: TutorialStepID)
     case completeTutorialStep(step: TutorialStepID, next: TutorialStepID?)
     case completeTutorial(TutorialSequenceID)
@@ -148,6 +149,10 @@ struct DemoGameSession: Sendable {
 
         case .restartEncounterFromCheckpoint:
             return try restartActiveEncounterFromCheckpoint()
+
+        case let .travelToCheckpoint(checkpoint):
+            encounter = nil
+            return wrap(try progression.travel(to: checkpoint))
 
         case let .beginTutorial(sequence, step):
             guard let event = progression.beginTutorial(sequence, at: step) else { return [] }

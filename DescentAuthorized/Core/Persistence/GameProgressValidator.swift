@@ -35,6 +35,13 @@ struct GameProgressValidator: Sendable {
     }
 
     private func validateLocation(_ progress: GameProgress) throws {
+        guard progress.checkpoint.progressionIndex
+            <= progress.furthestCheckpoint.progressionIndex else {
+            throw GameProgressValidationError.missingRequirement(
+                "current checkpoint must be unlocked"
+            )
+        }
+
         let expectedFloor = floor(for: progress.currentScene)
         guard progress.currentFloor == expectedFloor else {
             throw GameProgressValidationError.floorSceneMismatch(

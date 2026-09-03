@@ -386,7 +386,7 @@ enum SceneID: String, Codable, Sendable {
     case demoComplete
 }
 
-enum CheckpointID: String, Codable, Sendable {
+enum CheckpointID: String, Codable, CaseIterable, Equatable, Hashable, Sendable {
     case floor10Start
     case floor10Complete
     case recordsBattle
@@ -397,6 +397,10 @@ enum CheckpointID: String, Codable, Sendable {
     case observationBattle
     case observationDefeated
     case demoComplete
+
+    var progressionIndex: Int {
+        Self.allCases.firstIndex(of: self) ?? 0
+    }
 }
 
 enum TutorialFlag: String, Codable, Hashable, Sendable {
@@ -429,12 +433,13 @@ struct SpellMastery: Codable, Equatable, Sendable {
 }
 
 struct GameProgress: Codable, Equatable, Sendable {
-    static let currentSaveVersion = 2
+    static let currentSaveVersion = 3
 
     var saveVersion: Int
     var currentFloor: FloorID
     var currentScene: SceneID
     var checkpoint: CheckpointID
+    var furthestCheckpoint: CheckpointID
     var playerHP: Int
     var learnedSpells: Set<SpellID>
     var defeatedEnemies: Set<EnemyID>
@@ -451,6 +456,7 @@ struct GameProgress: Codable, Equatable, Sendable {
         currentFloor: FloorID,
         currentScene: SceneID,
         checkpoint: CheckpointID,
+        furthestCheckpoint: CheckpointID? = nil,
         playerHP: Int,
         learnedSpells: Set<SpellID>,
         defeatedEnemies: Set<EnemyID>,
@@ -466,6 +472,7 @@ struct GameProgress: Codable, Equatable, Sendable {
         self.currentFloor = currentFloor
         self.currentScene = currentScene
         self.checkpoint = checkpoint
+        self.furthestCheckpoint = furthestCheckpoint ?? checkpoint
         self.playerHP = playerHP
         self.learnedSpells = learnedSpells
         self.defeatedEnemies = defeatedEnemies
@@ -500,6 +507,7 @@ struct GameProgress: Codable, Equatable, Sendable {
         case currentFloor
         case currentScene
         case checkpoint
+        case furthestCheckpoint
         case playerHP
         case learnedSpells
         case defeatedEnemies
@@ -518,6 +526,10 @@ struct GameProgress: Codable, Equatable, Sendable {
         currentFloor = try container.decode(FloorID.self, forKey: .currentFloor)
         currentScene = try container.decode(SceneID.self, forKey: .currentScene)
         checkpoint = try container.decode(CheckpointID.self, forKey: .checkpoint)
+        furthestCheckpoint = try container.decodeIfPresent(
+            CheckpointID.self,
+            forKey: .furthestCheckpoint
+        ) ?? checkpoint
         playerHP = try container.decode(Int.self, forKey: .playerHP)
         learnedSpells = try container.decodeIfPresent(Set<SpellID>.self, forKey: .learnedSpells) ?? []
         defeatedEnemies = try container.decodeIfPresent(Set<EnemyID>.self, forKey: .defeatedEnemies) ?? []
@@ -557,6 +569,7 @@ struct GameProgress: Codable, Equatable, Sendable {
         try container.encode(currentFloor, forKey: .currentFloor)
         try container.encode(currentScene, forKey: .currentScene)
         try container.encode(checkpoint, forKey: .checkpoint)
+        try container.encode(furthestCheckpoint, forKey: .furthestCheckpoint)
         try container.encode(playerHP, forKey: .playerHP)
         try container.encode(learnedSpells, forKey: .learnedSpells)
         try container.encode(defeatedEnemies, forKey: .defeatedEnemies)
