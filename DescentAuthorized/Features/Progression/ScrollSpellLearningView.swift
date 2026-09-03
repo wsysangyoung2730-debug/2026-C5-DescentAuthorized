@@ -134,32 +134,7 @@ struct ScrollSpellLearningView: View {
                 .accessibilityLabel("떨어진 두루마리")
                 .accessibilityHint("눌러서 안쪽의 주문 흔적을 확인합니다")
 
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("새로운 마력 반응", systemImage: "sparkles")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(categoryColor)
-
-                    Text("두루마리 안쪽에서 기억에 없는 획의 순서가 감지됩니다.")
-                        .font(.system(size: 18, design: .serif))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .lineSpacing(4)
-
-                    ScrollLearningPlateButton(
-                        title: "두루마리 펼치기",
-                        systemImage: "scroll",
-                        assetName: "ScrollLearningRevealButtonPlate",
-                        width: 270,
-                        action: beginReveal
-                    )
-                }
-                .padding(20)
-                .frame(maxWidth: 390, alignment: .leading)
-                .background(DAColor.card.opacity(0.94), in: RoundedRectangle(cornerRadius: 12))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(DAColor.gold.opacity(0.42), lineWidth: 1)
-                }
-                .shadow(color: .black.opacity(0.72), radius: 18, y: 8)
+                discoveryPanel(width: min(size.width * 0.42, 430))
             }
             .frame(maxWidth: .infinity, alignment: .center)
 
@@ -169,6 +144,45 @@ struct ScrollSpellLearningView: View {
         .padding(.vertical, 28)
         .frame(maxWidth: presentation.maximumContentWidth)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func discoveryPanel(width: CGFloat) -> some View {
+        let height = width / 2.196
+
+        return ZStack {
+            Image("Floor10InvestigationPanelFrame")
+                .resizable()
+                .scaledToFit()
+                .frame(width: width, height: height)
+                .allowsHitTesting(false)
+
+            VStack(alignment: .leading, spacing: 9) {
+                Label("새로운 마력 반응", systemImage: "sparkles")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(categoryColor)
+
+                Text("두루마리 안쪽에서 기억에 없는 획의 순서가 감지됩니다.")
+                    .font(.system(size: 17, design: .serif))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                ScrollLearningPlateButton(
+                    title: "두루마리 펼치기",
+                    systemImage: "scroll",
+                    assetName: "ScrollLearningRevealButtonPlate",
+                    width: min(width * 0.68, 286),
+                    action: beginReveal
+                )
+                .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, width * 0.105)
+            .padding(.vertical, height * 0.13)
+            .frame(width: width, height: height, alignment: .center)
+        }
+        .frame(width: width, height: height)
+        .shadow(color: .black.opacity(0.72), radius: 18, y: 8)
+        .accessibilityElement(children: .contain)
     }
 
     private func revealedScrollStage(in size: CGSize) -> some View {
