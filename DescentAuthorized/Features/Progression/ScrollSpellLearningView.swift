@@ -320,15 +320,7 @@ struct ScrollSpellLearningView: View {
                     .shadow(color: categoryColor.opacity(0.35), radius: 22)
                     .allowsHitTesting(false)
 
-                ZStack {
-                    spellGlyphAsset
-
-                    ScrollLearningGlyphVertexGlow(
-                        spell: spell,
-                        contentBounds: spell.id.scrollLearningGlyphContentBounds,
-                        categoryColor: categoryColor
-                    )
-                }
+                spellGlyphAsset
                 .frame(width: min(size.width * 0.29, 320))
                 .shadow(color: categoryColor.opacity(0.92), radius: pulse ? 22 : 14)
             }
@@ -339,20 +331,21 @@ struct ScrollSpellLearningView: View {
                     .resizable()
                     .scaledToFit()
 
-                VStack(spacing: 6) {
+                VStack(spacing: 9) {
                     Text("주문 습득 완료")
-                        .font(.caption.monospaced().weight(.bold))
+                        .font(.system(size: 15, weight: .bold, design: .monospaced))
                         .tracking(2)
                         .foregroundStyle(categoryColor)
 
                     Text(spell.name)
-                        .font(.system(size: 36, weight: .semibold, design: .serif))
+                        .font(.system(size: 42, weight: .semibold, design: .serif))
                         .foregroundStyle(DAColor.gold)
                 }
                 .padding(.horizontal, 64)
                 .padding(.vertical, 38)
+                .offset(y: 4)
             }
-            .frame(width: min(size.width * 0.52, 520))
+            .frame(width: min(size.width * 0.55, 560))
             .accessibilityElement(children: .combine)
 
             ScrollLearningPlateButton(
@@ -362,6 +355,7 @@ struct ScrollSpellLearningView: View {
                 width: 300,
                 action: finishLearning
             )
+            .padding(.top, 18)
 
             Spacer(minLength: 6)
         }
@@ -468,7 +462,7 @@ struct ScrollSpellLearningView: View {
 
         guard !reduceMotion else { return }
 
-        withAnimation(.linear(duration: 24).repeatForever(autoreverses: false)) {
+        withAnimation(.linear(duration: 36).repeatForever(autoreverses: false)) {
             completionSealRotation = 360
         }
         withAnimation(.easeInOut(duration: 2.6).repeatForever(autoreverses: true)) {
@@ -560,20 +554,6 @@ private extension SpellID {
         }
     }
 
-    var scrollLearningGlyphContentBounds: CGRect {
-        switch self {
-        case .afterglowErasure:
-            CGRect(x: 0.127, y: 0.330, width: 0.730, height: 0.383)
-        case .riftSeverance:
-            CGRect(x: 0.122, y: 0.261, width: 0.752, height: 0.408)
-        case .barrierPiercing:
-            CGRect(x: 0.12, y: 0.12, width: 0.76, height: 0.76)
-        case .basicBarrier:
-            CGRect(x: 0.120, y: 0.218, width: 0.761, height: 0.546)
-        case .sealRelease:
-            CGRect(x: 0.137, y: 0.208, width: 0.723, height: 0.478)
-        }
-    }
 }
 
 private extension ScrollSpellLearningView {
@@ -640,62 +620,6 @@ private struct ScrollLearningGlyphReference: View {
     }
 }
 
-private struct ScrollLearningGlyphVertexGlow: View {
-    let spell: SpellDefinition
-    let contentBounds: CGRect
-    let categoryColor: Color
-
-    var body: some View {
-        Canvas { context, size in
-            let points = spell.glyph.strokes.flatMap(\.referencePath)
-            guard let minimumX = points.map(\.x).min(),
-                  let maximumX = points.map(\.x).max(),
-                  let minimumY = points.map(\.y).min(),
-                  let maximumY = points.map(\.y).max() else { return }
-
-            let sourceWidth = max(maximumX - minimumX, 1)
-            let sourceHeight = max(maximumY - minimumY, 1)
-
-            for stroke in spell.glyph.strokes {
-                for (index, point) in stroke.referencePath.enumerated() {
-                    let normalizedX = (point.x - minimumX) / sourceWidth
-                    let normalizedY = (point.y - minimumY) / sourceHeight
-                    let center = CGPoint(
-                        x: size.width * (contentBounds.minX + normalizedX * contentBounds.width),
-                        y: size.height * (contentBounds.minY + normalizedY * contentBounds.height)
-                    )
-                    let isStart = index == 0
-                    let glowColor = isStart ? DAColor.gold : categoryColor
-
-                    context.drawLayer { layer in
-                        layer.addFilter(.shadow(color: glowColor.opacity(0.95), radius: 12))
-                        layer.fill(
-                            Path(ellipseIn: CGRect(
-                                x: center.x - 11,
-                                y: center.y - 11,
-                                width: 22,
-                                height: 22
-                            )),
-                            with: .color(glowColor.opacity(0.34))
-                        )
-                        layer.fill(
-                            Path(ellipseIn: CGRect(
-                                x: center.x - 5.5,
-                                y: center.y - 5.5,
-                                width: 11,
-                                height: 11
-                            )),
-                            with: .color(isStart ? DAColor.gold : .white)
-                        )
-                    }
-                }
-            }
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-}
-
 private struct ScrollLearningPlateButton: View {
     let title: String
     let systemImage: String
@@ -712,7 +636,7 @@ private struct ScrollLearningPlateButton: View {
                     .resizable()
                     .scaledToFill()
                     .frame(width: width, height: height)
-                    .clipped()
+                    .offset(y: height * 0.06)
 
                 HStack(spacing: 10) {
                     Image(systemName: systemImage)
@@ -725,6 +649,7 @@ private struct ScrollLearningPlateButton: View {
                 .padding(.horizontal, 34)
             }
             .frame(width: width, height: height)
+            .clipped()
             .contentShape(Rectangle())
         }
         .buttonStyle(ScrollLearningPlateButtonStyle())
