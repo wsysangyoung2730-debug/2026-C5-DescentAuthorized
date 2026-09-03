@@ -429,31 +429,15 @@ struct FloorEntrancePanel: View {
     }
 
     private var actionButton: some View {
-        Button {
+        ArcaneNavigationButton(
+            title: configuration.actionTitle,
+            symbol: .forward,
+            width: 400
+        ) {
             gameFeedback.playInterface(.confirm, settings: appSettings.settings)
             action()
-        } label: {
-            ZStack {
-                Image(configuration.buttonAsset)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 88)
-                    .clipped()
-
-                HStack(spacing: 16) {
-                    Image(systemName: configuration.actionIcon)
-                        .font(.system(size: 27, weight: .light))
-                    Text(configuration.actionTitle)
-                        .font(.system(size: 22, weight: .medium, design: .serif))
-                }
-                .foregroundStyle(FloorEntrancePalette.buttonText)
-                .shadow(color: configuration.accent.opacity(0.5), radius: 5)
-            }
-            .frame(maxWidth: .infinity, minHeight: 88, maxHeight: 88)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(configuration.actionTitle)
+        .frame(maxWidth: .infinity)
     }
 
     private var divider: some View {
@@ -475,9 +459,7 @@ struct FloorEntranceConfiguration {
     let statuses: [FloorEntranceStatus]
     let signalTitle: String
     let signalBody: String
-    let buttonAsset: String
     let actionTitle: String
-    let actionIcon: String
 
     static let floor10 = FloorEntranceConfiguration(
         code: "10-A / 폐쇄 회의실",
@@ -491,9 +473,7 @@ struct FloorEntranceConfiguration {
         ],
         signalTitle: "확인된 단서",
         signalBody: "손등의 문양이 관리 단말보다 먼저 반응했다.",
-        buttonAsset: "Floor10ExitButtonPlate",
-        actionTitle: "회의실을 조사한다",
-        actionIcon: "door.left.hand.open"
+        actionTitle: "회의실을 조사한다"
     )
 
     static let floor8 = FloorEntranceConfiguration(
@@ -508,9 +488,7 @@ struct FloorEntranceConfiguration {
         ],
         signalTitle: "확인된 신호",
         signalBody: "보호 절차실의 비상동력이 작동 중이다.",
-        buttonAsset: "Floor8ProtectionButtonPlate",
-        actionTitle: "보호 절차실 진입",
-        actionIcon: "shield.lefthalf.filled"
+        actionTitle: "보호 절차실 진입"
     )
 }
 

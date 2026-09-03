@@ -193,14 +193,14 @@ struct ScrollSpellLearningView: View {
 
             Spacer(minLength: 2)
 
-            Button {
+            ArcaneNavigationButton(
+                title: "확대 입력판에서 문양 익히기",
+                symbol: .inputBoard,
+                width: 390
+            ) {
                 showPracticeBoard()
-            } label: {
-                Label("확대 입력판에서 문양 익히기", systemImage: "hand.draw.fill")
-                    .frame(minWidth: 310, minHeight: 46)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(categoryColor.opacity(0.84))
+            .accessibilityHint("확대된 전투 입력판을 열어 문양을 연습합니다")
         }
         .padding(.horizontal, 34)
         .padding(.vertical, 24)

@@ -355,16 +355,14 @@ struct Floor10InvestigationHubView: View {
     }
 
     private var continueButton: some View {
-        Button {
+        ArcaneNavigationButton(
+            title: "훈련 표적 앞으로 이동",
+            symbol: .forward,
+            width: 390,
+            showsWaypoint: true
+        ) {
             gameSession.send(.leaveMeetingRoom)
-        } label: {
-            Label("훈련 표적 앞으로 이동", systemImage: "arrow.forward")
-                .font(.headline)
-                .padding(.horizontal, 24)
-                .frame(height: 54)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(.purple.opacity(0.82))
         .accessibilityHint("발견한 주문 기록을 확인하는 단계로 이동합니다")
     }
 

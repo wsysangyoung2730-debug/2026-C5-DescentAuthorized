@@ -281,46 +281,16 @@ struct Floor9EntranceView: View {
     }
 
     private var enterButton: some View {
-        Button {
+        ArcaneNavigationButton(
+            title: "중앙 기록실 진입",
+            symbol: .forward,
+            width: 390
+        ) {
             gameFeedback.playInterface(.confirm, settings: appSettings.settings)
             gameSession.send(.enterRecordsBattle)
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "door.left.hand.open")
-                Text("중앙 기록실 진입")
-                    .font(.headline)
-                Spacer()
-                Image(systemName: "arrow.right")
-                    .font(.subheadline.weight(.bold))
-            }
-            .foregroundStyle(Floor9EntrancePalette.title)
-            .padding(.horizontal, 18)
-            .frame(height: 52)
-            .background {
-                ZStack {
-                    LinearGradient(
-                        colors: [
-                            DAColor.magic.opacity(0.82),
-                            Color(red: 0.29, green: 0.17, blue: 0.45)
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-
-                    Image("Floor9EntryButtonPlate")
-                        .resizable()
-                        .scaledToFill()
-                        .opacity(0.74)
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 7))
-            .overlay {
-                RoundedRectangle(cornerRadius: 7)
-                    .stroke(Floor9EntrancePalette.brass.opacity(0.66), lineWidth: 1)
-            }
-            .shadow(color: DAColor.magic.opacity(0.24), radius: 10, y: 4)
         }
-        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+        .accessibilityHint("제9층 기록 관리자 전투가 시작됩니다")
     }
 
     private var sectionDivider: some View {
