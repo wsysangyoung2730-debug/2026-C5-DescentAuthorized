@@ -150,7 +150,7 @@ struct ScrollSpellLearningView: View {
         let height = width / 2.196
 
         return ZStack {
-            Image("Floor10InvestigationPanelFrame")
+            Image("InvestigationPanelFrame")
                 .resizable()
                 .scaledToFit()
                 .frame(width: width, height: height)

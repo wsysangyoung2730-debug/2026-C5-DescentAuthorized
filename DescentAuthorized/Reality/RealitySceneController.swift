@@ -17,7 +17,7 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
         maximumFieldOfViewScale: 1.10
     )
 
-    static let floorExploration = BattleCameraInteractionConfiguration(
+    static let floor10Investigation = BattleCameraInteractionConfiguration(
         maximumYaw: .pi * 24 / 180,
         maximumUpwardPitch: .pi * 10 / 180,
         maximumDownwardPitch: .pi * 12 / 180,
@@ -25,7 +25,7 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
         maximumFieldOfViewScale: 1
     )
 
-    static let floorEntranceInvestigation = BattleCameraInteractionConfiguration(
+    static let floor8Investigation = BattleCameraInteractionConfiguration(
         maximumYaw: .pi * 28 / 180,
         maximumUpwardPitch: .pi * 10 / 180,
         maximumDownwardPitch: .pi * 12 / 180,
@@ -33,7 +33,7 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
         maximumFieldOfViewScale: 1
     )
 
-    static let floor9EntranceInvestigation = BattleCameraInteractionConfiguration(
+    static let floor9Investigation = BattleCameraInteractionConfiguration(
         maximumYaw: .pi * 65 / 180,
         maximumUpwardPitch: .pi * 10 / 180,
         maximumDownwardPitch: .pi * 12 / 180,

@@ -9,7 +9,7 @@ struct Floor8ExplorationView: View {
     var body: some View {
         Group {
             if gameSession.progress.currentScene == .floor8Antechamber {
-                FloorEntranceInvestigationFlow(
+                InvestigationFlow(
                     sceneController: sceneController,
                     configuration: .floor8,
                     hasCompletedInvestigation: hasCompletedEntranceInvestigation,
@@ -186,7 +186,7 @@ struct Floor8ExplorationView: View {
     }
 
     private var hasCompletedEntranceInvestigation: Bool {
-        let recordIDs = Set(FloorEntranceInvestigationConfiguration.floor8.clues.map(\.recordID))
+        let recordIDs = Set(InvestigationConfiguration.floor8.clues.map(\.recordID))
         return recordIDs.isSubset(of: gameSession.progress.readRecordIDs)
     }
 
