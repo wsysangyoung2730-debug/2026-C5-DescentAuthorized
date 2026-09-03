@@ -102,7 +102,7 @@ struct ScrollSpellLearningView: View {
     private func fallenScrollStage(in size: CGSize) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             stageHeader(
-                eyebrow: sourceCode,
+                eyebrow: nil,
                 title: "바닥에 떨어진 두루마리",
                 detail: discoveryText
             )
@@ -142,10 +142,13 @@ struct ScrollSpellLearningView: View {
                         .foregroundStyle(.white.opacity(0.9))
                         .lineSpacing(4)
 
-                    Button("두루마리 펼치기", action: beginReveal)
-                        .buttonStyle(.borderedProminent)
-                        .tint(categoryColor.opacity(0.82))
-                        .frame(minHeight: 44)
+                    ScrollLearningPlateButton(
+                        title: "두루마리 펼치기",
+                        systemImage: "scroll",
+                        assetName: "ScrollLearningRevealButtonPlate",
+                        width: 270,
+                        action: beginReveal
+                    )
                 }
                 .padding(20)
                 .frame(maxWidth: 390, alignment: .leading)
@@ -290,57 +293,68 @@ struct ScrollSpellLearningView: View {
     }
 
     private func acquiredStage(in size: CGSize) -> some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 12) {
             Spacer(minLength: 8)
 
             ZStack {
                 Image("ScrollLearningAcquisitionEffect")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: min(size.width * 0.82, 1040))
-                    .opacity(0.82)
+                    .frame(width: min(size.width * 0.72, 860))
+                    .opacity(0.68)
                     .blendMode(.screen)
                     .allowsHitTesting(false)
 
-                Circle()
-                    .fill(categoryColor.opacity(0.13))
-                    .frame(width: 330, height: 330)
-                    .blur(radius: 28)
+                Image("ScrollLearningCompletionSeal")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: min(size.width * 0.34, 360))
+                    .opacity(0.82)
+                    .blendMode(.screen)
+                    .rotationEffect(.degrees(reduceMotion ? 0 : (pulse ? 3 : -3)))
+                    .shadow(color: categoryColor.opacity(0.35), radius: 22)
+                    .allowsHitTesting(false)
 
-                ScrollLearningGlyphReference(
-                    spell: spell,
-                    color: categoryColor,
-                    showsNodes: false,
-                    lineWidth: 7
-                )
-                .frame(width: 300, height: 220)
-                .shadow(color: categoryColor, radius: 16)
+                spellGlyphAsset
+                    .frame(width: min(size.width * 0.2, 230))
+                    .shadow(color: categoryColor, radius: 18)
             }
-            .frame(maxHeight: min(size.height * 0.54, 500))
+            .frame(height: min(size.height * 0.38, 340))
 
-            VStack(spacing: 8) {
-                Text("주문 습득 완료")
-                    .font(.caption.monospaced().weight(.bold))
-                    .tracking(2)
-                    .foregroundStyle(categoryColor)
+            ZStack {
+                Image("ScrollLearningCompletionPlaque")
+                    .resizable()
+                    .scaledToFit()
 
-                Text(spell.name)
-                    .font(.system(size: 38, weight: .semibold, design: .serif))
-                    .foregroundStyle(DAColor.gold)
+                VStack(spacing: 6) {
+                    Text("주문 습득 완료")
+                        .font(.caption.monospaced().weight(.bold))
+                        .tracking(2)
+                        .foregroundStyle(categoryColor)
 
-                if let completionGrade {
-                    Text("문양 동기화 \(gradeTitle(completionGrade))")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.72))
+                    Text(spell.name)
+                        .font(.system(size: 31, weight: .semibold, design: .serif))
+                        .foregroundStyle(DAColor.gold)
+
+                    if let completionGrade {
+                        Text("문양 동기화 \(gradeTitle(completionGrade))")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.72))
+                    }
                 }
+                .padding(.horizontal, 54)
+                .padding(.vertical, 34)
             }
+            .frame(width: min(size.width * 0.42, 420))
+            .accessibilityElement(children: .combine)
 
-            Button("계속") {
-                finishLearning()
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(categoryColor.opacity(0.84))
-            .frame(minWidth: 180, minHeight: 46)
+            ScrollLearningPlateButton(
+                title: "계속",
+                systemImage: "chevron.right",
+                assetName: "ScrollLearningContinueButtonPlate",
+                width: 245,
+                action: finishLearning
+            )
 
             Spacer(minLength: 12)
         }
@@ -355,25 +369,22 @@ struct ScrollSpellLearningView: View {
                 .resizable()
                 .scaledToFit()
 
-            ScrollLearningGlyphReference(
-                spell: spell,
-                color: categoryColor,
-                showsNodes: true,
-                lineWidth: 4
-            )
-            .frame(width: width * 0.5, height: width * 0.3)
-            .offset(y: -width * 0.015)
+            spellGlyphAsset
+                .frame(width: width * 0.34)
+                .offset(y: -width * 0.015)
         }
         .frame(width: width)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(spell.name) 문양이 펼쳐진 두루마리")
     }
 
-    private func stageHeader(eyebrow: String, title: String, detail: String) -> some View {
+    private func stageHeader(eyebrow: String?, title: String, detail: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(eyebrow)
-                .font(.caption.monospaced().weight(.bold))
-                .foregroundStyle(categoryColor)
+            if let eyebrow {
+                Text(eyebrow)
+                    .font(.caption.monospaced().weight(.bold))
+                    .foregroundStyle(categoryColor)
+            }
 
             Text(title)
                 .font(.system(size: 30, weight: .semibold, design: .serif))
@@ -386,6 +397,13 @@ struct ScrollSpellLearningView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var spellGlyphAsset: some View {
+        Image(spell.id.scrollLearningGlyphAssetName)
+            .resizable()
+            .scaledToFit()
+            .accessibilityHidden(true)
     }
 
     private var scrollDiscoveryCoachStep: TutorialCoachStep? {
@@ -512,6 +530,23 @@ struct ScrollSpellLearningView: View {
     }
 }
 
+private extension SpellID {
+    var scrollLearningGlyphAssetName: String {
+        switch self {
+        case .afterglowErasure:
+            "ScrollLearningGlyphAfterglowErasure"
+        case .riftSeverance:
+            "ScrollLearningGlyphRiftSeverance"
+        case .barrierPiercing:
+            "BattleGlyphBarrierPiercing"
+        case .basicBarrier:
+            "ScrollLearningGlyphBasicBarrier"
+        case .sealRelease:
+            "ScrollLearningGlyphSealRelease"
+        }
+    }
+}
+
 private extension ScrollSpellLearningView {
     enum Stage {
         case fallen
@@ -573,5 +608,48 @@ private struct ScrollLearningGlyphReference: View {
             x: size.width * point.x / 100,
             y: size.height * point.y / 100
         )
+    }
+}
+
+private struct ScrollLearningPlateButton: View {
+    let title: String
+    let systemImage: String
+    let assetName: String
+    let width: CGFloat
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                Image(assetName)
+                    .resizable()
+                    .scaledToFit()
+
+                HStack(spacing: 10) {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 15, weight: .bold))
+
+                    Text(title)
+                        .font(.system(size: 17, weight: .semibold, design: .serif))
+                }
+                .foregroundStyle(.white.opacity(0.94))
+                .padding(.horizontal, 34)
+            }
+            .frame(width: width)
+            .frame(minHeight: 52)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(ScrollLearningPlateButtonStyle())
+        .accessibilityLabel(title)
+    }
+}
+
+private struct ScrollLearningPlateButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.975 : 1)
+            .brightness(configuration.isPressed ? 0.08 : 0)
+            .opacity(configuration.isPressed ? 0.9 : 1)
+            .animation(.easeOut(duration: 0.14), value: configuration.isPressed)
     }
 }
