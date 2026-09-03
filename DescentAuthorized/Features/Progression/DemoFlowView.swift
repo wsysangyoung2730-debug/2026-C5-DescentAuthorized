@@ -12,6 +12,7 @@ struct DemoFlowView: View {
     @State private var isShowingSettings = false
     @State private var retryLoadingPresentation: SceneRetryLoadingPresentation?
     @State private var battleTutorialStep: TutorialCoachStep?
+    @State private var isNarrativeAutoAdvanceEnabled = true
     @StateObject private var sceneController = RealitySceneController()
 
     private let topHUDRailSourceSize = CGSize(width: 1774, height: 887)
@@ -612,7 +613,10 @@ struct DemoFlowView: View {
         case .floor9Entrance:
             Floor9EntranceView(sceneController: sceneController)
         case let .narrative(sequence):
-            BossNarrativeView(sequence: sequence) {
+            BossNarrativeView(
+                sequence: sequence,
+                isAutoAdvanceEnabled: $isNarrativeAutoAdvanceEnabled
+            ) {
                 switch sequence {
                 case .floor9Encounter:
                     gameSession.send(.beginRecordsBattle)
@@ -678,41 +682,52 @@ private struct BossNarrativeView: View {
     @EnvironmentObject private var appSettings: AppSettings
 
     let sequence: BossNarrativeSequence
+    @Binding var isAutoAdvanceEnabled: Bool
     let onFinished: () -> Void
 
     @State private var dialogueIndex = 0
 
     var body: some View {
-        Button(action: advance) {
-            ZStack {
-                Image(sequence.backgroundAsset)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipped()
+        ZStack {
+            Button(action: advance) {
+                ZStack {
+                    Image(sequence.backgroundAsset)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .clipped()
 
-                LinearGradient(
-                    colors: [.clear, .black.opacity(0.12), .black.opacity(0.55)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .allowsHitTesting(false)
+                    LinearGradient(
+                        colors: [.clear, .black.opacity(0.12), .black.opacity(0.55)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .allowsHitTesting(false)
 
-                VStack(spacing: 8) {
-                    Spacer()
-                    dialoguePanel
-                    recordCounter
+                    VStack(spacing: 8) {
+                        Spacer()
+                        dialoguePanel
+                        recordCounter
+                    }
+                    .padding(.horizontal, 68)
+                    .padding(.bottom, 22)
                 }
-                .padding(.horizontal, 68)
-                .padding(.bottom, 22)
+                .contentShape(Rectangle())
             }
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(currentDialogue.speaker). \(currentDialogue.text)")
+            .accessibilityHint(dialogueIndex == sequence.dialogues.count - 1 ? sequence.finalAccessibilityHint : "다음 대화")
+
+            autoAdvanceControl
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .padding(.trailing, 102)
+                .padding(.bottom, 70)
         }
-        .buttonStyle(.plain)
         .ignoresSafeArea()
         .preferredColorScheme(.dark)
-        .accessibilityLabel("\(currentDialogue.speaker). \(currentDialogue.text)")
-        .accessibilityHint(dialogueIndex == sequence.dialogues.count - 1 ? sequence.finalAccessibilityHint : "다음 대화")
+        .task(id: autoAdvanceTaskID) {
+            await scheduleAutoAdvanceIfNeeded()
+        }
     }
 
     private var dialoguePanel: some View {
@@ -750,10 +765,53 @@ private struct BossNarrativeView: View {
                     .shadow(color: BossNarrativePalette.speaker, radius: 6)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-            .padding(.trailing, 34)
+            .padding(.trailing, 198)
             .padding(.bottom, 24)
         }
         .frame(maxWidth: .infinity, minHeight: 148, maxHeight: 148)
+    }
+
+    private var autoAdvanceControl: some View {
+        Button {
+            withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+                isAutoAdvanceEnabled.toggle()
+            }
+        } label: {
+            HStack(spacing: 9) {
+                if isAutoAdvanceEnabled {
+                    AutoAdvanceSpinner(reducedMotion: appSettings.reducedMotion)
+                } else {
+                    Image(systemName: "hand.tap")
+                        .font(.system(size: 17, weight: .medium))
+                        .frame(width: 22, height: 22)
+                }
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("자동 진행")
+                        .font(.system(size: 13, weight: .semibold, design: .serif))
+                    Text(isAutoAdvanceEnabled ? "켜짐" : "꺼짐 · 수동")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(BossNarrativePalette.prompt)
+                }
+            }
+            .foregroundStyle(isAutoAdvanceEnabled ? BossNarrativePalette.speaker : BossNarrativePalette.dialogue)
+            .frame(width: 142, height: 42)
+            .background(Color.black.opacity(0.62))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .overlay {
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(
+                        isAutoAdvanceEnabled
+                            ? BossNarrativePalette.speaker.opacity(0.72)
+                            : BossNarrativePalette.counter.opacity(0.5),
+                        lineWidth: 1
+                    )
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("대화 자동 진행")
+        .accessibilityValue(isAutoAdvanceEnabled ? "켜짐" : "꺼짐")
+        .accessibilityHint(isAutoAdvanceEnabled ? "두 번 탭하여 수동 진행으로 전환" : "두 번 탭하여 자동 진행 켜기")
     }
 
     private var recordCounter: some View {
@@ -774,6 +832,32 @@ private struct BossNarrativeView: View {
         sequence.dialogues[dialogueIndex]
     }
 
+    private var autoAdvanceTaskID: Int {
+        dialogueIndex * 2 + (isAutoAdvanceEnabled ? 1 : 0)
+    }
+
+    private var autoAdvanceDelay: Duration {
+        let readingTime = min(max(Double(currentDialogue.text.count) * 0.035, 0.8), 2.3)
+        return .seconds(3.2 + readingTime)
+    }
+
+    @MainActor
+    private func scheduleAutoAdvanceIfNeeded() async {
+        guard isAutoAdvanceEnabled else { return }
+        let scheduledIndex = dialogueIndex
+
+        do {
+            try await Task.sleep(for: autoAdvanceDelay)
+        } catch {
+            return
+        }
+
+        guard !Task.isCancelled,
+              isAutoAdvanceEnabled,
+              scheduledIndex == dialogueIndex else { return }
+        advance()
+    }
+
     private func advance() {
         guard dialogueIndex < sequence.dialogues.count - 1 else {
             onFinished()
@@ -782,6 +866,39 @@ private struct BossNarrativeView: View {
 
         withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.2)) {
             dialogueIndex += 1
+        }
+    }
+}
+
+private struct AutoAdvanceSpinner: View {
+    let reducedMotion: Bool
+
+    @State private var rotation = 0.0
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(BossNarrativePalette.speaker.opacity(0.2), lineWidth: 2)
+
+            Circle()
+                .trim(from: 0.08, to: 0.76)
+                .stroke(
+                    BossNarrativePalette.speaker,
+                    style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                )
+
+            Image(systemName: "arrowtriangle.forward.fill")
+                .font(.system(size: 5, weight: .bold))
+                .offset(x: 8.5, y: -3.5)
+        }
+        .frame(width: 22, height: 22)
+        .rotationEffect(.degrees(rotation))
+        .shadow(color: BossNarrativePalette.speaker.opacity(0.55), radius: 4)
+        .onAppear {
+            guard !reducedMotion else { return }
+            withAnimation(.linear(duration: 1.8).repeatForever(autoreverses: false)) {
+                rotation = 360
+            }
         }
     }
 }
