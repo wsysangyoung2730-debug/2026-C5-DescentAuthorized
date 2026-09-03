@@ -33,7 +33,7 @@ struct ScrollSpellLearningView: View {
     let failureMechanic: TutorialMechanicID?
     let onCompleted: (CastingGrade) -> Void
 
-    @State private var stage = Stage.fallen
+    @State private var stage: Stage
     @State private var pulse = false
     @State private var revealRotation = -4.0
     @State private var completionSealRotation = 0.0
@@ -41,6 +41,26 @@ struct ScrollSpellLearningView: View {
     @State private var completionGrade: CastingGrade?
     @State private var failureCount = 0
     @State private var hasFinished = false
+
+    init(
+        spell: SpellDefinition,
+        sourceCode: String,
+        discoveryText: String,
+        presentation: ScrollSpellLearningPresentation,
+        tutorialSequence: TutorialSequenceID?,
+        failureMechanic: TutorialMechanicID?,
+        startsAtPractice: Bool = false,
+        onCompleted: @escaping (CastingGrade) -> Void
+    ) {
+        self.spell = spell
+        self.sourceCode = sourceCode
+        self.discoveryText = discoveryText
+        self.presentation = presentation
+        self.tutorialSequence = tutorialSequence
+        self.failureMechanic = failureMechanic
+        self.onCompleted = onCompleted
+        _stage = State(initialValue: startsAtPractice ? .practice : .fallen)
+    }
 
     var body: some View {
         GeometryReader { proxy in

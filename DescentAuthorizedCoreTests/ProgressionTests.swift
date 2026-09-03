@@ -84,6 +84,10 @@ final class ProgressionTests: XCTestCase {
         )
         _ = try controller.continueAfterRecordsDefeat()
         _ = try controller.selectReward(candidateID: "floor9-worn-a")
+        _ = try controller.completeRewardLearning(
+            candidateID: "floor9-worn-a",
+            grade: .approved
+        )
         _ = try controller.approveDescentDoor()
 
         _ = try controller.enterProtectionRoom()
@@ -104,6 +108,10 @@ final class ProgressionTests: XCTestCase {
         )
         _ = try controller.continueAfterAdministratorDefeat()
         _ = try controller.selectReward(candidateID: "floor8-forbidden")
+        _ = try controller.completeRewardLearning(
+            candidateID: "floor8-forbidden",
+            grade: .approved
+        )
         let completionEvents = try controller.approveDescentDoor()
 
         XCTAssertEqual(controller.progress.currentFloor, .floor7)
@@ -131,16 +139,45 @@ final class ProgressionTests: XCTestCase {
         )
     }
 
-    func testEveryFloor9CandidateResolvesToBarrierPiercing() throws {
+    func testEveryFloor9CandidateRequiresPracticeBeforeDescent() throws {
         for candidate in RewardCatalog.candidates(for: .floor9) {
             var controller = try makeFloor9RewardController()
 
             _ = try controller.selectReward(candidateID: candidate.id)
 
-            XCTAssertTrue(controller.progress.learnedSpells.contains(.barrierPiercing))
+            XCTAssertFalse(controller.progress.learnedSpells.contains(.barrierPiercing))
             XCTAssertEqual(controller.progress.selectedRewardIDs, [candidate.id])
+            XCTAssertEqual(controller.progress.currentScene, .floor9RewardVault)
+
+            _ = try controller.completeRewardLearning(
+                candidateID: candidate.id,
+                grade: .precise
+            )
+
+            XCTAssertTrue(controller.progress.learnedSpells.contains(.barrierPiercing))
+            XCTAssertTrue(controller.progress.completedTrainingSpells.contains(.barrierPiercing))
             XCTAssertEqual(controller.progress.currentScene, .floor9DescentDoor)
         }
+    }
+
+    func testRewardLearningRejectsFailedOrUnselectedTracing() throws {
+        var controller = try makeFloor9RewardController()
+
+        XCTAssertThrowsError(
+            try controller.completeRewardLearning(
+                candidateID: "floor9-worn-a",
+                grade: .approved
+            )
+        )
+
+        _ = try controller.selectReward(candidateID: "floor9-worn-a")
+        XCTAssertThrowsError(
+            try controller.completeRewardLearning(
+                candidateID: "floor9-worn-a",
+                grade: .rejected
+            )
+        )
+        XCTAssertEqual(controller.progress.currentScene, .floor9RewardVault)
     }
 
     func testRewardCanOnlyBeSelectedOnce() throws {
@@ -153,6 +190,10 @@ final class ProgressionTests: XCTestCase {
     func testRecoveryRulesAreAppliedAtFloorBoundaries() throws {
         var controller = try makeFloor9RewardController(remainingHP: 35)
         _ = try controller.selectReward(candidateID: "floor9-worn-a")
+        _ = try controller.completeRewardLearning(
+            candidateID: "floor9-worn-a",
+            grade: .approved
+        )
         _ = try controller.approveDescentDoor()
         XCTAssertEqual(controller.progress.playerHP, 65)
 
@@ -256,6 +297,10 @@ final class ProgressionTests: XCTestCase {
     private func makeFloor8AntechamberController() throws -> GameProgressionController {
         var controller = try makeFloor9RewardController()
         _ = try controller.selectReward(candidateID: "floor9-worn-a")
+        _ = try controller.completeRewardLearning(
+            candidateID: "floor9-worn-a",
+            grade: .approved
+        )
         _ = try controller.approveDescentDoor()
         return controller
     }

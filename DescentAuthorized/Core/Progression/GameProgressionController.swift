@@ -383,14 +383,11 @@ struct GameProgressionController: Sendable {
 
     mutating func selectReward(candidateID: String) throws -> [ProgressionEvent] {
         let floor: FloorID
-        let destination: SceneID
         switch progress.currentScene {
         case .floor9RewardVault:
             floor = .floor9
-            destination = .floor9DescentDoor
         case .floor8Reward:
             floor = .floor8
-            destination = .floor8DescentDoor
         default:
             throw ProgressionError.invalidScene(
                 expected: [.floor9RewardVault, .floor8Reward],
@@ -407,16 +404,53 @@ struct GameProgressionController: Sendable {
         }
 
         progress.selectedRewardIDs.append(selected.id)
-        if let spell = selected.resolvedSpell {
-            progress.learnedSpells.insert(spell)
-        }
-
-        var events: [ProgressionEvent] = [
+        return [
             .rewardSelected(candidateID: selected.id, spell: selected.resolvedSpell)
         ]
-        if let spell = selected.resolvedSpell {
+    }
+
+    mutating func completeRewardLearning(
+        candidateID: String,
+        grade: CastingGrade
+    ) throws -> [ProgressionEvent] {
+        guard grade != .rejected else {
+            throw ProgressionError.requirementMissing("successful reward scroll tracing")
+        }
+
+        let floor: FloorID
+        let destination: SceneID
+        switch progress.currentScene {
+        case .floor9RewardVault:
+            floor = .floor9
+            destination = .floor9DescentDoor
+        case .floor8Reward:
+            floor = .floor8
+            destination = .floor8DescentDoor
+        default:
+            throw ProgressionError.invalidScene(
+                expected: [.floor9RewardVault, .floor8Reward],
+                actual: progress.currentScene
+            )
+        }
+
+        guard progress.selectedRewardIDs.contains(candidateID) else {
+            throw ProgressionError.requirementMissing("selected reward scroll")
+        }
+        guard let selected = RewardCatalog.candidates(for: floor)
+            .first(where: { $0.id == candidateID }) else {
+            throw ProgressionError.unknownReward(candidateID)
+        }
+
+        let spell = RewardCatalog.learningSpell(for: selected)
+        let isNewSpell = progress.learnedSpells.insert(spell).inserted
+        progress.completedTrainingSpells.insert(spell)
+
+        var events: [ProgressionEvent] = []
+        if isNewSpell {
             events.append(.spellLearned(spell))
         }
+        events.append(.trainingCompleted(spell: spell, grade: grade))
+        events.append(updateMastery(spell: spell, grade: grade))
         events.append(.sceneChanged(setScene(destination)))
         return events
     }

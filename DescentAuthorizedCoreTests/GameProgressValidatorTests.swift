@@ -34,6 +34,11 @@ final class GameProgressValidatorTests: XCTestCase {
         try assertValid(controller.progress)
         _ = try controller.selectReward(candidateID: "floor9-worn-a")
         try assertValid(controller.progress)
+        _ = try controller.completeRewardLearning(
+            candidateID: "floor9-worn-a",
+            grade: .approved
+        )
+        try assertValid(controller.progress)
         _ = try controller.approveDescentDoor()
         try assertValid(controller.progress)
         _ = try controller.enterProtectionRoom()
@@ -59,6 +64,11 @@ final class GameProgressValidatorTests: XCTestCase {
         _ = try controller.continueAfterAdministratorDefeat()
         try assertValid(controller.progress)
         _ = try controller.selectReward(candidateID: "floor8-forbidden")
+        try assertValid(controller.progress)
+        _ = try controller.completeRewardLearning(
+            candidateID: "floor8-forbidden",
+            grade: .approved
+        )
         try assertValid(controller.progress)
         _ = try controller.approveDescentDoor()
         try assertValid(controller.progress)

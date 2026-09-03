@@ -17,6 +17,7 @@ enum DemoCommand: Sendable {
     case beginAdministratorBattle
     case continueAfterAdministratorDefeat
     case selectReward(String)
+    case completeRewardLearning(candidateID: String, grade: CastingGrade)
     case readRecord(String)
     case startEncounter
     case castSpell(
@@ -122,6 +123,12 @@ struct DemoGameSession: Sendable {
 
         case let .selectReward(candidateID):
             return wrap(try progression.selectReward(candidateID: candidateID))
+
+        case let .completeRewardLearning(candidateID, grade):
+            return wrap(try progression.completeRewardLearning(
+                candidateID: candidateID,
+                grade: grade
+            ))
 
         case let .readRecord(recordID):
             guard let event = progression.readRecord(id: recordID) else { return [] }
