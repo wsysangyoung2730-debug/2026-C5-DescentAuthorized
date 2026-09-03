@@ -151,7 +151,7 @@ struct HomeView: View {
                 .accessibilityLabel("설정")
             }
         }
-        .sheet(isPresented: $isShowingSettings) {
+        .fullScreenCover(isPresented: $isShowingSettings) {
             SettingsView()
         }
     }

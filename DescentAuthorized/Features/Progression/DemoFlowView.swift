@@ -108,7 +108,7 @@ struct DemoFlowView: View {
                 onExitToTitle: onExit
             )
         }
-        .sheet(isPresented: $isShowingSettings) {
+        .fullScreenCover(isPresented: $isShowingSettings) {
             SettingsView()
         }
         .onAppear {
