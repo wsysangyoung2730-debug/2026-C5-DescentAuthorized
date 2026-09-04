@@ -829,11 +829,38 @@ private struct BossNarrativeView: View {
                 .scaledToFill()
                 .frame(height: 148)
                 .clipped()
+                .shadow(
+                    color: isProtagonistDialogue
+                        ? BossNarrativePalette.protagonistAccent.opacity(0.3)
+                        : .clear,
+                    radius: 9
+                )
+
+            if isProtagonistDialogue {
+                LinearGradient(
+                    colors: [
+                        BossNarrativePalette.protagonistPanel.opacity(0.5),
+                        BossNarrativePalette.protagonistAccent.opacity(0.16),
+                        .clear
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .blendMode(.screen)
+                .mask {
+                    Image("BossDialoguePanel")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 148)
+                        .clipped()
+                }
+                .allowsHitTesting(false)
+            }
 
             VStack(alignment: .leading, spacing: 14) {
                 Text(currentDialogue.speaker)
                     .font(.system(size: 17, weight: .semibold, design: .serif))
-                    .foregroundStyle(BossNarrativePalette.speaker)
+                    .foregroundStyle(currentSpeakerColor)
 
                 ZStack(alignment: .topLeading) {
                     Text(currentDialogue.text)
@@ -843,7 +870,7 @@ private struct BossNarrativeView: View {
                     Text(revealedDialogueText)
                 }
                     .font(.system(size: 20, weight: .regular, design: .serif))
-                    .foregroundStyle(BossNarrativePalette.dialogue)
+                    .foregroundStyle(currentDialogueColor)
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
             }
@@ -859,8 +886,8 @@ private struct BossNarrativeView: View {
 
                 Image(systemName: "diamond.fill")
                     .font(.caption)
-                    .foregroundStyle(BossNarrativePalette.speaker)
-                    .shadow(color: BossNarrativePalette.speaker, radius: 6)
+                    .foregroundStyle(currentSpeakerColor)
+                    .shadow(color: currentSpeakerColor, radius: 6)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             .padding(.trailing, 34)
@@ -928,6 +955,22 @@ private struct BossNarrativeView: View {
 
     private var currentDialogue: BossNarrativeDialogue {
         sequence.dialogues[dialogueIndex]
+    }
+
+    private var isProtagonistDialogue: Bool {
+        currentDialogue.speaker == "주인공"
+    }
+
+    private var currentSpeakerColor: Color {
+        isProtagonistDialogue
+            ? BossNarrativePalette.protagonistAccent
+            : BossNarrativePalette.speaker
+    }
+
+    private var currentDialogueColor: Color {
+        isProtagonistDialogue
+            ? BossNarrativePalette.protagonistDialogue
+            : BossNarrativePalette.dialogue
     }
 
     private var revealedDialogueText: String {
@@ -1122,6 +1165,9 @@ private extension BossNarrativeSequence {
 private enum BossNarrativePalette {
     static let speaker = Color(red: 190 / 255, green: 142 / 255, blue: 1)
     static let dialogue = Color(red: 232 / 255, green: 229 / 255, blue: 224 / 255)
+    static let protagonistAccent = Color(red: 94 / 255, green: 210 / 255, blue: 238 / 255)
+    static let protagonistDialogue = Color(red: 218 / 255, green: 241 / 255, blue: 246 / 255)
+    static let protagonistPanel = Color(red: 35 / 255, green: 122 / 255, blue: 158 / 255)
     static let prompt = Color(red: 166 / 255, green: 163 / 255, blue: 166 / 255)
     static let counter = Color(red: 196 / 255, green: 184 / 255, blue: 160 / 255)
 }
