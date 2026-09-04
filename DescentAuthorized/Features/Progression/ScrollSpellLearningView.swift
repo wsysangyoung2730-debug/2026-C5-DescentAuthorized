@@ -590,7 +590,7 @@ private extension SpellID {
         case .riftSeverance:
             "ScrollLearningGlyphRiftSeverance"
         case .barrierPiercing:
-            "BattleGlyphBarrierPiercing"
+            "ScrollLearningGlyphBarrierPiercing"
         case .basicBarrier:
             "ScrollLearningGlyphBasicBarrier"
         case .sealRelease:
