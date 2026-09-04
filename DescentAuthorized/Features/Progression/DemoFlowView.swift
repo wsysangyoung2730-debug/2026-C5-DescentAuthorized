@@ -56,17 +56,17 @@ struct DemoFlowView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .padding(.top, showsRewardLearningTopBar ? topBarHeight : 0)
 
-                        if showsRewardLearningTopBar {
-                            topBar
-                                .frame(height: topBarHeight)
-                                .clipped()
-                                .transition(.opacity)
-                        }
+                        topBar
+                            .frame(height: topBarHeight)
+                            .clipped()
+                            .opacity(showsRewardLearningTopBar ? 1 : 0)
+                            .allowsHitTesting(showsRewardLearningTopBar)
+                            .accessibilityHidden(!showsRewardLearningTopBar)
+                            .animation(
+                                .easeOut(duration: appSettings.reducedMotion ? 0 : 0.2),
+                                value: showsRewardLearningTopBar
+                            )
                     }
-                    .animation(
-                        .easeOut(duration: appSettings.reducedMotion ? 0 : 0.2),
-                        value: showsRewardLearningTopBar
-                    )
                 } else {
                     VStack(spacing: 0) {
                         if !sceneController.isDescentFailurePresentationActive {
@@ -127,6 +127,7 @@ struct DemoFlowView: View {
             SettingsView()
         }
         .onAppear {
+            synchronizeRewardLearningHUD()
             reportSystemOverlayVisibility()
             synchronizeFloorMusic()
             synchronizeRecordsBattleTutorial()
@@ -156,6 +157,7 @@ struct DemoFlowView: View {
             synchronizeFloorMusic()
         }
         .onChange(of: gameSession.progress.currentScene) { _, _ in
+            synchronizeRewardLearningHUD()
             synchronizeFloorMusic()
             synchronizeRecordsBattleTutorial()
         }
@@ -173,6 +175,20 @@ struct DemoFlowView: View {
 
     private func reportSystemOverlayVisibility() {
         onSystemOverlayVisibilityChange(isShowingPauseMenu || isShowingSettings)
+    }
+
+    private func synchronizeRewardLearningHUD() {
+        guard case let .reward(floor) = gameSession.presentation.experience else {
+            isRewardLearningInputActive = false
+            return
+        }
+
+        let hasPendingLearning = RewardCatalog.candidates(for: floor).contains { candidate in
+            gameSession.progress.selectedRewardIDs.contains(candidate.id)
+        }
+        if hasPendingLearning {
+            isRewardLearningInputActive = true
+        }
     }
 
     private func beginCheckpointTravel(to checkpoint: CheckpointID) {

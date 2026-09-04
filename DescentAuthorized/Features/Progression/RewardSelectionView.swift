@@ -84,10 +84,12 @@ struct RewardSelectionView: View {
                }) {
                 selectedCandidateID = pendingLearningCandidate.id
                 isSelectionInterfaceVisible = false
+                isLearningInputActive = true
                 setRewardState(.resolved(selectedIndex: selectedIndex))
                 return
             }
 
+            isLearningInputActive = false
             isSelectionInterfaceVisible = false
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             setRewardState(.appearing)
@@ -110,6 +112,7 @@ struct RewardSelectionView: View {
         .onDisappear {
             transitionTask?.cancel()
             cancelDetailPress(playsCloseSound: false)
+            isLearningInputActive = false
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
             sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion)
@@ -559,7 +562,19 @@ struct RewardSelectionView: View {
             setRewardState(.resolved(selectedIndex: selectedIndex))
             try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 390))
             guard !Task.isCancelled else { return }
-            gameSession.send(.selectReward(selectedCandidateID))
+
+            withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+                isSelectionInterfaceVisible = false
+            }
+            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 190))
+            guard !Task.isCancelled else { return }
+
+            isLearningInputActive = true
+            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 230))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeIn(duration: appSettings.reducedMotion ? 0 : 0.2)) {
+                _ = gameSession.send(.selectReward(selectedCandidateID))
+            }
         }
     }
 
