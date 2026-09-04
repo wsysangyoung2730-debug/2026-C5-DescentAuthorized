@@ -417,7 +417,7 @@ struct ScrollSpellLearningView: View {
                 .scaledToFit()
 
             spellGlyphAsset
-                .frame(width: width * 0.34)
+                .frame(width: width * scrollReferenceGlyphWidthRatio)
                 .offset(y: -width * 0.015)
         }
         .frame(width: width)
@@ -451,6 +451,10 @@ struct ScrollSpellLearningView: View {
             .resizable()
             .scaledToFit()
             .accessibilityHidden(true)
+    }
+
+    private var scrollReferenceGlyphWidthRatio: CGFloat {
+        spell.id == .barrierPiercing ? 0.29 : 0.34
     }
 
     private var scrollDiscoveryCoachStep: TutorialCoachStep? {
