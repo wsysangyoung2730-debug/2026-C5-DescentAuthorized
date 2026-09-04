@@ -770,6 +770,7 @@ private struct BossNarrativeView: View {
     let onFinished: () -> Void
 
     @State private var dialogueIndex = 0
+    @State private var revealedCharacterCount = 0
 
     var body: some View {
         ZStack {
@@ -787,14 +788,6 @@ private struct BossNarrativeView: View {
                         endPoint: .bottom
                     )
                     .allowsHitTesting(false)
-
-                    VStack(spacing: 8) {
-                        Spacer()
-                        dialoguePanel
-                        recordCounter
-                    }
-                    .padding(.horizontal, 68)
-                    .padding(.bottom, 22)
                 }
                 .contentShape(Rectangle())
             }
@@ -802,13 +795,28 @@ private struct BossNarrativeView: View {
             .accessibilityLabel("\(currentDialogue.speaker). \(currentDialogue.text)")
             .accessibilityHint(dialogueIndex == sequence.dialogues.count - 1 ? sequence.finalAccessibilityHint : "다음 대화")
 
-            autoAdvanceControl
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .padding(.trailing, 102)
-                .padding(.bottom, 70)
+            VStack(spacing: 8) {
+                Spacer()
+                dialoguePanel
+                recordCounter
+            }
+            .padding(.horizontal, 68)
+            .padding(.bottom, 22)
+            .allowsHitTesting(false)
+
+            GeometryReader { proxy in
+                autoAdvanceControl
+                    .position(
+                        x: proxy.size.width - 157,
+                        y: proxy.size.height - 225
+                    )
+            }
         }
         .ignoresSafeArea()
         .preferredColorScheme(.dark)
+        .task(id: dialogueIndex) {
+            await revealCurrentDialogue()
+        }
         .task(id: autoAdvanceTaskID) {
             await scheduleAutoAdvanceIfNeeded()
         }
@@ -827,7 +835,13 @@ private struct BossNarrativeView: View {
                     .font(.system(size: 17, weight: .semibold, design: .serif))
                     .foregroundStyle(BossNarrativePalette.speaker)
 
-                Text(currentDialogue.text)
+                ZStack(alignment: .topLeading) {
+                    Text(currentDialogue.text)
+                        .opacity(0)
+                        .accessibilityHidden(true)
+
+                    Text(revealedDialogueText)
+                }
                     .font(.system(size: 20, weight: .regular, design: .serif))
                     .foregroundStyle(BossNarrativePalette.dialogue)
                     .lineLimit(2)
@@ -849,7 +863,7 @@ private struct BossNarrativeView: View {
                     .shadow(color: BossNarrativePalette.speaker, radius: 6)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-            .padding(.trailing, 198)
+            .padding(.trailing, 34)
             .padding(.bottom, 24)
         }
         .frame(maxWidth: .infinity, minHeight: 148, maxHeight: 148)
@@ -916,18 +930,60 @@ private struct BossNarrativeView: View {
         sequence.dialogues[dialogueIndex]
     }
 
-    private var autoAdvanceTaskID: Int {
-        dialogueIndex * 2 + (isAutoAdvanceEnabled ? 1 : 0)
+    private var revealedDialogueText: String {
+        String(currentDialogue.text.prefix(revealedCharacterCount))
+    }
+
+    private var isDialogueFullyRevealed: Bool {
+        revealedCharacterCount >= currentDialogue.text.count
+    }
+
+    private var autoAdvanceTaskID: String {
+        "\(dialogueIndex)-\(isAutoAdvanceEnabled)-\(isDialogueFullyRevealed)"
     }
 
     private var autoAdvanceDelay: Duration {
-        let readingTime = min(max(Double(currentDialogue.text.count) * 0.035, 0.8), 2.3)
-        return .seconds(3.2 + readingTime)
+        let readingTime = min(max(Double(currentDialogue.text.count) * 0.025, 0.7), 1.5)
+        return .seconds(2.2 + readingTime)
+    }
+
+    @MainActor
+    private func revealCurrentDialogue() async {
+        let scheduledIndex = dialogueIndex
+        let characters = Array(currentDialogue.text)
+        revealedCharacterCount = appSettings.reducedMotion ? characters.count : 0
+
+        guard !appSettings.reducedMotion else { return }
+
+        for (index, character) in characters.enumerated() {
+            guard !Task.isCancelled, scheduledIndex == dialogueIndex else { return }
+            revealedCharacterCount = index + 1
+
+            guard index < characters.count - 1 else { continue }
+            do {
+                try await Task.sleep(for: typewriterDelay(after: character))
+            } catch {
+                return
+            }
+        }
+    }
+
+    private func typewriterDelay(after character: Character) -> Duration {
+        switch character {
+        case ".", "!", "?", "…":
+            .milliseconds(105)
+        case ",", "·":
+            .milliseconds(58)
+        case " ":
+            .milliseconds(14)
+        default:
+            .milliseconds(29)
+        }
     }
 
     @MainActor
     private func scheduleAutoAdvanceIfNeeded() async {
-        guard isAutoAdvanceEnabled else { return }
+        guard isAutoAdvanceEnabled, isDialogueFullyRevealed else { return }
         let scheduledIndex = dialogueIndex
 
         do {
@@ -948,8 +1004,13 @@ private struct BossNarrativeView: View {
             return
         }
 
+        let nextDialogueIndex = dialogueIndex + 1
+        revealedCharacterCount = appSettings.reducedMotion
+            ? sequence.dialogues[nextDialogueIndex].text.count
+            : 0
+
         withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.2)) {
-            dialogueIndex += 1
+            dialogueIndex = nextDialogueIndex
         }
     }
 }
