@@ -31,6 +31,7 @@ struct ScrollSpellLearningView: View {
     let presentation: ScrollSpellLearningPresentation
     let tutorialSequence: TutorialSequenceID?
     let failureMechanic: TutorialMechanicID?
+    let onPracticeVisibilityChange: (Bool) -> Void
     let onCompleted: (CastingGrade) -> Void
 
     @State private var stage: Stage
@@ -50,6 +51,7 @@ struct ScrollSpellLearningView: View {
         tutorialSequence: TutorialSequenceID?,
         failureMechanic: TutorialMechanicID?,
         startsAtPractice: Bool = false,
+        onPracticeVisibilityChange: @escaping (Bool) -> Void = { _ in },
         onCompleted: @escaping (CastingGrade) -> Void
     ) {
         self.spell = spell
@@ -58,6 +60,7 @@ struct ScrollSpellLearningView: View {
         self.presentation = presentation
         self.tutorialSequence = tutorialSequence
         self.failureMechanic = failureMechanic
+        self.onPracticeVisibilityChange = onPracticeVisibilityChange
         self.onCompleted = onCompleted
         _stage = State(initialValue: startsAtPractice ? .practice : .fallen)
     }
@@ -94,6 +97,13 @@ struct ScrollSpellLearningView: View {
         .onAppear {
             startPulse()
             synchronizeTutorial()
+            onPracticeVisibilityChange(stage == .practice)
+        }
+        .onChange(of: stage) { _, stage in
+            onPracticeVisibilityChange(stage == .practice)
+        }
+        .onDisappear {
+            onPracticeVisibilityChange(false)
         }
         .onChange(of: gameSession.progress.tutorialProgress.requestedReplay) { _, replay in
             guard replay == tutorialSequence else { return }
@@ -591,7 +601,7 @@ private extension SpellID {
 }
 
 private extension ScrollSpellLearningView {
-    enum Stage {
+    enum Stage: Equatable {
         case fallen
         case revealed
         case practice

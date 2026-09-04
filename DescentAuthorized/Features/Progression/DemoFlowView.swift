@@ -14,6 +14,7 @@ struct DemoFlowView: View {
     @State private var checkpointTravelTask: Task<Void, Never>?
     @State private var battleTutorialStep: TutorialCoachStep?
     @State private var isNarrativeAutoAdvanceEnabled = true
+    @State private var isRewardLearningInputActive = false
     @StateObject private var sceneController = RealitySceneController()
 
     private let topHUDRailSourceSize = CGSize(width: 1774, height: 887)
@@ -49,9 +50,23 @@ struct DemoFlowView: View {
                     )
                     .transition(.opacity)
                 } else if isNarrativePresentation {
-                    sceneView
-                        .id(gameSession.presentation.progressSceneID)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    ZStack(alignment: .top) {
+                        sceneView
+                            .id(gameSession.presentation.progressSceneID)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.top, showsRewardLearningTopBar ? topBarHeight : 0)
+
+                        if showsRewardLearningTopBar {
+                            topBar
+                                .frame(height: topBarHeight)
+                                .clipped()
+                                .transition(.opacity)
+                        }
+                    }
+                    .animation(
+                        .easeOut(duration: appSettings.reducedMotion ? 0 : 0.2),
+                        value: showsRewardLearningTopBar
+                    )
                 } else {
                     VStack(spacing: 0) {
                         if !sceneController.isDescentFailurePresentationActive {
@@ -374,6 +389,11 @@ struct DemoFlowView: View {
         default:
             return false
         }
+    }
+
+    private var showsRewardLearningTopBar: Bool {
+        guard case .reward = gameSession.presentation.experience else { return false }
+        return isRewardLearningInputActive
     }
 
     private var showsFloor10Opening: Bool {
@@ -708,7 +728,11 @@ struct DemoFlowView: View {
                 restartLoadingPresentation: $retryLoadingPresentation
             )
         case let .reward(floor):
-            RewardSelectionView(floor: floor, sceneController: sceneController)
+            RewardSelectionView(
+                floor: floor,
+                sceneController: sceneController,
+                isLearningInputActive: $isRewardLearningInputActive
+            )
         case .floor8Exploration:
             Floor8ExplorationView(sceneController: sceneController)
         case let .descent(floor):

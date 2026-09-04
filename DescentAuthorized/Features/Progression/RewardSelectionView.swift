@@ -36,6 +36,7 @@ struct RewardSelectionView: View {
 
     let floor: FloorID
     let sceneController: RealitySceneController
+    @Binding var isLearningInputActive: Bool
 
     @State private var selectedCandidateID: String?
     @State private var isResolving = false
@@ -445,7 +446,10 @@ struct RewardSelectionView: View {
             presentation: .standard,
             tutorialSequence: nil,
             failureMechanic: nil,
-            startsAtPractice: true
+            startsAtPractice: true,
+            onPracticeVisibilityChange: { isActive in
+                isLearningInputActive = isActive
+            }
         ) { grade in
             gameSession.send(.completeRewardLearning(
                 candidateID: candidate.id,
