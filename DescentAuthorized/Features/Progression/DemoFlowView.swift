@@ -11,7 +11,10 @@ struct DemoFlowView: View {
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
     @State private var retryLoadingPresentation: SceneRetryLoadingPresentation?
+    @State private var checkpointTravelTask: Task<Void, Never>?
     @State private var battleTutorialStep: TutorialCoachStep?
+    @State private var isNarrativeAutoAdvanceEnabled = true
+    @State private var isRewardLearningInputActive = false
     @StateObject private var sceneController = RealitySceneController()
 
     private let topHUDRailSourceSize = CGSize(width: 1774, height: 887)
@@ -47,9 +50,23 @@ struct DemoFlowView: View {
                     )
                     .transition(.opacity)
                 } else if isNarrativePresentation {
-                    sceneView
-                        .id(gameSession.presentation.progressSceneID)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    ZStack(alignment: .top) {
+                        sceneView
+                            .id(gameSession.presentation.progressSceneID)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.top, showsRewardLearningTopBar ? topBarHeight : 0)
+
+                        topBar
+                            .frame(height: topBarHeight)
+                            .clipped()
+                            .opacity(showsRewardLearningTopBar ? 1 : 0)
+                            .allowsHitTesting(showsRewardLearningTopBar)
+                            .accessibilityHidden(!showsRewardLearningTopBar)
+                            .animation(
+                                .easeOut(duration: appSettings.reducedMotion ? 0 : 0.2),
+                                value: showsRewardLearningTopBar
+                            )
+                    }
                 } else {
                     VStack(spacing: 0) {
                         if !sceneController.isDescentFailurePresentationActive {
@@ -99,17 +116,25 @@ struct DemoFlowView: View {
         )
         .ignoresSafeArea(edges: .top)
         .sheet(isPresented: $isShowingPauseMenu) {
-            PauseMenuView(onExitToTitle: onExit)
+            PauseMenuView(
+                onTravelToCheckpoint: { checkpoint in
+                    beginCheckpointTravel(to: checkpoint)
+                },
+                onExitToTitle: onExit
+            )
         }
-        .sheet(isPresented: $isShowingSettings) {
+        .fullScreenCover(isPresented: $isShowingSettings) {
             SettingsView()
         }
         .onAppear {
+            synchronizeRewardLearningHUD()
             reportSystemOverlayVisibility()
             synchronizeFloorMusic()
             synchronizeRecordsBattleTutorial()
         }
         .onDisappear {
+            checkpointTravelTask?.cancel()
+            checkpointTravelTask = nil
             onSystemOverlayVisibilityChange(false)
             gameFeedback.stopAllAudio()
         }
@@ -132,6 +157,7 @@ struct DemoFlowView: View {
             synchronizeFloorMusic()
         }
         .onChange(of: gameSession.progress.currentScene) { _, _ in
+            synchronizeRewardLearningHUD()
             synchronizeFloorMusic()
             synchronizeRecordsBattleTutorial()
         }
@@ -149,6 +175,82 @@ struct DemoFlowView: View {
 
     private func reportSystemOverlayVisibility() {
         onSystemOverlayVisibilityChange(isShowingPauseMenu || isShowingSettings)
+    }
+
+    private func synchronizeRewardLearningHUD() {
+        guard case let .reward(floor) = gameSession.presentation.experience else {
+            isRewardLearningInputActive = false
+            return
+        }
+
+        let hasPendingLearning = RewardCatalog.candidates(for: floor).contains { candidate in
+            gameSession.progress.selectedRewardIDs.contains(candidate.id)
+        }
+        if hasPendingLearning {
+            isRewardLearningInputActive = true
+        }
+    }
+
+    private func beginCheckpointTravel(to checkpoint: CheckpointID) {
+        checkpointTravelTask?.cancel()
+        let context = checkpoint.loadingContext
+        let tip = LoadingTipCatalog.randomTip(for: context)
+
+        withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+            retryLoadingPresentation = SceneRetryLoadingPresentation(
+                context: context,
+                progress: 0.08,
+                tip: tip
+            )
+        }
+
+        checkpointTravelTask = Task { @MainActor in
+            defer { checkpointTravelTask = nil }
+
+            guard await waitForCheckpointTravel(milliseconds: 180) else { return }
+            retryLoadingPresentation?.progress = 0.3
+
+            gameSession.send(.travelToCheckpoint(checkpoint))
+            guard gameSession.progress.checkpoint == checkpoint else {
+                retryLoadingPresentation = nil
+                return
+            }
+
+            sceneController.resetProgressionPresentation(
+                reducedMotion: appSettings.reducedMotion
+            )
+            retryLoadingPresentation?.progress = 0.58
+
+            for step in 0..<24 {
+                guard !isCurrentSceneReady else { break }
+                guard await waitForCheckpointTravel(milliseconds: 100) else { return }
+                retryLoadingPresentation?.progress = min(0.92, 0.58 + Double(step + 1) * 0.014)
+            }
+
+            retryLoadingPresentation?.progress = 1
+            guard await waitForCheckpointTravel(milliseconds: 180) else { return }
+            withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.2)) {
+                retryLoadingPresentation = nil
+            }
+        }
+    }
+
+    private var isCurrentSceneReady: Bool {
+        guard let sceneID = gameSession.presentation.floorSceneID else { return true }
+        return sceneController.isReady(
+            sceneID: sceneID,
+            cameraPreset: gameSession.presentation.cameraPreset
+        )
+    }
+
+    private func waitForCheckpointTravel(milliseconds: Int) async -> Bool {
+        let duration = appSettings.reducedMotion ? min(milliseconds, 60) : milliseconds
+        do {
+            try await Task.sleep(for: .milliseconds(duration))
+            return !Task.isCancelled
+        } catch {
+            return false
+        }
     }
 
     private func synchronizeFloorMusic() {
@@ -303,6 +405,11 @@ struct DemoFlowView: View {
         default:
             return false
         }
+    }
+
+    private var showsRewardLearningTopBar: Bool {
+        guard case .reward = gameSession.presentation.experience else { return false }
+        return isRewardLearningInputActive
     }
 
     private var showsFloor10Opening: Bool {
@@ -612,7 +719,10 @@ struct DemoFlowView: View {
         case .floor9Entrance:
             Floor9EntranceView(sceneController: sceneController)
         case let .narrative(sequence):
-            BossNarrativeView(sequence: sequence) {
+            BossNarrativeView(
+                sequence: sequence,
+                isAutoAdvanceEnabled: $isNarrativeAutoAdvanceEnabled
+            ) {
                 switch sequence {
                 case .floor9Encounter:
                     gameSession.send(.beginRecordsBattle)
@@ -634,7 +744,11 @@ struct DemoFlowView: View {
                 restartLoadingPresentation: $retryLoadingPresentation
             )
         case let .reward(floor):
-            RewardSelectionView(floor: floor, sceneController: sceneController)
+            RewardSelectionView(
+                floor: floor,
+                sceneController: sceneController,
+                isLearningInputActive: $isRewardLearningInputActive
+            )
         case .floor8Exploration:
             Floor8ExplorationView(sceneController: sceneController)
         case let .descent(floor):
@@ -651,6 +765,20 @@ struct DemoFlowView: View {
             }
         case .completion:
             DemoCompleteView(onReturnToTitle: onExit)
+        }
+    }
+}
+
+private extension CheckpointID {
+    var loadingContext: LoadingScreenContext {
+        switch self {
+        case .floor10Start:
+            .floor10
+        case .floor10Complete, .recordsBattle, .recordsDefeated:
+            .floor9
+        case .floor8Start, .residualBattle, .residualDefeated,
+             .observationBattle, .observationDefeated, .demoComplete:
+            .floor8
         }
     }
 }
@@ -678,41 +806,60 @@ private struct BossNarrativeView: View {
     @EnvironmentObject private var appSettings: AppSettings
 
     let sequence: BossNarrativeSequence
+    @Binding var isAutoAdvanceEnabled: Bool
     let onFinished: () -> Void
 
     @State private var dialogueIndex = 0
+    @State private var revealedCharacterCount = 0
 
     var body: some View {
-        Button(action: advance) {
-            ZStack {
-                Image(sequence.backgroundAsset)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipped()
+        ZStack {
+            Button(action: advance) {
+                ZStack {
+                    Image(sequence.backgroundAsset)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .clipped()
 
-                LinearGradient(
-                    colors: [.clear, .black.opacity(0.12), .black.opacity(0.55)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .allowsHitTesting(false)
-
-                VStack(spacing: 8) {
-                    Spacer()
-                    dialoguePanel
-                    recordCounter
+                    LinearGradient(
+                        colors: [.clear, .black.opacity(0.12), .black.opacity(0.55)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .allowsHitTesting(false)
                 }
-                .padding(.horizontal, 68)
-                .padding(.bottom, 22)
+                .contentShape(Rectangle())
             }
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(currentDialogue.speaker). \(currentDialogue.text)")
+            .accessibilityHint(dialogueIndex == sequence.dialogues.count - 1 ? sequence.finalAccessibilityHint : "다음 대화")
+
+            VStack(spacing: 8) {
+                Spacer()
+                dialoguePanel
+                recordCounter
+            }
+            .padding(.horizontal, 68)
+            .padding(.bottom, 22)
+            .allowsHitTesting(false)
+
+            GeometryReader { proxy in
+                autoAdvanceControl
+                    .position(
+                        x: proxy.size.width - 157,
+                        y: proxy.size.height - 225
+                    )
+            }
         }
-        .buttonStyle(.plain)
         .ignoresSafeArea()
         .preferredColorScheme(.dark)
-        .accessibilityLabel("\(currentDialogue.speaker). \(currentDialogue.text)")
-        .accessibilityHint(dialogueIndex == sequence.dialogues.count - 1 ? sequence.finalAccessibilityHint : "다음 대화")
+        .task(id: dialogueIndex) {
+            await revealCurrentDialogue()
+        }
+        .task(id: autoAdvanceTaskID) {
+            await scheduleAutoAdvanceIfNeeded()
+        }
     }
 
     private var dialoguePanel: some View {
@@ -722,15 +869,48 @@ private struct BossNarrativeView: View {
                 .scaledToFill()
                 .frame(height: 148)
                 .clipped()
+                .shadow(
+                    color: isProtagonistDialogue
+                        ? BossNarrativePalette.protagonistAccent.opacity(0.3)
+                        : .clear,
+                    radius: 9
+                )
+
+            if isProtagonistDialogue {
+                LinearGradient(
+                    colors: [
+                        BossNarrativePalette.protagonistPanel.opacity(0.5),
+                        BossNarrativePalette.protagonistAccent.opacity(0.16),
+                        .clear
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .blendMode(.screen)
+                .mask {
+                    Image("BossDialoguePanel")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 148)
+                        .clipped()
+                }
+                .allowsHitTesting(false)
+            }
 
             VStack(alignment: .leading, spacing: 14) {
                 Text(currentDialogue.speaker)
                     .font(.system(size: 17, weight: .semibold, design: .serif))
-                    .foregroundStyle(BossNarrativePalette.speaker)
+                    .foregroundStyle(currentSpeakerColor)
 
-                Text(currentDialogue.text)
+                ZStack(alignment: .topLeading) {
+                    Text(currentDialogue.text)
+                        .opacity(0)
+                        .accessibilityHidden(true)
+
+                    Text(revealedDialogueText)
+                }
                     .font(.system(size: 20, weight: .regular, design: .serif))
-                    .foregroundStyle(BossNarrativePalette.dialogue)
+                    .foregroundStyle(currentDialogueColor)
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
             }
@@ -746,14 +926,57 @@ private struct BossNarrativeView: View {
 
                 Image(systemName: "diamond.fill")
                     .font(.caption)
-                    .foregroundStyle(BossNarrativePalette.speaker)
-                    .shadow(color: BossNarrativePalette.speaker, radius: 6)
+                    .foregroundStyle(currentSpeakerColor)
+                    .shadow(color: currentSpeakerColor, radius: 6)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             .padding(.trailing, 34)
             .padding(.bottom, 24)
         }
         .frame(maxWidth: .infinity, minHeight: 148, maxHeight: 148)
+    }
+
+    private var autoAdvanceControl: some View {
+        Button {
+            withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+                isAutoAdvanceEnabled.toggle()
+            }
+        } label: {
+            HStack(spacing: 9) {
+                if isAutoAdvanceEnabled {
+                    AutoAdvanceSpinner(reducedMotion: appSettings.reducedMotion)
+                } else {
+                    Image(systemName: "hand.tap")
+                        .font(.system(size: 17, weight: .medium))
+                        .frame(width: 22, height: 22)
+                }
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("자동 진행")
+                        .font(.system(size: 13, weight: .semibold, design: .serif))
+                    Text(isAutoAdvanceEnabled ? "켜짐" : "꺼짐 · 수동")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(BossNarrativePalette.prompt)
+                }
+            }
+            .foregroundStyle(isAutoAdvanceEnabled ? BossNarrativePalette.speaker : BossNarrativePalette.dialogue)
+            .frame(width: 142, height: 42)
+            .background(Color.black.opacity(0.62))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .overlay {
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(
+                        isAutoAdvanceEnabled
+                            ? BossNarrativePalette.speaker.opacity(0.72)
+                            : BossNarrativePalette.counter.opacity(0.5),
+                        lineWidth: 1
+                    )
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("대화 자동 진행")
+        .accessibilityValue(isAutoAdvanceEnabled ? "켜짐" : "꺼짐")
+        .accessibilityHint(isAutoAdvanceEnabled ? "두 번 탭하여 수동 진행으로 전환" : "두 번 탭하여 자동 진행 켜기")
     }
 
     private var recordCounter: some View {
@@ -774,14 +997,136 @@ private struct BossNarrativeView: View {
         sequence.dialogues[dialogueIndex]
     }
 
+    private var isProtagonistDialogue: Bool {
+        currentDialogue.speaker == "주인공"
+    }
+
+    private var currentSpeakerColor: Color {
+        isProtagonistDialogue
+            ? BossNarrativePalette.protagonistAccent
+            : BossNarrativePalette.speaker
+    }
+
+    private var currentDialogueColor: Color {
+        isProtagonistDialogue
+            ? BossNarrativePalette.protagonistDialogue
+            : BossNarrativePalette.dialogue
+    }
+
+    private var revealedDialogueText: String {
+        String(currentDialogue.text.prefix(revealedCharacterCount))
+    }
+
+    private var isDialogueFullyRevealed: Bool {
+        revealedCharacterCount >= currentDialogue.text.count
+    }
+
+    private var autoAdvanceTaskID: String {
+        "\(dialogueIndex)-\(isAutoAdvanceEnabled)-\(isDialogueFullyRevealed)"
+    }
+
+    private var autoAdvanceDelay: Duration {
+        let readingTime = min(max(Double(currentDialogue.text.count) * 0.025, 0.7), 1.5)
+        return .seconds(2.2 + readingTime)
+    }
+
+    @MainActor
+    private func revealCurrentDialogue() async {
+        let scheduledIndex = dialogueIndex
+        let characters = Array(currentDialogue.text)
+        revealedCharacterCount = appSettings.reducedMotion ? characters.count : 0
+
+        guard !appSettings.reducedMotion else { return }
+
+        for (index, character) in characters.enumerated() {
+            guard !Task.isCancelled, scheduledIndex == dialogueIndex else { return }
+            revealedCharacterCount = index + 1
+
+            guard index < characters.count - 1 else { continue }
+            do {
+                try await Task.sleep(for: typewriterDelay(after: character))
+            } catch {
+                return
+            }
+        }
+    }
+
+    private func typewriterDelay(after character: Character) -> Duration {
+        switch character {
+        case ".", "!", "?", "…":
+            .milliseconds(105)
+        case ",", "·":
+            .milliseconds(58)
+        case " ":
+            .milliseconds(14)
+        default:
+            .milliseconds(29)
+        }
+    }
+
+    @MainActor
+    private func scheduleAutoAdvanceIfNeeded() async {
+        guard isAutoAdvanceEnabled, isDialogueFullyRevealed else { return }
+        let scheduledIndex = dialogueIndex
+
+        do {
+            try await Task.sleep(for: autoAdvanceDelay)
+        } catch {
+            return
+        }
+
+        guard !Task.isCancelled,
+              isAutoAdvanceEnabled,
+              scheduledIndex == dialogueIndex else { return }
+        advance()
+    }
+
     private func advance() {
         guard dialogueIndex < sequence.dialogues.count - 1 else {
             onFinished()
             return
         }
 
+        let nextDialogueIndex = dialogueIndex + 1
+        revealedCharacterCount = appSettings.reducedMotion
+            ? sequence.dialogues[nextDialogueIndex].text.count
+            : 0
+
         withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.2)) {
-            dialogueIndex += 1
+            dialogueIndex = nextDialogueIndex
+        }
+    }
+}
+
+private struct AutoAdvanceSpinner: View {
+    let reducedMotion: Bool
+
+    @State private var rotation = 0.0
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(BossNarrativePalette.speaker.opacity(0.2), lineWidth: 2)
+
+            Circle()
+                .trim(from: 0.08, to: 0.76)
+                .stroke(
+                    BossNarrativePalette.speaker,
+                    style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                )
+
+            Image(systemName: "arrowtriangle.forward.fill")
+                .font(.system(size: 5, weight: .bold))
+                .offset(x: 8.5, y: -3.5)
+        }
+        .frame(width: 22, height: 22)
+        .rotationEffect(.degrees(rotation))
+        .shadow(color: BossNarrativePalette.speaker.opacity(0.55), radius: 4)
+        .onAppear {
+            guard !reducedMotion else { return }
+            withAnimation(.linear(duration: 1.8).repeatForever(autoreverses: false)) {
+                rotation = 360
+            }
         }
     }
 }
@@ -860,6 +1205,9 @@ private extension BossNarrativeSequence {
 private enum BossNarrativePalette {
     static let speaker = Color(red: 190 / 255, green: 142 / 255, blue: 1)
     static let dialogue = Color(red: 232 / 255, green: 229 / 255, blue: 224 / 255)
+    static let protagonistAccent = Color(red: 94 / 255, green: 210 / 255, blue: 238 / 255)
+    static let protagonistDialogue = Color(red: 218 / 255, green: 241 / 255, blue: 246 / 255)
+    static let protagonistPanel = Color(red: 35 / 255, green: 122 / 255, blue: 158 / 255)
     static let prompt = Color(red: 166 / 255, green: 163 / 255, blue: 166 / 255)
     static let counter = Color(red: 196 / 255, green: 184 / 255, blue: 160 / 255)
 }

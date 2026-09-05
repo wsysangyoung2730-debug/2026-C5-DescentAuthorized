@@ -9,16 +9,51 @@ struct Floor8ExplorationView: View {
     var body: some View {
         Group {
             if gameSession.progress.currentScene == .floor8Antechamber {
-                FloorEntranceInvestigationFlow(
+                InvestigationFlow(
                     sceneController: sceneController,
                     configuration: .floor8,
-                    hasCompletedInvestigation: hasCompletedEntranceInvestigation
-                ) {
-                    FloorEntrancePanel(
-                        configuration: .floor8,
-                        action: { gameSession.send(.enterProtectionRoom) }
-                    )
+                    hasCompletedInvestigation: hasCompletedEntranceInvestigation,
+                    hasCompletedPostInvestigation: hasCompletedBarrierScrollLearning,
+                    postInvestigationContent: { completion in
+                        ScrollSpellLearningView(
+                            spell: SpellCatalog.basicBarrier,
+                            sourceCode: "제8층 · 보호 절차실 입구",
+                            discoveryText: "조사를 마치자 바닥의 격리 앵커 옆에서 청백색 문양이 새겨진 두루마리가 모습을 드러낸다.",
+                            presentation: .standard,
+                            tutorialSequence: nil,
+                            failureMechanic: nil
+                        ) { grade in
+                            gameSession.send(.completeScrollLearning(
+                                spell: .basicBarrier,
+                                grade: grade
+                            ))
+                            completion()
+                        }
+                    },
+                    entranceContent: {
+                        FloorEntrancePanel(
+                            configuration: .floor8,
+                            action: { gameSession.send(.enterProtectionRoom) }
+                        )
+                    }
+                )
+            } else if gameSession.progress.currentScene == .floor8SealedDoor,
+                      !gameSession.progress.learnedSpells.contains(.sealRelease) {
+                ScrollSpellLearningView(
+                    spell: SpellCatalog.sealRelease,
+                    sourceCode: "8-D / 관측 본실 봉인문",
+                    discoveryText: "소멸한 잔류체의 핵에서 떨어진 두루마리가 금빛 해제 문양을 드러낸다. 절대 방벽과 봉인을 무효화하는 획이다.",
+                    presentation: .standard,
+                    tutorialSequence: nil,
+                    failureMechanic: nil
+                ) { grade in
+                    gameSession.send(.completeScrollLearning(
+                        spell: .sealRelease,
+                        grade: grade
+                    ))
                 }
+            } else if gameSession.progress.currentScene == .floor8SealedDoor {
+                sealedDoor
             } else {
                 ZStack {
                     LinearGradient(
@@ -54,7 +89,7 @@ struct Floor8ExplorationView: View {
         case .floor8ProtectionRoom:
             protectionRoom
         case .floor8SealedDoor:
-            sealedDoor
+            EmptyView()
         default:
             EmptyView()
         }
@@ -101,29 +136,17 @@ struct Floor8ExplorationView: View {
 
     private var sealedDoor: some View {
         let spell = SpellCatalog.sealRelease
-        return VStack(alignment: .leading, spacing: 14) {
-            sceneCode("8-D / 관측 본실 봉인문")
-            Label("잔류체 핵에서 주문 해독 완료", systemImage: "lock.open.fill")
-                .font(.headline)
-                .foregroundStyle(.yellow)
-            Text(spell.name)
-                .font(.title2.weight(.semibold))
-            Text("공격으로는 열리지 않는 봉인이다. 금색 핵심점을 따라 해제 문양을 완성해 본실 잠금을 제거한다.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            GlyphCastingPanel(
-                spell: spell,
-                inputPreference: appSettings.inputPreference,
-                availableMana: 100,
-                availableStrokes: 2,
-                erasureZones: [],
-                onCast: { submission in
-                    guard submission.evaluation.succeeded else { return }
-                    gameSession.send(.releaseObservationDoor)
-                }
-            )
-            .frame(maxWidth: 760)
+        return GateSealInteractionView(
+            title: spell.name,
+            instruction: "금색 핵심점을 따라 해제 문양을 완성하십시오.",
+            spell: spell,
+            inputPreference: appSettings.inputPreference,
+            availableMana: 100,
+            availableStrokes: 2,
+            presentation: GateSealGlyphPresentation()
+        ) { submission in
+            guard submission.evaluation.succeeded else { return }
+            gameSession.send(.releaseObservationDoor)
         }
     }
 
@@ -153,13 +176,18 @@ struct Floor8ExplorationView: View {
     }
 
     private var hasCompletedEntranceInvestigation: Bool {
-        let recordIDs = Set(FloorEntranceInvestigationConfiguration.floor8.clues.map(\.recordID))
+        let recordIDs = Set(InvestigationConfiguration.floor8.clues.map(\.recordID))
         return recordIDs.isSubset(of: gameSession.progress.readRecordIDs)
+    }
+
+    private var hasCompletedBarrierScrollLearning: Bool {
+        gameSession.progress.learnedSpells.contains(.basicBarrier)
+            && gameSession.progress.completedTrainingSpells.contains(.basicBarrier)
     }
 
     private var contentWidth: CGFloat {
         switch gameSession.progress.currentScene {
-        case .floor8ProtectionRoom, .floor8SealedDoor: 720
+        case .floor8ProtectionRoom: 720
         default: 500
         }
     }

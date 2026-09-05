@@ -443,7 +443,7 @@ private struct DescentSealProcedureView: View {
 
     private var recordPanel: some View {
         ZStack {
-            Image("Floor10DescentRecordParchment")
+            Image("RecordParchment")
                 .resizable()
                 .scaledToFit()
 

@@ -35,6 +35,13 @@ struct GameProgressValidator: Sendable {
     }
 
     private func validateLocation(_ progress: GameProgress) throws {
+        guard progress.checkpoint.progressionIndex
+            <= progress.furthestCheckpoint.progressionIndex else {
+            throw GameProgressValidationError.missingRequirement(
+                "current checkpoint must be unlocked"
+            )
+        }
+
         let expectedFloor = floor(for: progress.currentScene)
         guard progress.currentFloor == expectedFloor else {
             throw GameProgressValidationError.floorSceneMismatch(
@@ -207,9 +214,22 @@ struct GameProgressValidator: Sendable {
             .demoComplete
         ].contains(scene) {
             try require(
-                progress.defeatedEnemies.contains(.observationResidual)
-                    && progress.learnedSpells.contains(.sealRelease),
-                "관측 잔류체 처치와 봉인 해제 습득"
+                progress.defeatedEnemies.contains(.observationResidual),
+                "관측 잔류체 처치"
+            )
+        }
+
+        if [
+            SceneID.floor8AdministratorEncounter,
+            .floor8AdministratorBattle,
+            .floor8AdministratorDefeated,
+            .floor8Reward,
+            .floor8DescentDoor,
+            .demoComplete
+        ].contains(scene) {
+            try require(
+                progress.learnedSpells.contains(.sealRelease),
+                "봉인 해제 습득"
             )
         }
 

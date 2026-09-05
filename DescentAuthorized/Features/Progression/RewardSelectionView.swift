@@ -36,6 +36,7 @@ struct RewardSelectionView: View {
 
     let floor: FloorID
     let sceneController: RealitySceneController
+    @Binding var isLearningInputActive: Bool
 
     @State private var selectedCandidateID: String?
     @State private var isResolving = false
@@ -54,7 +55,11 @@ struct RewardSelectionView: View {
             let metrics = RewardLayoutMetrics(size: proxy.size)
 
             ZStack {
-                if isSelectionInterfaceVisible {
+                if let pendingLearningCandidate {
+                    rewardLearningView(for: pendingLearningCandidate)
+                        .id(pendingLearningCandidate.id)
+                        .transition(.opacity)
+                } else if isSelectionInterfaceVisible {
                     ZStack {
                         backgroundTreatment
                         header(metrics: metrics)
@@ -73,6 +78,18 @@ struct RewardSelectionView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
+            if let pendingLearningCandidate,
+               let selectedIndex = candidates.firstIndex(where: {
+                   $0.id == pendingLearningCandidate.id
+               }) {
+                selectedCandidateID = pendingLearningCandidate.id
+                isSelectionInterfaceVisible = false
+                isLearningInputActive = true
+                setRewardState(.resolved(selectedIndex: selectedIndex))
+                return
+            }
+
+            isLearningInputActive = false
             isSelectionInterfaceVisible = false
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             setRewardState(.appearing)
@@ -95,6 +112,7 @@ struct RewardSelectionView: View {
         .onDisappear {
             transitionTask?.cancel()
             cancelDetailPress(playsCloseSound: false)
+            isLearningInputActive = false
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
             sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion)
@@ -417,6 +435,32 @@ struct RewardSelectionView: View {
         return candidates.first { $0.id == inspectedCandidateID }
     }
 
+    private var pendingLearningCandidate: RewardCandidate? {
+        candidates.first { gameSession.progress.selectedRewardIDs.contains($0.id) }
+    }
+
+    private func rewardLearningView(for candidate: RewardCandidate) -> some View {
+        let spell = displayedSpell(for: candidate)
+
+        return ScrollSpellLearningView(
+            spell: spell,
+            sourceCode: "제\(floor.rawValue)층 · 관리자 보상 기록",
+            discoveryText: "선택한 두루마리의 문양이 입력판과 공명합니다. 획의 순서를 재현해 주문 기록을 완전히 정착시키십시오.",
+            presentation: .standard,
+            tutorialSequence: nil,
+            failureMechanic: nil,
+            startsAtPractice: true,
+            onPracticeVisibilityChange: { isActive in
+                isLearningInputActive = isActive
+            }
+        ) { grade in
+            gameSession.send(.completeRewardLearning(
+                candidateID: candidate.id,
+                grade: grade
+            ))
+        }
+    }
+
     private func beginDetailPress(for candidateID: String) {
         guard detailPressTask == nil, inspectedCandidateID == nil else { return }
         detailPressTask = Task { @MainActor in
@@ -442,12 +486,7 @@ struct RewardSelectionView: View {
     }
 
     private func displayedSpell(for candidate: RewardCandidate) -> SpellDefinition {
-        if let id = candidate.resolvedSpell { return SpellCatalog.spell(id) }
-        switch candidate.category {
-        case .attack: return SpellCatalog.riftSeverance
-        case .defense: return SpellCatalog.basicBarrier
-        case .dispel: return SpellCatalog.sealRelease
-        }
+        SpellCatalog.spell(RewardCatalog.learningSpell(for: candidate))
     }
 
     private func displayedName(for candidate: RewardCandidate, spell: SpellDefinition) -> String {
@@ -523,7 +562,19 @@ struct RewardSelectionView: View {
             setRewardState(.resolved(selectedIndex: selectedIndex))
             try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 390))
             guard !Task.isCancelled else { return }
-            gameSession.send(.selectReward(selectedCandidateID))
+
+            withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+                isSelectionInterfaceVisible = false
+            }
+            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 190))
+            guard !Task.isCancelled else { return }
+
+            isLearningInputActive = true
+            try? await Task.sleep(for: .milliseconds(appSettings.reducedMotion ? 20 : 230))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeIn(duration: appSettings.reducedMotion ? 0 : 0.2)) {
+                _ = gameSession.send(.selectReward(selectedCandidateID))
+            }
         }
     }
 

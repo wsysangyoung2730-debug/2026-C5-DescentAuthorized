@@ -391,25 +391,25 @@ struct Floor10OpeningExperienceView: View {
                 terminalLineCount = terminalLines.count
                 try? await Task.sleep(for: .milliseconds(420))
             } else {
-                try? await Task.sleep(for: .milliseconds(180))
+                try? await Task.sleep(for: .milliseconds(120))
                 guard !Task.isCancelled else { return }
-                withAnimation(.easeIn(duration: 0.16)) {
+                withAnimation(.easeIn(duration: 0.12)) {
                     terminalPower = 0.018
                 }
 
-                try? await Task.sleep(for: .milliseconds(240))
+                try? await Task.sleep(for: .milliseconds(170))
                 guard !Task.isCancelled else { return }
-                withAnimation(.easeOut(duration: 0.18)) {
+                withAnimation(.easeOut(duration: 0.14)) {
                     terminalPower = 0.13
                 }
 
-                try? await Task.sleep(for: .milliseconds(260))
+                try? await Task.sleep(for: .milliseconds(190))
                 guard !Task.isCancelled else { return }
-                withAnimation(.easeInOut(duration: 0.52)) {
+                withAnimation(.easeInOut(duration: 0.34)) {
                     terminalPower = 1
                 }
 
-                try? await Task.sleep(for: .milliseconds(520))
+                try? await Task.sleep(for: .milliseconds(320))
                 guard !Task.isCancelled else { return }
                 terminalIsOnline = true
 
@@ -420,13 +420,13 @@ struct Floor10OpeningExperienceView: View {
                     for characterCount in 1...line.count {
                         guard !Task.isCancelled else { return }
                         terminalCharacterCount = characterCount
-                        let delay = line.contains("[WARN]") || line.contains("[CRIT]") ? 36 : 28
+                        let delay = line.contains("[WARN]") || line.contains("[CRIT]") ? 22 : 18
                         try? await Task.sleep(for: .milliseconds(delay))
                     }
 
                     try? await Task.sleep(
                         for: .milliseconds(
-                            line.contains("[WARN]") || line.contains("[CRIT]") ? 600 : 360
+                            line.contains("[WARN]") || line.contains("[CRIT]") ? 300 : 220
                         )
                     )
                     guard !Task.isCancelled else { return }
@@ -435,11 +435,11 @@ struct Floor10OpeningExperienceView: View {
                 }
             }
 
-            try? await Task.sleep(for: .milliseconds(reducesMotion ? 120 : 1_150))
+            try? await Task.sleep(for: .milliseconds(reducesMotion ? 120 : 550))
             guard !Task.isCancelled else { return }
             gameSession.send(.completeTutorialStep(step: .terminalBoot, next: .awaken))
             resetAwakeningVisuals()
-            withAnimation(.easeInOut(duration: reducesMotion ? 0 : 0.68)) {
+            withAnimation(.easeInOut(duration: reducesMotion ? 0 : 0.45)) {
                 presentation = .awakening
             }
             prepareAwakeningIfNeeded()

@@ -6,6 +6,8 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     let maximumYaw: Float
     let maximumUpwardPitch: Float
     let maximumDownwardPitch: Float
+    let yawRadiansPerViewport: Float
+    let pitchRadiansPerViewport: Float
     let minimumFieldOfViewScale: Float
     let maximumFieldOfViewScale: Float
 
@@ -13,33 +15,29 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
         maximumYaw: .pi * 60 / 180,
         maximumUpwardPitch: .pi * 25 / 180,
         maximumDownwardPitch: .pi * 25 / 180,
+        yawRadiansPerViewport: .pi * 120 / 180,
+        pitchRadiansPerViewport: .pi * 50 / 180,
         minimumFieldOfViewScale: 0.85,
         maximumFieldOfViewScale: 1.10
     )
 
-    static let floorExploration = BattleCameraInteractionConfiguration(
-        maximumYaw: .pi * 24 / 180,
-        maximumUpwardPitch: .pi * 10 / 180,
-        maximumDownwardPitch: .pi * 12 / 180,
-        minimumFieldOfViewScale: 1,
-        maximumFieldOfViewScale: 1
-    )
+    static let floor10Investigation = investigation(maximumYawDegrees: 24)
+    static let floor8Investigation = investigation(maximumYawDegrees: 28)
+    static let floor9Investigation = investigation(maximumYawDegrees: 65)
 
-    static let floorEntranceInvestigation = BattleCameraInteractionConfiguration(
-        maximumYaw: .pi * 28 / 180,
-        maximumUpwardPitch: .pi * 10 / 180,
-        maximumDownwardPitch: .pi * 12 / 180,
-        minimumFieldOfViewScale: 1,
-        maximumFieldOfViewScale: 1
-    )
-
-    static let floor9EntranceInvestigation = BattleCameraInteractionConfiguration(
-        maximumYaw: .pi * 65 / 180,
-        maximumUpwardPitch: .pi * 10 / 180,
-        maximumDownwardPitch: .pi * 12 / 180,
-        minimumFieldOfViewScale: 1,
-        maximumFieldOfViewScale: 1
-    )
+    /// Creates a floor investigation camera with a shared drag response while
+    /// allowing each scene to expose the horizontal range its clues require.
+    static func investigation(maximumYawDegrees: Float) -> Self {
+        BattleCameraInteractionConfiguration(
+            maximumYaw: .pi * maximumYawDegrees / 180,
+            maximumUpwardPitch: .pi * 10 / 180,
+            maximumDownwardPitch: .pi * 12 / 180,
+            yawRadiansPerViewport: .pi * 48 / 180,
+            pitchRadiansPerViewport: .pi * 22 / 180,
+            minimumFieldOfViewScale: 1,
+            maximumFieldOfViewScale: 1
+        )
+    }
 }
 
 struct RealityProjectedInvestigationAnchor: Equatable, Sendable {
@@ -451,9 +449,8 @@ final class RealitySceneController: ObservableObject {
 
         let horizontalProgress = Float(translation.width / viewportSize.width)
         let verticalProgress = Float(translation.height / viewportSize.height)
-        let horizontalSweep = configuration.maximumYaw * 2
-        let verticalSweep = configuration.maximumUpwardPitch
-            + configuration.maximumDownwardPitch
+        let horizontalSweep = configuration.yawRadiansPerViewport
+        let verticalSweep = configuration.pitchRadiansPerViewport
 
         // 손가락 이동과 시선 이동은 반대 방향이다. 오른쪽으로 끌면 왼쪽을 본다.
         battleCameraYaw = clamp(

@@ -8,7 +8,7 @@ struct Floor9EntranceView: View {
     let sceneController: RealitySceneController
 
     var body: some View {
-        FloorEntranceInvestigationFlow(
+        InvestigationFlow(
             sceneController: sceneController,
             configuration: .floor9,
             hasCompletedInvestigation: isInvestigationComplete
@@ -127,13 +127,13 @@ struct Floor9EntranceView: View {
     }
 
     private var statusBadge: some View {
-        let isComplete = inspectedClueIDs.count == FloorEntranceInvestigationConfiguration.floor9.clues.count
+        let isComplete = inspectedClueIDs.count == InvestigationConfiguration.floor9.clues.count
         let color = isComplete ? Floor9EntrancePalette.success : Floor9EntrancePalette.brass
 
         return Text(
             isComplete
                 ? "입구 조사 완료"
-                : "조사 \(inspectedClueIDs.count) / \(FloorEntranceInvestigationConfiguration.floor9.clues.count)"
+                : "조사 \(inspectedClueIDs.count) / \(InvestigationConfiguration.floor9.clues.count)"
         )
             .font(.caption2.weight(.semibold))
             .foregroundStyle(color)
@@ -257,12 +257,12 @@ struct Floor9EntranceView: View {
     }
 
     private var inspectedClueIDs: Set<String> {
-        Set(FloorEntranceInvestigationConfiguration.floor9.clues.map(\.recordID))
+        Set(InvestigationConfiguration.floor9.clues.map(\.recordID))
             .intersection(gameSession.progress.readRecordIDs)
     }
 
     private var isInvestigationComplete: Bool {
-        inspectedClueIDs.count == FloorEntranceInvestigationConfiguration.floor9.clues.count
+        inspectedClueIDs.count == InvestigationConfiguration.floor9.clues.count
     }
 
     private var entryWarning: some View {
@@ -321,6 +321,7 @@ struct Floor9EntranceView: View {
             .shadow(color: DAColor.magic.opacity(0.24), radius: 10, y: 4)
         }
         .buttonStyle(.plain)
+        .accessibilityHint("제9층 기록 관리자 전투가 시작됩니다")
     }
 
     private var sectionDivider: some View {
