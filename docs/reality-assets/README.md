@@ -1,5 +1,9 @@
 # Descent Authorized Reality assets v012
 
+> Document status: exported asset package reference
+> Source version: `DA_F08_F09_F10_Combined_v012.blend`
+> Last classified: 2026-09-01
+
 This package was exported from `DA_F08_F09_F10_Combined_v012.blend`.
 
 ## Xcode import

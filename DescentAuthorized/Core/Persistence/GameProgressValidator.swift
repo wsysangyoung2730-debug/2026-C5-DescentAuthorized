@@ -9,6 +9,7 @@ enum GameProgressValidationError: Error, Equatable, Sendable {
     case unknownReward(String)
     case duplicateReward(String)
     case invalidMastery(SpellID)
+    case invalidTutorialState(String)
     case completionStateMismatch
 }
 
@@ -29,10 +30,18 @@ struct GameProgressValidator: Sendable {
 
         try validateLocation(progress)
         try validateCollectionIntegrity(progress)
+        try validateTutorialState(progress.tutorialProgress)
         try validateProgressionRequirements(progress)
     }
 
     private func validateLocation(_ progress: GameProgress) throws {
+        guard progress.checkpoint.progressionIndex
+            <= progress.furthestCheckpoint.progressionIndex else {
+            throw GameProgressValidationError.missingRequirement(
+                "current checkpoint must be unlocked"
+            )
+        }
+
         let expectedFloor = floor(for: progress.currentScene)
         guard progress.currentFloor == expectedFloor else {
             throw GameProgressValidationError.floorSceneMismatch(
@@ -89,6 +98,31 @@ struct GameProgressValidator: Sendable {
             guard count <= 1 else {
                 throw GameProgressValidationError.duplicateReward("floor\(floor.rawValue)")
             }
+        }
+    }
+
+    private func validateTutorialState(_ tutorial: TutorialProgress) throws {
+        guard tutorial.completedSequences.isDisjoint(with: tutorial.skippedSequences) else {
+            throw GameProgressValidationError.invalidTutorialState(
+                "completed and skipped sequences must be disjoint"
+            )
+        }
+        guard (tutorial.activeSequence == nil) == (tutorial.activeStep == nil) else {
+            throw GameProgressValidationError.invalidTutorialState(
+                "active sequence and step must be stored together"
+            )
+        }
+        if let activeSequence = tutorial.activeSequence,
+           tutorial.completedSequences.contains(activeSequence)
+            || tutorial.skippedSequences.contains(activeSequence) {
+            throw GameProgressValidationError.invalidTutorialState(
+                "finished sequence cannot remain active"
+            )
+        }
+        guard tutorial.failureCounts.values.allSatisfy({ $0 >= 0 }) else {
+            throw GameProgressValidationError.invalidTutorialState(
+                "failure count cannot be negative"
+            )
         }
     }
 
@@ -180,9 +214,22 @@ struct GameProgressValidator: Sendable {
             .demoComplete
         ].contains(scene) {
             try require(
-                progress.defeatedEnemies.contains(.observationResidual)
-                    && progress.learnedSpells.contains(.sealRelease),
-                "관측 잔류체 처치와 봉인 해제 습득"
+                progress.defeatedEnemies.contains(.observationResidual),
+                "관측 잔류체 처치"
+            )
+        }
+
+        if [
+            SceneID.floor8AdministratorEncounter,
+            .floor8AdministratorBattle,
+            .floor8AdministratorDefeated,
+            .floor8Reward,
+            .floor8DescentDoor,
+            .demoComplete
+        ].contains(scene) {
+            try require(
+                progress.learnedSpells.contains(.sealRelease),
+                "봉인 해제 습득"
             )
         }
 

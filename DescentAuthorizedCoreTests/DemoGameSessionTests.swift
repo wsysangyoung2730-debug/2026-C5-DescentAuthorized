@@ -2,6 +2,26 @@ import XCTest
 @testable import DescentAuthorizedCore
 
 final class DemoGameSessionTests: XCTestCase {
+    func testCheckpointTravelClearsActiveEncounter() throws {
+        var progress = GameProgress.newGame
+        progress.currentFloor = .floor9
+        progress.currentScene = .floor9RecordsBattle
+        progress.checkpoint = .recordsBattle
+        progress.furthestCheckpoint = .recordsBattle
+        progress.learnedSpells = [.afterglowErasure, .riftSeverance]
+        progress.completedTrainingSpells = [.afterglowErasure, .riftSeverance]
+        var session = DemoGameSession(progress: progress)
+
+        _ = try session.handle(.startEncounter)
+        XCTAssertNotNil(session.encounter)
+
+        _ = try session.handle(.travelToCheckpoint(.floor10Start))
+
+        XCTAssertNil(session.encounter)
+        XCTAssertEqual(session.progress.currentScene, .floor10MeetingRoom)
+        XCTAssertEqual(session.progress.furthestCheckpoint, .recordsBattle)
+    }
+
     func testResidualEncounterKeepsBarrierFromProtectionTraining() throws {
         var progress = GameProgress.newGame
         progress.currentFloor = .floor8

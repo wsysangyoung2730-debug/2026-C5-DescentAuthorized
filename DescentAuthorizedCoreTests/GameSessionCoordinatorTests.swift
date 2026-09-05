@@ -79,7 +79,7 @@ final class GameSessionCoordinatorTests: XCTestCase {
         XCTAssertThrowsError(try GameSessionCoordinator(saveStore: store)) { error in
             XCTAssertEqual(
                 error as? GameProgressValidationError,
-                .unsupportedVersion(2)
+                .unsupportedVersion(GameProgress.currentSaveVersion + 1)
             )
         }
     }

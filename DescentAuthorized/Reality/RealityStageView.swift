@@ -28,6 +28,12 @@ enum LoadingScreenContext: Equatable {
     }
 }
 
+struct SceneRetryLoadingPresentation: Equatable {
+    let context: LoadingScreenContext
+    var progress: Double
+    let tip: String
+}
+
 enum LoadingTipCatalog {
     private static let general = [
         "문양은 정확하게 그릴수록 주문 효과가 강해집니다.",

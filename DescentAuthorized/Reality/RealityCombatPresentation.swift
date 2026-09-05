@@ -149,6 +149,55 @@ final class RealityCombatVFXRenderer {
     private var shieldAuraEntity: Entity?
     private var shieldTransitionTask: Task<Void, Never>?
     private var shieldTransitionGeneration = 0
+    var onIntentLayoutChanged: (() -> Void)?
+
+    func projectedIntentFrame(in arView: ARView) -> CGRect? {
+        guard let currentIntentEntity else { return nil }
+        let bounds = currentIntentEntity.visualBounds(relativeTo: nil)
+        let corners = [
+            SIMD3(bounds.min.x, bounds.min.y, bounds.min.z),
+            SIMD3(bounds.min.x, bounds.min.y, bounds.max.z),
+            SIMD3(bounds.min.x, bounds.max.y, bounds.min.z),
+            SIMD3(bounds.min.x, bounds.max.y, bounds.max.z),
+            SIMD3(bounds.max.x, bounds.min.y, bounds.min.z),
+            SIMD3(bounds.max.x, bounds.min.y, bounds.max.z),
+            SIMD3(bounds.max.x, bounds.max.y, bounds.min.z),
+            SIMD3(bounds.max.x, bounds.max.y, bounds.max.z)
+        ]
+        let projected = corners.compactMap(arView.project)
+        guard projected.count >= 4 else { return nil }
+
+        let minX = projected.map(\.x).min() ?? 0
+        let maxX = projected.map(\.x).max() ?? 0
+        let minY = projected.map(\.y).min() ?? 0
+        let maxY = projected.map(\.y).max() ?? 0
+        let rawFrame = CGRect(
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY
+        )
+        let minimumTargetSize: CGFloat = 64
+        let maximumTargetSize = CGSize(width: 148, height: 176)
+        let targetSize = CGSize(
+            width: min(
+                max(rawFrame.width + 8, minimumTargetSize),
+                maximumTargetSize.width
+            ),
+            height: min(
+                max(rawFrame.height + 8, minimumTargetSize),
+                maximumTargetSize.height
+            )
+        )
+        let targetFrame = CGRect(
+            x: rawFrame.midX - targetSize.width / 2,
+            y: rawFrame.midY - targetSize.height / 2,
+            width: targetSize.width,
+            height: targetSize.height
+        ).intersection(arView.bounds)
+        guard targetFrame.width >= 44, targetFrame.height >= 44 else { return nil }
+        return targetFrame
+    }
 
     func attach(to registry: RealityEntityRegistry) {
         root = registry.root
@@ -210,6 +259,7 @@ final class RealityCombatVFXRenderer {
         shieldAuraEntity = nil
         currentShieldState = .none
         shieldTransitionGeneration += 1
+        onIntentLayoutChanged?()
     }
 
     private func applyShield(
@@ -407,6 +457,7 @@ final class RealityCombatVFXRenderer {
                 enemyAnchor.addChild(container)
                 self.playAuthoredAnimation(on: entity)
                 self.animateAppearance(container, reducedMotion: reducedMotion)
+                self.onIntentLayoutChanged?()
             },
             failure: { [weak self] message in
                 guard let self, generation == self.intentGeneration else { return }
@@ -458,6 +509,7 @@ final class RealityCombatVFXRenderer {
         currentIntentEntity = nil
         currentIntentCue = nil
         pendingIntentCue = nil
+        onIntentLayoutChanged?()
     }
 
     private func intentPosition(relativeTo anchor: Entity) -> SIMD3<Float> {
@@ -482,6 +534,7 @@ final class RealityCombatVFXRenderer {
     private func repositionCurrentIntent() {
         guard let enemyAnchor, let currentIntentEntity else { return }
         currentIntentEntity.position = intentPosition(relativeTo: enemyAnchor)
+        onIntentLayoutChanged?()
     }
 
     private func hitPosition(relativeTo anchor: Entity) -> SIMD3<Float> {

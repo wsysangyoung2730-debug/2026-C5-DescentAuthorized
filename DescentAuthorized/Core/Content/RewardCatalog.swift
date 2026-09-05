@@ -12,6 +12,21 @@ enum RewardCatalog {
         }
     }
 
+    static func learningSpell(for candidate: RewardCandidate) -> SpellID {
+        if let resolvedSpell = candidate.resolvedSpell {
+            return resolvedSpell
+        }
+
+        switch candidate.category {
+        case .attack:
+            return .riftSeverance
+        case .defense:
+            return .basicBarrier
+        case .dispel:
+            return .sealRelease
+        }
+    }
+
     private static let floor9Candidates = [
         RewardCandidate(
             id: "floor9-worn-a",

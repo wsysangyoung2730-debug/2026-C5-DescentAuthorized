@@ -3,6 +3,7 @@ import Foundation
 enum DemoCommand: Sendable {
     case leaveMeetingRoom
     case learnSpell(SpellID)
+    case completeScrollLearning(spell: SpellID, grade: CastingGrade)
     case completeTraining(spell: SpellID, grade: CastingGrade)
     case completeProtectionTraining(grade: CastingGrade)
     case approveDescentDoor
@@ -16,6 +17,7 @@ enum DemoCommand: Sendable {
     case beginAdministratorBattle
     case continueAfterAdministratorDefeat
     case selectReward(String)
+    case completeRewardLearning(candidateID: String, grade: CastingGrade)
     case readRecord(String)
     case startEncounter
     case castSpell(
@@ -26,6 +28,14 @@ enum DemoCommand: Sendable {
     case finishTurn
     case restartEncounter
     case restartEncounterFromCheckpoint
+    case travelToCheckpoint(CheckpointID)
+    case beginTutorial(sequence: TutorialSequenceID, step: TutorialStepID)
+    case completeTutorialStep(step: TutorialStepID, next: TutorialStepID?)
+    case completeTutorial(TutorialSequenceID)
+    case skipTutorial(TutorialSequenceID)
+    case recordTutorialFailure(TutorialMechanicID)
+    case requestTutorialReplay(TutorialSequenceID)
+    case resetTutorials
 }
 
 enum DemoSessionEvent: Equatable, Sendable {
@@ -73,6 +83,9 @@ struct DemoGameSession: Sendable {
             }
             return wrap(events)
 
+        case let .completeScrollLearning(spell, grade):
+            return wrap(try progression.completeScrollLearning(spell: spell, grade: grade))
+
         case let .completeTraining(spell, grade):
             return wrap(try progression.completeTraining(spell: spell, grade: grade))
 
@@ -112,6 +125,12 @@ struct DemoGameSession: Sendable {
         case let .selectReward(candidateID):
             return wrap(try progression.selectReward(candidateID: candidateID))
 
+        case let .completeRewardLearning(candidateID, grade):
+            return wrap(try progression.completeRewardLearning(
+                candidateID: candidateID,
+                grade: grade
+            ))
+
         case let .readRecord(recordID):
             guard let event = progression.readRecord(id: recordID) else { return [] }
             return [.progression(event)]
@@ -130,6 +149,32 @@ struct DemoGameSession: Sendable {
 
         case .restartEncounterFromCheckpoint:
             return try restartActiveEncounterFromCheckpoint()
+
+        case let .travelToCheckpoint(checkpoint):
+            encounter = nil
+            return wrap(try progression.travel(to: checkpoint))
+
+        case let .beginTutorial(sequence, step):
+            guard let event = progression.beginTutorial(sequence, at: step) else { return [] }
+            return [.progression(event)]
+
+        case let .completeTutorialStep(step, next):
+            return [.progression(progression.completeTutorialStep(step, next: next))]
+
+        case let .completeTutorial(sequence):
+            return [.progression(progression.completeTutorial(sequence))]
+
+        case let .skipTutorial(sequence):
+            return [.progression(progression.skipTutorial(sequence))]
+
+        case let .recordTutorialFailure(mechanic):
+            return [.progression(progression.recordTutorialFailure(mechanic))]
+
+        case let .requestTutorialReplay(sequence):
+            return [.progression(progression.requestTutorialReplay(sequence))]
+
+        case .resetTutorials:
+            return [.progression(progression.resetTutorials())]
         }
     }
 

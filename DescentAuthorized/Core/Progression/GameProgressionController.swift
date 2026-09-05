@@ -20,6 +20,13 @@ enum ProgressionEvent: Equatable, Sendable {
     case checkpointChanged(CheckpointID)
     case recordRead(String)
     case masteryUpdated(spell: SpellID, mastery: SpellMastery)
+    case tutorialStarted(sequence: TutorialSequenceID, step: TutorialStepID)
+    case tutorialStepCompleted(TutorialStepID)
+    case tutorialCompleted(TutorialSequenceID)
+    case tutorialSkipped(TutorialSequenceID)
+    case tutorialFailureRecorded(mechanic: TutorialMechanicID, count: Int)
+    case tutorialReplayRequested(TutorialSequenceID)
+    case tutorialsReset
     case demoCompleted
 }
 
@@ -54,6 +61,55 @@ struct GameProgressionController: Sendable {
             .spellLearned(.riftSeverance),
             .sceneChanged(setScene(.floor10TrainingWall))
         ]
+    }
+
+    mutating func completeScrollLearning(
+        spell: SpellID,
+        grade: CastingGrade
+    ) throws -> [ProgressionEvent] {
+        guard grade != .rejected else {
+            throw ProgressionError.requirementMissing("successful scroll tracing")
+        }
+
+        let destination: SceneID?
+        switch spell {
+        case .afterglowErasure:
+            try requireScene(.floor10Office)
+            progress.tutorials.formUnion([.cardSelection, .drawing])
+            destination = .floor10GlyphArchive
+
+        case .riftSeverance:
+            try requireScene(.floor10GlyphArchive)
+            guard progress.completedTrainingSpells.contains(.afterglowErasure) else {
+                throw ProgressionError.requirementMissing("afterglow scroll learning")
+            }
+            destination = .floor10DescentDoor
+
+        case .basicBarrier:
+            try requireScene(.floor8Antechamber)
+            progress.tutorials.insert(.defense)
+            destination = nil
+
+        case .sealRelease:
+            try requireScene(.floor8SealedDoor)
+            destination = nil
+
+        case .barrierPiercing:
+            throw ProgressionError.unexpectedSpell(spell)
+        }
+
+        progress.learnedSpells.insert(spell)
+        progress.completedTrainingSpells.insert(spell)
+
+        var events: [ProgressionEvent] = [
+            .spellLearned(spell),
+            .trainingCompleted(spell: spell, grade: grade),
+            updateMastery(spell: spell, grade: grade)
+        ]
+        if let destination {
+            events.append(.sceneChanged(setScene(destination)))
+        }
+        return events
     }
 
     mutating func completeTraining(
@@ -98,7 +154,7 @@ struct GameProgressionController: Sendable {
                 throw ProgressionError.requirementMissing("two floor 10 training spells")
             }
             progress.currentFloor = .floor9
-            progress.checkpoint = .floor10Complete
+            reachCheckpoint(.floor10Complete)
             return [
                 .checkpointChanged(.floor10Complete),
                 .sceneChanged(setScene(.floor9Entrance))
@@ -110,7 +166,7 @@ struct GameProgressionController: Sendable {
             }
             let recovery = restoreHP(by: 30)
             progress.currentFloor = .floor8
-            progress.checkpoint = .floor8Start
+            reachCheckpoint(.floor8Start)
             return [
                 recovery,
                 .checkpointChanged(.floor8Start),
@@ -125,7 +181,7 @@ struct GameProgressionController: Sendable {
             }
             progress.currentFloor = .floor7
             progress.currentScene = .demoComplete
-            progress.checkpoint = .demoComplete
+            reachCheckpoint(.demoComplete)
             progress.isDemoComplete = true
             return [
                 .checkpointChanged(.demoComplete),
@@ -143,7 +199,7 @@ struct GameProgressionController: Sendable {
 
     mutating func enterRecordsBattle() throws -> [ProgressionEvent] {
         try requireScene(.floor9Entrance)
-        progress.checkpoint = .recordsBattle
+        reachCheckpoint(.recordsBattle)
         progress.tutorials.formUnion([.mana, .strokeCount, .enemyIntent, .hp])
         return [
             .checkpointChanged(.recordsBattle),
@@ -166,6 +222,13 @@ struct GameProgressionController: Sendable {
 
     mutating func enterProtectionRoom() throws -> [ProgressionEvent] {
         try requireScene(.floor8Antechamber)
+        if progress.completedTrainingSpells.contains(.basicBarrier) {
+            reachCheckpoint(.residualBattle)
+            return [
+                .checkpointChanged(.residualBattle),
+                .sceneChanged(setScene(.floor8ResidualEncounter))
+            ]
+        }
         return move(to: .floor8ProtectionRoom)
     }
 
@@ -188,7 +251,7 @@ struct GameProgressionController: Sendable {
         }
 
         progress.completedTrainingSpells.insert(.basicBarrier)
-        progress.checkpoint = .residualBattle
+        reachCheckpoint(.residualBattle)
         return [
             .trainingCompleted(spell: .basicBarrier, grade: grade),
             updateMastery(spell: .basicBarrier, grade: grade),
@@ -212,7 +275,7 @@ struct GameProgressionController: Sendable {
         guard progress.learnedSpells.contains(.sealRelease) else {
             throw ProgressionError.requirementMissing("seal release spell")
         }
-        progress.checkpoint = .observationBattle
+        reachCheckpoint(.observationBattle)
         progress.tutorials.formUnion([.absoluteBarrier, .dispel, .strongAttack])
         return [
             .checkpointChanged(.observationBattle),
@@ -290,7 +353,7 @@ struct GameProgressionController: Sendable {
 
         switch enemy {
         case .recordsAdministrator:
-            progress.checkpoint = .recordsDefeated
+            reachCheckpoint(.recordsDefeated)
             progress.tutorials.formUnion([.normalBarrier, .erasureZone, .rewardSelection])
             return [
                 .enemyDefeated(enemy),
@@ -299,19 +362,17 @@ struct GameProgressionController: Sendable {
             ]
 
         case .observationResidual:
-            progress.learnedSpells.insert(.sealRelease)
             let recovery = restoreHP(by: 20, minimum: 60)
-            progress.checkpoint = .residualDefeated
+            reachCheckpoint(.residualDefeated)
             return [
                 .enemyDefeated(enemy),
-                .spellLearned(.sealRelease),
                 recovery,
                 .checkpointChanged(.residualDefeated),
                 .sceneChanged(setScene(.floor8ResidualDefeated))
             ]
 
         case .observationAdministrator:
-            progress.checkpoint = .observationDefeated
+            reachCheckpoint(.observationDefeated)
             return [
                 .enemyDefeated(enemy),
                 .checkpointChanged(.observationDefeated),
@@ -322,14 +383,11 @@ struct GameProgressionController: Sendable {
 
     mutating func selectReward(candidateID: String) throws -> [ProgressionEvent] {
         let floor: FloorID
-        let destination: SceneID
         switch progress.currentScene {
         case .floor9RewardVault:
             floor = .floor9
-            destination = .floor9DescentDoor
         case .floor8Reward:
             floor = .floor8
-            destination = .floor8DescentDoor
         default:
             throw ProgressionError.invalidScene(
                 expected: [.floor9RewardVault, .floor8Reward],
@@ -346,18 +404,131 @@ struct GameProgressionController: Sendable {
         }
 
         progress.selectedRewardIDs.append(selected.id)
-        if let spell = selected.resolvedSpell {
-            progress.learnedSpells.insert(spell)
-        }
-
-        var events: [ProgressionEvent] = [
+        return [
             .rewardSelected(candidateID: selected.id, spell: selected.resolvedSpell)
         ]
-        if let spell = selected.resolvedSpell {
+    }
+
+    mutating func completeRewardLearning(
+        candidateID: String,
+        grade: CastingGrade
+    ) throws -> [ProgressionEvent] {
+        guard grade != .rejected else {
+            throw ProgressionError.requirementMissing("successful reward scroll tracing")
+        }
+
+        let floor: FloorID
+        let destination: SceneID
+        switch progress.currentScene {
+        case .floor9RewardVault:
+            floor = .floor9
+            destination = .floor9DescentDoor
+        case .floor8Reward:
+            floor = .floor8
+            destination = .floor8DescentDoor
+        default:
+            throw ProgressionError.invalidScene(
+                expected: [.floor9RewardVault, .floor8Reward],
+                actual: progress.currentScene
+            )
+        }
+
+        guard progress.selectedRewardIDs.contains(candidateID) else {
+            throw ProgressionError.requirementMissing("selected reward scroll")
+        }
+        guard let selected = RewardCatalog.candidates(for: floor)
+            .first(where: { $0.id == candidateID }) else {
+            throw ProgressionError.unknownReward(candidateID)
+        }
+
+        let spell = RewardCatalog.learningSpell(for: selected)
+        let isNewSpell = progress.learnedSpells.insert(spell).inserted
+        progress.completedTrainingSpells.insert(spell)
+
+        var events: [ProgressionEvent] = []
+        if isNewSpell {
             events.append(.spellLearned(spell))
         }
+        events.append(.trainingCompleted(spell: spell, grade: grade))
+        events.append(updateMastery(spell: spell, grade: grade))
         events.append(.sceneChanged(setScene(destination)))
         return events
+    }
+
+    mutating func travel(to checkpoint: CheckpointID) throws -> [ProgressionEvent] {
+        guard checkpoint.progressionIndex <= progress.furthestCheckpoint.progressionIndex else {
+            throw ProgressionError.requirementMissing("unlocked checkpoint")
+        }
+
+        let previousFloor9Reward = RewardCatalog.candidates(for: .floor9).first {
+            progress.selectedRewardIDs.contains($0.id)
+        }
+        let previousFloor8Reward = RewardCatalog.candidates(for: .floor8).first {
+            progress.selectedRewardIDs.contains($0.id)
+        }
+        let destination = checkpoint.destination
+        let targetIndex = checkpoint.progressionIndex
+
+        progress.currentFloor = destination.floor
+        progress.currentScene = destination.scene
+        progress.checkpoint = checkpoint
+        progress.playerHP = Self.maximumPlayerHP
+        progress.isDemoComplete = checkpoint == .demoComplete
+        progress.learnedSpells = []
+        progress.completedTrainingSpells = []
+        progress.defeatedEnemies = []
+        progress.selectedRewardIDs = []
+
+        if targetIndex >= CheckpointID.floor10Complete.progressionIndex {
+            let floor10Spells: Set<SpellID> = [.afterglowErasure, .riftSeverance]
+            progress.learnedSpells.formUnion(floor10Spells)
+            progress.completedTrainingSpells.formUnion(floor10Spells)
+        }
+        if targetIndex >= CheckpointID.recordsDefeated.progressionIndex {
+            progress.defeatedEnemies.insert(.recordsAdministrator)
+        }
+        if targetIndex >= CheckpointID.floor8Start.progressionIndex {
+            let reward = previousFloor9Reward
+                ?? RewardCatalog.candidates(for: .floor9)[0]
+            progress.selectedRewardIDs.append(reward.id)
+            progress.learnedSpells.insert(RewardCatalog.learningSpell(for: reward))
+            progress.completedTrainingSpells.insert(RewardCatalog.learningSpell(for: reward))
+        }
+        if targetIndex >= CheckpointID.residualBattle.progressionIndex {
+            progress.learnedSpells.insert(.basicBarrier)
+            progress.completedTrainingSpells.insert(.basicBarrier)
+        }
+        if targetIndex >= CheckpointID.residualDefeated.progressionIndex {
+            progress.defeatedEnemies.insert(.observationResidual)
+        }
+        if targetIndex >= CheckpointID.observationBattle.progressionIndex {
+            progress.learnedSpells.insert(.sealRelease)
+            progress.completedTrainingSpells.insert(.sealRelease)
+        }
+        if targetIndex >= CheckpointID.observationDefeated.progressionIndex {
+            progress.defeatedEnemies.insert(.observationAdministrator)
+        }
+        if targetIndex >= CheckpointID.demoComplete.progressionIndex {
+            let reward = previousFloor8Reward
+                ?? RewardCatalog.candidates(for: .floor8)[0]
+            progress.selectedRewardIDs.append(reward.id)
+            let rewardSpell = RewardCatalog.learningSpell(for: reward)
+            progress.learnedSpells.insert(rewardSpell)
+            progress.completedTrainingSpells.insert(rewardSpell)
+        }
+
+        let retainedLearnedSpells = progress.learnedSpells
+        progress.spellMastery = progress.spellMastery.filter {
+            retainedLearnedSpells.contains($0.key)
+        }
+        progress.tutorialProgress.activeSequence = nil
+        progress.tutorialProgress.activeStep = nil
+        progress.tutorialProgress.requestedReplay = nil
+
+        return [
+            .checkpointChanged(checkpoint),
+            .sceneChanged(destination.scene)
+        ]
     }
 
     mutating func recordCasting(
@@ -375,6 +546,52 @@ struct GameProgressionController: Sendable {
     mutating func readRecord(id: String) -> ProgressionEvent? {
         let inserted = progress.readRecordIDs.insert(id).inserted
         return inserted ? .recordRead(id) : nil
+    }
+
+    mutating func beginTutorial(
+        _ sequence: TutorialSequenceID,
+        at step: TutorialStepID
+    ) -> ProgressionEvent? {
+        guard progress.tutorialProgress.shouldPresent(sequence) else { return nil }
+        progress.tutorialProgress.begin(sequence, at: step)
+        return .tutorialStarted(sequence: sequence, step: step)
+    }
+
+    mutating func completeTutorialStep(
+        _ step: TutorialStepID,
+        next: TutorialStepID?
+    ) -> ProgressionEvent {
+        progress.tutorialProgress.completeStep(step, next: next)
+        return .tutorialStepCompleted(step)
+    }
+
+    mutating func completeTutorial(_ sequence: TutorialSequenceID) -> ProgressionEvent {
+        progress.tutorialProgress.complete(sequence)
+        return .tutorialCompleted(sequence)
+    }
+
+    mutating func skipTutorial(_ sequence: TutorialSequenceID) -> ProgressionEvent {
+        progress.tutorialProgress.skip(sequence)
+        return .tutorialSkipped(sequence)
+    }
+
+    mutating func recordTutorialFailure(
+        _ mechanic: TutorialMechanicID
+    ) -> ProgressionEvent {
+        let count = progress.tutorialProgress.recordFailure(mechanic)
+        return .tutorialFailureRecorded(mechanic: mechanic, count: count)
+    }
+
+    mutating func requestTutorialReplay(
+        _ sequence: TutorialSequenceID
+    ) -> ProgressionEvent {
+        progress.tutorialProgress.requestReplay(sequence)
+        return .tutorialReplayRequested(sequence)
+    }
+
+    mutating func resetTutorials() -> ProgressionEvent {
+        progress.tutorialProgress.reset()
+        return .tutorialsReset
     }
 
     private mutating func updateMastery(
@@ -404,6 +621,13 @@ struct GameProgressionController: Sendable {
         return .hpRestored(amount: restoredHP - previousHP, currentHP: restoredHP)
     }
 
+    private mutating func reachCheckpoint(_ checkpoint: CheckpointID) {
+        progress.checkpoint = checkpoint
+        if checkpoint.progressionIndex > progress.furthestCheckpoint.progressionIndex {
+            progress.furthestCheckpoint = checkpoint
+        }
+    }
+
     @discardableResult
     private mutating func setScene(_ scene: SceneID) -> SceneID {
         progress.currentScene = scene
@@ -420,6 +644,33 @@ struct GameProgressionController: Sendable {
                 expected: [expected],
                 actual: progress.currentScene
             )
+        }
+    }
+}
+
+private extension CheckpointID {
+    var destination: (floor: FloorID, scene: SceneID) {
+        switch self {
+        case .floor10Start:
+            (.floor10, .floor10MeetingRoom)
+        case .floor10Complete:
+            (.floor9, .floor9Entrance)
+        case .recordsBattle:
+            (.floor9, .floor9RecordsEncounter)
+        case .recordsDefeated:
+            (.floor9, .floor9RecordsDefeated)
+        case .floor8Start:
+            (.floor8, .floor8Antechamber)
+        case .residualBattle:
+            (.floor8, .floor8ResidualEncounter)
+        case .residualDefeated:
+            (.floor8, .floor8ResidualDefeated)
+        case .observationBattle:
+            (.floor8, .floor8AdministratorEncounter)
+        case .observationDefeated:
+            (.floor8, .floor8AdministratorDefeated)
+        case .demoComplete:
+            (.floor7, .demoComplete)
         }
     }
 }

@@ -23,6 +23,10 @@ final class DemoFlowIntegrationTests: XCTestCase {
         try winCurrentEncounter(in: &session)
         _ = try session.handle(.continueAfterRecordsDefeat)
         _ = try session.handle(.selectReward("floor9-worn-a"))
+        _ = try session.handle(.completeRewardLearning(
+            candidateID: "floor9-worn-a",
+            grade: .perfect
+        ))
         _ = try session.handle(.approveDescentDoor)
 
         _ = try session.handle(.enterProtectionRoom)
@@ -32,12 +36,20 @@ final class DemoFlowIntegrationTests: XCTestCase {
         try winCurrentEncounter(in: &session)
 
         _ = try session.handle(.continueAfterResidualDefeat)
+        _ = try session.handle(.completeScrollLearning(
+            spell: .sealRelease,
+            grade: .perfect
+        ))
 
         _ = try session.handle(.releaseObservationDoor)
         _ = try session.handle(.beginAdministratorBattle)
         try winCurrentEncounter(in: &session)
         _ = try session.handle(.continueAfterAdministratorDefeat)
         _ = try session.handle(.selectReward("floor8-forbidden"))
+        _ = try session.handle(.completeRewardLearning(
+            candidateID: "floor8-forbidden",
+            grade: .perfect
+        ))
         let endingEvents = try session.handle(.approveDescentDoor)
 
         XCTAssertEqual(session.progress.currentFloor, .floor7)

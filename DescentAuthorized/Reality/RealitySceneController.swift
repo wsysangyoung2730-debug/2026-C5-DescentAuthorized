@@ -6,6 +6,8 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     let maximumYaw: Float
     let maximumUpwardPitch: Float
     let maximumDownwardPitch: Float
+    let yawRadiansPerViewport: Float
+    let pitchRadiansPerViewport: Float
     let minimumFieldOfViewScale: Float
     let maximumFieldOfViewScale: Float
 
@@ -13,9 +15,42 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
         maximumYaw: .pi * 60 / 180,
         maximumUpwardPitch: .pi * 25 / 180,
         maximumDownwardPitch: .pi * 25 / 180,
+        yawRadiansPerViewport: .pi * 120 / 180,
+        pitchRadiansPerViewport: .pi * 50 / 180,
         minimumFieldOfViewScale: 0.85,
         maximumFieldOfViewScale: 1.10
     )
+
+    static let floor10Investigation = investigation(maximumYawDegrees: 24)
+    static let floor8Investigation = investigation(maximumYawDegrees: 28)
+    static let floor9Investigation = investigation(maximumYawDegrees: 65)
+
+    /// Creates a floor investigation camera with a shared drag response while
+    /// allowing each scene to expose the horizontal range its clues require.
+    static func investigation(maximumYawDegrees: Float) -> Self {
+        BattleCameraInteractionConfiguration(
+            maximumYaw: .pi * maximumYawDegrees / 180,
+            maximumUpwardPitch: .pi * 10 / 180,
+            maximumDownwardPitch: .pi * 12 / 180,
+            yawRadiansPerViewport: .pi * 48 / 180,
+            pitchRadiansPerViewport: .pi * 22 / 180,
+            minimumFieldOfViewScale: 1,
+            maximumFieldOfViewScale: 1
+        )
+    }
+}
+
+struct RealityProjectedInvestigationAnchor: Equatable, Sendable {
+    let point: CGPoint
+}
+
+enum Floor10OpeningCameraFocus: Equatable, Sendable {
+    case rising
+    case trainingTarget
+    case surroundingDesk(Int)
+    case damagedRoom
+    case lockedDoor
+    case settled
 }
 
 @MainActor
@@ -23,6 +58,12 @@ final class RealitySceneController: ObservableObject {
     private struct AuthoredCameraSnapshot {
         let transformMatrix: simd_float4x4
         let camera: PerspectiveCameraComponent
+    }
+
+    private struct InvestigationAnchorDefinition {
+        let id: String
+        let entityName: String
+        let normalizedPosition: SIMD3<Float>
     }
 
     enum LoadState: Equatable {
@@ -35,10 +76,13 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var loadState: LoadState = .idle
     @Published private(set) var missingEntityRoles: [RealityEntityRole] = []
     @Published private(set) var projectedMagicBoard: RealityProjectedBoard?
+    @Published private(set) var projectedEnemyIntentFrame: CGRect?
+    @Published private(set) var projectedInvestigationAnchors: [String: RealityProjectedInvestigationAnchor] = [:]
     @Published private(set) var cameraFadeOpacity: Double = 0
     @Published private(set) var isCameraTransitioning = false
     @Published private(set) var isBattleCameraInteractionEnabled = false
     @Published private(set) var isBattleCameraAdjusted = false
+    @Published private(set) var isDescentFailurePresentationActive = false
     @Published private(set) var loadingProgress: Double = 0
 
     let registry = RealityEntityRegistry()
@@ -51,12 +95,20 @@ final class RealitySceneController: ObservableObject {
     private var cameraTransitionTask: Task<Void, Never>?
     private var battleCameraImpactTask: Task<Void, Never>?
     private var actorIdleMotionTask: Task<Void, Never>?
+    private var enemyPreviewRevealTask: Task<Void, Never>?
+    private var investigationAnchorEntities: [String: Entity] = [:]
+    private var isProjectionRefreshScheduled = false
     private weak var animatedEnemyAnchor: Entity?
+    private weak var revealingEnemyPreviewActor: Entity?
     private var enemyAnchorRestingTransform: Transform?
+    private var enemyPreviewFinalTransform: Transform?
     private var enemyIdleMotionAmplitude: Float = 0
     private var sceneLoadGeneration: UInt64 = 0
     private var cameraTransitionGeneration: UInt64 = 0
     private var battleCameraImpactGeneration: UInt64 = 0
+    private var descentCameraEffectGeneration: UInt64 = 0
+    private var floor10OpeningCameraGeneration: UInt64 = 0
+    private var enemyPreviewRevealGeneration: UInt64 = 0
     private var requestedSceneID: FloorSceneID?
     private var requestedCameraPreset: RealityCameraPreset = .main
     private var activeCameraName: String?
@@ -71,6 +123,7 @@ final class RealitySceneController: ObservableObject {
     private var requestedErasureZones: [ErasureZone] = []
     private var requestedBattleState: BattleState?
     private var requestedReducedMotion = false
+    private var requestedEnemyPreviewVisibility = true
     private var requestedDescentState: RealityDescentPresentationState = .inactive
     private var requestedRewardState: RealityRewardPresentationState = .inactive
     private var pendingCombatCues: [RealityCombatCue] = []
@@ -79,6 +132,9 @@ final class RealitySceneController: ObservableObject {
     private let progressionVFXRenderer = RealityProgressionVFXRenderer()
 
     func attach(to arView: ARView) {
+        combatVFXRenderer.onIntentLayoutChanged = { [weak self] in
+            self?.scheduleBoardProjectionRefresh()
+        }
         guard self.arView !== arView else {
             scheduleBoardProjectionRefresh()
             return
@@ -154,11 +210,224 @@ final class RealitySceneController: ObservableObject {
         transitionCamera(to: preset)
     }
 
+    func prepareFloor10FallenCamera(reducedMotion: Bool) {
+        guard requestedSceneID == .floor10ClosedOffice,
+              requestedCameraPreset == .tutorial,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        floor10OpeningCameraGeneration &+= 1
+        cameraEntity.stopAllAnimations(recursive: false)
+        let fallen = floor10OpeningTransform(
+            from: snapshot,
+            yaw: -0.12,
+            pitch: 0.2,
+            roll: -0.28,
+            verticalOffset: reducedMotion ? -0.18 : -0.72,
+            forwardOffset: -0.08
+        )
+        cameraEntity.setTransformMatrix(fallen.matrix, relativeTo: nil)
+        scheduleBoardProjectionRefresh()
+    }
+
+    func restoreFloor10OpeningCamera() {
+        floor10OpeningCameraGeneration &+= 1
+        guard requestedSceneID == .floor10ClosedOffice,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+        cameraEntity.camera = snapshot.camera
+        scheduleBoardProjectionRefresh()
+    }
+
+    func playFloor10OpeningCamera(
+        reducedMotion: Bool,
+        onFocus: @escaping @MainActor (Floor10OpeningCameraFocus) -> Void
+    ) async {
+        guard requestedSceneID == .floor10ClosedOffice,
+              requestedCameraPreset == .tutorial,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        floor10OpeningCameraGeneration &+= 1
+        let generation = floor10OpeningCameraGeneration
+        let movementDuration = reducedMotion ? 0.01 : 0.72
+        let holdDuration = reducedMotion ? 0.04 : 1.05
+
+        @MainActor
+        func move(
+            focus: Floor10OpeningCameraFocus,
+            yaw: Float = 0,
+            pitch: Float = 0,
+            roll: Float = 0,
+            verticalOffset: Float = 0,
+            forwardOffset: Float = 0
+        ) async -> Bool {
+            guard generation == floor10OpeningCameraGeneration,
+                  !Task.isCancelled else { return false }
+            onFocus(focus)
+            let transform = floor10OpeningTransform(
+                from: snapshot,
+                yaw: yaw,
+                pitch: pitch,
+                roll: roll,
+                verticalOffset: verticalOffset,
+                forwardOffset: forwardOffset
+            )
+            cameraEntity.move(
+                to: transform,
+                relativeTo: nil,
+                duration: movementDuration,
+                timingFunction: .easeInOut
+            )
+            try? await Task.sleep(for: .seconds(movementDuration + holdDuration))
+            return generation == floor10OpeningCameraGeneration && !Task.isCancelled
+        }
+
+        guard await move(focus: .rising) else { return }
+        guard await move(focus: .trainingTarget, yaw: -0.34, pitch: -0.04) else { return }
+        guard await move(focus: .surroundingDesk(1), yaw: 0.28, pitch: 0.05) else { return }
+        guard await move(focus: .surroundingDesk(2), yaw: -0.08, pitch: 0.1) else { return }
+        guard await move(focus: .damagedRoom, yaw: 0.16, pitch: -0.14) else { return }
+        guard await move(focus: .lockedDoor, yaw: 0.02, forwardOffset: 0.34) else { return }
+        guard await move(focus: .settled) else { return }
+
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+        cameraEntity.camera = snapshot.camera
+        scheduleBoardProjectionRefresh()
+    }
+
     func setBattleCameraInteractionEnabled(_ isEnabled: Bool) {
         guard isBattleCameraInteractionEnabled != isEnabled else { return }
         isBattleCameraInteractionEnabled = isEnabled
         if !isEnabled {
             resetBattleCamera(animated: false)
+        }
+    }
+
+    func setLimitedCameraInteractionEnabled(_ isEnabled: Bool) {
+        setBattleCameraInteractionEnabled(isEnabled)
+    }
+
+    func setEnemyPreviewVisible(_ isVisible: Bool) {
+        cancelEnemyPreviewReveal(restoreActor: true)
+        requestedEnemyPreviewVisibility = isVisible
+        registry.setEnabled(isVisible, for: .enemyActor)
+    }
+
+    func revealEnemyPreview(reducedMotion: Bool) {
+        requestedEnemyPreviewVisibility = true
+        cancelEnemyPreviewReveal(restoreActor: true)
+
+        guard let actor = registry.entity(for: .enemyActor) else {
+            registry.setEnabled(true, for: .enemyActor)
+            return
+        }
+        guard !reducedMotion else {
+            actor.components.set(OpacityComponent(opacity: 1))
+            registry.setEnabled(true, for: .enemyActor)
+            return
+        }
+
+        enemyPreviewRevealGeneration &+= 1
+        let generation = enemyPreviewRevealGeneration
+        let finalTransform = actor.transform
+        revealingEnemyPreviewActor = actor
+        enemyPreviewFinalTransform = finalTransform
+        var concealedTransform = finalTransform
+        concealedTransform.scale *= 0.96
+
+        actor.stopAllAnimations(recursive: false)
+        actor.transform = concealedTransform
+        actor.components.set(OpacityComponent(opacity: 0))
+        registry.setEnabled(true, for: .enemyActor)
+        actor.move(
+            to: finalTransform,
+            relativeTo: actor.parent,
+            duration: 0.72,
+            timingFunction: .easeInOut
+        )
+
+        let opacitySteps: [Float]
+        let stepDuration: Duration
+        if requestedSceneID == .floor08ResidueIsolation {
+            // 잔류체는 신호가 끊겼다 이어지듯 잠깐 흔들린 뒤 응집된다.
+            opacitySteps = [0.08, 0.2, 0.11, 0.34, 0.28, 0.52, 0.68, 0.84, 1]
+            stepDuration = .milliseconds(72)
+        } else {
+            opacitySteps = [0.08, 0.18, 0.31, 0.46, 0.62, 0.78, 0.91, 1]
+            stepDuration = .milliseconds(82)
+        }
+
+        enemyPreviewRevealTask = Task { @MainActor [weak self, weak actor] in
+            guard let self, let actor else { return }
+            for opacity in opacitySteps {
+                do {
+                    try await Task.sleep(for: stepDuration)
+                } catch {
+                    return
+                }
+                guard generation == self.enemyPreviewRevealGeneration else { return }
+                actor.components.set(OpacityComponent(opacity: opacity))
+            }
+            guard generation == self.enemyPreviewRevealGeneration else { return }
+            actor.transform = finalTransform
+            self.revealingEnemyPreviewActor = nil
+            self.enemyPreviewFinalTransform = nil
+            self.enemyPreviewRevealTask = nil
+        }
+    }
+
+    func centerAndLockEntranceCamera(
+        previewYaw: Float,
+        reducedMotion: Bool,
+        completion: @escaping @MainActor () -> Void
+    ) {
+        isBattleCameraInteractionEnabled = false
+        cancelBattleCameraImpact(restoreCamera: false)
+        clearBattleCameraAdjustmentState()
+
+        guard [.main, .battle, .tutorial].contains(requestedCameraPreset),
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else {
+            completion()
+            return
+        }
+
+        let targetMatrix = adjustedBattleCameraMatrix(
+            from: snapshot,
+            transientYaw: previewYaw
+        )
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.camera = snapshot.camera
+
+        if reducedMotion {
+            cameraEntity.setTransformMatrix(targetMatrix, relativeTo: nil)
+        } else {
+            cameraEntity.move(
+                to: Transform(matrix: targetMatrix),
+                relativeTo: nil,
+                duration: 0.28,
+                timingFunction: .easeInOut
+            )
+        }
+        isBattleCameraAdjusted = abs(previewYaw) > 0.001
+        scheduleBoardProjectionRefresh()
+
+        guard !reducedMotion else {
+            completion()
+            return
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(280))
+            completion()
         }
     }
 
@@ -180,9 +449,8 @@ final class RealitySceneController: ObservableObject {
 
         let horizontalProgress = Float(translation.width / viewportSize.width)
         let verticalProgress = Float(translation.height / viewportSize.height)
-        let horizontalSweep = configuration.maximumYaw * 2
-        let verticalSweep = configuration.maximumUpwardPitch
-            + configuration.maximumDownwardPitch
+        let horizontalSweep = configuration.yawRadiansPerViewport
+        let verticalSweep = configuration.pitchRadiansPerViewport
 
         // 손가락 이동과 시선 이동은 반대 방향이다. 오른쪽으로 끌면 왼쪽을 본다.
         battleCameraYaw = clamp(
@@ -227,7 +495,7 @@ final class RealitySceneController: ObservableObject {
         battleCameraZoomStartFieldOfViewScale = 1
         isBattleCameraAdjusted = false
 
-        guard requestedCameraPreset == .battle,
+        guard [.main, .battle, .tutorial].contains(requestedCameraPreset),
               let activeCameraName,
               let snapshot = authoredCameraSnapshots[activeCameraName],
               let cameraEntity else { return }
@@ -358,6 +626,161 @@ final class RealitySceneController: ObservableObject {
         }
     }
 
+    func playDescentSealRejectionCamera(reducedMotion: Bool) async {
+        cancelDescentCameraEffect(restoreCamera: true)
+        guard requestedCameraPreset == .descentInput,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        descentCameraEffectGeneration &+= 1
+        let generation = descentCameraEffectGeneration
+        defer {
+            if generation == descentCameraEffectGeneration {
+                restoreDescentCamera(snapshot: snapshot, cameraEntity: cameraEntity)
+            }
+        }
+
+        if reducedMotion {
+            try? await Task.sleep(for: .milliseconds(280))
+            return
+        }
+
+        let baseMatrix = snapshot.transformMatrix
+        let keyframes: [(horizontalOffset: Float, milliseconds: Int64)] = [
+            (-0.045, 48),
+            (0.052, 66),
+            (-0.028, 70),
+            (0.013, 76),
+            (0, 88)
+        ]
+
+        for keyframe in keyframes {
+            guard !Task.isCancelled,
+                  generation == descentCameraEffectGeneration else { return }
+            let transform = Transform(matrix: descentRejectionCameraMatrix(
+                from: baseMatrix,
+                horizontalOffset: keyframe.horizontalOffset
+            ))
+            cameraEntity.move(
+                to: transform,
+                relativeTo: nil,
+                duration: Double(keyframe.milliseconds) / 1_000,
+                timingFunction: .easeInOut
+            )
+            do {
+                try await Task.sleep(for: .milliseconds(keyframe.milliseconds))
+            } catch {
+                return
+            }
+        }
+    }
+
+    func playDescentSealFailureCamera(reducedMotion: Bool) async {
+        cancelDescentCameraEffect(restoreCamera: true)
+        guard requestedCameraPreset == .descentInput,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+
+        descentCameraEffectGeneration &+= 1
+        let generation = descentCameraEffectGeneration
+        isDescentFailurePresentationActive = true
+        let baseTransform = Transform(matrix: snapshot.transformMatrix)
+        let bracedTransform = descentCameraTransform(
+            from: baseTransform,
+            roll: .pi * 4 / 180,
+            pitch: -.pi * 1.5 / 180,
+            verticalDrop: 0.05
+        )
+        let fallingTransform = descentCameraTransform(
+            from: baseTransform,
+            roll: .pi * 20 / 180,
+            pitch: -.pi * 6 / 180,
+            verticalDrop: 0.44
+        )
+        let impactTransform = descentCameraTransform(
+            from: baseTransform,
+            roll: .pi * 34 / 180,
+            pitch: -.pi * 11 / 180,
+            verticalDrop: 0.74
+        )
+        let groundedTransform = descentCameraTransform(
+            from: baseTransform,
+            roll: .pi * 31 / 180,
+            pitch: -.pi * 9.5 / 180,
+            verticalDrop: 0.69
+        )
+
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.camera = snapshot.camera
+
+        if reducedMotion {
+            cameraEntity.setTransformMatrix(groundedTransform.matrix, relativeTo: nil)
+            try? await Task.sleep(for: .milliseconds(650))
+            return
+        }
+
+        cameraEntity.move(
+            to: bracedTransform,
+            relativeTo: nil,
+            duration: 0.24,
+            timingFunction: .easeIn
+        )
+        do {
+            try await Task.sleep(for: .milliseconds(240))
+        } catch {
+            return
+        }
+        guard !Task.isCancelled,
+              generation == descentCameraEffectGeneration else { return }
+
+        cameraEntity.move(
+            to: fallingTransform,
+            relativeTo: nil,
+            duration: 0.86,
+            timingFunction: .easeIn
+        )
+        do {
+            try await Task.sleep(for: .milliseconds(860))
+        } catch {
+            return
+        }
+        guard !Task.isCancelled,
+              generation == descentCameraEffectGeneration else { return }
+
+        cameraEntity.move(
+            to: impactTransform,
+            relativeTo: nil,
+            duration: 0.34,
+            timingFunction: .easeIn
+        )
+        do {
+            try await Task.sleep(for: .milliseconds(340))
+        } catch {
+            return
+        }
+        guard !Task.isCancelled,
+              generation == descentCameraEffectGeneration else { return }
+
+        cameraEntity.move(
+            to: groundedTransform,
+            relativeTo: nil,
+            duration: 0.22,
+            timingFunction: .easeOut
+        )
+        do {
+            try await Task.sleep(for: .milliseconds(220))
+            try await Task.sleep(for: .milliseconds(700))
+        } catch {
+            return
+        }
+    }
+
+    func resetDescentCamera() {
+        cancelDescentCameraEffect(restoreCamera: true)
+    }
+
     private func transitionCamera(to preset: RealityCameraPreset) {
         guard
             let descriptor = registry.descriptor,
@@ -372,6 +795,7 @@ final class RealitySceneController: ObservableObject {
         }
 
         cancelBattleCameraImpact(restoreCamera: false)
+        cancelDescentCameraEffect(restoreCamera: false)
         cameraTransitionTask?.cancel()
         cameraTransitionGeneration &+= 1
         let transitionGeneration = cameraTransitionGeneration
@@ -432,7 +856,7 @@ final class RealitySceneController: ObservableObject {
 
     private var canAdjustBattleCamera: Bool {
         isBattleCameraInteractionEnabled
-            && requestedCameraPreset == .battle
+            && [.main, .battle, .tutorial].contains(requestedCameraPreset)
             && !isCameraTransitioning
             && activeCameraName != nil
             && cameraEntity != nil
@@ -488,6 +912,29 @@ final class RealitySceneController: ObservableObject {
         return adjustedMatrix
     }
 
+    private func floor10OpeningTransform(
+        from snapshot: AuthoredCameraSnapshot,
+        yaw: Float,
+        pitch: Float,
+        roll: Float,
+        verticalOffset: Float,
+        forwardOffset: Float
+    ) -> Transform {
+        var transform = Transform(matrix: snapshot.transformMatrix)
+        let yawRotation = simd_quatf(angle: yaw, axis: SIMD3<Float>(0, 1, 0))
+        let pitchRotation = simd_quatf(angle: pitch, axis: SIMD3<Float>(1, 0, 0))
+        let rollRotation = simd_quatf(angle: roll, axis: SIMD3<Float>(0, 0, 1))
+        transform.rotation = transform.rotation * yawRotation * pitchRotation * rollRotation
+
+        let forward = -normalizedAxis(
+            snapshot.transformMatrix.columns.2,
+            fallback: SIMD3<Float>(0, 0, -1)
+        )
+        transform.translation += forward * forwardOffset
+        transform.translation.y += verticalOffset
+        return transform
+    }
+
     private func cancelBattleCameraImpact(restoreCamera: Bool) {
         guard battleCameraImpactTask != nil else { return }
         battleCameraImpactTask?.cancel()
@@ -525,6 +972,59 @@ final class RealitySceneController: ObservableObject {
         transform.rotation = baseTransform.rotation * rollRotation * pitchRotation
         transform.translation.y -= verticalDrop
         return transform
+    }
+
+    private func descentCameraTransform(
+        from baseTransform: Transform,
+        roll: Float,
+        pitch: Float,
+        verticalDrop: Float
+    ) -> Transform {
+        var transform = baseTransform
+        let rollRotation = simd_quatf(angle: roll, axis: SIMD3<Float>(0, 0, 1))
+        let pitchRotation = simd_quatf(angle: pitch, axis: SIMD3<Float>(1, 0, 0))
+        transform.rotation = baseTransform.rotation * rollRotation * pitchRotation
+        transform.translation.y -= verticalDrop
+        return transform
+    }
+
+    private func descentRejectionCameraMatrix(
+        from baseMatrix: simd_float4x4,
+        horizontalOffset: Float
+    ) -> simd_float4x4 {
+        let cameraRight = normalizedAxis(
+            baseMatrix.columns.0,
+            fallback: SIMD3<Float>(1, 0, 0)
+        )
+        var matrix = baseMatrix
+        let translatedPosition = SIMD3<Float>(
+            baseMatrix.columns.3.x,
+            baseMatrix.columns.3.y,
+            baseMatrix.columns.3.z
+        ) + cameraRight * horizontalOffset
+        matrix.columns.3 = SIMD4<Float>(translatedPosition, baseMatrix.columns.3.w)
+        return matrix
+    }
+
+    private func cancelDescentCameraEffect(restoreCamera: Bool) {
+        descentCameraEffectGeneration &+= 1
+        isDescentFailurePresentationActive = false
+        guard restoreCamera,
+              requestedCameraPreset == .descentInput,
+              let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let cameraEntity else { return }
+        restoreDescentCamera(snapshot: snapshot, cameraEntity: cameraEntity)
+    }
+
+    private func restoreDescentCamera(
+        snapshot: AuthoredCameraSnapshot,
+        cameraEntity: PerspectiveCamera
+    ) {
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+        cameraEntity.camera = snapshot.camera
+        scheduleBoardProjectionRefresh()
     }
 
     private func clamp(_ value: Float, minimum: Float, maximum: Float) -> Float {
@@ -633,12 +1133,15 @@ final class RealitySceneController: ObservableObject {
 
     func unload() {
         sceneLoadGeneration &+= 1
+        floor10OpeningCameraGeneration &+= 1
         loadCancellable?.cancel()
         loadCancellable = nil
         actorLoadCancellable?.cancel()
         actorLoadCancellable = nil
+        cancelEnemyPreviewReveal(restoreActor: false)
         stopEnemyIdleMotion(resetTransform: true)
         cancelBattleCameraImpact(restoreCamera: false)
+        cancelDescentCameraEffect(restoreCamera: false)
         cancelCameraTransition()
         if let sceneAnchor, let arView {
             arView.scene.removeAnchor(sceneAnchor)
@@ -652,6 +1155,10 @@ final class RealitySceneController: ObservableObject {
         registry.reset()
         missingEntityRoles = []
         projectedMagicBoard = nil
+        projectedEnemyIntentFrame = nil
+        projectedInvestigationAnchors = [:]
+        investigationAnchorEntities = [:]
+        isProjectionRefreshScheduled = false
         combatVFXRenderer.reset()
         progressionVFXRenderer.reset()
         requestedSceneID = nil
@@ -688,6 +1195,11 @@ final class RealitySceneController: ObservableObject {
         sceneAnchor = anchor
         cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
+        installInvestigationAnchors(
+            in: root,
+            sceneAnchor: anchor,
+            descriptor: descriptor
+        )
         loadingProgress = 0.9
         registry.setDoorOpen(false)
         // The authored entities are the inactive barrier pylons. They remain
@@ -760,6 +1272,10 @@ final class RealitySceneController: ObservableObject {
                     )
                     spawn.addChild(actorContainer)
                     self.registry.register(actorContainer, for: .enemyActor)
+                    self.registry.setEnabled(
+                        self.requestedEnemyPreviewVisibility,
+                        for: .enemyActor
+                    )
                     self.prepareEnemyIdleMotion(
                         spawn,
                         targetHeight: actor.targetHeight,
@@ -866,6 +1382,22 @@ final class RealitySceneController: ObservableObject {
         enemyIdleMotionAmplitude = 0
     }
 
+    private func cancelEnemyPreviewReveal(restoreActor: Bool) {
+        enemyPreviewRevealGeneration &+= 1
+        enemyPreviewRevealTask?.cancel()
+        enemyPreviewRevealTask = nil
+        if restoreActor,
+           let actor = revealingEnemyPreviewActor ?? registry.entity(for: .enemyActor) {
+            actor.stopAllAnimations(recursive: false)
+            if let enemyPreviewFinalTransform {
+                actor.transform = enemyPreviewFinalTransform
+            }
+            actor.components.set(OpacityComponent(opacity: 1))
+        }
+        revealingEnemyPreviewActor = nil
+        enemyPreviewFinalTransform = nil
+    }
+
     private func completeInstallation(descriptor: RealitySceneDescriptor) {
         setErasureZones(requestedErasureZones)
         combatVFXRenderer.attach(to: registry)
@@ -940,7 +1472,135 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func scheduleBoardProjectionRefresh() {
-        DispatchQueue.main.async { [weak self] in self?.refreshBoardProjection() }
+        guard !isProjectionRefreshScheduled else { return }
+        isProjectionRefreshScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            self?.isProjectionRefreshScheduled = false
+            self?.refreshBoardProjection()
+            self?.refreshEnemyIntentProjection()
+            self?.refreshInvestigationProjections()
+        }
+    }
+
+    private func installInvestigationAnchors(
+        in root: Entity,
+        sceneAnchor: AnchorEntity,
+        descriptor: RealitySceneDescriptor
+    ) {
+        investigationAnchorEntities = [:]
+        projectedInvestigationAnchors = [:]
+
+        let definitions: [InvestigationAnchorDefinition]
+        switch descriptor.sceneID {
+        case .floor10ClosedOffice:
+            definitions = [
+                .init(
+                    id: "floor10.clue.training-target",
+                    entityName: "TargetPanel_R",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.94)
+                ),
+                .init(
+                    id: "floor10.clue.impact-scar",
+                    entityName: "BrokenMonitor_R",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.88)
+                ),
+                .init(
+                    id: "floor10.clue.glyph-archive",
+                    entityName: "BeginnerSpellCabinet",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.9)
+                )
+            ]
+        case .floor09ArchiveRedesign:
+            definitions = [
+                .init(
+                    id: "9-entrance-01",
+                    entityName: "F09_SetDress_CableCoil_LeftRear",
+                    normalizedPosition: SIMD3(0.5, 0.62, 0.55)
+                ),
+                .init(
+                    id: "floor9.entrance.erased-monitor",
+                    entityName: "F09_SetDress_Monitor_Right",
+                    normalizedPosition: SIMD3(0.5, 0.5, 0.9)
+                )
+            ]
+        case .floor08ResidueIsolation:
+            definitions = [
+                .init(
+                    id: "floor8.entrance.warning-tags",
+                    entityName: "IsolationWarningTags",
+                    normalizedPosition: SIMD3(0.5, 0.55, 0.9)
+                ),
+                .init(
+                    id: "floor8.entrance.floor-anchor",
+                    entityName: "Anchor_0",
+                    normalizedPosition: SIMD3(0.5, 0.72, 0.5)
+                )
+            ]
+        case .floor08AdministratorObservatory:
+            definitions = []
+        }
+
+        for definition in definitions {
+            guard let target = root.findEntity(named: definition.entityName) else { continue }
+            let bounds = target.visualBounds(relativeTo: nil)
+            let size = bounds.max - bounds.min
+            guard size.x > 0.001, size.y > 0.001, size.z > 0.001 else { continue }
+
+            let worldPosition = bounds.min + (size * definition.normalizedPosition)
+            let anchor = Entity()
+            anchor.name = "DA_INVESTIGATION_\(definition.id)"
+            sceneAnchor.addChild(anchor)
+            anchor.setPosition(worldPosition, relativeTo: nil)
+            investigationAnchorEntities[definition.id] = anchor
+        }
+    }
+
+    private func refreshInvestigationProjections() {
+        guard requestedSceneID != nil,
+              let arView,
+              let cameraEntity else {
+            projectedInvestigationAnchors = [:]
+            return
+        }
+
+        let cameraMatrix = cameraEntity.transformMatrix(relativeTo: nil)
+        let cameraPosition = SIMD3<Float>(
+            cameraMatrix.columns.3.x,
+            cameraMatrix.columns.3.y,
+            cameraMatrix.columns.3.z
+        )
+        let cameraForward = simd_normalize(-SIMD3<Float>(
+            cameraMatrix.columns.2.x,
+            cameraMatrix.columns.2.y,
+            cameraMatrix.columns.2.z
+        ))
+        let extendedViewport = arView.bounds.insetBy(dx: -640, dy: -480)
+
+        var next: [String: RealityProjectedInvestigationAnchor] = [:]
+        for (id, anchor) in investigationAnchorEntities {
+            let worldPosition = anchor.position(relativeTo: nil)
+            let direction = worldPosition - cameraPosition
+            guard simd_length_squared(direction) > 0.0001,
+                  simd_dot(simd_normalize(direction), cameraForward) > 0,
+                  let point = arView.project(worldPosition),
+                  extendedViewport.contains(point) else { continue }
+            next[id] = RealityProjectedInvestigationAnchor(point: point)
+        }
+
+        if projectedInvestigationAnchors != next {
+            projectedInvestigationAnchors = next
+        }
+    }
+
+    private func refreshEnemyIntentProjection() {
+        guard let arView else {
+            projectedEnemyIntentFrame = nil
+            return
+        }
+        let nextFrame = combatVFXRenderer.projectedIntentFrame(in: arView)
+        if projectedEnemyIntentFrame != nextFrame {
+            projectedEnemyIntentFrame = nextFrame
+        }
     }
 
     private func refreshBoardProjection() {

@@ -5,16 +5,23 @@ struct Floor10TutorialView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let sceneController: RealitySceneController
+    @Binding var retryLoadingPresentation: SceneRetryLoadingPresentation?
 
     var body: some View {
         Group {
             if gameSession.progress.currentScene == .floor10MeetingRoom {
-                FloorEntrancePanel(
-                    configuration: .floor10,
-                    action: { gameSession.send(.leaveMeetingRoom) }
-                )
+                InvestigationView(
+                    sceneController: sceneController,
+                    configuration: .floor10
+                ) {
+                    gameSession.send(.leaveMeetingRoom)
+                }
             } else if gameSession.progress.currentScene == .floor10DescentDoor {
                 descentDoorScene
+            } else if gameSession.progress.currentScene == .floor10Office
+                        || gameSession.progress.currentScene == .floor10GlyphArchive {
+                sceneContent
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ZStack {
                     LinearGradient(
@@ -79,30 +86,15 @@ struct Floor10TutorialView: View {
         code: String,
         body: String
     ) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            sceneCode(code)
-            Label("해독 가능한 주문 기록", systemImage: "doc.text.magnifyingglass")
-                .font(.headline)
-                .foregroundStyle(.purple)
-            Text(spell.name)
-                .font(.system(size: 32, weight: .semibold))
-            Text(body)
-                .foregroundStyle(.secondary)
-                .lineSpacing(4)
-
-            glyphPreview(spell)
-                .frame(maxHeight: 260)
-
-            Spacer()
-
-            Button {
-                gameSession.send(.learnSpell(spell.id))
-            } label: {
-                Label("\(spell.name) 익히기", systemImage: "scroll.fill")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.purple)
+        ScrollSpellLearningView(
+            spell: spell,
+            sourceCode: code,
+            discoveryText: body,
+            presentation: .floor10,
+            tutorialSequence: spell.id == .afterglowErasure ? .afterglowDiscovery : nil,
+            failureMechanic: tutorialMechanic(for: spell.id)
+        ) { grade in
+            gameSession.send(.completeScrollLearning(spell: spell.id, grade: grade))
         }
     }
 
@@ -124,6 +116,8 @@ struct Floor10TutorialView: View {
                     .foregroundStyle(.red)
             }
 
+            trainingGuidance(for: spell)
+
             GlyphCastingPanel(
                 spell: spell,
                 inputPreference: appSettings.inputPreference,
@@ -131,7 +125,11 @@ struct Floor10TutorialView: View {
                 availableStrokes: 2,
                 erasureZones: [],
                 onCast: { submission in
-                    guard submission.evaluation.succeeded else { return }
+                    guard submission.evaluation.succeeded else {
+                        gameSession.send(.recordTutorialFailure(tutorialMechanic(for: spell.id)))
+                        return
+                    }
+                    completeSpellTutorialIfActive(spell.id)
                     gameSession.send(.completeTraining(
                         spell: spell.id,
                         grade: submission.evaluation.grade
@@ -140,12 +138,96 @@ struct Floor10TutorialView: View {
             )
             .frame(maxWidth: 760)
         }
+        .onAppear {
+            beginSpellTutorialIfNeeded(spell.id, step: tutorialTrainingStep(for: spell.id))
+        }
+        .onChange(of: gameSession.progress.tutorialProgress.requestedReplay) { _, replay in
+            if replay == tutorialSequence(for: spell.id) {
+                beginSpellTutorialIfNeeded(spell.id, step: tutorialTrainingStep(for: spell.id))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func trainingGuidance(for spell: SpellDefinition) -> some View {
+        let failures = gameSession.progress.tutorialProgress.failureCount(
+            for: tutorialMechanic(for: spell.id)
+        )
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: failures == 0 ? "hand.draw" : "lightbulb.max.fill")
+                .foregroundStyle(failures == 0 ? Color.purple : DAColor.gold)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(trainingGuidanceTitle(failures: failures))
+                    .font(.subheadline.weight(.semibold))
+                Text(trainingGuidanceMessage(failures: failures, spell: spell))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+            if failures > 0 {
+                Text("실패 \(failures)회")
+                    .font(.caption2.monospaced().weight(.bold))
+                    .foregroundStyle(.red.opacity(0.82))
+            }
+        }
+        .padding(12)
+        .background(.black.opacity(0.34), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func trainingGuidanceTitle(failures: Int) -> String {
+        switch failures {
+        case 0: "문양 입력"
+        case 1: "시작점부터 다시 확인"
+        default: "핵심점을 순서대로 통과"
+        }
+    }
+
+    private func trainingGuidanceMessage(failures: Int, spell: SpellDefinition) -> String {
+        switch failures {
+        case 0:
+            "밝은 시작점에서 손을 떼지 말고 가이드 선을 따라가십시오."
+        case 1:
+            "첫 입력 위치가 시작점 안에 있는지 확인한 뒤 천천히 그리십시오."
+        default:
+            "\(spell.requiredStrokes)개의 획을 구분하고, 각 획의 밝은 핵심점을 표시된 순서대로 지나십시오. 속도보다 정확도가 우선입니다."
+        }
+    }
+
+    private func tutorialSequence(for spell: SpellID) -> TutorialSequenceID {
+        spell == .afterglowErasure ? .afterglowDiscovery : .riftDiscovery
+    }
+
+    private func tutorialTrainingStep(for spell: SpellID) -> TutorialStepID {
+        spell == .afterglowErasure ? .afterglowTraining : .riftTraining
+    }
+
+    private func tutorialMechanic(for spell: SpellID) -> TutorialMechanicID {
+        spell == .afterglowErasure ? .afterglowDrawing : .riftDrawing
+    }
+
+    private func beginSpellTutorialIfNeeded(_ spell: SpellID, step: TutorialStepID) {
+        let sequence = tutorialSequence(for: spell)
+        let progress = gameSession.progress.tutorialProgress
+        guard progress.shouldPresent(sequence), progress.activeSequence != sequence else { return }
+        gameSession.send(.beginTutorial(sequence: sequence, step: step))
+    }
+
+    private func completeSpellTutorialIfActive(_ spell: SpellID) {
+        let sequence = tutorialSequence(for: spell)
+        guard gameSession.progress.tutorialProgress.activeSequence == sequence else { return }
+        gameSession.send(.completeTutorialStep(
+            step: tutorialTrainingStep(for: spell),
+            next: nil
+        ))
+        gameSession.send(.completeTutorial(sequence))
     }
 
     private var descentDoorScene: some View {
         DescentDoorSceneView(
             configuration: .floor10,
-            sceneController: sceneController
+            sceneController: sceneController,
+            retryLoadingPresentation: $retryLoadingPresentation
         )
     }
 
@@ -155,37 +237,6 @@ struct Floor10TutorialView: View {
             return SpellCatalog.riftSeverance
         }
         return SpellCatalog.afterglowErasure
-    }
-
-    private func glyphPreview(_ spell: SpellDefinition) -> some View {
-        Canvas { context, size in
-            for stroke in spell.glyph.strokes {
-                var path = Path()
-                guard let first = stroke.referencePath.first else { continue }
-                path.move(to: canvasPoint(first, size: size))
-                for point in stroke.referencePath.dropFirst() {
-                    path.addLine(to: canvasPoint(point, size: size))
-                }
-                context.stroke(
-                    path,
-                    with: .color(.purple.opacity(0.9)),
-                    style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
-                )
-            }
-        }
-        .background(Color.black.opacity(0.35))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .overlay {
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(Color.purple.opacity(0.25), lineWidth: 1)
-        }
-    }
-
-    private func canvasPoint(_ point: NormalizedPoint, size: CGSize) -> CGPoint {
-        CGPoint(
-            x: size.width * point.x / 100,
-            y: size.height * point.y / 100
-        )
     }
 
     private func sceneCode(_ text: String) -> some View {
@@ -241,9 +292,11 @@ struct FloorEntrancePanel: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text(configuration.code)
-                        .font(.caption.monospaced().weight(.bold))
-                        .foregroundStyle(configuration.accent)
+                    if let code = configuration.code {
+                        Text(code)
+                            .font(.caption.monospaced().weight(.bold))
+                            .foregroundStyle(configuration.accent)
+                    }
 
                     Text(configuration.title)
                         .font(.system(size: 34, weight: .semibold, design: .serif))
@@ -420,7 +473,7 @@ struct FloorEntrancePanel: View {
 }
 
 struct FloorEntranceConfiguration {
-    let code: String
+    let code: String?
     let title: String
     let summary: String
     let accent: Color
@@ -449,7 +502,7 @@ struct FloorEntranceConfiguration {
     )
 
     static let floor8 = FloorEntranceConfiguration(
-        code: "8-A / 균열 관측실 전초",
+        code: nil,
         title: "제0균열 관측 구역",
         summary: "깨진 모니터마다 기억침식 수치가 다른 값으로 반복된다.\n관측 본실은 금색 봉인문 뒤에 있고, 보호 절차실의 비상등만 켜져 있다.",
         accent: Color(red: 0.22, green: 0.78, blue: 0.96),

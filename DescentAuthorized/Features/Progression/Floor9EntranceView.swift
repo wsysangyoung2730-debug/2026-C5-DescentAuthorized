@@ -5,27 +5,24 @@ struct Floor9EntranceView: View {
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
 
-    @State private var inspectedRecord = false
-    @State private var isShowingClueDetail = false
     let sceneController: RealitySceneController
 
     var body: some View {
-        GeometryReader { proxy in
-            let panelWidth = min(max(proxy.size.width * 0.43, 520), 650)
+        InvestigationFlow(
+            sceneController: sceneController,
+            configuration: .floor9,
+            hasCompletedInvestigation: isInvestigationComplete
+        ) {
+            GeometryReader { proxy in
+                let panelWidth = min(max(proxy.size.width * 0.43, 520), 650)
 
-            ZStack(alignment: .trailing) {
-                worldDimming(panelWidth: panelWidth)
-                detectionMarker(panelWidth: panelWidth)
-                recordsPanel(width: panelWidth)
+                ZStack(alignment: .trailing) {
+                    worldDimming(panelWidth: panelWidth)
+                    recordsPanel(width: panelWidth)
+                }
             }
         }
         .ignoresSafeArea(edges: .bottom)
-        .overlay {
-            if isShowingClueDetail {
-                clueDetailOverlay
-                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
-            }
-        }
         .onAppear {
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
         }
@@ -46,37 +43,6 @@ struct Floor9EntranceView: View {
         .accessibilityHidden(true)
     }
 
-    private func detectionMarker(panelWidth: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(spacing: 7) {
-                Circle()
-                    .fill(Floor9EntrancePalette.brass)
-                    .frame(width: 6, height: 6)
-                    .shadow(color: Floor9EntrancePalette.brass.opacity(0.8), radius: 5)
-
-                Text("중앙 기록실")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Floor9EntrancePalette.warmText)
-            }
-
-            Text("관리자 반응 감지")
-                .font(.caption2.monospaced())
-                .foregroundStyle(DAColor.secondary)
-        }
-        .padding(.horizontal, 13)
-        .padding(.vertical, 10)
-        .background(DAColor.panel.opacity(0.82), in: RoundedRectangle(cornerRadius: 5))
-        .overlay {
-            RoundedRectangle(cornerRadius: 5)
-                .stroke(Floor9EntrancePalette.brass.opacity(0.32), lineWidth: 1)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .padding(.trailing, panelWidth + 56)
-        .padding(.top, 34)
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-
     private func recordsPanel(width: CGFloat) -> some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 0) {
@@ -92,7 +58,7 @@ struct Floor9EntranceView: View {
 
                 resourceStatus
 
-                clueCard
+                investigationSummary
                     .padding(.top, 18)
 
                 entryWarning
@@ -143,13 +109,8 @@ struct Floor9EntranceView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 10) {
-                Text("9-A / 중앙 기록실 입구")
-                    .font(.caption.monospaced().weight(.bold))
-                    .foregroundStyle(DAColor.magicGlow)
-
-                Spacer(minLength: 12)
-
+            HStack {
+                Spacer()
                 statusBadge
             }
 
@@ -166,9 +127,14 @@ struct Floor9EntranceView: View {
     }
 
     private var statusBadge: some View {
-        let color = inspectedRecord ? Floor9EntrancePalette.success : Floor9EntrancePalette.brass
+        let isComplete = inspectedClueIDs.count == InvestigationConfiguration.floor9.clues.count
+        let color = isComplete ? Floor9EntrancePalette.success : Floor9EntrancePalette.brass
 
-        return Text(inspectedRecord ? "단서 확인" : "미확인 구역")
+        return Text(
+            isComplete
+                ? "입구 조사 완료"
+                : "조사 \(inspectedClueIDs.count) / \(InvestigationConfiguration.floor9.clues.count)"
+        )
             .font(.caption2.weight(.semibold))
             .foregroundStyle(color)
             .padding(.horizontal, 9)
@@ -245,35 +211,31 @@ struct Floor9EntranceView: View {
         }
     }
 
-    private var clueCard: some View {
+    private var investigationSummary: some View {
         ZStack(alignment: .trailing) {
             Image("Floor9DocumentStamp")
                 .resizable()
                 .scaledToFill()
                 .frame(width: 86, height: 86)
                 .clipped()
-                .opacity(inspectedRecord ? 0.34 : 0.18)
+                .opacity(isInvestigationComplete ? 0.34 : 0.18)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 11) {
                 HStack(spacing: 8) {
-                    Image(systemName: inspectedRecord ? "checkmark.seal.fill" : "doc.text.magnifyingglass")
-                        .foregroundStyle(inspectedRecord ? Floor9EntrancePalette.success : DAColor.magicGlow)
+                    Image(systemName: isInvestigationComplete ? "checkmark.seal.fill" : "doc.text.magnifyingglass")
+                        .foregroundStyle(isInvestigationComplete ? Floor9EntrancePalette.success : DAColor.magicGlow)
 
-                    Text(inspectedRecord ? "확인된 단서" : "승인 서류")
+                    Text(isInvestigationComplete ? "입구 조사 완료" : "조사 가능한 기록 2개")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(inspectedRecord ? Floor9EntrancePalette.success : DAColor.magicGlow)
+                        .foregroundStyle(isInvestigationComplete ? Floor9EntrancePalette.success : DAColor.magicGlow)
                 }
 
-                HStack {
-                    Text(inspectedRecord ? "확인한 단서 다시 보기" : "바닥의 승인 서류 확인")
-                        .font(.subheadline.weight(.semibold))
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.bold))
-                }
-                .foregroundStyle(Floor9EntrancePalette.warmText)
-                .padding(.vertical, 4)
+                Text("입구 기록 2개를 모두 확인했습니다. 완료한 기록은 탐색 화면에서 다시 열 수 있습니다.")
+                    .font(.caption)
+                    .foregroundStyle(Floor9EntrancePalette.warmText)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.trailing, 62)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -292,80 +254,15 @@ struct Floor9EntranceView: View {
             RoundedRectangle(cornerRadius: 7)
                 .stroke(DAColor.magic.opacity(0.52), lineWidth: 1)
         }
-        .contentShape(RoundedRectangle(cornerRadius: 7))
-        .onTapGesture {
-            if inspectedRecord {
-                gameFeedback.trigger(
-                    .recordOpened,
-                    settings: appSettings.settings,
-                    includesHaptic: false
-                )
-            } else {
-                inspectedRecord = true
-                gameSession.send(.readRecord("9-entrance-01"))
-            }
-            withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.22)) {
-                isShowingClueDetail = true
-            }
-        }
-        .accessibilityAddTraits(.isButton)
-        .accessibilityLabel(inspectedRecord ? "확인한 단서 다시 보기" : "바닥의 승인 서류 확인")
     }
 
-    private var clueDetailOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.66)
-                .ignoresSafeArea()
-                .onTapGesture { closeClueDetail() }
-
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("확인된 단서")
-                        .font(.system(size: 18, weight: .semibold, design: .serif))
-                        .foregroundStyle(Floor9EntrancePalette.brass)
-
-                    Spacer()
-
-                    Button(action: closeClueDetail) {
-                        Image(systemName: "xmark")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(Floor9EntrancePalette.warmText)
-                            .frame(width: 32, height: 32)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("단서 닫기")
-                }
-
-                Text("승인자 서명이 자신의 필체와 닮아 있다.\n이름 칸만 기억침식으로 비어 있다.")
-                    .font(.system(size: 20, weight: .medium, design: .serif))
-                    .foregroundStyle(Floor9EntrancePalette.title)
-                    .lineSpacing(7)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.horizontal, 26)
-            .padding(.vertical, 20)
-            .frame(width: 560)
-            .background(
-                LinearGradient(
-                    colors: [DAColor.magic.opacity(0.2), DAColor.card.opacity(0.98)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                ),
-                in: RoundedRectangle(cornerRadius: 6)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Floor9EntrancePalette.brass.opacity(0.55), lineWidth: 1)
-            }
-            .shadow(color: DAColor.magic.opacity(0.35), radius: 18)
-        }
+    private var inspectedClueIDs: Set<String> {
+        Set(InvestigationConfiguration.floor9.clues.map(\.recordID))
+            .intersection(gameSession.progress.readRecordIDs)
     }
 
-    private func closeClueDetail() {
-        gameFeedback.playInterface(.back, settings: appSettings.settings)
-        withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
-            isShowingClueDetail = false
-        }
+    private var isInvestigationComplete: Bool {
+        inspectedClueIDs.count == InvestigationConfiguration.floor9.clues.count
     }
 
     private var entryWarning: some View {
@@ -424,6 +321,7 @@ struct Floor9EntranceView: View {
             .shadow(color: DAColor.magic.opacity(0.24), radius: 10, y: 4)
         }
         .buttonStyle(.plain)
+        .accessibilityHint("제9층 기록 관리자 전투가 시작됩니다")
     }
 
     private var sectionDivider: some View {

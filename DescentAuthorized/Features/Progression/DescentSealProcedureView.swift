@@ -9,6 +9,7 @@ struct DescentSealStageConfiguration {
 struct DescentSealProcedureConfiguration {
     let recordSubtitle: String
     let destination: String
+    let loadingContext: LoadingScreenContext
     let stages: [DescentSealStageConfiguration]
     let accessibilityLabel: String
     let maximumAttempts: Int
@@ -17,6 +18,7 @@ struct DescentSealProcedureConfiguration {
     static let floor10 = DescentSealProcedureConfiguration(
         recordSubtitle: "제10층 봉인 해제 기록",
         destination: "제9층 기록 관리 구역",
+        loadingContext: .floor10,
         stages: [
             DescentSealStageConfiguration(
                 recordTitle: "단일 승인 문양",
@@ -32,6 +34,7 @@ struct DescentSealProcedureConfiguration {
     static let floor9 = DescentSealProcedureConfiguration(
         recordSubtitle: "제9층 이중 봉인 검수 기록",
         destination: "제8층 관측실",
+        loadingContext: .floor9,
         stages: [
             DescentSealStageConfiguration(
                 recordTitle: "1단계 · 관리 서명",
@@ -52,6 +55,7 @@ struct DescentSealProcedureConfiguration {
     static let floor8 = DescentSealProcedureConfiguration(
         recordSubtitle: "제8층 이중 봉인 검수 기록",
         destination: "제7층 미확인 구역",
+        loadingContext: .floor8,
         stages: [
             DescentSealStageConfiguration(
                 recordTitle: "1단계 · 중심 좌표",
@@ -77,6 +81,7 @@ struct DescentDoorSceneView: View {
 
     let configuration: DescentSealProcedureConfiguration
     let sceneController: RealitySceneController
+    @Binding var retryLoadingPresentation: SceneRetryLoadingPresentation?
 
     @State private var descentState: RealityDescentPresentationState = .ready
     @State private var transitionTask: Task<Void, Never>?
@@ -92,6 +97,9 @@ struct DescentDoorSceneView: View {
                     configuration: configuration,
                     onStateChanged: updateDescentState,
                     onValidationFeedback: playValidationFeedback,
+                    onRejected: presentSealRejection,
+                    onCollapse: presentSealCollapse,
+                    onRetry: retrySeal,
                     onApproved: completeDescent
                 )
                 .transition(.opacity)
@@ -106,7 +114,9 @@ struct DescentDoorSceneView: View {
             transitionTask = nil
             isSealInterfaceVisible = true
             isCompletingDescent = false
+            retryLoadingPresentation = nil
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+            sceneController.resetDescentCamera()
             setDescentState(.ready)
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
@@ -115,6 +125,8 @@ struct DescentDoorSceneView: View {
         .onDisappear {
             transitionTask?.cancel()
             transitionTask = nil
+            retryLoadingPresentation = nil
+            sceneController.resetDescentCamera()
         }
     }
 
@@ -136,6 +148,57 @@ struct DescentDoorSceneView: View {
             cue = .descentSealStageCompleted(final: final)
         }
         gameFeedback.trigger(cue, settings: appSettings.settings)
+    }
+
+    private func presentSealRejection() async {
+        await sceneController.playDescentSealRejectionCamera(
+            reducedMotion: appSettings.reducedMotion
+        )
+    }
+
+    private func presentSealCollapse() async {
+        await sceneController.playDescentSealFailureCamera(
+            reducedMotion: appSettings.reducedMotion
+        )
+    }
+
+    private func retrySeal() async {
+        gameFeedback.playInterface(.confirm, settings: appSettings.settings)
+        let tip = LoadingTipCatalog.randomTip(for: configuration.loadingContext)
+
+        withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+            retryLoadingPresentation = SceneRetryLoadingPresentation(
+                context: configuration.loadingContext,
+                progress: 0.08,
+                tip: tip
+            )
+        }
+
+        guard await waitForRetryStep(milliseconds: 180) else { return }
+        retryLoadingPresentation?.progress = 0.34
+        sceneController.resetDescentCamera()
+        setDescentState(.ready)
+
+        guard await waitForRetryStep(milliseconds: 420) else { return }
+        retryLoadingPresentation?.progress = 0.82
+
+        guard await waitForRetryStep(milliseconds: 220) else { return }
+        retryLoadingPresentation?.progress = 1
+
+        guard await waitForRetryStep(milliseconds: 180) else { return }
+        withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.2)) {
+            retryLoadingPresentation = nil
+        }
+    }
+
+    private func waitForRetryStep(milliseconds: Int) async -> Bool {
+        let duration = appSettings.reducedMotion ? min(milliseconds, 80) : milliseconds
+        do {
+            try await Task.sleep(for: .milliseconds(duration))
+            return !Task.isCancelled
+        } catch {
+            return false
+        }
     }
 
     private func completeDescent() {
@@ -172,9 +235,14 @@ private enum DescentSealValidationFeedback {
 }
 
 private struct DescentSealProcedureView: View {
+    @EnvironmentObject private var gameSession: GameSessionStore
+
     let configuration: DescentSealProcedureConfiguration
     let onStateChanged: (DoorGlyphPresentationState) -> Void
     let onValidationFeedback: (DescentSealValidationFeedback) -> Void
+    let onRejected: () async -> Void
+    let onCollapse: () async -> Void
+    let onRetry: () async -> Void
     let onApproved: () -> Void
 
     @State private var completedStageCount = 0
@@ -183,42 +251,58 @@ private struct DescentSealProcedureView: View {
     @State private var phase: DescentSealInputPhase = .ready
     @State private var remainingAttempts: Int
     @State private var isGameOver = false
+    @State private var isSealInterfaceSuppressed = false
+    @State private var isRetrying = false
+    @State private var validationTask: Task<Void, Never>?
+    @State private var coachStep: TutorialCoachStep?
 
     init(
         configuration: DescentSealProcedureConfiguration,
         onStateChanged: @escaping (DoorGlyphPresentationState) -> Void,
         onValidationFeedback: @escaping (DescentSealValidationFeedback) -> Void,
+        onRejected: @escaping () async -> Void,
+        onCollapse: @escaping () async -> Void,
+        onRetry: @escaping () async -> Void,
         onApproved: @escaping () -> Void
     ) {
         precondition(!configuration.stages.isEmpty, "A descent seal requires at least one stage")
         self.configuration = configuration
         self.onStateChanged = onStateChanged
         self.onValidationFeedback = onValidationFeedback
+        self.onRejected = onRejected
+        self.onCollapse = onCollapse
+        self.onRetry = onRetry
         self.onApproved = onApproved
         _remainingAttempts = State(initialValue: configuration.maximumAttempts)
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            let sideWidth = min(max(proxy.size.width * 0.235, 250), 350)
-            let centerWidth = min(max(proxy.size.width * 0.38, 430), 590)
+        ZStack {
+            if !isSealInterfaceSuppressed {
+                GeometryReader { proxy in
+                    let sideWidth = min(max(proxy.size.width * 0.235, 250), 350)
+                    let centerWidth = min(max(proxy.size.width * 0.38, 430), 590)
 
-            VStack(spacing: 14) {
-                Color.clear
-                    .frame(height: 62)
-                    .accessibilityHidden(true)
+                    VStack(spacing: 14) {
+                        Color.clear
+                            .frame(height: 62)
+                            .accessibilityHidden(true)
 
-                HStack(alignment: .center, spacing: max(18, proxy.size.width * 0.02)) {
-                    recordPanel.frame(width: sideWidth)
-                    inputPanel.frame(width: centerWidth)
-                    informationPanel.frame(width: sideWidth)
+                        HStack(alignment: .center, spacing: max(18, proxy.size.width * 0.02)) {
+                            recordPanel.frame(width: sideWidth)
+                            inputPanel.frame(width: centerWidth)
+                            informationPanel.frame(width: sideWidth)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    .padding(.horizontal, max(20, proxy.size.width * 0.035))
+                    .padding(.vertical, 14)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transition(.opacity)
             }
-            .padding(.horizontal, max(20, proxy.size.width * 0.035))
-            .padding(.vertical, 14)
         }
-        .background(Color.black.opacity(0.18))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(isSealInterfaceSuppressed ? Color.clear : Color.black.opacity(0.18))
         .overlay {
             if isGameOver {
                 sealGameOverOverlay
@@ -226,7 +310,25 @@ private struct DescentSealProcedureView: View {
             }
         }
         .animation(.easeInOut(duration: 0.24), value: isGameOver)
-        .onAppear { onStateChanged(.ready) }
+        .animation(.easeOut(duration: 0.28), value: isSealInterfaceSuppressed)
+        .tutorialCoach(
+            step: coachStep,
+            onNext: advanceCoach,
+            onSkip: skipCoach
+        )
+        .onAppear {
+            onStateChanged(.ready)
+            resumeCoachIfNeeded()
+        }
+        .onDisappear {
+            validationTask?.cancel()
+            validationTask = nil
+        }
+        .onChange(of: gameSession.progress.tutorialProgress.requestedReplay) { _, replay in
+            if replay == .floor10DescentSeal {
+                resumeCoachIfNeeded()
+            }
+        }
     }
 
     private var sealGameOverOverlay: some View {
@@ -325,6 +427,7 @@ private struct DescentSealProcedureView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .disabled(isRetrying)
                     .accessibilityLabel("봉인 검수 재시도")
                     .accessibilityHint("현재 봉인 검수 단계부터 다시 시작합니다")
                     .position(
@@ -340,7 +443,7 @@ private struct DescentSealProcedureView: View {
 
     private var recordPanel: some View {
         ZStack {
-            Image("Floor10DescentRecordParchment")
+            Image("RecordParchment")
                 .resizable()
                 .scaledToFit()
 
@@ -361,12 +464,6 @@ private struct DescentSealProcedureView: View {
                         }
 
                         recordPattern(stage: currentStageIndex)
-
-                        if configuration.stages.count == 1 {
-                            Text("기록된 순서를 따라 핵심점을 연결하십시오.")
-                                .font(.caption2)
-                                .multilineTextAlignment(.center)
-                        }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     .id(completedStageCount)
@@ -391,6 +488,7 @@ private struct DescentSealProcedureView: View {
         .animation(.easeInOut(duration: 0.28), value: completedStageCount)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(configuration.accessibilityLabel)
+        .tutorialTarget("descent.record")
     }
 
     private func recordPattern(stage: Int) -> some View {
@@ -446,6 +544,7 @@ private struct DescentSealProcedureView: View {
             }
             .aspectRatio(0.78, contentMode: .fit)
             .accessibilityLabel("하강문 봉인 문양 입력판")
+            .tutorialTarget("descent.input")
 
             if configuration.stages.count > 1 {
                 HStack(spacing: 8) {
@@ -470,6 +569,7 @@ private struct DescentSealProcedureView: View {
             .buttonStyle(DescentSealResetButtonStyle())
             .disabled((selectedNodes.isEmpty && completedStageCount == 0) || phase == .approved)
             .opacity(selectedNodes.isEmpty && completedStageCount == 0 ? 0.58 : 1)
+            .tutorialTarget("descent.reset")
         }
     }
 
@@ -520,6 +620,7 @@ private struct DescentSealProcedureView: View {
             }
         }
         .aspectRatio(CGFloat(1122) / 1402, contentMode: .fit)
+        .tutorialTarget("descent.information")
     }
 
     private var divider: some View {
@@ -573,12 +674,11 @@ private struct DescentSealProcedureView: View {
     private func inputGesture(in size: CGSize) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .local)
             .onChanged { value in
-                guard phase != .approved, !isGameOver else { return }
-                if phase == .failed {
-                    selectedNodes.removeAll()
-                    phase = .ready
-                    onStateChanged(.ready)
-                }
+                guard phase != .approved,
+                      phase != .failed,
+                      !isGameOver,
+                      !isRetrying,
+                      coachStep == nil else { return }
 
                 dragLocation = value.location
                 if let node = configuration.layout.nearestNode(to: value.location, in: size),
@@ -597,14 +697,15 @@ private struct DescentSealProcedureView: View {
 
     private func evaluateInput() {
         guard selectedNodes == currentStage.sequence else {
+            if configuration.loadingContext == .floor10 {
+                gameSession.send(.recordTutorialFailure(.descentSeal))
+            }
             let attemptsLeft = max(0, remainingAttempts - 1)
             phase = .failed
             remainingAttempts = attemptsLeft
             onStateChanged(.failed)
             onValidationFeedback(.rejected(exhausted: attemptsLeft == 0))
-            if attemptsLeft == 0 {
-                isGameOver = true
-            }
+            presentRejectedInput(exhausted: attemptsLeft == 0)
             return
         }
 
@@ -631,12 +732,135 @@ private struct DescentSealProcedureView: View {
     }
 
     private func retrySeal() {
-        selectedNodes.removeAll()
-        dragLocation = nil
-        remainingAttempts = configuration.maximumAttempts
-        phase = .ready
-        isGameOver = false
-        onStateChanged(.ready)
+        guard !isRetrying else { return }
+        validationTask?.cancel()
+        isRetrying = true
+        withAnimation(.easeOut(duration: 0.16)) {
+            isGameOver = false
+        }
+        validationTask = Task { @MainActor in
+            selectedNodes.removeAll()
+            dragLocation = nil
+            remainingAttempts = configuration.maximumAttempts
+            phase = .ready
+            isSealInterfaceSuppressed = false
+            onStateChanged(.ready)
+
+            await onRetry()
+            guard !Task.isCancelled else { return }
+            isRetrying = false
+            validationTask = nil
+        }
+    }
+
+    private func presentRejectedInput(exhausted: Bool) {
+        validationTask?.cancel()
+        validationTask = Task { @MainActor in
+            await onRejected()
+            guard !Task.isCancelled else { return }
+            if exhausted {
+                withAnimation(.easeOut(duration: 0.28)) {
+                    isSealInterfaceSuppressed = true
+                }
+                guard await waitForFailureStep(milliseconds: 300) else { return }
+                await onCollapse()
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeIn(duration: 0.2)) {
+                    isGameOver = true
+                }
+            } else {
+                selectedNodes.removeAll()
+                dragLocation = nil
+                phase = .ready
+                onStateChanged(.ready)
+            }
+            validationTask = nil
+        }
+    }
+
+    private func waitForFailureStep(milliseconds: Int) async -> Bool {
+        do {
+            try await Task.sleep(for: .milliseconds(milliseconds))
+            return !Task.isCancelled
+        } catch {
+            return false
+        }
+    }
+
+    private func resumeCoachIfNeeded() {
+        guard configuration.loadingContext == .floor10 else { return }
+        let progress = gameSession.progress.tutorialProgress
+        guard progress.shouldPresent(.floor10DescentSeal) else { return }
+        let step = progress.activeSequence == .floor10DescentSeal
+            ? (progress.activeStep ?? .descentRecord)
+            : .descentRecord
+        if progress.activeSequence != .floor10DescentSeal {
+            gameSession.send(.beginTutorial(sequence: .floor10DescentSeal, step: step))
+        }
+        coachStep = descentCoach(for: step)
+    }
+
+    private func descentCoach(for step: TutorialStepID) -> TutorialCoachStep? {
+        switch step {
+        case .descentRecord:
+            TutorialCoachStep(
+                id: step,
+                title: "해제 기록",
+                message: "왼쪽 기록은 봉인문이 요구하는 정답 문양입니다. 밝은 시작점에서 출발해 표시된 핵심점을 순서대로 기억하십시오.",
+                targetIDs: ["descent.record"],
+                placement: .bottom
+            )
+        case .descentInput:
+            TutorialCoachStep(
+                id: step,
+                title: "한 붓 입력",
+                message: "가운데 입력판에서 손을 떼지 않고 한 번에 경로를 연결합니다. 시작 위치와 핵심점의 순서가 모두 일치해야 승인됩니다.",
+                targetIDs: ["descent.input"],
+                placement: .bottom
+            )
+        case .descentInformation:
+            TutorialCoachStep(
+                id: step,
+                title: "하강 정보",
+                message: "목적지, 현재 연결한 핵심점 수, 남은 검수 시도를 확인할 수 있습니다. 시도가 모두 소진되면 현재 단계부터 다시 검수합니다.",
+                targetIDs: ["descent.information"],
+                placement: .bottom
+            )
+        case .descentReset:
+            TutorialCoachStep(
+                id: step,
+                title: "입력 초기화",
+                message: "경로를 잘못 시작했다면 입력 초기화로 현재 선을 지우고 다시 시작할 수 있습니다. 초기화는 실패 횟수를 차감하지 않습니다.",
+                targetIDs: ["descent.reset"],
+                placement: .top
+            )
+        default:
+            nil
+        }
+    }
+
+    private func advanceCoach() {
+        guard let step = coachStep?.id else { return }
+        let next: TutorialStepID?
+        switch step {
+        case .descentRecord: next = .descentInput
+        case .descentInput: next = .descentInformation
+        case .descentInformation: next = .descentReset
+        case .descentReset: next = nil
+        default: next = nil
+        }
+        gameSession.send(.completeTutorialStep(step: step, next: next))
+        if let next {
+            coachStep = descentCoach(for: next)
+        } else {
+            gameSession.send(.completeTutorial(.floor10DescentSeal))
+            coachStep = nil
+        }
+    }
+
+    private func skipCoach() {
+        gameSession.send(.skipTutorial(.floor10DescentSeal))
+        coachStep = nil
     }
 }
 

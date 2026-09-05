@@ -189,18 +189,12 @@ private struct BattleUIPresentation {
     }
 }
 
-struct BattleRestartLoadingPresentation: Equatable {
-    let context: LoadingScreenContext
-    var progress: Double
-    let tip: String
-}
-
 struct BattleView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
     @ObservedObject var realityController: RealitySceneController
-    @Binding var restartLoadingPresentation: BattleRestartLoadingPresentation?
+    @Binding var restartLoadingPresentation: SceneRetryLoadingPresentation?
 
     @State private var selectedSpellID: SpellID?
     @State private var enemyHitFlash = false
@@ -359,6 +353,8 @@ struct BattleView: View {
                 enemyStage(presentation)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.bottom, bottomBarHeight)
+
+                intentTutorialTarget(in: proxy)
 
                 if !isDefeated {
                     if isBattleScene, realitySceneID != nil {
@@ -523,6 +519,7 @@ struct BattleView: View {
                     ))
                 }
             )
+            .tutorialTarget("battle.input")
         } else {
             Text("시전할 수 있는 주문이 없습니다")
                 .foregroundStyle(.secondary)
@@ -577,10 +574,35 @@ struct BattleView: View {
         }
     }
 
+    @ViewBuilder
+    private func intentTutorialTarget(in proxy: GeometryProxy) -> some View {
+        if realitySceneID != nil {
+            let stageHeight = max(0, proxy.size.height - 242)
+            let focusWidth = min(440, max(300, proxy.size.width * 0.42))
+            let focusHeight = max(320, stageHeight - 96)
+
+            Color.clear
+                .frame(width: focusWidth, height: focusHeight)
+                .position(
+                    x: proxy.size.width / 2,
+                    y: 64 + (focusHeight / 2)
+                )
+                .tutorialTarget("battle.intent-symbol")
+                .allowsHitTesting(false)
+        } else if realitySceneID == nil {
+            Color.clear
+                .frame(width: 126, height: 126)
+                .position(x: proxy.size.width / 2, y: 108)
+                .tutorialTarget("battle.intent-symbol")
+                .allowsHitTesting(false)
+        }
+    }
+
     private func spellBar(_ presentation: BattleUIPresentation) -> some View {
         HStack(alignment: .bottom, spacing: 28) {
             battleLogPanel(presentation)
                 .frame(width: 248, height: 176)
+                .tutorialTarget("battle.log")
 
             VStack(alignment: .leading, spacing: 8) {
                 battleResourceBar(presentation)
@@ -595,9 +617,11 @@ struct BattleView: View {
                 }
                 .frame(height: 176)
             }
+            .tutorialTarget("battle.resources-and-spells")
 
             turnEndControl(presentation)
                 .frame(width: 184, height: 94, alignment: .bottomTrailing)
+                .tutorialTarget("battle.turn-end")
         }
     }
 
@@ -1341,7 +1365,7 @@ struct BattleView: View {
     }
 
     private var shouldShowFirstTurnBriefing: Bool {
-        isRecordsBattle || isResidualBattle || isObservationBattle
+        isResidualBattle || isObservationBattle
     }
 
     @ViewBuilder
@@ -1594,7 +1618,7 @@ struct BattleView: View {
 
         withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
             isDefeatPanelVisible = false
-            restartLoadingPresentation = BattleRestartLoadingPresentation(
+            restartLoadingPresentation = SceneRetryLoadingPresentation(
                 context: loadingContext,
                 progress: 0.08,
                 tip: loadingTip
