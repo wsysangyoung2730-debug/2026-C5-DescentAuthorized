@@ -2,6 +2,15 @@
 
 > DESCENT AUTHORIZED: Rift Zero
 
+<p align="left">
+  <img src="https://img.shields.io/badge/Swift-F05138?style=for-the-badge&amp;logo=swift&amp;logoColor=white" alt="Swift" />
+  <img src="https://img.shields.io/badge/SwiftUI-0D96F6?style=for-the-badge&amp;logo=swift&amp;logoColor=white" alt="SwiftUI" />
+  <img src="https://img.shields.io/badge/RealityKit-5E5CE6?style=for-the-badge&amp;logo=apple&amp;logoColor=white" alt="RealityKit" />
+  <img src="https://img.shields.io/badge/GameKit-7B61FF?style=for-the-badge&amp;logo=applearcade&amp;logoColor=white" alt="GameKit" />
+  <img src="https://img.shields.io/badge/iPadOS-000000?style=for-the-badge&amp;logo=apple&amp;logoColor=white" alt="iPadOS" />
+  <img src="https://img.shields.io/badge/Xcode-147EFB?style=for-the-badge&amp;logo=xcode&amp;logoColor=white" alt="Xcode" />
+</p>
+
 Apple Pencil 또는 손가락으로 마법진을 그려 층 관리자와 싸우는 iPadOS용 턴제 전략 배틀 어드벤처입니다.
 3D 그래픽이 적용되어 생동감 넘치게 즐길 수 있습니다!
 현재 8층까지 구현하였고, 확장 예정입니다.
