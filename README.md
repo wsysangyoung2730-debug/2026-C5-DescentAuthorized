@@ -1,4 +1,4 @@
-# 하강 승인: 제0균열
+# 하강 승인: 제0균열 
 
 > DESCENT AUTHORIZED: Rift Zero
 
