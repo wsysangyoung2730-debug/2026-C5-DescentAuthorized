@@ -362,13 +362,11 @@ struct PauseMenuView: View {
     }
 
     private var checkpointTitle: String {
-        gameSession.progress.checkpoint.pauseTitle
+        gameSession.progress.expansion?.areaName ?? gameSession.progress.checkpoint.pauseTitle
     }
 
     private var restartMessage: String {
-        gameSession.battleState?.phase == .defeat
-            ? "패배한 전투를 HP 100으로 재개합니다."
-            : "이번 전투에서 발생한 피해와 방벽 상태를 초기화하고, 진입 당시 HP로 돌아갑니다."
+        "HP 100으로 회복한 뒤 출전 준비로 돌아갑니다. 주문 구성을 다시 선택할 수 있습니다."
     }
 
     private func restartEncounter() {
