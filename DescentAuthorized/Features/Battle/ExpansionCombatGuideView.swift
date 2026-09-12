@@ -33,6 +33,15 @@ struct ExpansionCombatGuide {
                 return .init(flag: .reservationResult, title: "예약 처리 결과를 확인하세요", detail: "이번 처리에서 HP 피해는 \(hpDamage), 남은 방벽은 \(battle.player.normalBarrier)입니다. 피해 감소가 먼저 적용되고 방벽이 남은 피해를 흡수합니다. 사용한 감소 효과와 처리된 예약은 사라집니다.")
             }
         }
+        if current.floorNumber == 5 {
+            if let record = battle.expansion.copyRecord, !seen.contains(.memoryRecord) {
+                return .init(flag: .memoryRecord, title: "성공한 주문이 기록되었습니다", detail: "\(SpellCatalog.spell(record.spell).name)을 이번 턴에 다시 성공시키면 모사 반응이 발생합니다. 다른 주문을 선택하거나 정화로 기록을 지울 수 있습니다. 잔류체는 추가 할퀴기, 관리자는 주문 유형에 따라 다른 효과로 반응합니다.")
+            }
+            if case let .expansion(_, action) = battle.currentEnemyIntent,
+               action.previewsCardSeal, !seen.contains(.cardSeal) {
+                return .init(flag: .cardSeal, title: "선택 주문 봉인이 예고되었습니다", detail: "예고에 표시된 주문은 다음 턴에 봉인됩니다. 출전 준비에서 보호한 공격·방어와 봉인 해제는 제외됩니다. 정화로 하나를 풀 수 있고, 기억 압착 행동이 끝나면 해제됩니다. 예약 피해를 지연해도 봉인 시간은 늘어나지 않습니다.")
+            }
+        }
         return nil
     }
 }
@@ -58,6 +67,16 @@ struct ExpansionCombatGuideView: View {
             .background(DAColor.panel, in: RoundedRectangle(cornerRadius: 8))
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(DAColor.gold.opacity(0.5)))
             .padding(24)
+        }
+    }
+}
+
+private extension ExpansionEnemyAction {
+    var previewsCardSeal: Bool {
+        switch self {
+        case .preparedLockAndSchedule, .lockAndSchedule: true
+        case let .sequence(actions): actions.contains { $0.previewsCardSeal }
+        default: false
         }
     }
 }
