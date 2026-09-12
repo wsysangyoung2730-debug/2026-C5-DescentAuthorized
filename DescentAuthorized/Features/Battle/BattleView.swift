@@ -624,6 +624,7 @@ struct BattleView: View {
         let isCompact = availableWidth < 1_100
         let logWidth: CGFloat = isCompact ? 210 : 248
         let itemSpacing: CGFloat = isCompact ? 14 : 28
+        let cardWidth = min(132, max(82, (availableWidth - logWidth - 184 - itemSpacing * 2 - 40) / 6))
 
         return HStack(alignment: .bottom, spacing: itemSpacing) {
             battleLogPanel(presentation)
@@ -637,7 +638,7 @@ struct BattleView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(presentation.spells) { spellState in
-                            spellCard(spellState)
+                            spellCard(spellState, width: cardWidth)
                         }
                     }
                 }
@@ -836,7 +837,7 @@ struct BattleView: View {
         return DAColor.body.opacity(0.86)
     }
 
-    private func spellCard(_ state: BattleUISpellState) -> some View {
+    private func spellCard(_ state: BattleUISpellState, width: CGFloat) -> some View {
         let spell = state.spell
 
         return ZStack {
@@ -854,14 +855,14 @@ struct BattleView: View {
                 Spacer(minLength: 30)
 
                 SpellGlyphPreview(spell: spell)
-                    .frame(width: 76, height: 76)
+                    .frame(width: min(76, width - 24), height: 76)
 
                 Spacer(minLength: 2)
 
                 Text(spell.name)
                     .font(.system(size: 14, weight: .semibold, design: .serif))
                     .foregroundStyle(DAColor.body)
-                    .lineLimit(1)
+                    .lineLimit(1).minimumScaleFactor(0.68)
 
                 Text("\(spell.battleEffectRangeTitle) · \(spell.requiredStrokes)획")
                     .font(.caption2.monospacedDigit())
@@ -890,7 +891,13 @@ struct BattleView: View {
             }
             .padding(10)
         }
-        .frame(width: 132, height: 176)
+        .frame(width: width, height: 176)
+        .overlay(alignment: .topLeading) {
+            if gameSession.battleState?.expansion.lockedSpells[spell.id] != nil {
+                Text("봉인").font(.caption2.bold()).foregroundStyle(.white)
+                    .padding(5).background(.red.opacity(0.86)).padding(5)
+            }
+        }
         .clipped()
         .contentShape(Rectangle())
         .simultaneousGesture(
@@ -1638,58 +1645,12 @@ struct BattleView: View {
     private func restartDefeatedBattle() {
         guard !isRestartLoading else { return }
         gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-
-        defeatPresentationTask?.cancel()
-        defeatPresentationTask = nil
-        restartTask?.cancel()
-        clearTransientBattleEffects()
-        let loadingContext = restartLoadingContext
-        let loadingTip = LoadingTipCatalog.randomTip(for: loadingContext)
-        realityController.setBattleCameraInteractionEnabled(false)
-
-        withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+        if gameSession.sendChecked(.restartEncounter) {
+            defeatPresentationTask?.cancel()
+            restartTask?.cancel()
+            restartLoadingPresentation = nil
             isDefeatPanelVisible = false
-            restartLoadingPresentation = SceneRetryLoadingPresentation(
-                context: loadingContext,
-                progress: 0.08,
-                tip: loadingTip
-            )
-        }
-
-        restartTask = Task { @MainActor in
-            defer { restartTask = nil }
-
-            guard await waitForRestartStep(milliseconds: 180) else { return }
-            restartLoadingPresentation?.progress = 0.34
-
-            gameSession.send(.restartEncounter)
-            guard gameSession.battleState?.phase != .defeat else {
-                restoreDefeatPanelAfterRestartFailure()
-                return
-            }
-
-            battleLogEntries.removeAll(keepingCapacity: true)
             clearTransientBattleEffects()
-            previewMana = nil
-            previewStrokes = nil
-            detailedSpell = nil
-            selectedSpellID = nil
-            realityController.resetBattleCamera(animated: false)
-            realityController.synchronizeCombatState(
-                gameSession.battleState,
-                reducedMotion: appSettings.reducedMotion
-            )
-            restartLoadingPresentation?.progress = 0.82
-
-            guard await waitForRestartStep(milliseconds: 420) else { return }
-            selectAvailableSpell()
-            restartLoadingPresentation?.progress = 1
-
-            guard await waitForRestartStep(milliseconds: 180) else { return }
-            realityController.setBattleCameraInteractionEnabled(isBattleScene)
-            withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.2)) {
-                restartLoadingPresentation = nil
-            }
         }
     }
 

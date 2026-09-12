@@ -88,6 +88,7 @@
 		ACD1AF82D2B3105E7D0A843E /* RewardMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236557319E433CE6FBF68FE0 /* RewardMigration.swift */; };
 		3BDC2885BAED33F7B8955426 /* SpellGlyphPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = B15A5E3910E0F2516CC052C0 /* SpellGlyphPreview.swift */; };
 		5990144D0032DF0E807BD4F3 /* SpellPracticeSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42EC4FAA5B72FA40A80E4909 /* SpellPracticeSheet.swift */; };
+		F3D2677D04CAE5CAF2FD64AC /* LoadoutPreparationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB2CE49C2AD00937B89FDD4 /* LoadoutPreparationView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -174,6 +175,7 @@
 		236557319E433CE6FBF68FE0 /* RewardMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Persistence/RewardMigration.swift"; sourceTree = SOURCE_ROOT; };
 		B15A5E3910E0F2516CC052C0 /* SpellGlyphPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Battle/SpellGlyphPreview.swift"; sourceTree = SOURCE_ROOT; };
 		42EC4FAA5B72FA40A80E4909 /* SpellPracticeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/SpellPracticeSheet.swift"; sourceTree = SOURCE_ROOT; };
+		AAB2CE49C2AD00937B89FDD4 /* LoadoutPreparationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/LoadoutPreparationView.swift"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -201,6 +203,7 @@
 		400000000000000000000002 /* DescentAuthorized */ = {
 			isa = PBXGroup;
 			children = (
+				AAB2CE49C2AD00937B89FDD4 /* LoadoutPreparationView.swift */,
 				42EC4FAA5B72FA40A80E4909 /* SpellPracticeSheet.swift */,
 				B15A5E3910E0F2516CC052C0 /* SpellGlyphPreview.swift */,
 				236557319E433CE6FBF68FE0 /* RewardMigration.swift */,
@@ -524,6 +527,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F3D2677D04CAE5CAF2FD64AC /* LoadoutPreparationView.swift in Sources */,
 				5990144D0032DF0E807BD4F3 /* SpellPracticeSheet.swift in Sources */,
 				3BDC2885BAED33F7B8955426 /* SpellGlyphPreview.swift in Sources */,
 				ACD1AF82D2B3105E7D0A843E /* RewardMigration.swift in Sources */,

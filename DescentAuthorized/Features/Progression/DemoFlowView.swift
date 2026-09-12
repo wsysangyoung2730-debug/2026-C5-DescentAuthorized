@@ -8,6 +8,7 @@ struct DemoFlowView: View {
     let onExit: () -> Void
     let onSystemOverlayVisibilityChange: (Bool) -> Void
 
+    @State private var preparedBattle: PreparedLegacyBattle?
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
     @State private var retryLoadingPresentation: SceneRetryLoadingPresentation?
@@ -127,6 +128,11 @@ struct DemoFlowView: View {
                 },
                 onExitToTitle: onExit
             )
+        }
+        .fullScreenCover(item: $preparedBattle) { battle in
+            LoadoutPreparationView(onBegin: {
+                if gameSession.sendChecked(battle.command) { preparedBattle = nil }
+            }, onCancel: { preparedBattle = nil })
         }
         .fullScreenCover(isPresented: $isShowingSettings) {
             SettingsView()
@@ -730,15 +736,15 @@ struct DemoFlowView: View {
             ) {
                 switch sequence {
                 case .floor9Encounter:
-                    gameSession.send(.beginRecordsBattle)
+                    preparedBattle = .records
                 case .floor9Defeated:
                     gameSession.send(.continueAfterRecordsDefeat)
                 case .floor8ResidualEncounter:
-                    gameSession.send(.beginResidualBattle)
+                    preparedBattle = .residual
                 case .floor8ResidualDefeated:
                     gameSession.send(.continueAfterResidualDefeat)
                 case .floor8AdministratorEncounter:
-                    gameSession.send(.beginAdministratorBattle)
+                    preparedBattle = .administrator
                 case .floor8AdministratorDefeated:
                     gameSession.send(.continueAfterAdministratorDefeat)
                 }
@@ -1221,4 +1227,16 @@ private enum SharedHUDPalette {
     static let brass = Color(red: 184 / 255, green: 139 / 255, blue: 77 / 255)
     static let title = Color(red: 225 / 255, green: 202 / 255, blue: 164 / 255)
     static let icon = Color(red: 222 / 255, green: 216 / 255, blue: 202 / 255)
+}
+
+private enum PreparedLegacyBattle: String, Identifiable {
+    case records, residual, administrator
+    var id: String { rawValue }
+    var command: DemoCommand {
+        switch self {
+        case .records: .beginRecordsBattle
+        case .residual: .beginResidualBattle
+        case .administrator: .beginAdministratorBattle
+        }
+    }
 }

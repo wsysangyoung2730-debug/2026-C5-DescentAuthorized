@@ -38,6 +38,12 @@ struct GameProgressionController: Sendable {
     init(progress: GameProgress = .newGame) {
         self.progress = progress
         self.progress.synchronizeLoadout()
+        switch self.progress.currentScene {
+        case .floor9RecordsBattle: self.progress.currentScene = .floor9RecordsEncounter; self.progress.playerHP = 100
+        case .floor8ResidualBattle: self.progress.currentScene = .floor8ResidualEncounter; self.progress.playerHP = 100
+        case .floor8AdministratorBattle: self.progress.currentScene = .floor8AdministratorEncounter; self.progress.playerHP = 100
+        default: break
+        }
         if let expansion = self.progress.expansion, expansion.stage.isBattle {
             self.progress.expansion?.stage = expansion.resumableStage
             self.progress.playerHP = Self.maximumPlayerHP
@@ -420,6 +426,23 @@ struct GameProgressionController: Sendable {
                 currentHP: Self.maximumPlayerHP
             )
         ]
+    }
+
+    mutating func returnToBattlePreparation() throws -> [ProgressionEvent] {
+        if progress.expansion != nil {
+            try retryExpansionBattle()
+            return []
+        }
+        var events = try restartCurrentEncounter()
+        let scene: SceneID
+        switch progress.currentScene {
+        case .floor9RecordsBattle: scene = .floor9RecordsEncounter
+        case .floor8ResidualBattle: scene = .floor8ResidualEncounter
+        case .floor8AdministratorBattle: scene = .floor8AdministratorEncounter
+        default: throw ProgressionError.requirementMissing("재도전할 전투")
+        }
+        events.append(.sceneChanged(setScene(scene)))
+        return events
     }
 
     mutating func completeEncounter(

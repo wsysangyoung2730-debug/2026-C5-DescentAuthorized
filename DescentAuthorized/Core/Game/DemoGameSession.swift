@@ -204,6 +204,9 @@ struct DemoGameSession: Sendable {
         guard encounter == nil else {
             throw DemoSessionError.encounterAlreadyActive
         }
+        guard progress.loadoutIssues.isEmpty else {
+            throw ProgressionError.requirementMissing(progress.loadoutIssues.map(\.message).joined(separator: " "))
+        }
         let enemy = try enemyForCurrentScene()
         var newEncounter = EncounterController(
             enemy: enemy,
@@ -282,9 +285,7 @@ struct DemoGameSession: Sendable {
         }
 
         encounter = nil
-        var events = wrap(try progression.restartCurrentEncounter())
-        events.append(contentsOf: try startEncounter())
-        return events
+        return wrap(try progression.returnToBattlePreparation())
     }
 
     private mutating func restartActiveEncounterFromCheckpoint() throws -> [DemoSessionEvent] {
@@ -293,7 +294,7 @@ struct DemoGameSession: Sendable {
         }
 
         encounter = nil
-        return try startEncounter()
+        return wrap(try progression.returnToBattlePreparation())
     }
 
     private mutating func finalizeEncounterIfNeeded() throws -> [DemoSessionEvent] {
