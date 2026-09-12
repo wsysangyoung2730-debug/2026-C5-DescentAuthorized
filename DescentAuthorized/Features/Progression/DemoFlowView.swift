@@ -429,6 +429,9 @@ struct DemoFlowView: View {
     }
 
     private var descentTopHUDConfiguration: DescentTopHUDConfiguration? {
+        if let current = gameSession.progress.expansion, current.stage == .descent {
+            return DescentTopHUDConfiguration(areaTitle: "제\(current.floorNumber)층 · \(current.areaName)", inspectionTitle: "이중 문양 검수")
+        }
         if gameSession.progress.currentScene == .floor10DescentDoor {
             return DescentTopHUDConfiguration(
                 areaTitle: "제10층 · 승인 관리 구역",
@@ -550,7 +553,8 @@ struct DemoFlowView: View {
                 } else {
                     FloorTitleAssetView(
                         floor: gameSession.progress.currentFloor,
-                        size: .standard
+                        size: .standard,
+                        floorNumber: gameSession.progress.displayedFloorNumber
                     )
                     .frame(width: min(proxy.size.width * 0.54, 560), height: 72)
                     .position(
@@ -634,7 +638,8 @@ struct DemoFlowView: View {
                 BattleTopHUDView(
                     battle: battle,
                     floor: gameSession.progress.currentFloor,
-                    enemyToNextActionSpacing: battlePlateToStatusSpacing
+                    enemyToNextActionSpacing: battlePlateToStatusSpacing,
+                    floorNumber: gameSession.progress.displayedFloorNumber
                 )
                 .frame(
                     width: statusAreaWidth,
@@ -775,7 +780,8 @@ struct DemoFlowView: View {
                 )
             }
         case .completion:
-            DemoCompleteView(onReturnToTitle: onExit)
+            ExpansionFlowView(sceneController: sceneController, retryLoadingPresentation: $retryLoadingPresentation, onExit: onExit)
+                .id("\(gameSession.progress.expansion?.floorNumber ?? 7)-\(gameSession.progress.expansion?.stage.rawValue ?? "entrance")")
         }
     }
 }

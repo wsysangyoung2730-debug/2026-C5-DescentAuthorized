@@ -111,7 +111,7 @@ struct PauseMenuView: View {
         VStack(spacing: 15) {
             pauseHeader(
                 title: "절차 일시정지",
-                subtitle: "제\(gameSession.progress.currentFloor.rawValue)층 · \(checkpointTitle)"
+                subtitle: "제\(gameSession.progress.displayedFloorNumber)층 · \(checkpointTitle)"
             )
 
             ornamentDivider
