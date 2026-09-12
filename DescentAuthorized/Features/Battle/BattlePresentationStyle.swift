@@ -24,6 +24,9 @@ enum FloorTitlePresentationSize {
 struct FloorTitleAssetView: View {
     let floor: FloorID
     let size: FloorTitlePresentationSize
+    var floorNumber: Int? = nil
+
+    private var displayedFloorNumber: Int { floorNumber ?? floor.rawValue }
 
     var body: some View {
         HStack(spacing: ornamentSpacing) {
@@ -36,7 +39,7 @@ struct FloorTitleAssetView: View {
         }
         .frame(height: totalHeight)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("제\(floor.rawValue)층")
+        .accessibilityLabel("제\(displayedFloorNumber)층")
     }
 
     private var ornament: some View {
@@ -58,7 +61,7 @@ struct FloorTitleAssetView: View {
                 .clipped()
                 .accessibilityHidden(true)
         } else {
-            Text("제\(floor.rawValue)층")
+            Text("제\(displayedFloorNumber)층")
                 .font(.system(size: fallbackFontSize, weight: .medium, design: .serif))
                 .foregroundStyle(DAColor.gold)
                 .frame(width: titleWidth, height: titleHeight)
@@ -66,11 +69,11 @@ struct FloorTitleAssetView: View {
     }
 
     private var floorTitleAssetName: String? {
-        switch floor {
-        case .floor10: "FloorTitle10"
-        case .floor9: "FloorTitle9"
-        case .floor8: "FloorTitle8"
-        case .floor7: nil
+        switch displayedFloorNumber {
+        case 10: "FloorTitle10"
+        case 9: "FloorTitle9"
+        case 8: "FloorTitle8"
+        default: nil
         }
     }
 
@@ -107,6 +110,7 @@ struct BattleTopHUDView: View {
     let battle: BattleState
     let floor: FloorID
     let enemyToNextActionSpacing: CGFloat
+    var floorNumber: Int? = nil
 
     var body: some View {
         HStack(alignment: .center, spacing: enemyToNextActionSpacing) {
@@ -121,7 +125,7 @@ struct BattleTopHUDView: View {
                 Spacer(minLength: 8)
 
                 VStack(spacing: 1) {
-                    FloorTitleAssetView(floor: floor, size: .battle)
+                    FloorTitleAssetView(floor: floor, size: .battle, floorNumber: floorNumber)
 
                     HStack(spacing: 5) {
                         Text("TURN \(battle.turnNumber)")

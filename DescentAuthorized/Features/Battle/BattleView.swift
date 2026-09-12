@@ -213,7 +213,13 @@ struct BattleView: View {
 
     var body: some View {
         ZStack {
-            if realitySceneID != nil {
+            if isExpansionBattle, let expansion = gameSession.progress.expansion {
+                ExpansionBackdropView(
+                    floorNumber: expansion.floorNumber,
+                    isBoss: expansion.stage == .bossBattle
+                )
+                .brightness(enemyHitFlash && !appSettings.reducedFlashes ? 0.07 : 0)
+            } else if realitySceneID != nil {
                 Color.black.opacity(0.2)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
@@ -267,12 +273,17 @@ struct BattleView: View {
             }
 
         }
-        .task(id: gameSession.progress.currentScene) {
+        .task(id: encounterIdentity) {
             battleLogEntries = []
             lastLoggedEventSequence = nil
             previewMana = nil
             previewStrokes = nil
             detailedSpell = nil
+            selectedSpellID = nil
+            selectedEffectTarget = nil
+            showsFirstTurnBriefing = false
+            didExperienceAbsoluteBarrier = false
+            clearTransientBattleEffects()
             startEncounterIfNeeded()
             appendBattleLog(
                 gameSession.latestEvents,
@@ -283,14 +294,16 @@ struct BattleView: View {
                gameSession.battleState?.turnNumber == 1 {
                 showsFirstTurnBriefing = true
             }
-            realityController.synchronizeCombatState(
-                gameSession.battleState,
-                reducedMotion: appSettings.reducedMotion
-            )
-            realityController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
-            realityController.setBattleCameraInteractionEnabled(isBattleScene)
-            if isBattleScene {
-                realityController.resetBattleCamera(animated: false)
+            if !isExpansionBattle {
+                realityController.synchronizeCombatState(
+                    gameSession.battleState,
+                    reducedMotion: appSettings.reducedMotion
+                )
+                realityController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+                realityController.setBattleCameraInteractionEnabled(isBattleScene)
+                if isBattleScene {
+                    realityController.resetBattleCamera(animated: false)
+                }
             }
             updateDefeatPresentation(for: gameSession.battleState?.phase)
         }
@@ -563,12 +576,12 @@ struct BattleView: View {
 
     private func enemyStage(_ presentation: BattleUIPresentation) -> some View {
         ZStack {
-            if realitySceneID == nil {
+            if usesFallbackEnemySymbol {
                 stageGrid
             }
 
             VStack(spacing: 8) {
-                if realitySceneID == nil {
+                if usesFallbackEnemySymbol {
                     ZStack {
                         Image(systemName: enemySymbol)
                             .font(.system(size: 104, weight: .thin))
@@ -585,7 +598,7 @@ struct BattleView: View {
                 }
             }
         }
-        .background(realitySceneID == nil ? Color.black.opacity(0.28) : Color.clear)
+        .background(usesFallbackEnemySymbol ? Color.black.opacity(0.28) : Color.clear)
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(DAColor.gold.opacity(0.22))
@@ -608,7 +621,7 @@ struct BattleView: View {
                 )
                 .tutorialTarget("battle.intent-symbol")
                 .allowsHitTesting(false)
-        } else if realitySceneID == nil {
+        } else if usesFallbackEnemySymbol {
             Color.clear
                 .frame(width: 126, height: 126)
                 .position(x: proxy.size.width / 2, y: 108)
@@ -1271,11 +1284,13 @@ struct BattleView: View {
     }
 
     private func present(_ events: [DemoSessionEvent]) {
-        realityController.presentCombat(
-            events: events,
-            battleState: gameSession.battleState,
-            reducedMotion: appSettings.reducedMotion
-        )
+        if !isExpansionBattle {
+            realityController.presentCombat(
+                events: events,
+                battleState: gameSession.battleState,
+                reducedMotion: appSettings.reducedMotion
+            )
+        }
         var enemyWasHit = false
         var playerWasHit = false
         var playerBarrierWasHit = false
@@ -1303,7 +1318,7 @@ struct BattleView: View {
                 if case .player = target {
                     playerBarrierWasHit = true
                 } else if case .enemy = target, amount > 0 {
-                    banner = ("문서 방벽 전개", .cyan)
+                    banner = (isExpansionBattle ? "교정 방벽 전개" : "문서 방벽 전개", .cyan)
                 }
             case .erasureZoneAdded:
                 banner = ("말소 구역 발생", .red)
@@ -1318,7 +1333,7 @@ struct BattleView: View {
 
         if enemyWasHit { pulseEnemy() }
         if playerWasHit { pulsePlayer(strong: strongAttack) }
-        if strongAttack, playerWasHit || playerBarrierWasHit {
+        if !isExpansionBattle, strongAttack, playerWasHit || playerBarrierWasHit {
             realityController.playStrongAttackCameraImpact(
                 guarded: playerBarrierWasHit && !playerWasHit,
                 reducedMotion: appSettings.reducedMotion
@@ -1378,7 +1393,8 @@ struct BattleView: View {
     }
 
     private var isBattleScene: Bool {
-        switch gameSession.progress.currentScene {
+        if isExpansionBattle { return true }
+        return switch gameSession.progress.currentScene {
         case .floor9RecordsBattle, .floor8ResidualBattle, .floor8AdministratorBattle:
             true
         default:
@@ -1387,19 +1403,34 @@ struct BattleView: View {
     }
 
     private var realitySceneID: FloorSceneID? {
-        gameSession.presentation.floorSceneID
+        isExpansionBattle ? nil : gameSession.presentation.floorSceneID
+    }
+
+    private var isExpansionBattle: Bool {
+        gameSession.progress.expansion?.stage.isBattle == true
+    }
+
+    private var usesFallbackEnemySymbol: Bool {
+        realitySceneID == nil && !isExpansionBattle
+    }
+
+    private var encounterIdentity: String {
+        if let expansion = gameSession.progress.expansion, expansion.stage.isBattle {
+            return "expansion-\(expansion.floorNumber)-\(expansion.stage.rawValue)"
+        }
+        return gameSession.progress.currentScene.rawValue
     }
 
     private var isRecordsBattle: Bool {
-        gameSession.progress.currentScene == .floor9RecordsBattle
+        !isExpansionBattle && gameSession.progress.currentScene == .floor9RecordsBattle
     }
 
     private var isResidualBattle: Bool {
-        gameSession.progress.currentScene == .floor8ResidualBattle
+        !isExpansionBattle && gameSession.progress.currentScene == .floor8ResidualBattle
     }
 
     private var isObservationBattle: Bool {
-        gameSession.progress.currentScene == .floor8AdministratorBattle
+        !isExpansionBattle && gameSession.progress.currentScene == .floor8AdministratorBattle
     }
 
     private var shouldShowFirstTurnBriefing: Bool {
@@ -1601,6 +1632,7 @@ struct BattleView: View {
             }
             if wasPresentingDefeat,
                isBattleScene,
+               !isExpansionBattle,
                !isRestartLoading {
                 realityController.resetBattleCamera(animated: false)
                 realityController.setBattleCameraInteractionEnabled(true)
@@ -1622,6 +1654,10 @@ struct BattleView: View {
         isCameraLooking = false
         isCameraZooming = false
         cameraLookTranslationOrigin = nil
+        if isExpansionBattle {
+            isDefeatPanelVisible = true
+            return
+        }
         realityController.setBattleCameraInteractionEnabled(false)
 
         defeatPresentationTask = Task { @MainActor in
