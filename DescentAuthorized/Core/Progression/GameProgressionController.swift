@@ -37,6 +37,106 @@ struct GameProgressionController: Sendable {
 
     init(progress: GameProgress = .newGame) {
         self.progress = progress
+        self.progress.synchronizeLoadout()
+        if let expansion = self.progress.expansion, expansion.stage.isBattle {
+            self.progress.expansion?.stage = expansion.resumableStage
+            self.progress.playerHP = Self.maximumPlayerHP
+        }
+    }
+
+    // MARK: - 7–5F extension foundation
+
+    /// The completed 8F save remains the compatibility anchor for the extension.
+    mutating func beginExpansion() throws {
+        try requireScene(.demoComplete)
+        guard progress.isDemoComplete else {
+            throw ProgressionError.requirementMissing("8층 하강 승인 완료")
+        }
+        if progress.expansion == nil {
+            progress.expansion = ExpansionProgress()
+        }
+        progress.synchronizeLoadout()
+    }
+
+    mutating func updateExpansion(_ expansion: ExpansionProgress) throws {
+        try requireScene(.demoComplete)
+        guard progress.expansion != nil else {
+            throw ProgressionError.requirementMissing("확장 구간 진입")
+        }
+        guard (4...7).contains(expansion.floorNumber),
+              (0...2).contains(expansion.descentStage),
+              (expansion.floorNumber == 4) == (expansion.stage == .complete),
+              expansion.stage != .learnDebuff || expansion.floorNumber == 6 else {
+            throw ProgressionError.requirementMissing("유효한 확장 진행 단계")
+        }
+        progress.expansion = expansion
+    }
+
+    mutating func configureLoadout(
+        _ spells: [SpellID], protectedAttack: SpellID? = nil, protectedDefense: SpellID? = nil
+    ) throws {
+        let legacyBattleScenes: Set<SceneID> = [
+            .floor9RecordsBattle, .floor8ResidualBattle, .floor8AdministratorBattle
+        ]
+        guard progress.expansion?.stage.isBattle != true,
+              !legacyBattleScenes.contains(progress.currentScene) else {
+            throw ProgressionError.requirementMissing("전투 시작 전에만 주문 변경 가능")
+        }
+        guard progress.setLoadout(
+            spells, protectedAttack: protectedAttack, protectedDefense: protectedDefense
+        ) else {
+            throw ProgressionError.requirementMissing(
+                LoadoutRules.issues(for: spells, learned: progress.learnedSpells)
+                    .map(\.message).joined(separator: " ")
+            )
+        }
+    }
+
+    mutating func markLoadoutTutorial(_ flag: LoadoutTutorialFlag) {
+        progress.loadoutTutorials.insert(flag)
+    }
+
+    mutating func learnExpansionSpell(
+        _ spell: SpellID, grade: CastingGrade = .approved
+    ) throws -> [ProgressionEvent] {
+        guard progress.expansion != nil, grade != .rejected else {
+            throw ProgressionError.requirementMissing("확장 구간 주문 학습 완료")
+        }
+        var events: [ProgressionEvent] = []
+        if progress.learnedSpells.insert(spell).inserted {
+            events.append(.spellLearned(spell))
+        }
+        progress.completedTrainingSpells.insert(spell)
+        events.append(updateMastery(spell: spell, grade: grade))
+        events.append(.trainingCompleted(spell: spell, grade: grade))
+        return events
+    }
+
+    /// Effects remain in combat; only the durable encounter result is recorded here.
+    mutating func recordExpansionVictory(
+        enemy: EnemyID, remainingPlayerHP: Int
+    ) throws -> [ProgressionEvent] {
+        guard let expansion = progress.expansion, expansion.stage.isBattle else {
+            throw ProgressionError.requirementMissing("진행 중인 확장 전투")
+        }
+        progress.playerHP = min(max(remainingPlayerHP, 1), Self.maximumPlayerHP)
+        progress.defeatedEnemies.insert(enemy)
+        progress.expansion?.stage = expansion.stage == .residualBattle
+            ? .residualDefeated : .bossDefeated
+        return [.enemyDefeated(enemy)]
+    }
+
+    mutating func setExpansionPlayerHP(_ hp: Int) {
+        guard progress.expansion != nil else { return }
+        progress.playerHP = min(max(hp, 1), Self.maximumPlayerHP)
+    }
+
+    mutating func retryExpansionBattle() throws {
+        guard let expansion = progress.expansion, expansion.stage.isBattle else {
+            throw ProgressionError.requirementMissing("재도전할 확장 전투")
+        }
+        progress.expansion?.stage = expansion.resumableStage
+        progress.playerHP = Self.maximumPlayerHP
     }
 
     mutating func leaveMeetingRoom() throws -> [ProgressionEvent] {
@@ -474,6 +574,7 @@ struct GameProgressionController: Sendable {
         progress.checkpoint = checkpoint
         progress.playerHP = Self.maximumPlayerHP
         progress.isDemoComplete = checkpoint == .demoComplete
+        progress.expansion = checkpoint == .demoComplete ? ExpansionProgress() : nil
         progress.learnedSpells = []
         progress.completedTrainingSpells = []
         progress.defeatedEnemies = []

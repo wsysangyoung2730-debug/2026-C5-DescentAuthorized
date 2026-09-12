@@ -433,7 +433,7 @@ struct SpellMastery: Codable, Equatable, Sendable {
 }
 
 struct GameProgress: Codable, Equatable, Sendable {
-    static let currentSaveVersion = 3
+    static let currentSaveVersion = 4
 
     var saveVersion: Int
     var currentFloor: FloorID
@@ -441,7 +441,23 @@ struct GameProgress: Codable, Equatable, Sendable {
     var checkpoint: CheckpointID
     var furthestCheckpoint: CheckpointID
     var playerHP: Int
-    var learnedSpells: Set<SpellID>
+    var learnedSpells: Set<SpellID> {
+        didSet {
+            synchronizeLoadout()
+            let additions = learnedSpells.subtracting(oldValue)
+            for id in SpellID.allCases where additions.contains(id) && !equippedSpells.contains(id) {
+                if equippedSpells.count < LoadoutRules.maximumEquipped { equippedSpells.append(id) }
+            }
+            synchronizeLoadout()
+        }
+    }
+    /// Ordered battle cards, separate from the complete learned collection.
+    var equippedSpells: [SpellID]
+    var protectedAttack: SpellID?
+    var protectedDefense: SpellID?
+    var loadoutTutorials: Set<LoadoutTutorialFlag>
+    /// Later floors retain the existing 10–8F checkpoint as their migration anchor.
+    var expansion: ExpansionProgress?
     var defeatedEnemies: Set<EnemyID>
     var readRecordIDs: Set<String>
     var tutorials: Set<TutorialFlag>
@@ -466,7 +482,12 @@ struct GameProgress: Codable, Equatable, Sendable {
         spellMastery: [SpellID: SpellMastery],
         completedTrainingSpells: Set<SpellID>,
         selectedRewardIDs: [String],
-        isDemoComplete: Bool
+        isDemoComplete: Bool,
+        equippedSpells: [SpellID]? = nil,
+        protectedAttack: SpellID? = nil,
+        protectedDefense: SpellID? = nil,
+        loadoutTutorials: Set<LoadoutTutorialFlag> = [],
+        expansion: ExpansionProgress? = nil
     ) {
         self.saveVersion = saveVersion
         self.currentFloor = currentFloor
@@ -475,6 +496,18 @@ struct GameProgress: Codable, Equatable, Sendable {
         self.furthestCheckpoint = furthestCheckpoint ?? checkpoint
         self.playerHP = playerHP
         self.learnedSpells = learnedSpells
+        self.equippedSpells = LoadoutRules.normalized(
+            equippedSpells ?? LoadoutRules.defaultSpells(from: learnedSpells),
+            learned: learnedSpells
+        )
+        self.protectedAttack = LoadoutRules.protectedSpell(
+            preferred: protectedAttack, category: .attack, equipped: self.equippedSpells
+        )
+        self.protectedDefense = LoadoutRules.protectedSpell(
+            preferred: protectedDefense, category: .defense, equipped: self.equippedSpells
+        )
+        self.loadoutTutorials = loadoutTutorials
+        self.expansion = expansion
         self.defeatedEnemies = defeatedEnemies
         self.readRecordIDs = readRecordIDs
         self.tutorials = tutorials
@@ -510,6 +543,11 @@ struct GameProgress: Codable, Equatable, Sendable {
         case furthestCheckpoint
         case playerHP
         case learnedSpells
+        case equippedSpells
+        case protectedAttack
+        case protectedDefense
+        case loadoutTutorials
+        case expansion
         case defeatedEnemies
         case readRecordIDs
         case tutorials
@@ -532,6 +570,25 @@ struct GameProgress: Codable, Equatable, Sendable {
         ) ?? checkpoint
         playerHP = try container.decode(Int.self, forKey: .playerHP)
         learnedSpells = try container.decodeIfPresent(Set<SpellID>.self, forKey: .learnedSpells) ?? []
+        let decodedEquipped = try container.decodeIfPresent([SpellID].self, forKey: .equippedSpells)
+        equippedSpells = LoadoutRules.normalized(
+            decodedEquipped ?? LoadoutRules.defaultSpells(from: learnedSpells),
+            learned: learnedSpells
+        )
+        protectedAttack = LoadoutRules.protectedSpell(
+            preferred: try container.decodeIfPresent(SpellID.self, forKey: .protectedAttack),
+            category: .attack,
+            equipped: equippedSpells
+        )
+        protectedDefense = LoadoutRules.protectedSpell(
+            preferred: try container.decodeIfPresent(SpellID.self, forKey: .protectedDefense),
+            category: .defense,
+            equipped: equippedSpells
+        )
+        loadoutTutorials = try container.decodeIfPresent(
+            Set<LoadoutTutorialFlag>.self, forKey: .loadoutTutorials
+        ) ?? []
+        expansion = try container.decodeIfPresent(ExpansionProgress.self, forKey: .expansion)
         defeatedEnemies = try container.decodeIfPresent(Set<EnemyID>.self, forKey: .defeatedEnemies) ?? []
         readRecordIDs = try container.decodeIfPresent(Set<String>.self, forKey: .readRecordIDs) ?? []
         tutorials = try container.decodeIfPresent(Set<TutorialFlag>.self, forKey: .tutorials) ?? []
@@ -572,6 +629,11 @@ struct GameProgress: Codable, Equatable, Sendable {
         try container.encode(furthestCheckpoint, forKey: .furthestCheckpoint)
         try container.encode(playerHP, forKey: .playerHP)
         try container.encode(learnedSpells, forKey: .learnedSpells)
+        try container.encode(equippedSpells, forKey: .equippedSpells)
+        try container.encodeIfPresent(protectedAttack, forKey: .protectedAttack)
+        try container.encodeIfPresent(protectedDefense, forKey: .protectedDefense)
+        try container.encode(loadoutTutorials, forKey: .loadoutTutorials)
+        try container.encodeIfPresent(expansion, forKey: .expansion)
         try container.encode(defeatedEnemies, forKey: .defeatedEnemies)
         try container.encode(readRecordIDs, forKey: .readRecordIDs)
         try container.encode(tutorials, forKey: .tutorials)

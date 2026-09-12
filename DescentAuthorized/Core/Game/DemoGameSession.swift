@@ -1,6 +1,9 @@
 import Foundation
 
 enum DemoCommand: Sendable {
+    case beginExpansion
+    case configureLoadout([SpellID], protectedAttack: SpellID?, protectedDefense: SpellID?)
+    case markLoadoutTutorial(LoadoutTutorialFlag)
     case leaveMeetingRoom
     case learnSpell(SpellID)
     case completeScrollLearning(spell: SpellID, grade: CastingGrade)
@@ -66,6 +69,15 @@ struct DemoGameSession: Sendable {
 
     mutating func handle(_ command: DemoCommand) throws -> [DemoSessionEvent] {
         switch command {
+        case .beginExpansion:
+            try progression.beginExpansion()
+            return []
+        case let .configureLoadout(spells, attack, defense):
+            try progression.configureLoadout(spells, protectedAttack: attack, protectedDefense: defense)
+            return []
+        case let .markLoadoutTutorial(flag):
+            progression.markLoadoutTutorial(flag)
+            return []
         case .leaveMeetingRoom:
             return wrap(try progression.leaveMeetingRoom())
 

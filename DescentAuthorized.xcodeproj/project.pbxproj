@@ -81,6 +81,8 @@
 		100000000000000000000072 /* InvestigationFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000072 /* InvestigationFlow.swift */; };
 		100000000000000000000073 /* ScrollSpellLearningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000073 /* ScrollSpellLearningView.swift */; };
 		100000000000000000000074 /* ArcaneNavigationButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000074 /* ArcaneNavigationButton.swift */; };
+		0E4EB4F5CDE8D923787595C0 /* ExpansionProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E44F77750E0CB3904476235 /* ExpansionProgress.swift */; };
+		B6DC40859EEA9499B5F3C8CE /* ExpansionBackdropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4B466720AADD1752CF1C1F /* ExpansionBackdropView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -160,6 +162,8 @@
 		200000000000000000000072 /* InvestigationFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvestigationFlow.swift; sourceTree = "<group>"; };
 		200000000000000000000073 /* ScrollSpellLearningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollSpellLearningView.swift; sourceTree = "<group>"; };
 		200000000000000000000074 /* ArcaneNavigationButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArcaneNavigationButton.swift; sourceTree = "<group>"; };
+		9E44F77750E0CB3904476235 /* ExpansionProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Progression/ExpansionProgress.swift"; sourceTree = SOURCE_ROOT; };
+		9B4B466720AADD1752CF1C1F /* ExpansionBackdropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/ExpansionBackdropView.swift"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -187,6 +191,8 @@
 		400000000000000000000002 /* DescentAuthorized */ = {
 			isa = PBXGroup;
 			children = (
+				9B4B466720AADD1752CF1C1F /* ExpansionBackdropView.swift */,
+				9E44F77750E0CB3904476235 /* ExpansionProgress.swift */,
 				400000000000000000000003 /* App */,
 				400000000000000000000004 /* Core */,
 				400000000000000000000006 /* Features */,
@@ -503,6 +509,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B6DC40859EEA9499B5F3C8CE /* ExpansionBackdropView.swift in Sources */,
+				0E4EB4F5CDE8D923787595C0 /* ExpansionProgress.swift in Sources */,
 				100000000000000000000001 /* DescentAuthorizedApp.swift in Sources */,
 				100000000000000000000054 /* RealityAssetIDs.swift in Sources */,
 				100000000000000000000057 /* RealitySceneDescriptor.swift in Sources */,

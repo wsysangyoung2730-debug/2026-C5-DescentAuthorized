@@ -11,6 +11,7 @@ enum GameProgressValidationError: Error, Equatable, Sendable {
     case invalidMastery(SpellID)
     case invalidTutorialState(String)
     case completionStateMismatch
+    case invalidExpansionState(String)
 }
 
 struct GameProgressValidator: Sendable {
@@ -32,6 +33,35 @@ struct GameProgressValidator: Sendable {
         try validateCollectionIntegrity(progress)
         try validateTutorialState(progress.tutorialProgress)
         try validateProgressionRequirements(progress)
+        try validateExpansion(progress)
+    }
+
+    private func validateExpansion(_ progress: GameProgress) throws {
+        guard let expansion = progress.expansion else { return }
+        guard progress.currentScene == .demoComplete,
+              progress.checkpoint == .demoComplete,
+              progress.isDemoComplete else {
+            throw GameProgressValidationError.invalidExpansionState("8층 완료 지점 필요")
+        }
+        guard (4...7).contains(expansion.floorNumber),
+              (0...2).contains(expansion.descentStage),
+              (expansion.floorNumber == 4) == (expansion.stage == .complete),
+              expansion.stage != .learnDebuff || expansion.floorNumber == 6 else {
+            throw GameProgressValidationError.invalidExpansionState("유효하지 않은 층 또는 진행 단계")
+        }
+        guard progress.loadoutIssues.isEmpty else {
+            throw GameProgressValidationError.invalidExpansionState(
+                progress.loadoutIssues.map(\.message).joined(separator: " ")
+            )
+        }
+        guard progress.protectedAttack.map({
+            progress.equippedSpells.contains($0) && SpellCatalog.all[$0]?.category == .attack
+        }) == true,
+              progress.protectedDefense.map({
+            progress.equippedSpells.contains($0) && SpellCatalog.all[$0]?.category == .defense
+        }) == true else {
+            throw GameProgressValidationError.invalidExpansionState("기본 대응 공격·방어 지정 필요")
+        }
     }
 
     private func validateLocation(_ progress: GameProgress) throws {
