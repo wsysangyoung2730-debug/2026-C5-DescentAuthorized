@@ -83,9 +83,9 @@ final class ProgressionTests: XCTestCase {
             remainingPlayerHP: 40
         )
         _ = try controller.continueAfterRecordsDefeat()
-        _ = try controller.selectReward(candidateID: "floor9-worn-a")
+        _ = try controller.selectReward(candidateID: "floor9-barrier")
         _ = try controller.completeRewardLearning(
-            candidateID: "floor9-worn-a",
+            candidateID: "floor9-barrier",
             grade: .approved
         )
         _ = try controller.approveDescentDoor()
@@ -107,9 +107,9 @@ final class ProgressionTests: XCTestCase {
             remainingPlayerHP: 18
         )
         _ = try controller.continueAfterAdministratorDefeat()
-        _ = try controller.selectReward(candidateID: "floor8-forbidden")
+        _ = try controller.selectReward(candidateID: "floor8-rupture")
         _ = try controller.completeRewardLearning(
-            candidateID: "floor8-forbidden",
+            candidateID: "floor8-rupture",
             grade: .approved
         )
         let completionEvents = try controller.approveDescentDoor()
@@ -117,8 +117,8 @@ final class ProgressionTests: XCTestCase {
         XCTAssertEqual(controller.progress.currentFloor, .floor7)
         XCTAssertEqual(controller.progress.currentScene, .demoComplete)
         XCTAssertEqual(controller.progress.checkpoint, .demoComplete)
-        XCTAssertEqual(controller.progress.learnedSpells, Set(SpellID.allCases))
-        XCTAssertEqual(controller.progress.defeatedEnemies, Set(EnemyID.allCases))
+        XCTAssertEqual(controller.progress.learnedSpells, Set([SpellID.afterglowErasure, .riftSeverance, .barrierPiercing, .basicBarrier, .sealRelease, .focusedRupture]))
+        XCTAssertEqual(controller.progress.defeatedEnemies, Set([EnemyID.recordsAdministrator, .observationResidual, .observationAdministrator]))
         XCTAssertTrue(controller.progress.isDemoComplete)
         XCTAssertTrue(completionEvents.contains(.demoCompleted))
     }
@@ -145,7 +145,7 @@ final class ProgressionTests: XCTestCase {
 
             _ = try controller.selectReward(candidateID: candidate.id)
 
-            XCTAssertFalse(controller.progress.learnedSpells.contains(.barrierPiercing))
+            XCTAssertFalse(controller.progress.learnedSpells.contains(RewardCatalog.learningSpell(for: candidate)))
             XCTAssertEqual(controller.progress.selectedRewardIDs, [candidate.id])
             XCTAssertEqual(controller.progress.currentScene, .floor9RewardVault)
 
@@ -154,8 +154,8 @@ final class ProgressionTests: XCTestCase {
                 grade: .precise
             )
 
-            XCTAssertTrue(controller.progress.learnedSpells.contains(.barrierPiercing))
-            XCTAssertTrue(controller.progress.completedTrainingSpells.contains(.barrierPiercing))
+            XCTAssertTrue(controller.progress.learnedSpells.contains(RewardCatalog.learningSpell(for: candidate)))
+            XCTAssertTrue(controller.progress.completedTrainingSpells.contains(RewardCatalog.learningSpell(for: candidate)))
             XCTAssertEqual(controller.progress.currentScene, .floor9DescentDoor)
         }
     }
@@ -165,15 +165,15 @@ final class ProgressionTests: XCTestCase {
 
         XCTAssertThrowsError(
             try controller.completeRewardLearning(
-                candidateID: "floor9-worn-a",
+                candidateID: "floor9-barrier",
                 grade: .approved
             )
         )
 
-        _ = try controller.selectReward(candidateID: "floor9-worn-a")
+        _ = try controller.selectReward(candidateID: "floor9-barrier")
         XCTAssertThrowsError(
             try controller.completeRewardLearning(
-                candidateID: "floor9-worn-a",
+                candidateID: "floor9-barrier",
                 grade: .rejected
             )
         )
@@ -226,23 +226,23 @@ final class ProgressionTests: XCTestCase {
         XCTAssertEqual(controller.progress.currentFloor, .floor8)
         XCTAssertEqual(controller.progress.currentScene, .floor8AdministratorDefeated)
         XCTAssertEqual(controller.progress.furthestCheckpoint, .observationDefeated)
-        XCTAssertEqual(controller.progress.defeatedEnemies, Set(EnemyID.allCases))
+        XCTAssertEqual(controller.progress.defeatedEnemies, Set([EnemyID.recordsAdministrator, .observationResidual, .observationAdministrator]))
         XCTAssertTrue(controller.progress.learnedSpells.contains(.sealRelease))
         XCTAssertNoThrow(try GameProgressValidator().validate(controller.progress))
     }
 
     func testRewardCanOnlyBeSelectedOnce() throws {
         var controller = try makeFloor9RewardController()
-        _ = try controller.selectReward(candidateID: "floor9-worn-b")
+        _ = try controller.selectReward(candidateID: "floor9-chain")
 
-        XCTAssertThrowsError(try controller.selectReward(candidateID: "floor9-sealed"))
+        XCTAssertThrowsError(try controller.selectReward(candidateID: "floor9-condensed"))
     }
 
     func testRecoveryRulesAreAppliedAtFloorBoundaries() throws {
         var controller = try makeFloor9RewardController(remainingHP: 35)
-        _ = try controller.selectReward(candidateID: "floor9-worn-a")
+        _ = try controller.selectReward(candidateID: "floor9-barrier")
         _ = try controller.completeRewardLearning(
-            candidateID: "floor9-worn-a",
+            candidateID: "floor9-barrier",
             grade: .approved
         )
         _ = try controller.approveDescentDoor()
@@ -347,9 +347,9 @@ final class ProgressionTests: XCTestCase {
 
     private func makeFloor8AntechamberController() throws -> GameProgressionController {
         var controller = try makeFloor9RewardController()
-        _ = try controller.selectReward(candidateID: "floor9-worn-a")
+        _ = try controller.selectReward(candidateID: "floor9-barrier")
         _ = try controller.completeRewardLearning(
-            candidateID: "floor9-worn-a",
+            candidateID: "floor9-barrier",
             grade: .approved
         )
         _ = try controller.approveDescentDoor()

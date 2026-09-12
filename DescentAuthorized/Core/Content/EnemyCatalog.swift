@@ -5,7 +5,9 @@ enum EnemyCatalog {
         .recordsAdministrator: recordsAdministrator,
         .observationResidual: observationResidual,
         .observationAdministrator: observationAdministrator
-    ]
+    ].merging(Dictionary(uniqueKeysWithValues: (5...7).flatMap { floor in
+        [false, true].compactMap { ExpansionEnemyCatalog.enemy(floor: floor, isBoss: $0) }
+    }.map { ($0.id, $0) })) { _, new in new }
 
     static func enemy(_ id: EnemyID) -> EnemyDefinition {
         guard let enemy = all[id] else {
