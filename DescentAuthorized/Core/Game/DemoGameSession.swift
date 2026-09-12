@@ -26,7 +26,8 @@ enum DemoCommand: Sendable {
     case castSpell(
         spell: SpellID,
         strokes: [DrawnStroke],
-        inputMethod: DrawingInputMethod
+        inputMethod: DrawingInputMethod,
+        target: ExpansionEffectTarget? = nil
     )
     case finishTurn
     case restartEncounter
@@ -150,8 +151,8 @@ struct DemoGameSession: Sendable {
         case .startEncounter:
             return try startEncounter()
 
-        case let .castSpell(spell, strokes, inputMethod):
-            return try castSpell(spell, strokes: strokes, inputMethod: inputMethod)
+        case let .castSpell(spell, strokes, inputMethod, target):
+            return try castSpell(spell, strokes: strokes, inputMethod: inputMethod, target: target)
 
         case .finishTurn:
             return try finishTurn()
@@ -208,7 +209,9 @@ struct DemoGameSession: Sendable {
             enemy: enemy,
             playerHP: progress.playerHP,
             playerNormalBarrier: startingPlayerBarrier(for: enemy.id),
-            learnedSpells: progress.learnedSpells
+            learnedSpells: progress.learnedSpells,
+            equippedSpells: progress.equippedSpells,
+            protectedSpells: progress.protectedSpells
         )
         let battleEvents = try newEncounter.start()
         encounter = newEncounter
@@ -218,7 +221,8 @@ struct DemoGameSession: Sendable {
     private mutating func castSpell(
         _ spell: SpellID,
         strokes: [DrawnStroke],
-        inputMethod: DrawingInputMethod
+        inputMethod: DrawingInputMethod,
+        target: ExpansionEffectTarget?
     ) throws -> [DemoSessionEvent] {
         guard var activeEncounter = encounter else {
             throw DemoSessionError.noActiveEncounter
@@ -227,7 +231,8 @@ struct DemoGameSession: Sendable {
         var battleEvents = try activeEncounter.submitSpell(
             spell,
             strokes: strokes,
-            inputMethod: inputMethod
+            inputMethod: inputMethod,
+            selectedTarget: target
         )
         if activeEncounter.state.phase == .resolvingEnemyAction {
             battleEvents.append(contentsOf: try activeEncounter.finishTurnAndAdvance())

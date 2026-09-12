@@ -188,6 +188,7 @@ enum SpellEffect: Codable, Equatable, Sendable {
     case damage(minimum: Int, maximum: Int, piercesNormalBarrier: Bool)
     case fixedBarrier(minimum: Int, maximum: Int, maxStack: Int)
     case dispelAbsoluteBarrier(minimumCharges: Int, maximumCharges: Int)
+    case expansion(ExpansionSpellEffect)
 
     var range: ClosedRange<Int> {
         switch self {
@@ -196,6 +197,8 @@ enum SpellEffect: Codable, Equatable, Sendable {
             minimum...maximum
         case let .dispelAbsoluteBarrier(minimumCharges, maximumCharges):
             minimumCharges...maximumCharges
+        case let .expansion(effect):
+            effect.range
         }
     }
 }
@@ -302,13 +305,15 @@ enum EnemyAction: Codable, Equatable, Sendable {
     case grantNormalBarrier(name: String, amount: Int)
     case grantAbsoluteBarrier(name: String, charges: Int)
     case telegraph(name: String, upcomingActionName: String)
+    case expansion(name: String, action: ExpansionEnemyAction)
 
     var name: String {
         switch self {
         case let .attack(name, _, _),
              let .grantNormalBarrier(name, _),
              let .grantAbsoluteBarrier(name, _),
-             let .telegraph(name, _):
+             let .telegraph(name, _),
+             let .expansion(name, _):
             name
         }
     }
@@ -347,6 +352,8 @@ enum BattleEvent: Equatable, Sendable {
     case erasureZoneAdded(ErasureZone)
     case enemyActionStarted(EnemyAction)
     case enemyActionCancelled
+    case expansionChanged(message: String)
+    case healingApplied(amount: Int, remainingHP: Int)
     case victory(EnemyID)
     case defeat
 }

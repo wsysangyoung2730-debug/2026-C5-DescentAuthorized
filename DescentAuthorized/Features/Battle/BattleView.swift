@@ -197,6 +197,7 @@ struct BattleView: View {
     @Binding var restartLoadingPresentation: SceneRetryLoadingPresentation?
 
     @State private var selectedSpellID: SpellID?
+    @State private var selectedEffectTarget: ExpansionEffectTarget?
     @State private var enemyHitFlash = false
     @State private var playerHitFlash = false
     @State private var strongAttackFlash = false
@@ -238,6 +239,9 @@ struct BattleView: View {
 
             if let battle = gameSession.battleState {
                 battleContent(presentation(for: battle))
+                    .overlay(alignment: .top) {
+                        ExpansionCombatStatusView(battle: battle)
+                    }
             } else {
                 encounterStandby
             }
@@ -498,6 +502,29 @@ struct BattleView: View {
     @ViewBuilder
     private func glyphInputPanel(_ presentation: BattleUIPresentation) -> some View {
         if let spell = presentation.selectedSpell {
+            let options = gameSession.battleState?.availableEffectTargets(for: spell) ?? []
+            let selectedOption = options.first { $0.id == selectedEffectTarget }
+            VStack(spacing: 6) {
+                if !options.isEmpty {
+                    Menu {
+                        ForEach(options) { option in
+                            Button("\(option.title) · \(option.detail)") {
+                                selectedEffectTarget = option.id
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text(selectedOption.map { "대상: \($0.title)" } ?? "대상을 선택하세요")
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(DAColor.gold)
+                        .padding(10)
+                        .background(.black.opacity(0.9), in: RoundedRectangle(cornerRadius: 5))
+                    }
+                    .disabled(presentation.phase != .playerTurn)
+                }
             GlyphCastingPanel(
                 spell: spell,
                 inputPreference: appSettings.inputPreference,
@@ -516,15 +543,18 @@ struct BattleView: View {
                     gameSession.send(.castSpell(
                         spell: spell.id,
                         strokes: submission.strokes,
-                        inputMethod: submission.inputMethod
+                        inputMethod: submission.inputMethod,
+                        target: selectedOption?.id
                     ))
                 }
             )
             .disabled(
                 presentation.phase != .playerTurn
                     || showsFirstTurnBriefing || detailedSpell != nil || isRestartLoading
+                    || (!options.isEmpty && selectedOption == nil)
             )
             .tutorialTarget("battle.input")
+            }
         } else {
             Text("시전할 수 있는 주문이 없습니다")
                 .foregroundStyle(.secondary)
@@ -959,6 +989,7 @@ struct BattleView: View {
     private func selectSpellFromUser(_ spellID: SpellID) {
         gameFeedback.playInterface(.select, settings: appSettings.settings)
         selectedSpellID = spellID
+        selectedEffectTarget = nil
     }
 
     private func spellDetailOverlay(_ spell: SpellDefinition) -> some View {
@@ -1172,6 +1203,10 @@ struct BattleView: View {
             return "관리자 무력화"
         case .defeat:
             return "하강 봉인 절차 중단"
+        case let .healingApplied(amount, _):
+            return "생명력 회복 \(amount)"
+        case let .expansionChanged(message):
+            return message
         }
     }
 
@@ -1240,7 +1275,7 @@ struct BattleView: View {
     }
 
     private func availableSpells(in battle: BattleState) -> [SpellDefinition] {
-        SpellID.allCases
+        (battle.expansion.equippedSpells ?? SpellID.allCases)
             .filter(battle.learnedSpells.contains)
             .map(SpellCatalog.spell)
     }
@@ -1759,6 +1794,7 @@ struct BattleView: View {
     }
 
     private func isSpellPermitted(_ spell: SpellDefinition, battle: BattleState) -> Bool {
+        guard battle.spellUnavailabilityReason(for: spell) == nil else { return false }
         if isObservationBattle, spell.id == .sealRelease {
             return battle.enemy.absoluteBarrierCharges > 0
                 && didExperienceAbsoluteBarrier

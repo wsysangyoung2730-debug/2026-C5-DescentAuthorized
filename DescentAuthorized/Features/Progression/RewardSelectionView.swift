@@ -507,6 +507,8 @@ struct RewardSelectionView: View {
             return "다음 공격을 흡수할 일반 방벽을 생성합니다."
         case .dispelAbsoluteBarrier:
             return "대상의 절대 방벽을 해제합니다."
+        case .expansion:
+            return "주문에 각인된 조건과 지속 효과를 적용합니다."
         }
     }
 
@@ -515,6 +517,7 @@ struct RewardSelectionView: View {
         case let .damage(_, _, pierces): return pierces ? ["희귀", "방벽 파괴"] : ["직접 피해"]
         case .fixedBarrier: return ["생존"]
         case .dispelAbsoluteBarrier: return ["해제"]
+        case .expansion: return ["상태 효과"]
         }
     }
 

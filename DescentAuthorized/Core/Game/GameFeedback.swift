@@ -6,6 +6,7 @@ enum GameFeedbackCue: Equatable, Sendable {
     case enemyAttack(strong: Bool)
     case enemyDamaged
     case playerDamaged(strong: Bool)
+    case playerHealed
     case barrierDamaged(strong: Bool)
     case barrierBroken(strong: Bool)
     case barrierApplied(isAbsolute: Bool)
@@ -34,6 +35,7 @@ struct GameFeedbackMapper: Sendable {
                 case let .spellResolved(_, grade):
                     isResolvingPlayerSpell = true
                     isResolvingEnemyAttack = false
+                    currentEnemyAttackIsStrong = false
                     cues.append(.spellAccepted(perfect: grade == .perfect))
                 case .spellRejected:
                     isResolvingPlayerSpell = false
@@ -74,13 +76,26 @@ struct GameFeedbackMapper: Sendable {
                     }
                 case .attackNegatedByAbsoluteBarrier:
                     cues.append(.absoluteBarrierNegated)
+                case let .healingApplied(amount, _):
+                    if amount > 0 { cues.append(.playerHealed) }
+                case .expansionChanged:
+                    // A state refresh may accompany several effects; avoid duplicate feedback.
+                    break
                 case let .enemyActionStarted(action):
                     isResolvingPlayerSpell = false
                     isResolvingEnemyAttack = false
+                    currentEnemyAttackIsStrong = false
                     if case let .attack(_, _, isStrong) = action {
                         currentEnemyAttackIsStrong = isStrong
                         isResolvingEnemyAttack = true
                         cues.append(.enemyAttack(strong: isStrong))
+                    } else if case let .expansion(_, expansionAction) = action {
+                        // A delayed hit can arrive during any expansion action, including a wait.
+                        isResolvingEnemyAttack = true
+                        if let strong = expansionAttackStrength(expansionAction) {
+                            currentEnemyAttackIsStrong = strong
+                            cues.append(.enemyAttack(strong: strong))
+                        }
                     }
                 case .victory:
                     cues.append(.victory)
@@ -111,5 +126,16 @@ struct GameFeedbackMapper: Sendable {
             }
         }
         return cues
+    }
+
+    private func expansionAttackStrength(_ action: ExpansionEnemyAction) -> Bool? {
+        switch action {
+        case .correctionStrike: true
+        case .copyReaction: false
+        case let .sequence(actions): actions.compactMap(expansionAttackStrength).first
+        case .correctionBarrier, .amplify, .schedule, .recordLastSpell,
+             .lockAndSchedule, .preparedLockAndSchedule, .wait:
+            nil
+        }
     }
 }

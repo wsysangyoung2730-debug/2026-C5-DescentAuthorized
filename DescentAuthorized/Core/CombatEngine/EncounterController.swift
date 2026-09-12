@@ -8,13 +8,17 @@ struct EncounterController: Sendable {
         enemy: EnemyDefinition,
         playerHP: Int = 100,
         playerNormalBarrier: Int = 0,
-        learnedSpells: Set<SpellID> = Set(SpellID.allCases)
+        learnedSpells: Set<SpellID> = Set(SpellID.allCases),
+        equippedSpells: [SpellID]? = nil,
+        protectedSpells: Set<SpellID> = []
     ) {
         combat = CombatEngine(
             enemy: enemy,
             playerHP: playerHP,
             playerNormalBarrier: playerNormalBarrier,
-            learnedSpells: learnedSpells
+            learnedSpells: learnedSpells,
+            equippedSpells: equippedSpells,
+            protectedSpells: protectedSpells
         )
         nextPatternIndex = 0
     }
@@ -31,13 +35,15 @@ struct EncounterController: Sendable {
     mutating func submitSpell(
         _ spellID: SpellID,
         strokes: [DrawnStroke],
-        inputMethod: DrawingInputMethod = .pencil
+        inputMethod: DrawingInputMethod = .pencil,
+        selectedTarget: ExpansionEffectTarget? = nil
     ) throws -> [BattleEvent] {
         let spell = SpellCatalog.spell(spellID)
         var events = try combat.submitSpell(
             spell,
             strokes: strokes,
-            inputMethod: inputMethod
+            inputMethod: inputMethod,
+            selectedTarget: selectedTarget
         )
         events.append(contentsOf: applyPendingThresholdRules())
         return events

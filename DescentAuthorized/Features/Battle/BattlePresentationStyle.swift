@@ -12,6 +12,7 @@ enum DAColor {
     static let attack = Color(red: 196 / 255, green: 69 / 255, blue: 63 / 255)
     static let defense = Color(red: 111 / 255, green: 182 / 255, blue: 217 / 255)
     static let dispel = Color(red: 201 / 255, green: 162 / 255, blue: 39 / 255)
+    static let debuff = Color(red: 177 / 255, green: 126 / 255, blue: 218 / 255)
     static let gold = Color(red: 213 / 255, green: 174 / 255, blue: 67 / 255)
 }
 
@@ -248,7 +249,8 @@ struct BattleTopHUDView: View {
                 Text(intentDetail(intent))
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(DAColor.body)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
             } else {
                 Text("분석 중")
                     .font(.caption.weight(.semibold))
@@ -302,6 +304,8 @@ struct BattleTopHUDView: View {
             "절대 방벽 \(charges)회"
         case let .telegraph(_, upcoming):
             upcoming
+        case let .expansion(_, action):
+            action.detail
         }
     }
 
@@ -311,6 +315,19 @@ struct BattleTopHUDView: View {
         case .grantNormalBarrier: DAColor.defense
         case .grantAbsoluteBarrier: DAColor.gold
         case .telegraph: DAColor.magicGlow
+        case let .expansion(_, action): expansionIntentColor(action)
+        }
+    }
+
+    private func expansionIntentColor(_ action: ExpansionEnemyAction) -> Color {
+        switch action {
+        case .correctionBarrier: DAColor.defense
+        case .correctionStrike, .copyReaction: DAColor.attack
+        case .amplify: DAColor.gold
+        case .schedule: DAColor.magicGlow
+        case .recordLastSpell, .lockAndSchedule, .preparedLockAndSchedule: DAColor.debuff
+        case let .sequence(actions): actions.first.map(expansionIntentColor) ?? DAColor.secondary
+        case .wait: DAColor.secondary
         }
     }
 }
