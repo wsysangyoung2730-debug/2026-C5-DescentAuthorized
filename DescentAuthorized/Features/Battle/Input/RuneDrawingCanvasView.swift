@@ -4,6 +4,14 @@ import UIKit
 final class RuneDrawingCanvasView: UIView {
     var onDrawingChanged: ((RuneDrawingState) -> Void)?
     var onInputRejected: ((StrokeCaptureError) -> Void)?
+    var onCheckpointReached: ((GlyphCheckpointHit) -> Void)?
+
+    var practiceStrokeSpecs: [GlyphStrokeSpec] = [] {
+        didSet {
+            guard practiceStrokeSpecs != oldValue else { return }
+            checkpointTracker.reset()
+        }
+    }
 
     private(set) var inputPreference: DrawingInputPreference
     private(set) var maximumStrokeCount: Int
@@ -31,6 +39,7 @@ final class RuneDrawingCanvasView: UIView {
     private var captureSession: StrokeCaptureSession
     private var activeDisplayPoints: [CGPoint] = []
     private var activeDisplayMethod: DrawingInputMethod?
+    private var checkpointTracker = GlyphCheckpointTracker()
 
     override init(frame: CGRect) {
         inputPreference = .automatic
@@ -53,6 +62,9 @@ final class RuneDrawingCanvasView: UIView {
         maximumStrokeCount: Int
     ) {
         precondition(maximumStrokeCount > 0)
+        guard inputPreference != self.inputPreference
+            || maximumStrokeCount != self.maximumStrokeCount else { return }
+        let previousState = drawingState
 
         if maximumStrokeCount != self.maximumStrokeCount {
             self.maximumStrokeCount = maximumStrokeCount
@@ -62,26 +74,35 @@ final class RuneDrawingCanvasView: UIView {
             )
             activeDisplayPoints.removeAll(keepingCapacity: true)
             activeDisplayMethod = nil
-            notifyStateChanged()
+            checkpointTracker.reset()
         } else if inputPreference != self.inputPreference {
             captureSession.updateInputPreference(inputPreference)
             activeDisplayPoints.removeAll(keepingCapacity: true)
             activeDisplayMethod = nil
-            notifyStateChanged()
+            checkpointTracker.reset()
         }
 
         self.inputPreference = inputPreference
         updateAccessibilityValue()
         setNeedsDisplay()
+        if drawingState != previousState {
+            // UIViewRepresentable configuration runs during a SwiftUI update.
+            // Only a real drawing change needs to publish back, after that update.
+            DispatchQueue.main.async { [weak self] in
+                self?.notifyStateChanged()
+            }
+        }
     }
 
     func undoLastStroke() {
+        checkpointTracker.reset()
         guard captureSession.undoLastStroke() != nil else { return }
         notifyStateChanged()
         setNeedsDisplay()
     }
 
     func clearStrokes() {
+        checkpointTracker.reset()
         guard captureSession.hasActiveStroke
                 || !captureSession.completedStrokes.isEmpty else {
             return
@@ -93,10 +114,21 @@ final class RuneDrawingCanvasView: UIView {
         setNeedsDisplay()
     }
 
+    func cancelActiveStroke() {
+        checkpointTracker.reset()
+        guard let contactID = captureSession.activeContactID,
+              captureSession.cancelStroke(contactID: contactID) else { return }
+        activeDisplayPoints.removeAll(keepingCapacity: true)
+        activeDisplayMethod = nil
+        notifyStateChanged()
+        setNeedsDisplay()
+    }
+
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
 
-        let prioritized = touches.sorted { first, second in
+        let touchSnapshot = Array(touches)
+        let prioritized = touchSnapshot.sorted { first, second in
             touchPriority(first) > touchPriority(second)
         }
         for touch in prioritized {
@@ -110,6 +142,17 @@ final class RuneDrawingCanvasView: UIView {
                 )
                 activeDisplayPoints = [location(for: touch)]
                 activeDisplayMethod = method
+                checkpointTracker.reset()
+                let strokeIndex = captureSession.completedStrokes.count
+                if practiceStrokeSpecs.indices.contains(strokeIndex) {
+                    let hits = checkpointTracker.begin(
+                        stroke: practiceStrokeSpecs[strokeIndex],
+                        strokeIndex: strokeIndex,
+                        at: normalizedPoint(for: location(for: touch)),
+                        inputMethod: method
+                    )
+                    notifyCheckpointHits(hits)
+                }
                 notifyStateChanged()
                 setNeedsDisplay()
                 break
@@ -125,15 +168,21 @@ final class RuneDrawingCanvasView: UIView {
         super.touchesMoved(touches, with: event)
 
         guard let activeContactID = captureSession.activeContactID else { return }
-        for touch in touches {
+        let touchSnapshot = Array(touches)
+        for touch in touchSnapshot {
             guard contactID(for: touch) == activeContactID else { continue }
             let coalesced = event?.coalescedTouches(for: touch) ?? [touch]
+            let samples = coalesced.map(rawSample(for:))
+            let displayPoints = coalesced.map(location(for:))
+            let normalizedPoints = displayPoints.map(normalizedPoint(for:))
             do {
                 try captureSession.appendSamples(
                     contactID: activeContactID,
-                    samples: coalesced.map(rawSample(for:))
+                    samples: samples
                 )
-                activeDisplayPoints.append(contentsOf: coalesced.map(location(for:)))
+                activeDisplayPoints.append(contentsOf: displayPoints)
+                let hits = checkpointTracker.append(normalizedPoints)
+                notifyCheckpointHits(hits)
                 notifyStateChanged()
                 setNeedsDisplay()
             } catch let error as StrokeCaptureError {
@@ -148,18 +197,23 @@ final class RuneDrawingCanvasView: UIView {
         super.touchesEnded(touches, with: event)
 
         guard let activeContactID = captureSession.activeContactID else { return }
-        for touch in touches {
+        let touchSnapshot = Array(touches)
+        for touch in touchSnapshot {
             guard contactID(for: touch) == activeContactID else { continue }
             let finalTouches = event?.coalescedTouches(for: touch) ?? [touch]
+            let finalSamples = finalTouches.map(rawSample(for:))
+            let finalPoints = finalTouches.map(location(for:)).map(normalizedPoint(for:))
             do {
                 _ = try captureSession.endStroke(
                     contactID: activeContactID,
-                    finalSamples: finalTouches.map(rawSample(for:)),
+                    finalSamples: finalSamples,
                     canvasSize: DrawingCanvasSize(
                         width: bounds.width,
                         height: bounds.height
                     )
                 )
+                let hits = checkpointTracker.append(finalPoints)
+                notifyCheckpointHits(hits)
             } catch let error as StrokeCaptureError {
                 onInputRejected?(error)
             } catch let error as StrokeProcessingError {
@@ -168,6 +222,7 @@ final class RuneDrawingCanvasView: UIView {
                 assertionFailure("Unexpected stroke end error: \(error)")
             }
 
+            checkpointTracker.reset()
             activeDisplayPoints.removeAll(keepingCapacity: true)
             activeDisplayMethod = nil
             notifyStateChanged()
@@ -178,12 +233,11 @@ final class RuneDrawingCanvasView: UIView {
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesCancelled(touches, with: event)
 
-        for touch in touches {
-            if captureSession.cancelStroke(contactID: contactID(for: touch)) {
-                activeDisplayPoints.removeAll(keepingCapacity: true)
-                activeDisplayMethod = nil
-                notifyStateChanged()
-                setNeedsDisplay()
+        guard let activeContactID = captureSession.activeContactID else { return }
+        let touchSnapshot = Array(touches)
+        for touch in touchSnapshot {
+            if activeContactID == contactID(for: touch) {
+                cancelActiveStroke()
                 break
             }
         }
@@ -228,18 +282,26 @@ final class RuneDrawingCanvasView: UIView {
         updateAccessibilityValue()
     }
 
-    private func notifyStateChanged() {
-        updateAccessibilityValue()
+    private var drawingState: RuneDrawingState {
         let activeStroke = activeDisplayPoints.isEmpty
             ? nil
             : DrawnStroke(points: activeDisplayPoints.map(normalizedPoint(for:)))
-        onDrawingChanged?(
-            RuneDrawingState(
-                completedStrokes: captureSession.completedStrokes,
-                activeStroke: activeStroke,
-                inputMethod: captureSession.activeMethod ?? captureSession.lastCompletedMethod
-            )
+        return RuneDrawingState(
+            completedStrokes: captureSession.completedStrokes,
+            activeStroke: activeStroke,
+            inputMethod: captureSession.activeMethod ?? captureSession.lastCompletedMethod
         )
+    }
+
+    private func notifyStateChanged() {
+        updateAccessibilityValue()
+        onDrawingChanged?(drawingState)
+    }
+
+    private func notifyCheckpointHits(_ hits: [GlyphCheckpointHit]) {
+        for hit in hits {
+            onCheckpointReached?(hit)
+        }
     }
 
     private func updateAccessibilityValue() {

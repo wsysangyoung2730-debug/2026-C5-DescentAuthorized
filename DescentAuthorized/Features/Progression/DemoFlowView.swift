@@ -116,6 +116,10 @@ struct DemoFlowView: View {
             onSkip: skipBattleTutorial
         )
         .ignoresSafeArea(edges: .top)
+        .environment(
+            \.isGlyphPracticeSuspended,
+            isShowingPauseMenu || isShowingSettings || retryLoadingPresentation != nil
+        )
         .sheet(isPresented: $isShowingPauseMenu) {
             PauseMenuView(
                 onTravelToCheckpoint: { checkpoint in

@@ -97,6 +97,57 @@ private struct EffectPlayback {
     var rate: Float = 1
 }
 
+private enum GlyphCheckpointTone: CaseIterable, Hashable {
+    case point
+    case strokeCompleted
+
+    /// A small PCM bell is kept in memory; no audio file or decoding is needed at touch time.
+    func waveData() -> Data {
+        let sampleRate = 24_000
+        let duration = self == .strokeCompleted ? 0.46 : 0.30
+        let sampleCount = Int(Double(sampleRate) * duration)
+        let audioByteCount = UInt32(sampleCount * MemoryLayout<Int16>.size)
+        var data = Data()
+        data.reserveCapacity(44 + Int(audioByteCount))
+
+        func append<Value: FixedWidthInteger>(_ value: Value) {
+            var littleEndian = value.littleEndian
+            withUnsafeBytes(of: &littleEndian) { data.append(contentsOf: $0) }
+        }
+
+        data.append(contentsOf: "RIFF".utf8)
+        append(UInt32(36) + audioByteCount)
+        data.append(contentsOf: "WAVEfmt ".utf8)
+        append(UInt32(16))
+        append(UInt16(1)) // Linear PCM.
+        append(UInt16(1)) // Mono.
+        append(UInt32(sampleRate))
+        append(UInt32(sampleRate * 2))
+        append(UInt16(2))
+        append(UInt16(16))
+        data.append(contentsOf: "data".utf8)
+        append(audioByteCount)
+
+        for sampleIndex in 0..<sampleCount {
+            let time = Double(sampleIndex) / Double(sampleRate)
+            let phase = 2 * Double.pi * 523.25 * time
+            let attack = min(time / 0.008, 1)
+            let release = min((duration - time) / 0.035, 1)
+            let envelope = attack * release * exp(-8 * time)
+            var bell = sin(phase)
+                + 0.22 * sin(phase * 2.01) * exp(-7 * time)
+                + 0.07 * sin(phase * 3.97) * exp(-16 * time)
+            if self == .strokeCompleted {
+                bell += 0.16 * sin(phase * 1.5) * exp(-4 * time)
+                    + 0.10 * sin(phase * 2) * exp(-3 * time)
+            }
+            let sample = max(-1, min(1, bell * envelope * 0.48))
+            append(Int16(sample * Double(Int16.max)))
+        }
+        return data
+    }
+}
+
 @MainActor
 final class GameFeedbackManager: ObservableObject {
     private let mapper = GameFeedbackMapper()
@@ -111,6 +162,10 @@ final class GameFeedbackManager: ObservableObject {
     private var musicFadeTask: Task<Void, Never>?
     private var eventSequenceTask: Task<Void, Never>?
     private var pendingEventCues: [GameFeedbackCue] = []
+    private var glyphCheckpointPlayers: [GlyphCheckpointTone: [AVAudioPlayer]] = [:]
+    private let glyphCheckpointClock = ContinuousClock()
+    private var lastGlyphCheckpointTime: ContinuousClock.Instant?
+    private var lastGlyphCheckpointCompletedStroke = false
     private var currentSettings = GameSettings.defaults
     private var isAudioSessionConfigured = false
 
@@ -121,6 +176,7 @@ final class GameFeedbackManager: ObservableObject {
 
     init() {
         preloadEffects()
+        preloadGlyphCheckpointSounds()
     }
 
     func apply(settings: GameSettings) {
@@ -138,6 +194,7 @@ final class GameFeedbackManager: ObservableObject {
             eventSequenceTask = nil
             pendingEventCues.removeAll(keepingCapacity: true)
             effectPlayers.values.flatMap { $0 }.forEach { $0.stop() }
+            stopGlyphCheckpointSounds()
             stopOutcomeMusic(restoreFloorMusic: settings.musicEnabled)
         }
     }
@@ -187,6 +244,7 @@ final class GameFeedbackManager: ObservableObject {
         outcomePlayer = nil
         outcomeAsset = nil
         effectPlayers.values.flatMap { $0 }.forEach { $0.stop() }
+        stopGlyphCheckpointSounds()
     }
 
     func consume(_ events: [DemoSessionEvent], settings: GameSettings) {
@@ -242,6 +300,58 @@ final class GameFeedbackManager: ObservableObject {
         case .error: .uiError
         }
         playEffect(EffectPlayback(asset: asset))
+    }
+
+    func playGlyphCheckpoint(
+        index: Int,
+        completesStroke: Bool,
+        isDemonstration: Bool = false,
+        settings: GameSettings
+    ) {
+        currentSettings = settings
+        guard settings.soundEffectsEnabled else { return }
+        let now = glyphCheckpointClock.now
+        // Coalesced touch samples may cross several nearby points in one frame.
+        if let lastGlyphCheckpointTime {
+            guard lastGlyphCheckpointTime.duration(to: now) >= .milliseconds(45)
+                || (completesStroke && !lastGlyphCheckpointCompletedStroke) else { return }
+        }
+        let tone: GlyphCheckpointTone = completesStroke ? .strokeCompleted : .point
+        guard let pool = glyphCheckpointPlayers[tone],
+              let player = pool.first(where: { !$0.isPlaying })
+                ?? pool.max(by: { $0.currentTime < $1.currentTime }) else { return }
+
+        configureAudioSessionIfNeeded()
+        let pentatonicSteps = [0, 2, 4, 7, 9, 12]
+        let step = pentatonicSteps[min(max(index, 0), pentatonicSteps.count - 1)]
+        if player.isPlaying {
+            player.pause()
+        }
+        player.rate = Float(pow(2, Double(step) / 12))
+        player.volume = isDemonstration ? 0.30 : 0.58
+        player.currentTime = 0
+        lastGlyphCheckpointTime = now
+        lastGlyphCheckpointCompletedStroke = completesStroke
+        player.play()
+    }
+
+    private func preloadGlyphCheckpointSounds() {
+        configureAudioSessionIfNeeded()
+        for tone in GlyphCheckpointTone.allCases {
+            let data = tone.waveData()
+            glyphCheckpointPlayers[tone] = (0..<2).compactMap { _ in
+                guard let player = try? AVAudioPlayer(data: data) else { return nil }
+                player.enableRate = true
+                player.prepareToPlay()
+                return player
+            }
+        }
+    }
+
+    private func stopGlyphCheckpointSounds() {
+        glyphCheckpointPlayers.values.flatMap { $0 }.forEach { $0.stop() }
+        lastGlyphCheckpointTime = nil
+        lastGlyphCheckpointCompletedStroke = false
     }
 
     private func effectSequence(for cue: GameFeedbackCue) -> [EffectPlayback] {

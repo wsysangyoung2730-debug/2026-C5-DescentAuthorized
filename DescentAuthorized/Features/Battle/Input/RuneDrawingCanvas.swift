@@ -28,6 +28,10 @@ final class RuneDrawingCanvasController {
     func clear() {
         canvasView?.clearStrokes()
     }
+
+    func cancelActiveStroke() {
+        canvasView?.cancelActiveStroke()
+    }
 }
 
 struct RuneDrawingCanvas: UIViewRepresentable {
@@ -40,6 +44,8 @@ struct RuneDrawingCanvas: UIViewRepresentable {
     let controller: RuneDrawingCanvasController
     let onDrawingChanged: ((RuneDrawingState) -> Void)?
     let onInputRejected: ((StrokeCaptureError) -> Void)?
+    let practiceStrokeSpecs: [GlyphStrokeSpec]
+    let onCheckpointReached: ((GlyphCheckpointHit) -> Void)?
 
     @Binding var strokes: [DrawnStroke]
     @Binding var lastInputMethod: DrawingInputMethod?
@@ -55,7 +61,9 @@ struct RuneDrawingCanvas: UIViewRepresentable {
         strokes: Binding<[DrawnStroke]>,
         lastInputMethod: Binding<DrawingInputMethod?>,
         onDrawingChanged: ((RuneDrawingState) -> Void)? = nil,
-        onInputRejected: ((StrokeCaptureError) -> Void)? = nil
+        onInputRejected: ((StrokeCaptureError) -> Void)? = nil,
+        practiceStrokeSpecs: [GlyphStrokeSpec] = [],
+        onCheckpointReached: ((GlyphCheckpointHit) -> Void)? = nil
     ) {
         self.inputPreference = inputPreference
         self.maximumStrokeCount = maximumStrokeCount
@@ -66,6 +74,8 @@ struct RuneDrawingCanvas: UIViewRepresentable {
         self.controller = controller
         self.onDrawingChanged = onDrawingChanged
         self.onInputRejected = onInputRejected
+        self.practiceStrokeSpecs = practiceStrokeSpecs
+        self.onCheckpointReached = onCheckpointReached
         _strokes = strokes
         _lastInputMethod = lastInputMethod
     }
@@ -75,7 +85,8 @@ struct RuneDrawingCanvas: UIViewRepresentable {
             strokes: $strokes,
             lastInputMethod: $lastInputMethod,
             onDrawingChanged: onDrawingChanged,
-            onInputRejected: onInputRejected
+            onInputRejected: onInputRejected,
+            onCheckpointReached: onCheckpointReached
         )
     }
 
@@ -90,6 +101,9 @@ struct RuneDrawingCanvas: UIViewRepresentable {
         view.onInputRejected = { [weak coordinator = context.coordinator] error in
             coordinator?.onInputRejected?(error)
         }
+        view.onCheckpointReached = { [weak coordinator = context.coordinator] hit in
+            coordinator?.onCheckpointReached?(hit)
+        }
         return view
     }
 
@@ -98,11 +112,13 @@ struct RuneDrawingCanvas: UIViewRepresentable {
         context.coordinator.lastInputMethod = $lastInputMethod
         context.coordinator.onDrawingChanged = onDrawingChanged
         context.coordinator.onInputRejected = onInputRejected
+        context.coordinator.onCheckpointReached = onCheckpointReached
         controller.canvasView = view
         view.guidePaths = guidePaths
         view.guideNodes = guideNodes
         view.erasureZones = erasureZones
         view.strokeColor = strokeColor
+        view.practiceStrokeSpecs = practiceStrokeSpecs
         view.configure(
             inputPreference: inputPreference,
             maximumStrokeCount: maximumStrokeCount
@@ -115,6 +131,8 @@ struct RuneDrawingCanvas: UIViewRepresentable {
     ) {
         view.onDrawingChanged = nil
         view.onInputRejected = nil
+        view.onCheckpointReached = nil
+        view.cancelActiveStroke()
     }
 
     final class Coordinator {
@@ -122,17 +140,20 @@ struct RuneDrawingCanvas: UIViewRepresentable {
         var lastInputMethod: Binding<DrawingInputMethod?>
         var onDrawingChanged: ((RuneDrawingState) -> Void)?
         var onInputRejected: ((StrokeCaptureError) -> Void)?
+        var onCheckpointReached: ((GlyphCheckpointHit) -> Void)?
 
         init(
             strokes: Binding<[DrawnStroke]>,
             lastInputMethod: Binding<DrawingInputMethod?>,
             onDrawingChanged: ((RuneDrawingState) -> Void)?,
-            onInputRejected: ((StrokeCaptureError) -> Void)?
+            onInputRejected: ((StrokeCaptureError) -> Void)?,
+            onCheckpointReached: ((GlyphCheckpointHit) -> Void)?
         ) {
             self.strokes = strokes
             self.lastInputMethod = lastInputMethod
             self.onDrawingChanged = onDrawingChanged
             self.onInputRejected = onInputRejected
+            self.onCheckpointReached = onCheckpointReached
         }
     }
 }

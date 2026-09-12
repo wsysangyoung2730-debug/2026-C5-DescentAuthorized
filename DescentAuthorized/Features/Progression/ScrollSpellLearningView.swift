@@ -264,10 +264,7 @@ struct ScrollSpellLearningView: View {
     }
 
     private func practiceStage(in size: CGSize) -> some View {
-        let boardWidth = min(presentation.maximumBoardWidth, size.width * 0.62)
-        let referenceWidth = min(390, max(270, size.width - boardWidth - 96))
-
-        return VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("두루마리 문양 해독")
@@ -287,50 +284,61 @@ struct ScrollSpellLearningView: View {
                     .foregroundStyle(categoryColor)
             }
 
-            HStack(spacing: 24) {
-                VStack(spacing: 8) {
-                    Text("두루마리 원본")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(DAColor.gold.opacity(0.9))
+            GeometryReader { workspace in
+                // Reserve the guidance row before fitting the artwork to available height.
+                let boardWidth = min(
+                    presentation.maximumBoardWidth,
+                    workspace.size.width * 0.64,
+                    max(0, workspace.size.height - 50) * 1331 / 994
+                )
+                let referenceWidth = min(360, max(0, workspace.size.width - boardWidth - 24))
 
-                    ZStack {
-                        Image("ScrollLearningProjection")
-                            .resizable()
-                            .scaledToFit()
-                            .opacity(0.34)
-                            .blendMode(.screen)
+                HStack(spacing: 24) {
+                    VStack(spacing: 8) {
+                        Text("두루마리 원본")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(DAColor.gold.opacity(0.9))
 
-                        openScrollReference(width: referenceWidth)
+                        ZStack {
+                            Image("ScrollLearningProjection")
+                                .resizable()
+                                .scaledToFit()
+                                .opacity(0.34)
+                                .blendMode(.screen)
+
+                            openScrollReference(width: referenceWidth)
+                        }
+                        .frame(width: referenceWidth)
+                        .frame(maxHeight: boardWidth * 0.7)
+
+                        if failureCount > 0 {
+                            Label(
+                                failureCount == 1 ? "시작점을 다시 확인하십시오" : "핵심점을 순서대로 통과하십시오",
+                                systemImage: "lightbulb.max.fill"
+                            )
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(DAColor.gold)
+                            .transition(.opacity)
+                        }
                     }
                     .frame(width: referenceWidth)
-                    .frame(maxHeight: boardWidth * 0.7)
 
-                    if failureCount > 0 {
-                        Label(
-                            failureCount == 1 ? "시작점을 다시 확인하십시오" : "핵심점을 순서대로 통과하십시오",
-                            systemImage: "lightbulb.max.fill"
-                        )
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(DAColor.gold)
-                        .transition(.opacity)
-                    }
+                    GlyphCastingPanel(
+                        spell: spell,
+                        inputPreference: appSettings.inputPreference,
+                        availableMana: 100,
+                        availableStrokes: max(2, spell.requiredStrokes),
+                        erasureZones: [],
+                        showsResourceHeader: false,
+                        usesBattleArtwork: true,
+                        showsPracticeGuidance: true,
+                        onCast: handleSubmission
+                    )
+                    .frame(width: boardWidth)
+                    .tutorialTarget("scroll-learning.input-board")
                 }
-                .frame(width: referenceWidth)
-
-                GlyphCastingPanel(
-                    spell: spell,
-                    inputPreference: appSettings.inputPreference,
-                    availableMana: 100,
-                    availableStrokes: max(2, spell.requiredStrokes),
-                    erasureZones: [],
-                    showsResourceHeader: false,
-                    usesBattleArtwork: true,
-                    onCast: handleSubmission
-                )
-                .frame(width: boardWidth)
-                .tutorialTarget("scroll-learning.input-board")
+                .frame(width: workspace.size.width, height: workspace.size.height, alignment: .center)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 22)
@@ -477,7 +485,7 @@ struct ScrollSpellLearningView: View {
 
     private var practiceGuidance: String {
         if failureCount == 0 {
-            return "왼쪽 두루마리의 시작점과 핵심점을 확인한 뒤 확대된 전투 입력판에 그대로 그리십시오."
+            return "획순 시범을 본 뒤, 번호가 표시된 시작점부터 한 획씩 따라 그려 보십시오."
         }
         return "입력은 초기화되었습니다. 밝은 시작점부터 천천히 다시 이어 보십시오."
     }
