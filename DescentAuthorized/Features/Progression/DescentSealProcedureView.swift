@@ -12,7 +12,8 @@ struct DescentSealProcedureConfiguration {
     let loadingContext: LoadingScreenContext
     let stages: [DescentSealStageConfiguration]
     let accessibilityLabel: String
-    let maximumAttempts: Int
+    /// Nil allows resubmission without resetting an already approved stage.
+    let maximumAttempts: Int?
     let layout: DescentSealPatternLayout
 
     static let floor10 = DescentSealProcedureConfiguration(
@@ -72,6 +73,47 @@ struct DescentSealProcedureConfiguration {
         maximumAttempts: 2,
         layout: .standard
     )
+
+    static func expansion(floorNumber: Int) -> DescentSealProcedureConfiguration {
+        precondition((5...7).contains(floorNumber), "Expansion seals exist on floors 7, 6, and 5")
+        let destination: String
+        let stages: [DescentSealStageConfiguration]
+        switch floorNumber {
+        case 7:
+            destination = "제6층 인과 검증 구역"
+            stages = [
+                .init(recordTitle: "1단계 · 기준축 고정", inputTitle: "1차 기준축 대조",
+                      sequence: [0, 3, 1, 4, 5, 8, 6, 9]),
+                .init(recordTitle: "2단계 · 좌표 인계", inputTitle: "2차 좌표 인계 승인",
+                      sequence: [2, 3, 0, 1, 4, 7, 6, 8, 5])
+            ]
+        case 6:
+            destination = "제5층 기억 원본 보관 구역"
+            stages = [
+                .init(recordTitle: "1단계 · 원인 대조", inputTitle: "1차 원인 기록 대조",
+                      sequence: [1, 3, 2, 5, 4, 7, 6, 9]),
+                .init(recordTitle: "2단계 · 결과 승인", inputTitle: "2차 결과 인계 승인",
+                      sequence: [8, 5, 2, 3, 0, 1, 4, 7])
+            ]
+        default:
+            destination = "제4층 하강 구역"
+            stages = [
+                .init(recordTitle: "1단계 · 원본 대조", inputTitle: "1차 원본 기억 대조",
+                      sequence: [0, 1, 4, 7, 9, 8, 5, 2, 3]),
+                .init(recordTitle: "2단계 · 기억 인계", inputTitle: "2차 기억 인계 승인",
+                      sequence: [2, 5, 4, 1, 0, 3, 6, 8, 9])
+            ]
+        }
+        return DescentSealProcedureConfiguration(
+            recordSubtitle: "제\(floorNumber)층 이중 하강 승인 기록",
+            destination: destination,
+            loadingContext: .floor8,
+            stages: stages,
+            accessibilityLabel: "제\(floorNumber)층 이중 하강 승인 정답 기록",
+            maximumAttempts: nil,
+            layout: .standard
+        )
+    }
 }
 
 struct DescentDoorSceneView: View {
@@ -229,15 +271,16 @@ struct DescentDoorSceneView: View {
     }
 }
 
-private enum DescentSealValidationFeedback {
+enum DescentSealValidationFeedback {
     case rejected(exhausted: Bool)
     case stageCompleted(final: Bool)
 }
 
-private struct DescentSealProcedureView: View {
+struct DescentSealProcedureView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let configuration: DescentSealProcedureConfiguration
+    let onStageApproved: (Int) -> Bool
     let onStateChanged: (DoorGlyphPresentationState) -> Void
     let onValidationFeedback: (DescentSealValidationFeedback) -> Void
     let onRejected: () async -> Void
@@ -258,22 +301,28 @@ private struct DescentSealProcedureView: View {
 
     init(
         configuration: DescentSealProcedureConfiguration,
-        onStateChanged: @escaping (DoorGlyphPresentationState) -> Void,
-        onValidationFeedback: @escaping (DescentSealValidationFeedback) -> Void,
-        onRejected: @escaping () async -> Void,
-        onCollapse: @escaping () async -> Void,
-        onRetry: @escaping () async -> Void,
+        initialCompletedStages: Int = 0,
+        onStageApproved: @escaping (Int) -> Bool = { _ in true },
+        onStateChanged: @escaping (DoorGlyphPresentationState) -> Void = { _ in },
+        onValidationFeedback: @escaping (DescentSealValidationFeedback) -> Void = { _ in },
+        onRejected: @escaping () async -> Void = {},
+        onCollapse: @escaping () async -> Void = {},
+        onRetry: @escaping () async -> Void = {},
         onApproved: @escaping () -> Void
     ) {
         precondition(!configuration.stages.isEmpty, "A descent seal requires at least one stage")
         self.configuration = configuration
+        self.onStageApproved = onStageApproved
+        let initialCount = min(max(initialCompletedStages, 0), configuration.stages.count)
+        _completedStageCount = State(initialValue: initialCount)
+        _phase = State(initialValue: initialCount == configuration.stages.count ? .approved : .ready)
         self.onStateChanged = onStateChanged
         self.onValidationFeedback = onValidationFeedback
         self.onRejected = onRejected
         self.onCollapse = onCollapse
         self.onRetry = onRetry
         self.onApproved = onApproved
-        _remainingAttempts = State(initialValue: configuration.maximumAttempts)
+        _remainingAttempts = State(initialValue: configuration.maximumAttempts ?? 0)
     }
 
     var body: some View {
@@ -317,8 +366,14 @@ private struct DescentSealProcedureView: View {
             onSkip: skipCoach
         )
         .onAppear {
-            onStateChanged(.ready)
-            resumeCoachIfNeeded()
+            if completedStageCount == configuration.stages.count {
+                phase = .approved
+                onStateChanged(.approved)
+                onApproved()
+            } else {
+                onStateChanged(.ready)
+                resumeCoachIfNeeded()
+            }
         }
         .onDisappear {
             validationTask?.cancel()
@@ -556,20 +611,34 @@ private struct DescentSealProcedureView: View {
                 }
             }
 
-            Button(action: resetInput) {
-                Label(
-                    configuration.stages.count == 1 ? "입력 초기화" : "전체 입력 초기화",
-                    systemImage: "arrow.counterclockwise"
-                )
-                .font(.headline)
-                .foregroundStyle(DescentSealPalette.secondary)
-                .frame(maxWidth: 270)
-                .frame(height: 52)
+            if phase == .approved, configuration.maximumAttempts == nil {
+                // If final navigation could not save, the accepted two stages remain retryable.
+                Button(action: onApproved) {
+                    Label("하강 진행", systemImage: "arrow.down")
+                        .font(.headline)
+                        .foregroundStyle(DescentSealPalette.secondary)
+                        .frame(maxWidth: 270)
+                        .frame(height: 52)
+                }
+                .buttonStyle(DescentSealResetButtonStyle())
+            } else {
+                Button(action: resetInput) {
+                    Label(
+                        configuration.maximumAttempts == nil
+                            ? "현재 단계 초기화"
+                            : (configuration.stages.count == 1 ? "입력 초기화" : "전체 입력 초기화"),
+                        systemImage: "arrow.counterclockwise"
+                    )
+                    .font(.headline)
+                    .foregroundStyle(DescentSealPalette.secondary)
+                    .frame(maxWidth: 270)
+                    .frame(height: 52)
+                }
+                .buttonStyle(DescentSealResetButtonStyle())
+                .disabled(!canResetInput)
+                .opacity(canResetInput ? 1 : 0.58)
+                .tutorialTarget("descent.reset")
             }
-            .buttonStyle(DescentSealResetButtonStyle())
-            .disabled((selectedNodes.isEmpty && completedStageCount == 0) || phase == .approved)
-            .opacity(selectedNodes.isEmpty && completedStageCount == 0 ? 0.58 : 1)
-            .tutorialTarget("descent.reset")
         }
     }
 
@@ -602,7 +671,10 @@ private struct DescentSealProcedureView: View {
                         value: "\(selectedNodes.count) / \(currentStage.sequence.count)"
                     )
                     divider
-                    informationRow(icon: "clock.arrow.circlepath", title: "남은 시도", value: "\(remainingAttempts)")
+                    informationRow(
+                        icon: "clock.arrow.circlepath", title: "남은 시도",
+                        value: configuration.maximumAttempts == nil ? "제한 없음" : "\(remainingAttempts)"
+                    )
 
                     Spacer(minLength: 12)
 
@@ -628,6 +700,11 @@ private struct DescentSealProcedureView: View {
             .fill(DescentSealPalette.cyan.opacity(0.18))
             .frame(height: 1)
             .padding(.vertical, 10)
+    }
+
+    private var canResetInput: Bool {
+        phase != .approved && (!selectedNodes.isEmpty
+            || (configuration.maximumAttempts != nil && completedStageCount > 0))
     }
 
     private var currentStageIndex: Int {
@@ -701,16 +778,24 @@ private struct DescentSealProcedureView: View {
                 gameSession.send(.recordTutorialFailure(.descentSeal))
             }
             let attemptsLeft = max(0, remainingAttempts - 1)
+            let exhausted = configuration.maximumAttempts != nil && attemptsLeft == 0
             phase = .failed
             remainingAttempts = attemptsLeft
             onStateChanged(.failed)
-            onValidationFeedback(.rejected(exhausted: attemptsLeft == 0))
-            presentRejectedInput(exhausted: attemptsLeft == 0)
+            onValidationFeedback(.rejected(exhausted: exhausted))
+            presentRejectedInput(exhausted: exhausted)
             return
         }
 
+        let approvedCount = completedStageCount + 1
+        guard onStageApproved(approvedCount) else {
+            selectedNodes.removeAll()
+            phase = .ready
+            onStateChanged(.ready)
+            return
+        }
         selectedNodes.removeAll()
-        completedStageCount += 1
+        completedStageCount = approvedCount
         let isFinalStage = completedStageCount == configuration.stages.count
         onValidationFeedback(.stageCompleted(final: isFinalStage))
         if isFinalStage {
@@ -724,7 +809,7 @@ private struct DescentSealProcedureView: View {
     }
 
     private func resetInput() {
-        completedStageCount = 0
+        if configuration.maximumAttempts != nil { completedStageCount = 0 }
         selectedNodes.removeAll()
         dragLocation = nil
         phase = .ready
@@ -741,7 +826,7 @@ private struct DescentSealProcedureView: View {
         validationTask = Task { @MainActor in
             selectedNodes.removeAll()
             dragLocation = nil
-            remainingAttempts = configuration.maximumAttempts
+            remainingAttempts = configuration.maximumAttempts ?? 0
             phase = .ready
             isSealInterfaceSuppressed = false
             onStateChanged(.ready)
@@ -758,6 +843,9 @@ private struct DescentSealProcedureView: View {
         validationTask = Task { @MainActor in
             await onRejected()
             guard !Task.isCancelled else { return }
+            if configuration.maximumAttempts == nil {
+                guard await waitForFailureStep(milliseconds: 260) else { return }
+            }
             if exhausted {
                 withAnimation(.easeOut(duration: 0.28)) {
                     isSealInterfaceSuppressed = true
