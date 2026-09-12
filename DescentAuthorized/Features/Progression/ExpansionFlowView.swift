@@ -4,6 +4,7 @@ import SwiftUI
 struct ExpansionFlowView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
     @EnvironmentObject private var appSettings: AppSettings
+    @Environment(\.isGlyphInputSuspended) private var inheritedInputSuspension
     @ObservedObject var sceneController: RealitySceneController
     @Binding var retryLoadingPresentation: SceneRetryLoadingPresentation?
     let onExit: () -> Void
@@ -19,11 +20,17 @@ struct ExpansionFlowView: View {
                     ExpansionBackdropView(floorNumber: current.floorNumber, isBoss: current.showsBoss)
                 }
                 content(current)
+                    .environment(\.isGlyphInputSuspended, inheritedInputSuspension || combatGuide != nil)
+                if let guide = combatGuide { ExpansionCombatGuideView(guide: guide) }
             }
             .sheet(isPresented: $showsPractice) {
                 if let practiceSpell { SpellPracticeSheet(spell: SpellCatalog.spell(practiceSpell)) }
             }
         }
+    }
+
+    private var combatGuide: ExpansionCombatGuide? {
+        ExpansionCombatGuide.current(progress: gameSession.progress, battle: gameSession.battleState, events: gameSession.latestEvents)
     }
 
     @ViewBuilder
@@ -71,7 +78,12 @@ struct ExpansionFlowView: View {
                 onStageApproved: { gameSession.sendChecked(.approveExpansionStage($0)) },
                 onApproved: { gameSession.send(.advanceExpansion) })
         case .learnDebuff:
-            Text("주문 기록 확인").foregroundStyle(DAColor.gold)
+            ScrollSpellLearningView(spell: SpellCatalog.spell(.outputReduction),
+                sourceCode: "제6층 · 출력 저하 기록",
+                discoveryText: "적의 다음 타격을 약화시키는 디버프 주문입니다. 문양을 익힌 뒤 출전 가방에서 사용 여부를 선택하세요.",
+                presentation: .standard, tutorialSequence: nil, failureMechanic: nil) { grade in
+                    gameSession.send(.learnExpansionDebuff(grade))
+                }
         case .complete:
             VStack(spacing: 20) {
                 Spacer()

@@ -71,7 +71,8 @@ struct GameProgressionController: Sendable {
             return []
         }
         switch current.stage {
-        case .entrance: current.stage = .preparation
+        case .entrance:
+            current.stage = current.floorNumber == 6 && !progress.learnedSpells.contains(.outputReduction) ? .learnDebuff : .preparation
         case .preparation, .bossPreparation:
             guard progress.loadoutIssues.isEmpty,
                   ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: current.stage == .bossPreparation) != nil else {
@@ -90,6 +91,15 @@ struct GameProgressionController: Sendable {
         }
         try updateExpansion(current)
         return []
+    }
+
+    mutating func learnExpansionDebuff(grade: CastingGrade) throws -> [ProgressionEvent] {
+        guard progress.expansion?.floorNumber == 6, progress.expansion?.stage == .learnDebuff else {
+            throw ProgressionError.requirementMissing("6층 고정 주문 학습")
+        }
+        let events = try learnExpansionSpell(.outputReduction, grade: grade)
+        progress.expansion?.stage = .preparation
+        return events
     }
 
     mutating func releaseExpansionSeal(grade: CastingGrade) throws -> [ProgressionEvent] {

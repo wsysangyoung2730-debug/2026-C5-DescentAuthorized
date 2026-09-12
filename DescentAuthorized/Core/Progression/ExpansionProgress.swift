@@ -47,6 +47,8 @@ enum LoadoutTutorialFlag: String, Codable, Hashable, Sendable {
     case firstOverflowLoadout
     case statusEffects
     case scheduledDamage
+    case reservationCounter
+    case reservationResult
     case memoryRecord
     case cardSeal
 }

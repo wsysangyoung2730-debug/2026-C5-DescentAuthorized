@@ -91,6 +91,7 @@
 		F3D2677D04CAE5CAF2FD64AC /* LoadoutPreparationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB2CE49C2AD00937B89FDD4 /* LoadoutPreparationView.swift */; };
 		1B4C39B22FDD13EBC8A43D04 /* ExpansionEnemyCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B78A42DDCE290DDD306D33 /* ExpansionEnemyCatalog.swift */; };
 		4D4DB959837B19118F6E0A4B /* ExpansionFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5884690AA8046D1C96B64881 /* ExpansionFlowView.swift */; };
+		F0ED0993C01A519FB92D34CE /* ExpansionCombatGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CC104F7F1D8E1F17AA010EC /* ExpansionCombatGuideView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -180,6 +181,7 @@
 		AAB2CE49C2AD00937B89FDD4 /* LoadoutPreparationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/LoadoutPreparationView.swift"; sourceTree = SOURCE_ROOT; };
 		F5B78A42DDCE290DDD306D33 /* ExpansionEnemyCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/ExpansionEnemyCatalog.swift"; sourceTree = SOURCE_ROOT; };
 		5884690AA8046D1C96B64881 /* ExpansionFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/ExpansionFlowView.swift"; sourceTree = SOURCE_ROOT; };
+		1CC104F7F1D8E1F17AA010EC /* ExpansionCombatGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Battle/ExpansionCombatGuideView.swift"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -207,6 +209,7 @@
 		400000000000000000000002 /* DescentAuthorized */ = {
 			isa = PBXGroup;
 			children = (
+				1CC104F7F1D8E1F17AA010EC /* ExpansionCombatGuideView.swift */,
 				5884690AA8046D1C96B64881 /* ExpansionFlowView.swift */,
 				F5B78A42DDCE290DDD306D33 /* ExpansionEnemyCatalog.swift */,
 				AAB2CE49C2AD00937B89FDD4 /* LoadoutPreparationView.swift */,
@@ -533,6 +536,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F0ED0993C01A519FB92D34CE /* ExpansionCombatGuideView.swift in Sources */,
 				4D4DB959837B19118F6E0A4B /* ExpansionFlowView.swift in Sources */,
 				1B4C39B22FDD13EBC8A43D04 /* ExpansionEnemyCatalog.swift in Sources */,
 				F3D2677D04CAE5CAF2FD64AC /* LoadoutPreparationView.swift in Sources */,
