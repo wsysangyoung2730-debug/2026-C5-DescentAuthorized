@@ -331,7 +331,7 @@ struct ScrollSpellLearningView: View {
                         erasureZones: [],
                         showsResourceHeader: false,
                         usesBattleArtwork: true,
-                        showsPracticeGuidance: true,
+                        inputFeedbackMode: .practice,
                         onCast: handleSubmission
                     )
                     .frame(width: boardWidth)

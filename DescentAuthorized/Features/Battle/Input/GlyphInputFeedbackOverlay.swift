@@ -1,23 +1,25 @@
 import SwiftUI
 
-private struct GlyphPracticeSuspendedKey: EnvironmentKey {
+private struct GlyphInputSuspendedKey: EnvironmentKey {
     static let defaultValue = false
 }
 
 extension EnvironmentValues {
-    var isGlyphPracticeSuspended: Bool {
-        get { self[GlyphPracticeSuspendedKey.self] }
-        set { self[GlyphPracticeSuspendedKey.self] = newValue }
+    var isGlyphInputSuspended: Bool {
+        get { self[GlyphInputSuspendedKey.self] }
+        set { self[GlyphInputSuspendedKey.self] = newValue }
     }
 }
 
 /// Decorations only: the reference playback never becomes a captured player stroke.
-struct GlyphPracticeOverlay: View {
+struct GlyphInputFeedbackOverlay: View {
     let glyph: GlyphDefinition
     let frame: GlyphDemonstrationFrame?
     let nextStrokeIndex: Int
     let checkpoint: GlyphCheckpointHit?
     let color: Color
+    let showsStartNumbers: Bool
+    let reducesFlashes: Bool
 
     var body: some View {
         GeometryReader { proxy in
@@ -60,17 +62,22 @@ struct GlyphPracticeOverlay: View {
                         let center = point(checkpoint.position, in: canvasSize)
                         context.stroke(
                             Path(ellipseIn: CGRect(x: center.x - 10, y: center.y - 10, width: 20, height: 20)),
-                            with: .color(color), lineWidth: 2
+                            with: .color(color.opacity(reducesFlashes ? 0.65 : 1)),
+                            lineWidth: reducesFlashes ? 1.5 : 2
                         )
-                        context.fill(
-                            Path(ellipseIn: CGRect(x: center.x - 4, y: center.y - 4, width: 8, height: 8)),
-                            with: .color(.white)
-                        )
+                        if !reducesFlashes {
+                            context.fill(
+                                Path(ellipseIn: CGRect(x: center.x - 4, y: center.y - 4, width: 8, height: 8)),
+                                with: .color(.white)
+                            )
+                        }
                     }
                 }
 
-                ForEach(glyph.strokes.indices, id: \.self) { index in
-                    startBadge(index: index, in: size)
+                if showsStartNumbers {
+                    ForEach(glyph.strokes.indices, id: \.self) { index in
+                        startBadge(index: index, in: size)
+                    }
                 }
             }
             .clipped()

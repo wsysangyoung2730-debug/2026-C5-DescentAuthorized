@@ -306,10 +306,11 @@ final class GameFeedbackManager: ObservableObject {
         index: Int,
         completesStroke: Bool,
         isDemonstration: Bool = false,
+        volume: Float = 0.58,
         settings: GameSettings
     ) {
         currentSettings = settings
-        guard settings.soundEffectsEnabled else { return }
+        guard settings.soundEffectsEnabled, volume.isFinite else { return }
         let now = glyphCheckpointClock.now
         // Coalesced touch samples may cross several nearby points in one frame.
         if let lastGlyphCheckpointTime {
@@ -328,7 +329,7 @@ final class GameFeedbackManager: ObservableObject {
             player.pause()
         }
         player.rate = Float(pow(2, Double(step) / 12))
-        player.volume = isDemonstration ? 0.30 : 0.58
+        player.volume = isDemonstration ? 0.30 : min(max(volume, 0), 1)
         player.currentTime = 0
         lastGlyphCheckpointTime = now
         lastGlyphCheckpointCompletedStroke = completesStroke

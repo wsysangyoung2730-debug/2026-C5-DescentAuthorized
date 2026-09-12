@@ -102,7 +102,8 @@ struct GlyphCastingPanel: View {
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-    @Environment(\.isGlyphPracticeSuspended) private var isPracticeSuspended
+    @Environment(\.isGlyphInputSuspended) private var isInputSuspended
+    @Environment(\.isEnabled) private var isEnabled
 
     let spell: SpellDefinition
     let inputPreference: DrawingInputPreference
@@ -112,7 +113,7 @@ struct GlyphCastingPanel: View {
     let showsResourceHeader: Bool
     let surfaceOpacity: Double
     let usesBattleArtwork: Bool
-    let showsPracticeGuidance: Bool
+    let inputFeedbackMode: GlyphInputFeedbackMode
     let gateSealPresentation: GateSealGlyphPresentation?
     let onResourcePreviewChanged: ((Double, Int) -> Void)?
     let onCast: (GlyphCastSubmission) -> Void
@@ -128,7 +129,7 @@ struct GlyphCastingPanel: View {
     @State private var demonstrationElapsed: TimeInterval = 0
     @State private var demonstrationRun = 0
     @State private var demonstratedCheckpoints: Set<String> = []
-    @State private var practiceCheckpoint: GlyphCheckpointHit?
+    @State private var checkpointHighlight: GlyphCheckpointHit?
     @State private var checkpointRevision = 0
 
     private let manaEstimator = GlyphManaEstimator()
@@ -142,7 +143,7 @@ struct GlyphCastingPanel: View {
         showsResourceHeader: Bool = true,
         surfaceOpacity: Double = 1,
         usesBattleArtwork: Bool = false,
-        showsPracticeGuidance: Bool = false,
+        inputFeedbackMode: GlyphInputFeedbackMode = .disabled,
         gateSealPresentation: GateSealGlyphPresentation? = nil,
         onResourcePreviewChanged: ((Double, Int) -> Void)? = nil,
         onCast: @escaping (GlyphCastSubmission) -> Void
@@ -155,8 +156,8 @@ struct GlyphCastingPanel: View {
         self.showsResourceHeader = showsResourceHeader
         self.surfaceOpacity = surfaceOpacity
         self.usesBattleArtwork = usesBattleArtwork
-        self.showsPracticeGuidance = showsPracticeGuidance
-        _demonstrationCompleted = State(initialValue: !showsPracticeGuidance)
+        self.inputFeedbackMode = inputFeedbackMode
+        _demonstrationCompleted = State(initialValue: !inputFeedbackMode.showsPracticeGuidance)
         self.gateSealPresentation = gateSealPresentation
         self.onResourcePreviewChanged = onResourcePreviewChanged
         self.onCast = onCast
@@ -184,33 +185,40 @@ struct GlyphCastingPanel: View {
         .onAppear { publishResourcePreview(for: drawingState) }
         .onDisappear {
             resetAfterCastTask?.cancel()
+            canvasController.cancelActiveStroke()
+            checkpointHighlight = nil
             onResourcePreviewChanged?(availableMana, availableStrokes)
         }
         .onChange(of: spell.id) { _, _ in restartDemonstration() }
         .onChange(of: availableMana) { _, _ in resetDrawing() }
         .onChange(of: availableStrokes) { _, _ in resetDrawing() }
-        .onChange(of: practiceIsSuspended) { _, suspended in
+        .onChange(of: inputIsSuspended) { _, suspended in
             if suspended {
                 canvasController.cancelActiveStroke()
-                practiceCheckpoint = nil
+                checkpointHighlight = nil
             }
         }
         .task(id: PracticePlaybackKey(
             run: demonstrationRun,
-            suspended: practiceIsSuspended,
+            suspended: inputIsSuspended,
             reducedMotion: practiceReducedMotion
         )) {
             await playDemonstration()
         }
         .task(id: checkpointRevision) {
-            guard practiceCheckpoint != nil else { return }
+            guard checkpointHighlight != nil else { return }
             do { try await Task.sleep(for: .milliseconds(220)) } catch { return }
-            practiceCheckpoint = nil
+            checkpointHighlight = nil
         }
     }
 
-    private var practiceIsSuspended: Bool {
-        showsPracticeGuidance && (isPracticeSuspended || scenePhase != .active)
+    private var showsPracticeGuidance: Bool {
+        inputFeedbackMode.showsPracticeGuidance
+    }
+
+    private var inputIsSuspended: Bool {
+        inputFeedbackMode.showsCheckpointFeedback
+            && (isInputSuspended || scenePhase != .active || !isEnabled)
     }
 
     private var practiceReducedMotion: Bool {
@@ -230,7 +238,7 @@ struct GlyphCastingPanel: View {
     }
 
     private var practiceStatus: String {
-        if practiceIsSuspended { return "연습 일시정지" }
+        if inputIsSuspended { return "연습 일시정지" }
         if isDemonstrating {
             let frame = demonstrationFrame
             if frame.isLifting, frame.strokeIndex + 1 < spell.requiredStrokes {
@@ -275,7 +283,7 @@ struct GlyphCastingPanel: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(DAColor.body)
-            .disabled(practiceIsSuspended || drawingState.activeStroke != nil || feedback != nil)
+            .disabled(inputIsSuspended || drawingState.activeStroke != nil || feedback != nil)
             .accessibilityIdentifier("practice.replay")
         }
         .frame(height: 44)
@@ -284,14 +292,14 @@ struct GlyphCastingPanel: View {
 
     @MainActor
     private func playDemonstration() async {
-        guard isDemonstrating, !practiceIsSuspended else { return }
+        guard isDemonstrating, !inputIsSuspended else { return }
         let playback = demonstration
         let clock = ContinuousClock()
         var previous = clock.now
         playDemonstrationCheckpoints(demonstrationFrame)
         while demonstrationElapsed < playback.duration {
             do { try await Task.sleep(for: .milliseconds(33)) } catch { return }
-            guard !Task.isCancelled, isDemonstrating, !practiceIsSuspended else { return }
+            guard !Task.isCancelled, isDemonstrating, !inputIsSuspended else { return }
             let now = clock.now
             let delta = previous.duration(to: now).components
             previous = now
@@ -325,11 +333,13 @@ struct GlyphCastingPanel: View {
     }
 
     private func handleCheckpoint(_ hit: GlyphCheckpointHit) {
-        guard showsPracticeGuidance, !isDemonstrating, !practiceIsSuspended, feedback == nil else { return }
-        practiceCheckpoint = hit
+        guard inputFeedbackMode.showsCheckpointFeedback,
+              !isDemonstrating, !inputIsSuspended, feedback == nil else { return }
+        checkpointHighlight = hit
         checkpointRevision += 1
         gameFeedback.playGlyphCheckpoint(
             index: checkpointSoundIndex(hit), completesStroke: hit.isStrokeEnd,
+            volume: inputFeedbackMode.checkpointVolume,
             settings: appSettings.settings
         )
     }
@@ -654,18 +664,20 @@ struct GlyphCastingPanel: View {
                 lastInputMethod: $lastInputMethod,
                 onDrawingChanged: updateDrawing,
                 onInputRejected: handleInputRejection,
-                practiceStrokeSpecs: showsPracticeGuidance ? spell.glyph.strokes : [],
+                checkpointStrokeSpecs: inputFeedbackMode.showsCheckpointFeedback ? spell.glyph.strokes : [],
                 onCheckpointReached: handleCheckpoint
             )
-            .allowsHitTesting(feedback == nil && !isDemonstrating && !practiceIsSuspended)
+            .allowsHitTesting(feedback == nil && !isDemonstrating && !inputIsSuspended)
 
-            if showsPracticeGuidance {
-                GlyphPracticeOverlay(
+            if inputFeedbackMode.showsCheckpointFeedback {
+                GlyphInputFeedbackOverlay(
                     glyph: spell.glyph,
                     frame: isDemonstrating ? demonstrationFrame : nil,
                     nextStrokeIndex: completedStrokes.count,
-                    checkpoint: practiceCheckpoint,
-                    color: categoryColor
+                    checkpoint: checkpointHighlight,
+                    color: categoryColor,
+                    showsStartNumbers: showsPracticeGuidance,
+                    reducesFlashes: appSettings.reducedFlashes
                 )
             }
 
@@ -820,7 +832,7 @@ struct GlyphCastingPanel: View {
     }
 
     private var canCast: Bool {
-        !isDemonstrating && !practiceIsSuspended
+        !isDemonstrating && !inputIsSuspended
             && drawingState.activeStroke == nil
             && completedStrokes.count == spell.requiredStrokes
             && completedStrokes.count <= availableStrokes
@@ -830,7 +842,7 @@ struct GlyphCastingPanel: View {
     private var canUndo: Bool {
         !completedStrokes.isEmpty && feedback == nil
             && drawingState.activeStroke == nil
-            && !isDemonstrating && !practiceIsSuspended
+            && !isDemonstrating && !inputIsSuspended
     }
 
     private var guideNodes: [NormalizedPoint] {
@@ -861,6 +873,9 @@ struct GlyphCastingPanel: View {
     }
 
     private func updateDrawing(_ state: RuneDrawingState) {
+        if state.completedStrokes.count < drawingState.completedStrokes.count {
+            checkpointHighlight = nil
+        }
         drawingState = state
         feedback = nil
         rejectionMessage = nil
@@ -922,7 +937,7 @@ struct GlyphCastingPanel: View {
         lastInputMethod = nil
         feedback = nil
         rejectionMessage = nil
-        practiceCheckpoint = nil
+        checkpointHighlight = nil
         onResourcePreviewChanged?(availableMana, availableStrokes)
     }
 

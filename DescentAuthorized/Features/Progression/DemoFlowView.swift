@@ -117,7 +117,7 @@ struct DemoFlowView: View {
         )
         .ignoresSafeArea(edges: .top)
         .environment(
-            \.isGlyphPracticeSuspended,
+            \.isGlyphInputSuspended,
             isShowingPauseMenu || isShowingSettings || retryLoadingPresentation != nil
         )
         .sheet(isPresented: $isShowingPauseMenu) {

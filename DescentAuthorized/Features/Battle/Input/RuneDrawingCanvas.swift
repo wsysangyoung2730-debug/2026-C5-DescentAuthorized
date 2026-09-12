@@ -44,7 +44,7 @@ struct RuneDrawingCanvas: UIViewRepresentable {
     let controller: RuneDrawingCanvasController
     let onDrawingChanged: ((RuneDrawingState) -> Void)?
     let onInputRejected: ((StrokeCaptureError) -> Void)?
-    let practiceStrokeSpecs: [GlyphStrokeSpec]
+    let checkpointStrokeSpecs: [GlyphStrokeSpec]
     let onCheckpointReached: ((GlyphCheckpointHit) -> Void)?
 
     @Binding var strokes: [DrawnStroke]
@@ -62,7 +62,7 @@ struct RuneDrawingCanvas: UIViewRepresentable {
         lastInputMethod: Binding<DrawingInputMethod?>,
         onDrawingChanged: ((RuneDrawingState) -> Void)? = nil,
         onInputRejected: ((StrokeCaptureError) -> Void)? = nil,
-        practiceStrokeSpecs: [GlyphStrokeSpec] = [],
+        checkpointStrokeSpecs: [GlyphStrokeSpec] = [],
         onCheckpointReached: ((GlyphCheckpointHit) -> Void)? = nil
     ) {
         self.inputPreference = inputPreference
@@ -74,7 +74,7 @@ struct RuneDrawingCanvas: UIViewRepresentable {
         self.controller = controller
         self.onDrawingChanged = onDrawingChanged
         self.onInputRejected = onInputRejected
-        self.practiceStrokeSpecs = practiceStrokeSpecs
+        self.checkpointStrokeSpecs = checkpointStrokeSpecs
         self.onCheckpointReached = onCheckpointReached
         _strokes = strokes
         _lastInputMethod = lastInputMethod
@@ -118,7 +118,7 @@ struct RuneDrawingCanvas: UIViewRepresentable {
         view.guideNodes = guideNodes
         view.erasureZones = erasureZones
         view.strokeColor = strokeColor
-        view.practiceStrokeSpecs = practiceStrokeSpecs
+        view.checkpointStrokeSpecs = checkpointStrokeSpecs
         view.configure(
             inputPreference: inputPreference,
             maximumStrokeCount: maximumStrokeCount

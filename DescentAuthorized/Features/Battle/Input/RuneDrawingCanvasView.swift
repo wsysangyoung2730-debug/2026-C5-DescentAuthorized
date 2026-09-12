@@ -6,9 +6,9 @@ final class RuneDrawingCanvasView: UIView {
     var onInputRejected: ((StrokeCaptureError) -> Void)?
     var onCheckpointReached: ((GlyphCheckpointHit) -> Void)?
 
-    var practiceStrokeSpecs: [GlyphStrokeSpec] = [] {
+    var checkpointStrokeSpecs: [GlyphStrokeSpec] = [] {
         didSet {
-            guard practiceStrokeSpecs != oldValue else { return }
+            guard checkpointStrokeSpecs != oldValue else { return }
             checkpointTracker.reset()
         }
     }
@@ -144,9 +144,9 @@ final class RuneDrawingCanvasView: UIView {
                 activeDisplayMethod = method
                 checkpointTracker.reset()
                 let strokeIndex = captureSession.completedStrokes.count
-                if practiceStrokeSpecs.indices.contains(strokeIndex) {
+                if checkpointStrokeSpecs.indices.contains(strokeIndex) {
                     let hits = checkpointTracker.begin(
-                        stroke: practiceStrokeSpecs[strokeIndex],
+                        stroke: checkpointStrokeSpecs[strokeIndex],
                         strokeIndex: strokeIndex,
                         at: normalizedPoint(for: location(for: touch)),
                         inputMethod: method

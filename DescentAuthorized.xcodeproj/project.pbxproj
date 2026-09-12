@@ -9,7 +9,8 @@
 /* Begin PBXBuildFile section */
 		100000000000000000000076 /* GlyphCheckpointTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000076 /* GlyphCheckpointTracker.swift */; };
 		100000000000000000000077 /* GlyphPracticeDemonstration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000077 /* GlyphPracticeDemonstration.swift */; };
-		100000000000000000000078 /* GlyphPracticeOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000078 /* GlyphPracticeOverlay.swift */; };
+		100000000000000000000078 /* GlyphInputFeedbackOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000078 /* GlyphInputFeedbackOverlay.swift */; };
+		100000000000000000000079 /* GlyphInputFeedbackMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000079 /* GlyphInputFeedbackMode.swift */; };
 		100000000000000000000054 /* RealityAssetIDs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000054 /* RealityAssetIDs.swift */; };
 		100000000000000000000055 /* AssetManifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000055 /* AssetManifest.json */; };
 		100000000000000000000075 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000075 /* PrivacyInfo.xcprivacy */; };
@@ -85,7 +86,8 @@
 /* Begin PBXFileReference section */
 		200000000000000000000076 /* GlyphCheckpointTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphCheckpointTracker.swift; sourceTree = "<group>"; };
 		200000000000000000000077 /* GlyphPracticeDemonstration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphPracticeDemonstration.swift; sourceTree = "<group>"; };
-		200000000000000000000078 /* GlyphPracticeOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphPracticeOverlay.swift; sourceTree = "<group>"; };
+		200000000000000000000078 /* GlyphInputFeedbackOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphInputFeedbackOverlay.swift; sourceTree = "<group>"; };
+		200000000000000000000079 /* GlyphInputFeedbackMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphInputFeedbackMode.swift; sourceTree = "<group>"; };
 		200000000000000000000054 /* RealityAssetIDs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityAssetIDs.swift; sourceTree = "<group>"; };
 		200000000000000000000055 /* AssetManifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = AssetManifest.json; sourceTree = "<group>"; };
 		200000000000000000000075 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -312,6 +314,7 @@
 				200000000000000000000014 /* GlyphGeometry.swift */,
 				200000000000000000000076 /* GlyphCheckpointTracker.swift */,
 				200000000000000000000077 /* GlyphPracticeDemonstration.swift */,
+				200000000000000000000079 /* GlyphInputFeedbackMode.swift */,
 				200000000000000000000015 /* GlyphEvaluator.swift */,
 				200000000000000000000032 /* GlyphManaEstimator.swift */,
 				200000000000000000000024 /* StrokeProcessor.swift */,
@@ -352,7 +355,7 @@
 			children = (
 				200000000000000000000025 /* RuneDrawingCanvasView.swift */,
 				200000000000000000000026 /* RuneDrawingCanvas.swift */,
-				200000000000000000000078 /* GlyphPracticeOverlay.swift */,
+				200000000000000000000078 /* GlyphInputFeedbackOverlay.swift */,
 			);
 			path = Input;
 			sourceTree = "<group>";
@@ -521,7 +524,8 @@
 				100000000000000000000014 /* GlyphGeometry.swift in Sources */,
 				100000000000000000000076 /* GlyphCheckpointTracker.swift in Sources */,
 				100000000000000000000077 /* GlyphPracticeDemonstration.swift in Sources */,
-				100000000000000000000078 /* GlyphPracticeOverlay.swift in Sources */,
+				100000000000000000000078 /* GlyphInputFeedbackOverlay.swift in Sources */,
+				100000000000000000000079 /* GlyphInputFeedbackMode.swift in Sources */,
 				100000000000000000000015 /* GlyphEvaluator.swift in Sources */,
 				100000000000000000000016 /* CombatEngine.swift in Sources */,
 				100000000000000000000017 /* EncounterController.swift in Sources */,

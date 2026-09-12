@@ -507,6 +507,7 @@ struct BattleView: View {
                 showsResourceHeader: false,
                 surfaceOpacity: 0.76,
                 usesBattleArtwork: true,
+                inputFeedbackMode: .battle,
                 onResourcePreviewChanged: { mana, strokes in
                     previewMana = mana
                     previewStrokes = strokes
@@ -518,6 +519,10 @@ struct BattleView: View {
                         inputMethod: submission.inputMethod
                     ))
                 }
+            )
+            .disabled(
+                presentation.phase != .playerTurn
+                    || showsFirstTurnBriefing || detailedSpell != nil || isRestartLoading
             )
             .tutorialTarget("battle.input")
         } else {
