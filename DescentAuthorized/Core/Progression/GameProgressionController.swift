@@ -561,7 +561,7 @@ struct GameProgressionController: Sendable {
                 .checkpointChanged(.observationDefeated),
                 .sceneChanged(setScene(.floor8AdministratorDefeated))
             ]
-        case .coordinateDriftResidual, .coordinateCorrectionAdministrator, .delayedConsequenceResidual, .causalityVerificationAdministrator:
+        default:
             throw ProgressionError.unexpectedEnemy(enemy)
         }
     }

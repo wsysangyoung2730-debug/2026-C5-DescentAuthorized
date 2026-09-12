@@ -6,6 +6,7 @@ enum ExpansionEnemyCatalog {
         switch floor {
         case 7: isBoss ? coordinateCorrectionAdministrator : coordinateDriftResidual
         case 6: isBoss ? causalityVerificationAdministrator : delayedConsequenceResidual
+        case 5: isBoss ? memoryOriginalAdministrator : memoryOmissionResidual
         default: nil
         }
     }
@@ -16,12 +17,16 @@ enum ExpansionEnemyCatalog {
         case .coordinateCorrectionAdministrator: coordinateCorrectionAdministrator
         case .delayedConsequenceResidual: delayedConsequenceResidual
         case .causalityVerificationAdministrator: causalityVerificationAdministrator
+        case .memoryOmissionResidual: memoryOmissionResidual
+        case .memoryOriginalAdministrator: memoryOriginalAdministrator
         default: nil
         }
     }
 
     static func phaseTwoPattern(for id: EnemyID, firstCycle: Bool) -> [EnemyAction]? {
         switch id {
+        case .memoryOriginalAdministrator:
+            memoryPattern(phaseTwo: true)
         case .causalityVerificationAdministrator:
             causalityPattern(phaseTwo: true)
         case .coordinateCorrectionAdministrator:
@@ -91,6 +96,31 @@ enum ExpansionEnemyCatalog {
             .attack(name: "원인 추궁", damage: phaseTwo ? 14 : 12, isStrong: false),
             .expansion(name: "제1결과 집행", action: .wait),
             .expansion(name: phaseTwo ? "제2결과 집행" : "기록 정리", action: .wait)
+        ]
+    }
+
+    static let memoryOmissionResidual = EnemyDefinition(
+        id: .memoryOmissionResidual, name: "기억 누락 잔류체", maxHP: 180,
+        startingAbsoluteBarrierCharges: 0,
+        pattern: [
+            .expansion(name: "기억 붙잡기", action: .recordLastSpell),
+            .expansion(name: "모사 할퀴기", action: .copyReaction(baseDamage: 12, categoryEffects: false, extraDamage: 12)),
+            .expansion(name: "기록 압축", action: .schedule([.init(name: "기억 파열", damage: 36, turnsFromNow: 1)])),
+            .expansion(name: "기억 파열", action: .wait)
+        ], thresholdRules: []
+    )
+
+    static let memoryOriginalAdministrator = EnemyDefinition(
+        id: .memoryOriginalAdministrator, name: "기억 원본 관리자", maxHP: 450,
+        startingAbsoluteBarrierCharges: 0, pattern: memoryPattern(phaseTwo: false), thresholdRules: []
+    )
+
+    private static func memoryPattern(phaseTwo: Bool) -> [EnemyAction] {
+        [
+            .expansion(name: "원본 채취", action: .recordLastSpell),
+            .expansion(name: "원본 대조", action: .copyReaction(baseDamage: phaseTwo ? 18 : 14, categoryEffects: true, extraDamage: phaseTwo ? 16 : 12)),
+            .expansion(name: "보관 명령", action: .lockAndSchedule(count: phaseTwo ? 2 : 1, damage: phaseTwo ? 48 : 40)),
+            .expansion(name: "기억 압착", action: .wait)
         ]
     }
 
