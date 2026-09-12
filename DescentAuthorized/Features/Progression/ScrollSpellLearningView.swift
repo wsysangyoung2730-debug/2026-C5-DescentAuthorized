@@ -220,7 +220,7 @@ struct ScrollSpellLearningView: View {
             stageHeader(
                 eyebrow: "주문 흔적 복원",
                 title: spell.name,
-                detail: "두루마리에 남은 문양을 확인하고 실제 입력판에서 같은 순서로 재현하십시오."
+                detail: "\(SpellCatalog.metadata(for: spell.id).effectSummary)\n\(SpellCatalog.metadata(for: spell.id).usageNote)"
             )
             .frame(maxWidth: 760)
 
@@ -455,10 +455,7 @@ struct ScrollSpellLearningView: View {
     }
 
     private var spellGlyphAsset: some View {
-        Image(spell.id.scrollLearningGlyphAssetName)
-            .resizable()
-            .scaledToFit()
-            .accessibilityHidden(true)
+        SpellGlyphPreview(spell: spell, artwork: .scroll, color: categoryColor)
     }
 
     private var scrollReferenceGlyphWidthRatio: CGFloat {
@@ -495,6 +492,7 @@ struct ScrollSpellLearningView: View {
         case .attack: Color(red: 0.84, green: 0.24, blue: 0.68)
         case .defense: Color(red: 0.24, green: 0.76, blue: 0.94)
         case .dispel: Color(red: 0.94, green: 0.68, blue: 0.2)
+        case .debuff: DAColor.debuff
         }
     }
 
@@ -590,24 +588,6 @@ struct ScrollSpellLearningView: View {
         hasFinished = true
         gameFeedback.playInterface(.confirm, settings: appSettings.settings)
         onCompleted(completionGrade)
-    }
-
-}
-
-private extension SpellID {
-    var scrollLearningGlyphAssetName: String {
-        switch self {
-        case .afterglowErasure:
-            "ScrollLearningGlyphAfterglowErasure"
-        case .riftSeverance:
-            "ScrollLearningGlyphRiftSeverance"
-        case .barrierPiercing:
-            "ScrollLearningGlyphBarrierPiercing"
-        case .basicBarrier:
-            "ScrollLearningGlyphBasicBarrier"
-        case .sealRelease:
-            "ScrollLearningGlyphSealRelease"
-        }
     }
 
 }

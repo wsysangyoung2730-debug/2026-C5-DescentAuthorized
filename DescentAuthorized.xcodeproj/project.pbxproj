@@ -85,6 +85,9 @@
 		B6DC40859EEA9499B5F3C8CE /* ExpansionBackdropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4B466720AADD1752CF1C1F /* ExpansionBackdropView.swift */; };
 		DEAAE5D0E8EC60E4E06D12AC /* ExpansionCombatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EE05552E0088B791F83B0EC /* ExpansionCombatModels.swift */; };
 		A9D7E7DE37C6297EDA264C86 /* ExpansionCombatStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B26BCC5CC0FA38C5DED2DC9 /* ExpansionCombatStatusView.swift */; };
+		ACD1AF82D2B3105E7D0A843E /* RewardMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236557319E433CE6FBF68FE0 /* RewardMigration.swift */; };
+		3BDC2885BAED33F7B8955426 /* SpellGlyphPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = B15A5E3910E0F2516CC052C0 /* SpellGlyphPreview.swift */; };
+		5990144D0032DF0E807BD4F3 /* SpellPracticeSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42EC4FAA5B72FA40A80E4909 /* SpellPracticeSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -168,6 +171,9 @@
 		9B4B466720AADD1752CF1C1F /* ExpansionBackdropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/ExpansionBackdropView.swift"; sourceTree = SOURCE_ROOT; };
 		8EE05552E0088B791F83B0EC /* ExpansionCombatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/CombatEngine/ExpansionCombatModels.swift"; sourceTree = SOURCE_ROOT; };
 		2B26BCC5CC0FA38C5DED2DC9 /* ExpansionCombatStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Battle/ExpansionCombatStatusView.swift"; sourceTree = SOURCE_ROOT; };
+		236557319E433CE6FBF68FE0 /* RewardMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Persistence/RewardMigration.swift"; sourceTree = SOURCE_ROOT; };
+		B15A5E3910E0F2516CC052C0 /* SpellGlyphPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Battle/SpellGlyphPreview.swift"; sourceTree = SOURCE_ROOT; };
+		42EC4FAA5B72FA40A80E4909 /* SpellPracticeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/SpellPracticeSheet.swift"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -195,6 +201,9 @@
 		400000000000000000000002 /* DescentAuthorized */ = {
 			isa = PBXGroup;
 			children = (
+				42EC4FAA5B72FA40A80E4909 /* SpellPracticeSheet.swift */,
+				B15A5E3910E0F2516CC052C0 /* SpellGlyphPreview.swift */,
+				236557319E433CE6FBF68FE0 /* RewardMigration.swift */,
 				2B26BCC5CC0FA38C5DED2DC9 /* ExpansionCombatStatusView.swift */,
 				8EE05552E0088B791F83B0EC /* ExpansionCombatModels.swift */,
 				9B4B466720AADD1752CF1C1F /* ExpansionBackdropView.swift */,
@@ -515,6 +524,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5990144D0032DF0E807BD4F3 /* SpellPracticeSheet.swift in Sources */,
+				3BDC2885BAED33F7B8955426 /* SpellGlyphPreview.swift in Sources */,
+				ACD1AF82D2B3105E7D0A843E /* RewardMigration.swift in Sources */,
 				A9D7E7DE37C6297EDA264C86 /* ExpansionCombatStatusView.swift in Sources */,
 				DEAAE5D0E8EC60E4E06D12AC /* ExpansionCombatModels.swift in Sources */,
 				B6DC40859EEA9499B5F3C8CE /* ExpansionBackdropView.swift in Sources */,

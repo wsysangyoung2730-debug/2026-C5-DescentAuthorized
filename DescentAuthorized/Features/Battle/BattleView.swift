@@ -79,16 +79,7 @@ private extension SpellDefinition {
         case .attack: "BattleCardFrameAttack"
         case .defense: "BattleCardFrameDefense"
         case .dispel: "BattleCardFrameSeal"
-        }
-    }
-
-    var battleGlyphAssetName: String {
-        switch id {
-        case .afterglowErasure: "BattleGlyphAfterglowErasure"
-        case .riftSeverance: "BattleGlyphRiftSeverance"
-        case .barrierPiercing: "BattleGlyphBarrierPiercing"
-        case .basicBarrier: "BattleGlyphBasicBarrier"
-        case .sealRelease: "BattleGlyphSealRelease"
+        case .debuff: "BattleCardFrameSeal"
         }
     }
 
@@ -111,12 +102,7 @@ private extension SpellDefinition {
     }
 
     var battleEffectRangeTitle: String {
-        let range = effect.range
-        switch category {
-        case .attack: return "공격 \(range.lowerBound)~\(range.upperBound)"
-        case .defense: return "방벽 \(range.lowerBound)~\(range.upperBound)"
-        case .dispel: return "해제 \(range.lowerBound)~\(range.upperBound)"
-        }
+        compactEffectDescription
     }
 
     var battleCategoryTitle: String {
@@ -124,15 +110,23 @@ private extension SpellDefinition {
         case .attack: return "공격"
         case .defense: return "방어"
         case .dispel: return "해제"
+        case .debuff: return "디버프"
         }
     }
 
     var battleDetailEffectTitle: String {
+        if case .expansion = effect { return "주요 효과" }
         switch category {
         case .attack: return "피해"
         case .defense: return "방벽"
         case .dispel: return "해제 횟수"
+        case .debuff: return "디버프"
         }
+    }
+
+    var battleDetailEffectValue: String {
+        if case .expansion = effect { return compactEffectDescription }
+        return "\(effect.range.lowerBound)~\(effect.range.upperBound)"
     }
 
     var battleDifficultyTitle: String {
@@ -157,18 +151,8 @@ private extension SpellDefinition {
     }
 
     var battleDetailDescription: String {
-        switch id {
-        case .afterglowErasure:
-            return "잔류 관측광을 지워 대상에게 피해를 줍니다."
-        case .riftSeverance:
-            return "균열을 절단해 대상에게 강한 피해를 줍니다."
-        case .barrierPiercing:
-            return "일반 방벽을 관통하고 제거한 뒤 대상에게 피해를 줍니다."
-        case .basicBarrier:
-            return "봉인관에게 피해를 흡수하는 일반 방벽을 부여합니다."
-        case .sealRelease:
-            return "대상에게 적용된 절대 방벽의 충전을 해제합니다."
-        }
+        let metadata = SpellCatalog.metadata(for: id)
+        return "\(metadata.effectSummary) \(metadata.usageNote)"
     }
 }
 
@@ -869,10 +853,7 @@ struct BattleView: View {
             VStack(spacing: 5) {
                 Spacer(minLength: 30)
 
-                Image(spell.battleGlyphAssetName)
-                    .resizable()
-                    .scaledToFit()
-                    .blendMode(.screen)
+                SpellGlyphPreview(spell: spell)
                     .frame(width: 76, height: 76)
 
                 Spacer(minLength: 2)
@@ -996,7 +977,6 @@ struct BattleView: View {
         GeometryReader { proxy in
             let panelWidth = min(760, proxy.size.width * 0.58)
             let panelHeight = panelWidth * 0.75
-            let effectRange = spell.effect.range
 
             ZStack {
                 Color.black.opacity(0.42)
@@ -1024,19 +1004,16 @@ struct BattleView: View {
                     .frame(width: panelWidth * 0.86, height: panelHeight * 0.12, alignment: .leading)
                     .position(x: panelWidth * 0.50, y: panelHeight * 0.135)
 
-                    Image(spell.battleGlyphAssetName)
-                        .resizable()
-                        .scaledToFit()
-                        .blendMode(.screen)
+                    SpellGlyphPreview(spell: spell)
                         .frame(width: panelWidth * 0.20, height: panelHeight * 0.25)
                         .position(x: panelWidth * 0.228, y: panelHeight * 0.46)
 
                     VStack(spacing: 0) {
                         spellDetailRow(
                             spell.battleDetailEffectTitle,
-                            "\(effectRange.lowerBound)~\(effectRange.upperBound)"
+                            spell.battleDetailEffectValue
                         )
-                        spellDetailRow("소모 마나", "\(Int(spell.recommendedMana.rounded()))%")
+                        spellDetailRow("기준 마나", "약 \(Int(spell.recommendedMana.rounded()))%")
                         spellDetailRow("필요 획", "\(spell.requiredStrokes)")
                         spellDetailRow("구현 난이도", spell.battleDifficultyTitle)
                         spellDetailRow("필수 핵심점", spell.battleRequiredPointTitle)
@@ -1046,16 +1023,22 @@ struct BattleView: View {
                     .position(x: panelWidth * 0.66, y: panelHeight * 0.465)
 
                     Text(spell.battleDetailDescription)
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(DAColor.body.opacity(0.9))
-                        .frame(width: panelWidth * 0.86, height: panelHeight * 0.08, alignment: .leading)
-                        .position(x: panelWidth * 0.50, y: panelHeight * 0.77)
+                        .lineLimit(4)
+                        .minimumScaleFactor(0.8)
+                        .frame(width: panelWidth * 0.86, height: panelHeight * 0.15, alignment: .leading)
+                        .position(x: panelWidth * 0.50, y: panelHeight * 0.755)
 
-                    Text("누르는 동안 상세 표시 · 손을 떼면 닫힘")
+                    HStack {
+                        Text(SpellCatalog.metadata(for: spell.id).acquisitionLabel)
+                        Spacer(minLength: 8)
+                        Text("누르는 동안 상세 표시 · 손을 떼면 닫힘")
+                    }
                         .font(.caption)
                         .foregroundStyle(DAColor.secondary.opacity(0.86))
                         .frame(width: panelWidth * 0.82, alignment: .trailing)
-                        .position(x: panelWidth * 0.50, y: panelHeight * 0.85)
+                        .position(x: panelWidth * 0.50, y: panelHeight * 0.87)
                 }
                 .frame(width: panelWidth, height: panelHeight)
             }
@@ -1815,6 +1798,7 @@ struct BattleView: View {
         case .attack: "sparkles"
         case .defense: "shield.fill"
         case .dispel: "lock.open.fill"
+        case .debuff: "sparkle.magnifyingglass"
         }
     }
 
@@ -1823,6 +1807,7 @@ struct BattleView: View {
         case .attack: DAColor.attack
         case .defense: DAColor.defense
         case .dispel: DAColor.dispel
+        case .debuff: DAColor.debuff
         }
     }
 
@@ -1831,6 +1816,7 @@ struct BattleView: View {
         case .attack: "공격"
         case .defense: "방어"
         case .dispel: "해제"
+        case .debuff: "디버프"
         }
     }
 

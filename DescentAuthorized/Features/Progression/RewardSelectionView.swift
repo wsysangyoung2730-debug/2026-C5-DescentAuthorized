@@ -34,11 +34,23 @@ struct RewardSelectionView: View {
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
 
-    let floor: FloorID
+    let floorNumber: Int
+
+    init(floor: FloorID, sceneController: RealitySceneController, isLearningInputActive: Binding<Bool>) {
+        self.init(floorNumber: floor.rawValue, sceneController: sceneController, isLearningInputActive: isLearningInputActive)
+    }
+
+    init(floorNumber: Int, sceneController: RealitySceneController, isLearningInputActive: Binding<Bool>) {
+        self.floorNumber = floorNumber
+        self.sceneController = sceneController
+        self._isLearningInputActive = isLearningInputActive
+    }
     let sceneController: RealitySceneController
     @Binding var isLearningInputActive: Bool
 
     @State private var selectedCandidateID: String?
+    @State private var practiceSpell: SpellDefinition?
+    @State private var showsPractice = false
     @State private var isResolving = false
     @State private var rewardState: RealityRewardPresentationState = .appearing
     @State private var transitionTask: Task<Void, Never>?
@@ -47,7 +59,7 @@ struct RewardSelectionView: View {
     @State private var isSelectionInterfaceVisible = false
 
     private var candidates: [RewardCandidate] {
-        RewardCatalog.candidates(for: floor)
+        RewardCatalog.candidates(forFloorNumber: floorNumber)
     }
 
     var body: some View {
@@ -77,6 +89,9 @@ struct RewardSelectionView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showsPractice) {
+            if let practiceSpell { SpellPracticeSheet(spell: practiceSpell) }
+        }
         .onAppear {
             if let pendingLearningCandidate,
                let selectedIndex = candidates.firstIndex(where: {
@@ -140,7 +155,7 @@ struct RewardSelectionView: View {
     private func header(metrics: RewardLayoutMetrics) -> some View {
         ZStack {
             VStack(alignment: .leading, spacing: metrics.headerSpacing) {
-                Text("제\(floor.rawValue)층 · 기록 보관고")
+                Text("제\(floorNumber)층 · 기록 보관고")
                     .font(.system(size: metrics.eyebrowSize, weight: .medium, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.gold)
                     .padding(.leading, metrics.titleContentLeadingInset)
@@ -217,9 +232,7 @@ struct RewardSelectionView: View {
                         .resizable()
                         .scaledToFit()
                         .opacity(0.2)
-                    Image(spell.rewardGlyphAssetName)
-                        .resizable()
-                        .scaledToFit()
+                    SpellGlyphPreview(spell: spell)
                         .blendMode(.screen)
                         .padding(metrics.cardWidth * 0.08)
                 }
@@ -313,6 +326,16 @@ struct RewardSelectionView: View {
 
     private func footer(metrics: RewardLayoutMetrics) -> some View {
         VStack(spacing: 3) {
+            HStack(spacing: 16) {
+            Button("선택 주문 시험 각인") {
+                guard let selectedCandidateID,
+                      let candidate = candidates.first(where: { $0.id == selectedCandidateID }) else { return }
+                practiceSpell = displayedSpell(for: candidate)
+                showsPractice = true
+            }
+            .buttonStyle(.bordered)
+            .tint(RewardSelectionPalette.gold)
+            .disabled(selectedCandidateID == nil || isResolving)
             Button(action: confirmSelection) {
                 Text(isResolving ? "선택 기록 복원 중" : "선택 두루마리 수령")
                     .font(.system(size: metrics.confirmTextSize, weight: .medium, design: .serif))
@@ -322,6 +345,7 @@ struct RewardSelectionView: View {
             .frame(width: metrics.confirmWidth, height: metrics.confirmHeight)
             .clipped()
             .disabled(selectedCandidateID == nil || isResolving)
+            }
 
             Text("수령 후 나머지 기록은 즉시 말소됩니다.")
                 .font(.system(size: metrics.footerSize, design: .serif))
@@ -362,9 +386,7 @@ struct RewardSelectionView: View {
                             .resizable()
                             .scaledToFit()
                             .opacity(0.22)
-                        Image(spell.rewardGlyphAssetName)
-                            .resizable()
-                            .scaledToFit()
+                        SpellGlyphPreview(spell: spell)
                             .blendMode(.screen)
                             .padding(12)
                     }
@@ -373,7 +395,7 @@ struct RewardSelectionView: View {
                         .fill(RewardSelectionPalette.gold.opacity(0.28))
                         .frame(width: 1, height: metrics.detailGlyphSize * 0.8)
                     VStack(alignment: .leading, spacing: 5) {
-                        detailRow("효과 범위", spell.rewardEffectRangeTitle)
+                        detailRow("효과 범위", spell.compactEffectDescription)
                         detailRow("소모 마나", "\(Int(spell.recommendedMana))%")
                         detailRow("필요 획", "\(spell.requiredStrokes)")
                         Text(effectDescription(for: spell))
@@ -444,7 +466,7 @@ struct RewardSelectionView: View {
 
         return ScrollSpellLearningView(
             spell: spell,
-            sourceCode: "제\(floor.rawValue)층 · 관리자 보상 기록",
+            sourceCode: "제\(floorNumber)층 · 관리자 보상 기록",
             discoveryText: "선택한 두루마리의 문양이 입력판과 공명합니다. 획의 순서를 재현해 주문 기록을 완전히 정착시키십시오.",
             presentation: .standard,
             tutorialSequence: nil,
@@ -494,31 +516,15 @@ struct RewardSelectionView: View {
     }
 
     private func summaryLine(for spell: SpellDefinition) -> String {
-        "\(spell.rewardEffectRangeTitle) · 마나 \(Int(spell.recommendedMana))% · \(spell.requiredStrokes)획"
+        "\(spell.compactEffectDescription) · 마나 \(Int(spell.recommendedMana))% · \(spell.requiredStrokes)획"
     }
 
     private func effectDescription(for spell: SpellDefinition) -> String {
-        switch spell.effect {
-        case let .damage(_, _, piercesNormalBarrier):
-            return piercesNormalBarrier
-                ? "일반 방벽을 관통하고 피해를 줍니다."
-                : "대상에게 직접 피해를 줍니다."
-        case .fixedBarrier:
-            return "다음 공격을 흡수할 일반 방벽을 생성합니다."
-        case .dispelAbsoluteBarrier:
-            return "대상의 절대 방벽을 해제합니다."
-        case .expansion:
-            return "주문에 각인된 조건과 지속 효과를 적용합니다."
-        }
+        SpellCatalog.metadata(for: spell.id).effectSummary
     }
 
     private func effectTags(for spell: SpellDefinition) -> [String] {
-        switch spell.effect {
-        case let .damage(_, _, pierces): return pierces ? ["희귀", "방벽 파괴"] : ["직접 피해"]
-        case .fixedBarrier: return ["생존"]
-        case .dispelAbsoluteBarrier: return ["해제"]
-        case .expansion: return ["상태 효과"]
-        }
+        [categoryTitle(spell.category), "\(spell.requiredStrokes)획"]
     }
 
     private func cardFrameAsset(isSelected: Bool, isDisabled: Bool) -> String {
@@ -531,6 +537,7 @@ struct RewardSelectionView: View {
         case .attack: "공격"
         case .defense: "방어"
         case .dispel: "해제"
+        case .debuff: "디버프"
         }
     }
 
@@ -548,6 +555,7 @@ struct RewardSelectionView: View {
         case .attack: RewardSelectionPalette.violet
         case .defense: RewardSelectionPalette.cyan
         case .dispel: Color(red: 0.94, green: 0.72, blue: 0.22)
+        case .debuff: Color(red: 0.76, green: 0.43, blue: 0.84)
         }
     }
 
@@ -652,6 +660,7 @@ private extension SpellDefinition {
         case .barrierPiercing: "BattleGlyphBarrierPiercing"
         case .basicBarrier: "BattleGlyphBasicBarrier"
         case .sealRelease: "BattleGlyphSealRelease"
+        default: ""
         }
     }
 
@@ -661,6 +670,7 @@ private extension SpellDefinition {
         case .attack: return "피해 \(range.lowerBound)~\(range.upperBound)"
         case .defense: return "방어막 \(range.lowerBound)~\(range.upperBound)"
         case .dispel: return "해제 \(range.lowerBound)~\(range.upperBound)"
+        case .debuff: return "디버프"
         }
     }
 }

@@ -108,8 +108,7 @@ struct GameProgressValidator: Sendable {
         }
 
         let knownRewards = Dictionary(
-            uniqueKeysWithValues: [FloorID.floor9, .floor8]
-                .flatMap { RewardCatalog.candidates(for: $0) }
+            uniqueKeysWithValues: RewardCatalog.allCandidates
                 .map { ($0.id, $0) }
         )
         var selectedRewards = Set<String>()
@@ -122,11 +121,11 @@ struct GameProgressValidator: Sendable {
             }
         }
 
-        for floor in [FloorID.floor9, .floor8] {
-            let floorRewardIDs = Set(RewardCatalog.candidates(for: floor).map(\.id))
+        for floor in 5...9 {
+            let floorRewardIDs = Set(RewardCatalog.candidates(forFloorNumber: floor).map(\.id))
             let count = progress.selectedRewardIDs.filter(floorRewardIDs.contains).count
             guard count <= 1 else {
-                throw GameProgressValidationError.duplicateReward("floor\(floor.rawValue)")
+                throw GameProgressValidationError.duplicateReward("floor\(floor)")
             }
         }
     }
@@ -211,7 +210,10 @@ struct GameProgressValidator: Sendable {
         if scene == .floor9DescentDoor || progress.currentFloor.rawValue <= FloorID.floor8.rawValue {
             try require(
                 progress.selectedRewardIDs.contains(where: floor9RewardIDs.contains)
-                    && progress.learnedSpells.contains(.barrierPiercing),
+                    && RewardCatalog.candidates(for: .floor9).contains { candidate in
+                        progress.selectedRewardIDs.contains(candidate.id)
+                            && progress.learnedSpells.contains(RewardCatalog.learningSpell(for: candidate))
+                    },
                 "9층 주문서 선택"
             )
         }

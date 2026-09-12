@@ -169,12 +169,28 @@ enum SpellID: String, Codable, CaseIterable, Sendable {
     case barrierPiercing
     case basicBarrier
     case sealRelease
+    case chainInscription
+    case condensedBarrier
+    case purificationGlyph
+    case lingeringBarrier
+    case focusedRupture
+    case axisSeverance
+    case anchorGuard
+    case consequenceErasure
+    case outputReduction
+    case executionDelay
+    case advanceVerdict
+    case causalCushion
+    case memorySeverance
+    case memorySuture
+    case mimicProhibition
 }
 
 enum SpellCategory: String, Codable, Sendable {
     case attack
     case defense
     case dispel
+    case debuff
 }
 
 enum ScrollTier: String, Codable, Sendable {
@@ -440,7 +456,7 @@ struct SpellMastery: Codable, Equatable, Sendable {
 }
 
 struct GameProgress: Codable, Equatable, Sendable {
-    static let currentSaveVersion = 4
+    static let currentSaveVersion = 5
 
     var saveVersion: Int
     var currentFloor: FloorID
@@ -625,6 +641,7 @@ struct GameProgress: Codable, Equatable, Sendable {
             )
         }
         saveVersion = max(decodedVersion, Self.currentSaveVersion)
+        migrateLegacyRewards(fromVersion: decodedVersion)
     }
 
     func encode(to encoder: Encoder) throws {

@@ -91,7 +91,7 @@ struct DemoGameSession: Sendable {
                 events = try progression.learnRiftSeverance()
             case .basicBarrier:
                 events = try progression.learnBasicBarrier()
-            case .barrierPiercing, .sealRelease:
+            default:
                 throw ProgressionError.unexpectedSpell(spell)
             }
             return wrap(events)
