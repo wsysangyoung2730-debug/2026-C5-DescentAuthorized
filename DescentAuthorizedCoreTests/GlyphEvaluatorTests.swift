@@ -98,6 +98,55 @@ final class GlyphEvaluatorTests: XCTestCase {
         XCTAssertNil(result.failure)
     }
 
+    func testBarrierPiercingRisesRightThenLoopsLeftAndCrossesItsFirstPass() {
+        let spell = SpellCatalog.barrierPiercing
+        let firstStroke = DrawnStroke(points: [
+            (24.0, 72.0), (30, 63), (37, 54),
+            (44, 45), (50, 34), (55, 23),
+            (59, 14), (57, 8), (51, 6),
+            (44, 10), (40, 18), (37, 30),
+            (36, 43), (37, 54), (40, 63),
+            (43, 69), (49, 74), (56, 78),
+            (62, 79), (69, 77), (76, 72)
+        ].map { NormalizedPoint(x: $0.0, y: $0.1) })
+        let secondStroke = DrawnStroke(points: spell.glyph.strokes[1].referencePath)
+
+        for method in [DrawingInputMethod.pencil, .finger] {
+            let result = evaluator.evaluate(
+                spell: spell,
+                strokes: [firstStroke, secondStroke],
+                inputMethod: method
+            )
+            XCTAssertTrue(result.succeeded, "Expected right-first loop to succeed with \(method)")
+            XCTAssertEqual(result.grade, .perfect)
+            XCTAssertNil(result.failure)
+        }
+    }
+
+    func testBarrierPiercingRejectsThePreviousLeftFirstLoopDirection() {
+        let spell = SpellCatalog.barrierPiercing
+        let oldFirstStroke = DrawnStroke(points: [
+            (24.0, 72.0), (30, 63), (37, 54),
+            (36, 43), (37, 30), (40, 18),
+            (44, 10), (51, 6), (57, 8),
+            (59, 14), (57, 25), (54, 37),
+            (50, 47), (44, 56), (32, 58),
+            (43, 69), (49, 74), (56, 78),
+            (62, 79), (69, 77), (76, 72)
+        ].map { NormalizedPoint(x: $0.0, y: $0.1) })
+        let secondStroke = DrawnStroke(points: spell.glyph.strokes[1].referencePath)
+
+        for method in [DrawingInputMethod.pencil, .finger] {
+            let result = evaluator.evaluate(
+                spell: spell,
+                strokes: [oldFirstStroke, secondStroke],
+                inputMethod: method
+            )
+            XCTAssertEqual(result.grade, .rejected, "The old loop must not pass with \(method)")
+            XCTAssertEqual(result.failure, .missingRequiredNode)
+        }
+    }
+
     func testFasterCastProducesStrongerEffectAtSameAccuracy() {
         let spell = SpellCatalog.barrierPiercing
         let fast = evaluator.evaluate(

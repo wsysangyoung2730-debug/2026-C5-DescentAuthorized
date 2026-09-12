@@ -72,15 +72,17 @@ enum SpellCatalog {
             strokes: [
                 stroke(
                     points: [
+                        // Rise from the lower left along the right side of the loop,
+                        // turn left over the top, then descend through the first pass.
                         (24, 72), (30, 63), (37, 54),
-                        (36, 43), (37, 30), (40, 18),
-                        (44, 10), (51, 6), (57, 8),
-                        (59, 14), (57, 25), (54, 37),
-                        (50, 47), (44, 56), (32, 58),
+                        (44, 45), (50, 34), (55, 23),
+                        (59, 14), (57, 8), (51, 6),
+                        (44, 10), (40, 18), (37, 30),
+                        (36, 43), (37, 54), (40, 63),
                         (43, 69), (49, 74), (56, 78),
                         (62, 79), (69, 77), (76, 72)
                     ],
-                    requiredNodeIndices: [2, 7, 13, 18],
+                    requiredNodeIndices: [2, 4, 8, 11, 13, 18],
                     nodeRadius: 9,
                     pathRadius: 9
                 ),

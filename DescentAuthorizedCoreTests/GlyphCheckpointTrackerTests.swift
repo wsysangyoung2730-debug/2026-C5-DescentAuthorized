@@ -43,6 +43,29 @@ final class GlyphCheckpointTrackerTests: XCTestCase {
         XCTAssertEqual(hits.map(\.position), stroke.referencePath)
     }
 
+    func testBarrierPiercingCrossingProducesSeparateAscendingAndDescendingHits() {
+        let stroke = SpellCatalog.barrierPiercing.glyph.strokes[0]
+        let crossing = point(37, 54)
+        for method in [DrawingInputMethod.pencil, .finger] {
+            var tracker = GlyphCheckpointTracker()
+            var firstPass = tracker.begin(stroke: stroke, strokeIndex: 0, at: stroke.start, inputMethod: method)
+            firstPass += tracker.append([point(30, 63), crossing])
+            XCTAssertEqual(firstPass.filter { $0.position == crossing }.map(\.checkpointIndex), [1])
+
+            let loop = tracker.append([
+                point(44, 45), point(50, 34), point(55, 23),
+                point(59, 14), point(57, 8), point(51, 6),
+                point(44, 10), point(40, 18), point(37, 30),
+                point(36, 43), crossing
+            ])
+            XCTAssertEqual(loop.filter { $0.position == crossing }.map(\.checkpointIndex), [5])
+            let bothVisits = (firstPass + loop).filter { $0.position == crossing }
+            XCTAssertEqual(bothVisits.count, 2)
+            XCTAssertTrue(bothVisits.allSatisfy { !$0.isStrokeEnd })
+            XCTAssertTrue(tracker.append([crossing, crossing]).isEmpty)
+        }
+    }
+
     func testRepeatedCheckpointRequiresLeavingAndReturning() {
         let stroke = spec(
             path: [(0, 0), (20, 0), (20, 20), (20, 0), (40, 0)],
