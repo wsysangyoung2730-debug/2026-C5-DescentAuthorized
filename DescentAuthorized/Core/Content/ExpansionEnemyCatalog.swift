@@ -5,6 +5,7 @@ enum ExpansionEnemyCatalog {
     static func enemy(floor: Int, isBoss: Bool) -> EnemyDefinition? {
         switch floor {
         case 7: isBoss ? coordinateCorrectionAdministrator : coordinateDriftResidual
+        case 6: isBoss ? causalityVerificationAdministrator : delayedConsequenceResidual
         default: nil
         }
     }
@@ -13,12 +14,16 @@ enum ExpansionEnemyCatalog {
         switch id {
         case .coordinateDriftResidual: coordinateDriftResidual
         case .coordinateCorrectionAdministrator: coordinateCorrectionAdministrator
+        case .delayedConsequenceResidual: delayedConsequenceResidual
+        case .causalityVerificationAdministrator: causalityVerificationAdministrator
         default: nil
         }
     }
 
     static func phaseTwoPattern(for id: EnemyID, firstCycle: Bool) -> [EnemyAction]? {
         switch id {
+        case .causalityVerificationAdministrator:
+            causalityPattern(phaseTwo: true)
         case .coordinateCorrectionAdministrator:
             [
                 firstCycle
@@ -59,4 +64,34 @@ enum ExpansionEnemyCatalog {
         ],
         thresholdRules: []
     )
+    static let delayedConsequenceResidual = EnemyDefinition(
+        id: .delayedConsequenceResidual, name: "결과 지연 잔류체", maxHP: 180,
+        startingAbsoluteBarrierCharges: 0,
+        pattern: [
+            .expansion(name: "잔류 증폭", action: .amplify(multiplier: 1.5)),
+            .expansion(name: "결과 각인", action: .schedule([.init(name: "지연 충돌", damage: 24, turnsFromNow: 2)])),
+            .attack(name: "늦은 잔격", damage: 10, isStrong: false),
+            .expansion(name: "지연 충돌", action: .wait)
+        ], thresholdRules: []
+    )
+
+    static let causalityVerificationAdministrator = EnemyDefinition(
+        id: .causalityVerificationAdministrator, name: "인과 검증 관리자", maxHP: 420,
+        startingAbsoluteBarrierCharges: 0, pattern: causalityPattern(phaseTwo: false), thresholdRules: []
+    )
+
+    private static func causalityPattern(phaseTwo: Bool) -> [EnemyAction] {
+        let reservations: [ScheduledDamageSpec] = phaseTwo
+            ? [.init(name: "제1결과 집행", damage: 34, turnsFromNow: 2),
+               .init(name: "제2결과 집행", damage: 16, turnsFromNow: 3)]
+            : [.init(name: "제1결과 집행", damage: 32, turnsFromNow: 2)]
+        return [
+            .expansion(name: "인과 증폭", action: .amplify(multiplier: 1.5)),
+            .expansion(name: "집행 등록", action: .schedule(reservations)),
+            .attack(name: "원인 추궁", damage: phaseTwo ? 14 : 12, isStrong: false),
+            .expansion(name: "제1결과 집행", action: .wait),
+            .expansion(name: phaseTwo ? "제2결과 집행" : "기록 정리", action: .wait)
+        ]
+    }
+
 }

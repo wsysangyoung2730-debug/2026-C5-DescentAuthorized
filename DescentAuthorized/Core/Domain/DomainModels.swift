@@ -316,6 +316,8 @@ enum EnemyID: String, Codable, CaseIterable, Sendable {
     case observationAdministrator
     case coordinateDriftResidual
     case coordinateCorrectionAdministrator
+    case delayedConsequenceResidual
+    case causalityVerificationAdministrator
 }
 
 enum EnemyAction: Codable, Equatable, Sendable {
