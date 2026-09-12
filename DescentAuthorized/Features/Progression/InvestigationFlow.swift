@@ -17,6 +17,9 @@ struct InvestigationFlow<EntranceContent: View>: View {
     @State private var isInvestigationPresented = true
     @State private var isPostInvestigationPresented = false
     @State private var isBossRevealTransition = false
+    @State private var isActive = false
+    @State private var revealGeneration = 0
+    @State private var entranceRevealTask: Task<Void, Never>?
 
     init(
         sceneController: RealitySceneController,
@@ -98,6 +101,8 @@ struct InvestigationFlow<EntranceContent: View>: View {
             value: isBossRevealTransition
         )
         .onAppear {
+            isActive = true
+            revealGeneration += 1
             let shouldPresentPostInvestigation = hasCompletedInvestigation
                 && !hasCompletedPostInvestigation
                 && postInvestigationContent != nil
@@ -115,12 +120,17 @@ struct InvestigationFlow<EntranceContent: View>: View {
             }
         }
         .onDisappear {
+            isActive = false
+            revealGeneration += 1
+            entranceRevealTask?.cancel()
+            entranceRevealTask = nil
             sceneController.setEnemyPreviewVisible(true)
             sceneController.resetBattleCamera(animated: false)
         }
     }
 
     private func completeInvestigation() {
+        guard isActive else { return }
         var immediateRemoval = Transaction(animation: nil)
         immediateRemoval.disablesAnimations = true
         withTransaction(immediateRemoval) {
@@ -140,6 +150,7 @@ struct InvestigationFlow<EntranceContent: View>: View {
     }
 
     private func completePostInvestigation() {
+        guard isActive else { return }
         var immediateRemoval = Transaction(animation: nil)
         immediateRemoval.disablesAnimations = true
         withTransaction(immediateRemoval) {
@@ -150,35 +161,50 @@ struct InvestigationFlow<EntranceContent: View>: View {
     }
 
     private func presentEntrance() {
+        guard isActive else { return }
+        let generation = revealGeneration
         sceneController.centerAndLockEntranceCamera(
             previewYaw: configuration.enemyPreviewCameraYaw,
             reducedMotion: appSettings.reducedMotion
         ) {
+            guard isActive, revealGeneration == generation else { return }
+            entranceRevealTask?.cancel()
             if appSettings.reducedMotion {
                 isEntrancePresented = true
                 sceneController.revealEnemyPreview(reducedMotion: true)
                 return
             }
 
-            withAnimation(.easeOut(duration: 0.16)) {
-                isBossRevealTransition = true
-            }
+            entranceRevealTask = Task { @MainActor in
+                withAnimation(.easeOut(duration: 0.16)) {
+                    isBossRevealTransition = true
+                }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                guard await waitForReveal(milliseconds: 120),
+                      isActive, revealGeneration == generation else { return }
                 sceneController.revealEnemyPreview(reducedMotion: false)
-            }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) {
+                guard await waitForReveal(milliseconds: 220),
+                      isActive, revealGeneration == generation else { return }
                 withAnimation(.easeOut(duration: 0.58)) {
                     isEntrancePresented = true
                 }
-            }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                guard await waitForReveal(milliseconds: 160),
+                      isActive, revealGeneration == generation else { return }
                 withAnimation(.easeIn(duration: 0.38)) {
                     isBossRevealTransition = false
                 }
             }
+        }
+    }
+
+    private func waitForReveal(milliseconds: Int) async -> Bool {
+        do {
+            try await Task.sleep(for: .milliseconds(milliseconds))
+            return !Task.isCancelled
+        } catch {
+            return false
         }
     }
 }

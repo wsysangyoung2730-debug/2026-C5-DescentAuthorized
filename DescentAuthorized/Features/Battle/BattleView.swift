@@ -406,7 +406,7 @@ struct BattleView: View {
                             y: inputPanelCenterY
                         )
 
-                    spellBar(presentation)
+                    spellBar(presentation, availableWidth: contentWidth - 24)
                         .frame(height: 218)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 12)
@@ -492,7 +492,7 @@ struct BattleView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("전투 카메라 기본 시점으로 복귀")
-        .accessibilityHint("블렌더에 저장된 전투 시점으로 돌아갑니다")
+        .accessibilityHint("전투가 시작될 때의 카메라 시점으로 돌아갑니다")
     }
 
     @ViewBuilder
@@ -598,10 +598,17 @@ struct BattleView: View {
         }
     }
 
-    private func spellBar(_ presentation: BattleUIPresentation) -> some View {
-        HStack(alignment: .bottom, spacing: 28) {
+    private func spellBar(
+        _ presentation: BattleUIPresentation,
+        availableWidth: CGFloat
+    ) -> some View {
+        let isCompact = availableWidth < 1_100
+        let logWidth: CGFloat = isCompact ? 210 : 248
+        let itemSpacing: CGFloat = isCompact ? 14 : 28
+
+        return HStack(alignment: .bottom, spacing: itemSpacing) {
             battleLogPanel(presentation)
-                .frame(width: 248, height: 176)
+                .frame(width: logWidth, height: 176)
                 .tutorialTarget("battle.log")
 
             VStack(alignment: .leading, spacing: 8) {
@@ -637,13 +644,14 @@ struct BattleView: View {
                 .foregroundStyle(DAColor.magicGlow)
 
             manaMeter(ratio: manaRatio)
-                .frame(minWidth: 280, idealWidth: 460, maxWidth: 560)
+                .frame(minWidth: 80, maxWidth: .infinity)
                 .frame(height: 18)
 
             Text(resourceSummary(presentation, strokes: displayedStrokes))
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(DAColor.body.opacity(0.84))
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
         .padding(.horizontal, 12)
         .background(DAColor.card.opacity(0.9))

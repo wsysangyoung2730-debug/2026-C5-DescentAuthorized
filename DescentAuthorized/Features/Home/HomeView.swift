@@ -117,8 +117,9 @@ struct HomeView: View {
                             width: menuButtonWidth
                         ) {
                             gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-                            gameSession.startNewGame()
-                            isPlaying = true
+                            if gameSession.startNewGame() {
+                                isPlaying = true
+                            }
                         }
                     } else {
                         homeButton(
@@ -127,8 +128,9 @@ struct HomeView: View {
                             width: menuButtonWidth
                         ) {
                             gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-                            gameSession.startNewGame()
-                            isPlaying = true
+                            if gameSession.startNewGame() {
+                                isPlaying = true
+                            }
                         }
                     }
 

@@ -124,11 +124,13 @@ final class RuneDrawingCanvasView: UIView {
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesMoved(touches, with: event)
 
-        for touch in touches where contactID(for: touch) == captureSession.activeContactID {
+        guard let activeContactID = captureSession.activeContactID else { return }
+        for touch in touches {
+            guard contactID(for: touch) == activeContactID else { continue }
             let coalesced = event?.coalescedTouches(for: touch) ?? [touch]
             do {
                 try captureSession.appendSamples(
-                    contactID: contactID(for: touch),
+                    contactID: activeContactID,
                     samples: coalesced.map(rawSample(for:))
                 )
                 activeDisplayPoints.append(contentsOf: coalesced.map(location(for:)))
@@ -145,11 +147,13 @@ final class RuneDrawingCanvasView: UIView {
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesEnded(touches, with: event)
 
-        for touch in touches where contactID(for: touch) == captureSession.activeContactID {
+        guard let activeContactID = captureSession.activeContactID else { return }
+        for touch in touches {
+            guard contactID(for: touch) == activeContactID else { continue }
             let finalTouches = event?.coalescedTouches(for: touch) ?? [touch]
             do {
                 _ = try captureSession.endStroke(
-                    contactID: contactID(for: touch),
+                    contactID: activeContactID,
                     finalSamples: finalTouches.map(rawSample(for:)),
                     canvasSize: DrawingCanvasSize(
                         width: bounds.width,

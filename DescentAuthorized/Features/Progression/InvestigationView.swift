@@ -18,6 +18,10 @@ struct InvestigationView: View {
     @State private var isAnchorPulseActive = false
     @State private var completesWhenRecordCloses = false
 
+    private var reducesMotion: Bool {
+        reduceMotion || appSettings.reducedMotion
+    }
+
     private let sceneProjectionTopInset: CGFloat = 96
     private let anchorMinProjectionScale: CGFloat = 0.9
     private let anchorMarkerImageSize = CGSize(width: 112, height: 162)
@@ -86,8 +90,8 @@ struct InvestigationView: View {
                 }
             }
             .clipped()
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: detailClueID)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.28), value: inspectedClueIDs.count)
+            .animation(reducesMotion ? nil : .easeOut(duration: 0.2), value: detailClueID)
+            .animation(reducesMotion ? nil : .easeOut(duration: 0.28), value: inspectedClueIDs.count)
         }
         .tutorialCoach(
             step: coachStep,
@@ -101,6 +105,9 @@ struct InvestigationView: View {
         }
         .onDisappear {
             sceneController.setLimitedCameraInteractionEnabled(false)
+        }
+        .onChange(of: reducesMotion) { _, _ in
+            startAnchorPulse()
         }
         .onChange(of: gameSession.progress.tutorialProgress.requestedReplay) { _, replay in
             if replay == configuration.tutorial?.sequence {
@@ -167,9 +174,9 @@ struct InvestigationView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: markerSize.width, height: markerSize.height)
-                .opacity(isCompleted ? 0.98 : (isAnchorPulseActive ? 1 : 0.82))
+                .opacity(isCompleted ? 0.98 : (isAnchorPulseActive && !reducesMotion ? 1 : 0.82))
                 .scaleEffect(
-                    isCompleted || reduceMotion
+                    isCompleted || reducesMotion
                         ? 1
                         : (isAnchorPulseActive ? 1.022 : 0.992)
                 )
@@ -279,6 +286,7 @@ struct InvestigationView: View {
             let recordHeight = min(proxy.size.height * 0.82, 700)
             let recordWidth = recordHeight * (1086 / 1448)
             let parchmentSideInsetRatio: CGFloat = 0.17
+            let isCompactRecord = recordHeight < 620
 
             ZStack {
                 Color.black.opacity(0.84)
@@ -292,7 +300,7 @@ struct InvestigationView: View {
                         .frame(width: recordWidth, height: recordHeight)
                         .allowsHitTesting(false)
 
-                    VStack(spacing: 16) {
+                    VStack(spacing: isCompactRecord ? 10 : 16) {
                         Text(configuration.recordTitle)
                             .font(.system(size: 15, weight: .bold, design: .serif))
                             .tracking(1.1)
@@ -300,7 +308,7 @@ struct InvestigationView: View {
                             .lineLimit(1)
 
                         Text(clue.title)
-                            .font(.system(size: 29, weight: .semibold, design: .serif))
+                            .font(.system(size: isCompactRecord ? 26 : 29, weight: .semibold, design: .serif))
                             .foregroundStyle(InvestigationRecordPalette.ink)
                             .multilineTextAlignment(.center)
                             .lineLimit(2)
@@ -318,30 +326,38 @@ struct InvestigationView: View {
                         }
                         .foregroundStyle(InvestigationRecordPalette.ink.opacity(0.62))
 
-                        Text(clue.body)
-                            .font(.system(size: 19, weight: .medium, design: .serif))
-                            .foregroundStyle(InvestigationRecordPalette.ink.opacity(0.92))
-                            .lineSpacing(8)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
+                        ScrollView(.vertical, showsIndicators: isCompactRecord) {
+                            VStack(alignment: .leading, spacing: isCompactRecord ? 8 : 12) {
+                                Text(clue.body)
+                                    .font(.system(
+                                        size: isCompactRecord ? 17 : 19,
+                                        weight: .medium,
+                                        design: .serif
+                                    ))
+                                    .foregroundStyle(InvestigationRecordPalette.ink.opacity(0.92))
+                                    .lineSpacing(isCompactRecord ? 5 : 8)
+                                    .multilineTextAlignment(.leading)
+                                    .fixedSize(horizontal: false, vertical: true)
 
-                        if let recordTag = clue.recordTag,
-                           let recordTagIcon = clue.recordTagIcon {
-                            Label(recordTag, systemImage: recordTagIcon)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(InvestigationRecordPalette.magicInk)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 9)
-                                .background(
-                                    InvestigationRecordPalette.magicInk.opacity(0.09),
-                                    in: Capsule()
-                                )
+                                if let recordTag = clue.recordTag,
+                                   let recordTagIcon = clue.recordTagIcon {
+                                    Label(recordTag, systemImage: recordTagIcon)
+                                        .font((isCompactRecord ? Font.caption : Font.subheadline).weight(.semibold))
+                                        .foregroundStyle(InvestigationRecordPalette.magicInk)
+                                        .padding(.horizontal, isCompactRecord ? 10 : 14)
+                                        .padding(.vertical, isCompactRecord ? 6 : 9)
+                                        .background(
+                                            InvestigationRecordPalette.magicInk.opacity(0.09),
+                                            in: Capsule()
+                                        )
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-
-                        Spacer(minLength: 4)
+                        .scrollBounceBehavior(.basedOnSize)
 
                         Label("조사 완료 · 기록 보존됨", systemImage: "checkmark.seal.fill")
-                            .font(.subheadline.weight(.semibold))
+                            .font((isCompactRecord ? Font.caption : Font.subheadline).weight(.semibold))
                             .foregroundStyle(InvestigationRecordPalette.sealInk)
 
                         Button("기록 닫기") {
@@ -350,7 +366,7 @@ struct InvestigationView: View {
                         .font(.system(size: 17, weight: .semibold, design: .serif))
                         .foregroundStyle(Color(red: 0.88, green: 0.79, blue: 0.59))
                         .padding(.horizontal, 26)
-                        .frame(height: 48)
+                        .frame(height: isCompactRecord ? 44 : 48)
                         .background(
                             InvestigationRecordPalette.ink.opacity(0.9),
                             in: RoundedRectangle(cornerRadius: 5)
@@ -364,8 +380,8 @@ struct InvestigationView: View {
                     }
                     // The parchment's vertical ornaments sit near 17% from each edge.
                     .padding(.horizontal, recordWidth * parchmentSideInsetRatio)
-                    .padding(.top, recordHeight * 0.205)
-                    .padding(.bottom, recordHeight * 0.12)
+                    .padding(.top, recordHeight * (isCompactRecord ? 0.17 : 0.205))
+                    .padding(.bottom, recordHeight * (isCompactRecord ? 0.085 : 0.12))
                     .frame(height: recordHeight)
                 }
                 .frame(width: recordWidth, height: recordHeight)
@@ -445,21 +461,21 @@ struct InvestigationView: View {
 
         completesWhenRecordCloses = willCompleteInvestigation
 
-        withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.86)) {
+        withAnimation(reducesMotion ? nil : .spring(response: 0.3, dampingFraction: 0.86)) {
             detailClueID = clue.id
         }
     }
 
     private func closeClueRecord() {
         gameFeedback.playInterface(.back, settings: appSettings.settings)
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.18)) {
+        withAnimation(reducesMotion ? nil : .easeInOut(duration: 0.18)) {
             detailClueID = nil
         }
 
         guard completesWhenRecordCloses else { return }
         completesWhenRecordCloses = false
 
-        let completionDelay = reduceMotion ? 0 : 0.2
+        let completionDelay = reducesMotion ? 0 : 0.2
         DispatchQueue.main.asyncAfter(deadline: .now() + completionDelay) {
             onCompletion?()
         }
@@ -532,8 +548,10 @@ struct InvestigationView: View {
     }
 
     private func startAnchorPulse() {
-        guard !reduceMotion else {
-            isAnchorPulseActive = true
+        guard !reducesMotion else {
+            withTransaction(Transaction(animation: nil)) {
+                isAnchorPulseActive = false
+            }
             return
         }
 
@@ -726,7 +744,7 @@ struct InvestigationConfiguration {
             )
         ],
         completionAction: .init(
-            title: "훈련 표적 앞으로 이동",
+            title: "주문 기록 확인하기",
             symbol: .forward,
             width: 390,
             showsWaypoint: true,

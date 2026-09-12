@@ -37,7 +37,7 @@ enum RealityRewardPresentationState: Equatable, Sendable {
 }
 
 enum RealityRewardTransitionTiming {
-    // Both reward scenes describe a 30 fps, 66 frame emergence sequence.
+    // Both reward scenes are authored Z-up and describe a 30 fps, 66 frame emergence sequence.
     static let authoredFrameRate: Double = 30
     static let appearanceEndFrame: Double = 66
     static let interfaceFadeDuration: TimeInterval = 0.36
@@ -143,7 +143,7 @@ final class RealityProgressionVFXRenderer {
             for (index, role) in roles.enumerated() {
                 guard let entity = registry.entity(for: role), let base = baseTransforms[role] else { continue }
                 var hidden = base
-                hidden.translation.y -= reducedMotion ? 0 : 0.44
+                hidden.translation.z -= reducedMotion ? 0 : 0.44
                 hidden.scale *= reducedMotion ? 1 : 0.68
                 entity.transform = hidden
                 entity.move(
@@ -163,10 +163,10 @@ final class RealityProgressionVFXRenderer {
                 guard let entity = registry.entity(for: role), let base = baseTransforms[role] else { continue }
                 var destination = base
                 if index == selectedIndex {
-                    destination.translation.y += reducedMotion ? 0 : 0.14
+                    destination.translation.z += reducedMotion ? 0 : 0.14
                     destination.scale *= reducedMotion ? 1 : 1.08
                 } else {
-                    destination.translation.y -= reducedMotion ? 0 : 0.22
+                    destination.translation.z -= reducedMotion ? 0 : 0.22
                     destination.scale = SIMD3(repeating: reducedMotion ? 0.01 : 0.04)
                 }
                 entity.move(
@@ -281,7 +281,7 @@ final class RealityProgressionVFXRenderer {
         guard let entity = registry.entity(for: .rewardStand),
               let base = baseTransforms[.rewardStand] else { return }
         var hidden = base
-        hidden.translation.y -= reducedMotion ? 0 : 0.1
+        hidden.translation.z -= reducedMotion ? 0 : 0.1
         hidden.scale *= reducedMotion ? 1 : 0.97
         entity.transform = hidden
         entity.move(
@@ -306,7 +306,7 @@ final class RealityProgressionVFXRenderer {
                 for (index, role) in roles.enumerated() {
                     guard let entity = registry.entity(for: role),
                           var target = self.baseTransforms[role] else { continue }
-                    target.translation.y += isRaised
+                    target.translation.z += isRaised
                         ? 0.018 + Float(index) * 0.004
                         : -0.006
                     entity.move(

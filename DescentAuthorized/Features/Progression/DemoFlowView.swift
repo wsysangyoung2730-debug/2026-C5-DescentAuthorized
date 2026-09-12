@@ -36,7 +36,8 @@ struct DemoFlowView: View {
                     cameraPreset: gameSession.presentation.cameraPreset,
                     erasureZones: gameSession.battleState?.activeErasureZones ?? [],
                     reducedMotion: appSettings.reducedMotion,
-                    controller: sceneController
+                    controller: sceneController,
+                    onReturnToTitle: onExit
                 )
             } else {
                 Color.black.ignoresSafeArea()
@@ -110,7 +111,7 @@ struct DemoFlowView: View {
             }
         }
         .tutorialCoach(
-            step: battleTutorialStep,
+            step: isPresentationReady ? battleTutorialStep : nil,
             onNext: advanceBattleTutorial,
             onSkip: skipBattleTutorial
         )

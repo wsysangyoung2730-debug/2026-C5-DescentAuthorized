@@ -62,18 +62,21 @@ final class GameSessionStore: ObservableObject {
         }
     }
 
-    func startNewGame() {
+    @discardableResult
+    func startNewGame() -> Bool {
         do {
             try coordinator.replaceWithNewGame()
             session = coordinator.session
             latestEvents = []
             eventSequence &+= 1
             reportAchievementSnapshot()
+            return true
         } catch {
             presentedError = PresentedGameError(
                 title: "새 게임을 시작하지 못했습니다",
                 message: "저장 공간을 확인한 뒤 다시 시도해 주세요."
             )
+            return false
         }
     }
 

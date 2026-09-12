@@ -188,6 +188,7 @@ struct RealityStageView: View {
     var erasureZones: [ErasureZone] = []
     var reducedMotion = false
     @ObservedObject var controller: RealitySceneController
+    let onReturnToTitle: () -> Void
     @State private var loadingTip: String
 
     init(
@@ -195,13 +196,15 @@ struct RealityStageView: View {
         cameraPreset: RealityCameraPreset = .main,
         erasureZones: [ErasureZone] = [],
         reducedMotion: Bool = false,
-        controller: RealitySceneController
+        controller: RealitySceneController,
+        onReturnToTitle: @escaping () -> Void
     ) {
         self.sceneID = sceneID
         self.cameraPreset = cameraPreset
         self.erasureZones = erasureZones
         self.reducedMotion = reducedMotion
         self.controller = controller
+        self.onReturnToTitle = onReturnToTitle
         let context = LoadingScreenContext(sceneID: sceneID)
         _loadingTip = State(initialValue: LoadingTipCatalog.randomTip(for: context))
     }
@@ -223,7 +226,7 @@ struct RealityStageView: View {
             case let .failed(failedSceneID, message) where failedSceneID == sceneID:
                 statusOverlay(
                     icon: "exclamationmark.triangle",
-                    title: "장면 승인 반려",
+                    title: "장면을 불러오지 못했습니다",
                     detail: message
                 )
             default:
@@ -271,10 +274,23 @@ struct RealityStageView: View {
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 420)
                 }
+
+                HStack(spacing: 12) {
+                    Button("다시 시도") {
+                        controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button("타이틀로") {
+                        onReturnToTitle()
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .tint(DAColor.magic)
+                .padding(.top, 12)
             }
             .padding(24)
         }
-        .allowsHitTesting(false)
     }
 }
 
@@ -300,7 +316,13 @@ private struct RealityARView: UIViewRepresentable {
     }
 
     private func synchronizePresentation() {
-        controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
+        switch controller.loadState {
+        case let .failed(failedSceneID, _) where failedSceneID == sceneID:
+            // Keep the error visible until the player explicitly retries.
+            break
+        default:
+            controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
+        }
         controller.setEnemyIdleMotion(reducedMotion: reducedMotion)
         controller.setErasureZones(erasureZones)
     }
