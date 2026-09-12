@@ -178,3 +178,21 @@ extension GameProgress {
         return true
     }
 }
+
+extension ExpansionProgress {
+    var areaName: String {
+        switch floorNumber {
+        case 7: "좌표 교정 구역"
+        case 6: "인과 검증 구역"
+        case 5: "기억 원본 보관 구역"
+        default: "다음 하강 구역"
+        }
+    }
+    var showsBoss: Bool {
+        [.bossPreparation, .bossBattle, .bossDefeated, .reward, .descent].contains(stage)
+    }
+}
+
+extension GameProgress {
+    var displayedFloorNumber: Int { expansion?.floorNumber ?? currentFloor.rawValue }
+}

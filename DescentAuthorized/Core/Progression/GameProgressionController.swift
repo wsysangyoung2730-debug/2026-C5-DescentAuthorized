@@ -60,8 +60,53 @@ struct GameProgressionController: Sendable {
         }
         if progress.expansion == nil {
             progress.expansion = ExpansionProgress()
+            progress.playerHP = min(100, progress.playerHP + 30)
         }
         progress.synchronizeLoadout()
+    }
+
+    mutating func advanceExpansion() throws -> [ProgressionEvent] {
+        guard var current = progress.expansion else {
+            try beginExpansion()
+            return []
+        }
+        switch current.stage {
+        case .entrance: current.stage = .preparation
+        case .preparation, .bossPreparation:
+            guard progress.loadoutIssues.isEmpty,
+                  ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: current.stage == .bossPreparation) != nil else {
+                throw ProgressionError.requirementMissing("유효한 출전 준비")
+            }
+            current.stage = current.stage == .preparation ? .residualBattle : .bossBattle
+        case .residualDefeated: current.stage = .sealedDoor
+        case .bossDefeated: current.stage = .reward
+        case .descent:
+            guard current.descentStage == 2 else { throw ProgressionError.requirementMissing("하강 승인 2단계 완료") }
+            current.floorNumber -= 1
+            current.stage = current.floorNumber == 4 ? .complete : .entrance
+            current.descentStage = 0
+            progress.playerHP = min(100, progress.playerHP + 30)
+        default: throw ProgressionError.requirementMissing("현재 단계의 절차를 먼저 완료하세요.")
+        }
+        try updateExpansion(current)
+        return []
+    }
+
+    mutating func releaseExpansionSeal(grade: CastingGrade) throws -> [ProgressionEvent] {
+        guard progress.expansion?.stage == .sealedDoor,
+              progress.learnedSpells.contains(.sealRelease), grade != .rejected else {
+            throw ProgressionError.requirementMissing("봉인 해제 각인 성공")
+        }
+        progress.expansion?.stage = .bossPreparation
+        return [updateMastery(spell: .sealRelease, grade: grade)]
+    }
+
+    mutating func approveExpansionStage(_ count: Int) throws {
+        guard let current = progress.expansion, current.stage == .descent,
+              (1...2).contains(count), count == current.descentStage || count == current.descentStage + 1 else {
+            throw ProgressionError.requirementMissing("순서에 맞는 하강 승인")
+        }
+        progress.expansion?.descentStage = count
     }
 
     mutating func updateExpansion(_ expansion: ExpansionProgress) throws {
@@ -125,7 +170,8 @@ struct GameProgressionController: Sendable {
         guard let expansion = progress.expansion, expansion.stage.isBattle else {
             throw ProgressionError.requirementMissing("진행 중인 확장 전투")
         }
-        progress.playerHP = min(max(remainingPlayerHP, 1), Self.maximumPlayerHP)
+        let remaining = min(max(remainingPlayerHP, 1), Self.maximumPlayerHP)
+        progress.playerHP = expansion.stage == .residualBattle ? min(100, max(60, remaining + 20)) : remaining
         progress.defeatedEnemies.insert(enemy)
         progress.expansion?.stage = expansion.stage == .residualBattle
             ? .residualDefeated : .bossDefeated
@@ -292,6 +338,7 @@ struct GameProgressionController: Sendable {
             progress.currentScene = .demoComplete
             reachCheckpoint(.demoComplete)
             progress.isDemoComplete = true
+            try beginExpansion()
             return [
                 .checkpointChanged(.demoComplete),
                 .sceneChanged(.demoComplete),
@@ -504,6 +551,8 @@ struct GameProgressionController: Sendable {
                 .checkpointChanged(.observationDefeated),
                 .sceneChanged(setScene(.floor8AdministratorDefeated))
             ]
+        case .coordinateDriftResidual, .coordinateCorrectionAdministrator:
+            throw ProgressionError.unexpectedEnemy(enemy)
         }
     }
 

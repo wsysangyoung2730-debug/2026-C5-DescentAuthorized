@@ -3,6 +3,7 @@ import Foundation
 struct EncounterController: Sendable {
     private(set) var combat: CombatEngine
     private var nextPatternIndex: Int
+    private var firstPhaseTwoCycle = false
 
     init(
         enemy: EnemyDefinition,
@@ -66,12 +67,28 @@ struct EncounterController: Sendable {
     }
 
     private mutating func beginNextTurn() throws -> [BattleEvent] {
-        let pattern = enemyDefinition.pattern
+        var events: [BattleEvent] = []
+        // Lock the phase at cycle boundaries so a displayed intent never changes mid-turn.
+        if nextPatternIndex == 0,
+           state.expansion.encounterPhase == 1,
+           state.enemy.hpFraction <= 0.5,
+           ExpansionEnemyCatalog.phaseTwoPattern(for: enemyDefinition.id, firstCycle: true) != nil {
+            combat.setEncounterPhase(2)
+            firstPhaseTwoCycle = true
+            events.append(.expansionChanged(message: "2단계 시작 · 이번 주기부터 강화된 절차 적용"))
+        }
+        let pattern = state.expansion.encounterPhase == 2
+            ? ExpansionEnemyCatalog.phaseTwoPattern(for: enemyDefinition.id, firstCycle: firstPhaseTwoCycle) ?? enemyDefinition.pattern
+            : enemyDefinition.pattern
         precondition(!pattern.isEmpty, "Enemy pattern must not be empty")
 
         let intent = pattern[nextPatternIndex]
         nextPatternIndex = (nextPatternIndex + 1) % pattern.count
-        return try combat.beginPlayerTurn(intent: intent)
+        if nextPatternIndex == 0, state.expansion.encounterPhase == 2 {
+            firstPhaseTwoCycle = false
+        }
+        events.append(contentsOf: try combat.beginPlayerTurn(intent: intent))
+        return events
     }
 
     private mutating func applyPendingThresholdRules() -> [BattleEvent] {

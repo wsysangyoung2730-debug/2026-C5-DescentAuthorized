@@ -2,6 +2,9 @@ import Foundation
 
 enum DemoCommand: Sendable {
     case beginExpansion
+    case advanceExpansion
+    case releaseExpansionSeal(CastingGrade)
+    case approveExpansionStage(Int)
     case configureLoadout([SpellID], protectedAttack: SpellID?, protectedDefense: SpellID?)
     case markLoadoutTutorial(LoadoutTutorialFlag)
     case leaveMeetingRoom
@@ -63,6 +66,9 @@ struct DemoGameSession: Sendable {
 
     init(progress: GameProgress = .newGame) {
         progression = GameProgressionController(progress: progress)
+        if progression.progress.currentScene == .demoComplete && progression.progress.expansion == nil {
+            try? progression.beginExpansion()
+        }
     }
 
     var progress: GameProgress { progression.progress }
@@ -70,6 +76,14 @@ struct DemoGameSession: Sendable {
 
     mutating func handle(_ command: DemoCommand) throws -> [DemoSessionEvent] {
         switch command {
+        case .advanceExpansion:
+            guard encounter == nil else { throw DemoSessionError.encounterAlreadyActive }
+            return wrap(try progression.advanceExpansion())
+        case let .releaseExpansionSeal(grade):
+            return wrap(try progression.releaseExpansionSeal(grade: grade))
+        case let .approveExpansionStage(count):
+            try progression.approveExpansionStage(count)
+            return []
         case .beginExpansion:
             try progression.beginExpansion()
             return []
@@ -305,16 +319,22 @@ struct DemoGameSession: Sendable {
 
         let enemyID = activeEncounter.enemyDefinition.id
         let remainingHP = activeEncounter.state.player.hp
-        let progressionEvents = try progression.completeEncounter(
-            enemy: enemyID,
-            remainingPlayerHP: remainingHP
-        )
+        let progressionEvents: [ProgressionEvent]
+        if progress.expansion != nil {
+            progressionEvents = try progression.recordExpansionVictory(enemy: enemyID, remainingPlayerHP: remainingHP)
+        } else {
+            progressionEvents = try progression.completeEncounter(enemy: enemyID, remainingPlayerHP: remainingHP)
+        }
         encounter = nil
         return [.encounterWon(enemyID)] + wrap(progressionEvents)
     }
 
     private func enemyForCurrentScene() throws -> EnemyDefinition {
-        switch progress.currentScene {
+        if let current = progress.expansion, current.stage.isBattle,
+           let enemy = ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: current.stage == .bossBattle) {
+            return enemy
+        }
+        return switch progress.currentScene {
         case .floor9RecordsBattle:
             EnemyCatalog.recordsAdministrator
         case .floor8ResidualBattle:
