@@ -47,9 +47,13 @@ struct DescentAuthorizedApp: App {
         let gameFeedback = GameFeedbackManager()
         _gameCenter = StateObject(wrappedValue: gameCenter)
         _gameFeedback = StateObject(wrappedValue: gameFeedback)
-        _gameSession = StateObject(
-            wrappedValue: GameSessionStore(achievementReporter: gameCenter)
-        )
+        #if DEBUG
+        let previewStore = ExpansionPreviewSupport.makeStore()
+        _gameSession = StateObject(wrappedValue: GameSessionStore(saveStore: previewStore,
+            achievementReporter: previewStore == nil ? gameCenter : nil))
+        #else
+        _gameSession = StateObject(wrappedValue: GameSessionStore(achievementReporter: gameCenter))
+        #endif
     }
 
     var body: some Scene {
