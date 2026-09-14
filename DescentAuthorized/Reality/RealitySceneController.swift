@@ -91,6 +91,9 @@ final class RealitySceneController: ObservableObject {
     let registry = RealityEntityRegistry()
 
     private weak var arView: ARView?
+    private var graphicsQuality: GraphicsQuality = .medium
+    private var appliedGraphicsQuality: GraphicsQuality?
+    private weak var graphicsQualityView: ARView?
     private var sceneAnchor: AnchorEntity?
     private var cameraEntity: PerspectiveCamera?
     private var loadCancellable: AnyCancellable?
@@ -168,7 +171,7 @@ final class RealitySceneController: ObservableObject {
         guard let arView else { return }
         let descriptor = RealitySceneDescriptor.descriptor(for: sceneID)
         guard let url = bundle.url(
-            forResource: descriptor.resourceName,
+            forResource: sceneID == .floor09ArchiveRedesign ? graphicsQuality.floor9ResourceName : descriptor.resourceName,
             withExtension: "usdc",
             subdirectory: descriptor.resourceSubdirectory
         ) else {
@@ -1230,7 +1233,10 @@ final class RealitySceneController: ObservableObject {
         sceneAnchor = anchor
         cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
-        if descriptor.sceneID == .floor09ArchiveRedesign { installFloor9Lighting(in: root) }
+        if descriptor.sceneID == .floor09ArchiveRedesign {
+            installFloor9Lighting(in: root)
+            applyFloor9ShadowQuality()
+        }
         installInvestigationAnchors(
             in: root,
             sceneAnchor: anchor,
@@ -1712,6 +1718,32 @@ extension RealitySceneController {
             if index == 1 || index == 3 { lamp.shadow = SpotLightComponent.Shadow() }
             root.addChild(lamp)
             lamp.look(at: SIMD3(position.x, position.y, 0), from: position, upVector: SIMD3(0, 1, 0), relativeTo: root)
+        }
+    }
+}
+
+
+extension RealitySceneController {
+    func setGraphicsQuality(_ quality: GraphicsQuality) {
+        graphicsQuality = quality
+        guard appliedGraphicsQuality != quality || graphicsQualityView !== arView else { return }
+        appliedGraphicsQuality = quality
+        graphicsQualityView = arView
+        // Preserve HDR brightness and UI resolution across all presets.
+        arView?.renderOptions.insert(.disableMotionBlur)
+        if quality == .low {
+            arView?.renderOptions.formUnion([.disableDepthOfField, .disableGroundingShadows])
+        } else {
+            arView?.renderOptions.subtract([.disableDepthOfField, .disableGroundingShadows])
+        }
+        applyFloor9ShadowQuality()
+    }
+
+    private func applyFloor9ShadowQuality() {
+        // Alternate fixtures retain even coverage when only two shadows are enabled.
+        for (rank, index) in [1, 3, 0, 2].enumerated() {
+            guard let lamp = registry.entity(named: "F09_RUNTIME_CEILING_\(index)") as? SpotLight else { continue }
+            lamp.shadow = rank < graphicsQuality.shadowLightCount ? SpotLightComponent.Shadow() : nil
         }
     }
 }

@@ -39,6 +39,10 @@ struct GameSettingsManager {
         try update(\.reducedMotion, to: isEnabled)
     }
 
+    mutating func setGraphicsQuality(_ quality: GraphicsQuality) throws {
+        try update(\.graphicsQuality, to: quality)
+    }
+
     mutating func reset() {
         store.reset()
         settings = .defaults

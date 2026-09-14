@@ -295,6 +295,7 @@ struct RealityStageView: View {
 }
 
 private struct RealityARView: UIViewRepresentable {
+    @EnvironmentObject private var appSettings: AppSettings
     let sceneID: FloorSceneID
     let cameraPreset: RealityCameraPreset
     let erasureZones: [ErasureZone]
@@ -316,6 +317,14 @@ private struct RealityARView: UIViewRepresentable {
     }
 
     private func synchronizePresentation() {
+        var quality = appSettings.graphicsQuality
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--floor9-preview") {
+            if ProcessInfo.processInfo.arguments.contains("--graphics-low") { quality = .low }
+            if ProcessInfo.processInfo.arguments.contains("--graphics-high") { quality = .high }
+        }
+        #endif
+        controller.setGraphicsQuality(quality)
         switch controller.loadState {
         case let .failed(failedSceneID, _) where failedSceneID == sceneID:
             // Keep the error visible until the player explicitly retries.

@@ -331,6 +331,24 @@ struct SettingsView: View {
     private var displaySettings: some View {
         settingsSection(title: "화면 효과", subtitle: "시각 연출과 움직임의 강도를 조정합니다") {
             VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("그래픽 품질").font(.headline)
+                    Picker("그래픽 품질", selection: Binding(
+                        get: { appSettings.graphicsQuality },
+                        set: { appSettings.setGraphicsQuality($0) }
+                    )) {
+                        ForEach(GraphicsQuality.allCases, id: \.self) { quality in
+                            Text(quality.title).tag(quality)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("graphicsQualityPicker")
+                    Text("낮음은 배경 질감과 그림자를 줄이고, 높음은 세부 표현을 살립니다. 배경 질감은 현재 9층에 적용되며 다음 공간 로딩부터 바뀝니다.")
+                        .font(.caption).foregroundStyle(SettingsPalette.secondary)
+                }
+                .padding(16)
+                rowDivider
+
                 toggleRow(
                     title: "번쩍임 줄이기",
                     detail: "강한 섬광 효과의 밝기와 빈도를 낮춥니다",

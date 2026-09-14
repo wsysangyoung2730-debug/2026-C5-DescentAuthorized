@@ -441,6 +441,20 @@
           "normal"
         ],
         "mapping": "8 meter world-planar tiles"
+      },
+      "graphicsQualityVariants": {
+        "low": {
+          "path": "Reality/Scenes/Floor09/ArchiveRedesign/floor09_archive_redesign_low.usdc",
+          "surfaceTextureSize": 512
+        },
+        "medium": {
+          "path": "Reality/Scenes/Floor09/ArchiveRedesign/floor09_archive_redesign_medium.usdc",
+          "surfaceTextureSize": 1024
+        },
+        "high": {
+          "path": "Reality/Scenes/Floor09/ArchiveRedesign/floor09_archive_redesign.usdc",
+          "surfaceTextureSize": 2048
+        }
       }
     },
     {

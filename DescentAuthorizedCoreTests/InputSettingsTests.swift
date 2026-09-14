@@ -160,6 +160,34 @@ final class InputSettingsTests: XCTestCase {
         XCTAssertTrue(manager.settings.reducedMotion)
     }
 
+    func testGraphicsQualityMigratesOldAndUnknownSettings() throws {
+        for json in ["{\"saveVersion\":3,\"reducedMotion\":true}", "{\"saveVersion\":4,\"graphicsQuality\":\"unknown\",\"reducedMotion\":true}"] {
+            let settings = try JSONDecoder().decode(GameSettings.self, from: Data(json.utf8))
+            XCTAssertEqual(settings.graphicsQuality, .medium)
+            XCTAssertTrue(settings.reducedMotion)
+        }
+    }
+
+    func testGraphicsQualityRoundTripAndPersistence() throws {
+        let store = InMemoryGameSettingsStore()
+        var manager = GameSettingsManager(store: store)
+        for quality in GraphicsQuality.allCases {
+            try manager.setGraphicsQuality(quality)
+            let restored = GameSettingsManager(store: store)
+            XCTAssertEqual(restored.settings.graphicsQuality, quality)
+            let encoded = try JSONEncoder().encode(restored.settings)
+            XCTAssertEqual(try JSONDecoder().decode(GameSettings.self, from: encoded), restored.settings)
+        }
+        manager.reset()
+        XCTAssertEqual(manager.settings.graphicsQuality, .medium)
+    }
+
+    func testGraphicsQualityKeepsPreviousSelectionOnSaveFailure() {
+        var manager = GameSettingsManager(store: FailingGameSettingsStore())
+        XCTAssertThrowsError(try manager.setGraphicsQuality(.low))
+        XCTAssertEqual(manager.settings.graphicsQuality, .medium)
+    }
+
     func testSettingsManagerKeepsPreviousValueWhenSaveFails() {
         let store = FailingGameSettingsStore()
         var manager = GameSettingsManager(store: store)
