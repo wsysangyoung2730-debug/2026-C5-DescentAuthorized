@@ -52,9 +52,25 @@ struct DescentAuthorizedApp: App {
         )
     }
 
+    private var isFloor9Preview: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("--floor9-preview")
+        #else
+        false
+        #endif
+    }
+
+    @ViewBuilder private var initialView: some View {
+        #if DEBUG
+        if isFloor9Preview { Floor9MotionPreview() } else { HomeView() }
+        #else
+        HomeView()
+        #endif
+    }
+
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            initialView
                 .environmentObject(appSettings)
                 .environmentObject(gameCenter)
                 .environmentObject(gameFeedback)
@@ -70,12 +86,12 @@ struct DescentAuthorizedApp: App {
                     if phase == .active {
                         LandscapeOrientationController.requestLandscape()
                     } else if phase == .inactive || phase == .background {
-                        gameSession.saveForLifecycleTransition()
+                        if !isFloor9Preview { gameSession.saveForLifecycleTransition() }
                     }
                 }
                 .task {
                     LandscapeOrientationController.requestLandscape()
-                    gameCenter.authenticate()
+                    if !isFloor9Preview { gameCenter.authenticate() }
                     gameFeedback.apply(settings: appSettings.settings)
                 }
                 .onChange(of: gameSession.eventSequence) { _, _ in

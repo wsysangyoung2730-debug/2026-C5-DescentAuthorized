@@ -327,3 +327,47 @@ private struct RealityARView: UIViewRepresentable {
         controller.setErasureZones(erasureZones)
     }
 }
+
+
+#if DEBUG
+/// Isolated asset review, entered only with --floor9-preview. Does not advance a save.
+struct Floor9MotionPreview: View {
+    @StateObject private var controller = RealitySceneController()
+    @State private var camera: RealityCameraPreset = ProcessInfo.processInfo.arguments.contains("--descent")
+        ? .descentInput : (ProcessInfo.processInfo.arguments.contains("--boss") ? .battle : .rewardSelection)
+    @State private var replay = 0
+    @State private var reducedMotion = false
+
+    var body: some View {
+        RealityStageView(sceneID: .floor09ArchiveRedesign, cameraPreset: camera,
+                         reducedMotion: reducedMotion, controller: controller, onReturnToTitle: {})
+            .overlay(alignment: .top) {
+                HStack(spacing: 16) {
+                    Button("보스") { camera = .battle }
+                    Button("두루마리") { camera = .rewardSelection }
+                    Button("하강문") { camera = .descentInput }
+                    Button("다시 보기") { replay += 1 }
+                    Toggle("동작 줄이기", isOn: $reducedMotion).fixedSize()
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(12).background(.ultraThinMaterial)
+            }
+            .task(id: "\(camera.rawValue)-\(replay)-\(reducedMotion)") {
+                while !controller.isReady(sceneID: .floor09ArchiveRedesign, cameraPreset: camera) {
+                    if Task.isCancelled { return }
+                    if case .failed = controller.loadState { return }
+                    do { try await Task.sleep(for: .milliseconds(30)) } catch { return }
+                }
+                controller.setRewardPresentation(.inactive, reducedMotion: reducedMotion)
+                controller.setDescentPresentation(camera == .descentInput ? .ready : .inactive,
+                                                  reducedMotion: reducedMotion)
+                if camera == .rewardSelection {
+                    controller.setRewardPresentation(.appearing, reducedMotion: reducedMotion)
+                    if await controller.waitForRewardAppearance(), !Task.isCancelled {
+                        controller.setRewardPresentation(.choosing, reducedMotion: reducedMotion)
+                    }
+                }
+            }
+    }
+}
+#endif

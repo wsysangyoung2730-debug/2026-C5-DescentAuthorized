@@ -85,6 +85,9 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var isDescentFailurePresentationActive = false
     @Published private(set) var loadingProgress: Double = 0
 
+    @Published private(set) var isRewardAppearanceComplete = false
+    private var rewardAppearanceStartTask: Task<Void, Never>?
+
     let registry = RealityEntityRegistry()
 
     private weak var arView: ARView?
@@ -1113,13 +1116,42 @@ final class RealitySceneController: ObservableObject {
         _ state: RealityRewardPresentationState,
         reducedMotion: Bool
     ) {
+        rewardAppearanceStartTask?.cancel()
+        rewardAppearanceStartTask = nil
         requestedRewardState = state
         requestedReducedMotion = reducedMotion
+        if state == .inactive || state == .appearing { isRewardAppearanceComplete = false }
+        if requestedSceneID == .floor09ArchiveRedesign, state == .appearing {
+            // Wait for loading and camera travel; otherwise the rise occurs off-screen.
+            rewardAppearanceStartTask = Task { @MainActor [weak self] in
+                guard let self else { return }
+                while !Task.isCancelled {
+                    guard self.requestedRewardState == .appearing else { return }
+                    if case .failed = self.loadState { return }
+                    if case .ready(.floor09ArchiveRedesign) = self.loadState,
+                       self.isReady(sceneID: .floor09ArchiveRedesign, cameraPreset: .rewardSelection) {
+                        self.progressionVFXRenderer.presentReward(.appearing, registry: self.registry, reducedMotion: reducedMotion)
+                        return
+                    }
+                    do { try await Task.sleep(for: .milliseconds(30)) } catch { return }
+                }
+            }
+            return
+        }
         progressionVFXRenderer.presentReward(
             state,
             registry: registry,
             reducedMotion: reducedMotion
         )
+    }
+
+    func waitForRewardAppearance() async -> Bool {
+        while !Task.isCancelled {
+            if isRewardAppearanceComplete { return true }
+            if case .failed = loadState { return false }
+            do { try await Task.sleep(for: .milliseconds(30)) } catch { return false }
+        }
+        return false
     }
 
     func resetProgressionPresentation(reducedMotion: Bool) {
@@ -1132,6 +1164,9 @@ final class RealitySceneController: ObservableObject {
     }
 
     func unload() {
+        rewardAppearanceStartTask?.cancel()
+        rewardAppearanceStartTask = nil
+        isRewardAppearanceComplete = false
         sceneLoadGeneration &+= 1
         floor10OpeningCameraGeneration &+= 1
         loadCancellable?.cancel()
@@ -1206,7 +1241,14 @@ final class RealitySceneController: ObservableObject {
         // visible while the renderer adds and removes the active energy shell.
         registry.setEnabled(true, for: .generalShield)
         registry.setEnabled(true, for: .absoluteShield)
-        progressionVFXRenderer.attach(to: registry)
+        progressionVFXRenderer.onRewardAppearanceCompleted = { [weak self] in
+            self?.isRewardAppearanceComplete = true
+        }
+        progressionVFXRenderer.attach(to: registry, bundle: bundle)
+        if let error = progressionVFXRenderer.rewardMotionError {
+            fail(sceneID: descriptor.sceneID, message: error)
+            return
+        }
         if let cameraName = descriptor.cameraName(for: requestedCameraPreset) {
             applyCamera(named: cameraName)
         }
@@ -1416,11 +1458,13 @@ final class RealitySceneController: ObservableObject {
             registry: registry,
             reducedMotion: requestedReducedMotion
         )
-        progressionVFXRenderer.presentReward(
-            requestedRewardState,
-            registry: registry,
-            reducedMotion: requestedReducedMotion
-        )
+        if descriptor.sceneID == .floor09ArchiveRedesign, requestedRewardState == .appearing {
+            setRewardPresentation(.appearing, reducedMotion: requestedReducedMotion)
+        } else {
+            progressionVFXRenderer.presentReward(
+                requestedRewardState, registry: registry, reducedMotion: requestedReducedMotion
+            )
+        }
         loadingProgress = 0.97
         missingEntityRoles = registry.missingRequiredRoles
         guard

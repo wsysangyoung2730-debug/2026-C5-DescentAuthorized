@@ -95,11 +95,13 @@ struct RewardSelectionView: View {
             setRewardState(.appearing)
             transitionTask?.cancel()
             transitionTask = Task { @MainActor in
-                try? await Task.sleep(
-                    for: RealityRewardTransitionTiming.appearanceDelay(
-                        reducedMotion: appSettings.reducedMotion
+                if floor == .floor9 {
+                    guard await sceneController.waitForRewardAppearance() else { return }
+                } else {
+                    try? await Task.sleep(
+                        for: RealityRewardTransitionTiming.appearanceDelay(reducedMotion: appSettings.reducedMotion)
                     )
-                )
+                }
                 guard !Task.isCancelled else { return }
                 setRewardState(.choosing)
                 withAnimation(
@@ -111,6 +113,7 @@ struct RewardSelectionView: View {
         }
         .onDisappear {
             transitionTask?.cancel()
+            if floor == .floor9 { sceneController.setRewardPresentation(.inactive, reducedMotion: appSettings.reducedMotion) }
             cancelDetailPress(playsCloseSound: false)
             isLearningInputActive = false
         }

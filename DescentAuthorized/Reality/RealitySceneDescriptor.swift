@@ -145,9 +145,9 @@ struct RealitySceneDescriptor: Sendable {
                 .descentStele: "F09_DescentStele",
                 .descentPedestal: "F09_DescentPedestal",
                 .rewardStand: "F09_RewardStand",
-                .rewardScrollLeft: "F09_RewardScroll_Left_HoleAnchor",
-                .rewardScrollCenter: "F09_RewardScroll_Center_HoleAnchor",
-                .rewardScrollRight: "F09_RewardScroll_Right_HoleAnchor",
+                .rewardScrollLeft: "F09_RewardScroll_Left_Idle",
+                .rewardScrollCenter: "F09_RewardScroll_Center_Idle",
+                .rewardScrollRight: "F09_RewardScroll_Right_Idle",
                 .generalShield: "F09_GeneralShield"
             ],
             descentDoorAnimation: .init(prefix: "F09"),
