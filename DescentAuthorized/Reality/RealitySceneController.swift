@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 import RealityKit
+import UIKit
 
 struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     let maximumYaw: Float
@@ -1704,20 +1705,62 @@ final class RealitySceneController: ObservableObject {
 
 
 extension RealitySceneController {
-    /// Runtime counterparts for the authored ceiling fixtures; USD area lights are not equivalent.
+    /// Blender's Cycles area lights do not survive the RealityKit USD import.
+    /// Positions and aim points use the authored F09 scene's local, Z-up coordinates.
     private func installFloor9Lighting(in root: Entity) {
-        let positions: [SIMD3<Float>] = [SIMD3(-5, 4, 6.9), SIMD3(1, 7, 6.9), SIMD3(4, 12, 6.9), SIMD3(-2, 15, 6.9)]
-        for (index, position) in positions.enumerated() {
+        struct Fixture {
+            let name: String
+            let position: SIMD3<Float>
+            let target: SIMD3<Float>
+            let color: UIColor
+            let intensity: Float
+            let radius: Float
+            let outerAngle: Float
+        }
+
+        let ceiling = UIColor(red: 1, green: 0.95, blue: 0.87, alpha: 1)
+        let warm = UIColor(red: 1, green: 0.94, blue: 0.84, alpha: 1)
+        let door = UIColor(red: 1, green: 0.70, blue: 0.36, alpha: 1)
+        // RealityKit may normalize a Z-up USD stage to Y-up on import. Compare
+        // an authored lamp with its Blender coordinates before placing lights.
+        let lampTube = root.findEntity(named: "F09D_Lamp_Tube_0")
+        let lampPosition = lampTube?.position(relativeTo: root)
+        let isYUp = lampPosition.map { abs($0.y - 7.045) < abs($0.z - 7.045) } ?? false
+        func importedPosition(_ source: SIMD3<Float>) -> SIMD3<Float> {
+            isYUp ? SIMD3(source.x, source.z, -source.y) : source
+        }
+        let upVector: SIMD3<Float> = isYUp ? [0, 0, -1] : [0, 1, 0]
+        // Six working fluorescent fixtures from DA_F09_Archive_Redesign in v022.
+        let fixtures: [Fixture] = [
+            Fixture(name: "CEILING_0", position: [-6, -3, 6.93], target: [-6, -3, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
+            Fixture(name: "CEILING_1", position: [2, -3, 6.93], target: [2, -3, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
+            Fixture(name: "CEILING_3", position: [-5, 4, 6.93], target: [-5, 4, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
+            Fixture(name: "CEILING_4", position: [1, 7, 6.93], target: [1, 7, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
+            Fixture(name: "CEILING_6", position: [4, 12, 6.93], target: [4, 12, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
+            Fixture(name: "CEILING_7", position: [-2, 15, 6.93], target: [-2, 15, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
+            // These broad spotlights stand in for the six 5 m Cycles area lights.
+            Fixture(name: "BOSS_KEY", position: [-4.5, 8.5, 7.1], target: [-0.26, 10.29, 1.82], color: warm, intensity: 1500, radius: 12, outerAngle: 115),
+            Fixture(name: "BOSS_RIM", position: [4.8, 13.8, 5.8], target: [0.15, 10.51, 1.73], color: warm, intensity: 1500, radius: 12, outerAngle: 115),
+            Fixture(name: "INPUT_KEY", position: [-3.8, -3.5, 6.5], target: [-0.36, -1.87, 0.62], color: warm, intensity: 1500, radius: 12, outerAngle: 115),
+            Fixture(name: "DOOR", position: [8, 12, 5.7], target: [8.2, 13.3, -0.15], color: door, intensity: 1700, radius: 10, outerAngle: 110),
+            Fixture(name: "REWARD", position: [-8, 10.2, 5.4], target: [-8, 12.22, -0.25], color: warm, intensity: 1500, radius: 10, outerAngle: 110),
+            Fixture(name: "FRONT_FILL", position: [0, -11, 4.5], target: [0, -2.31, 2.16], color: warm, intensity: 1900, radius: 16, outerAngle: 120)
+        ]
+        for fixture in fixtures {
             let lamp = SpotLight()
-            lamp.name = "F09_RUNTIME_CEILING_\(index)"
-            lamp.light.color = .init(red: 1, green: 0.94, blue: 0.84, alpha: 1)
-            lamp.light.intensity = 3500
-            lamp.light.innerAngleInDegrees = 55
-            lamp.light.outerAngleInDegrees = 105
-            lamp.light.attenuationRadius = 20
-            if index == 1 || index == 3 { lamp.shadow = SpotLightComponent.Shadow() }
+            lamp.name = "F09_RUNTIME_\(fixture.name)"
+            lamp.light.color = fixture.color
+            lamp.light.intensity = fixture.intensity
+            lamp.light.innerAngleInDegrees = fixture.outerAngle * 0.64
+            lamp.light.outerAngleInDegrees = fixture.outerAngle
+            lamp.light.attenuationRadius = fixture.radius
             root.addChild(lamp)
-            lamp.look(at: SIMD3(position.x, position.y, 0), from: position, upVector: SIMD3(0, 1, 0), relativeTo: root)
+            lamp.look(
+                at: importedPosition(fixture.target),
+                from: importedPosition(fixture.position),
+                upVector: upVector,
+                relativeTo: root
+            )
         }
     }
 }
@@ -1741,7 +1784,7 @@ extension RealitySceneController {
 
     private func applyFloor9ShadowQuality() {
         // Alternate fixtures retain even coverage when only two shadows are enabled.
-        for (rank, index) in [1, 3, 0, 2].enumerated() {
+        for (rank, index) in [3, 4, 0, 7].enumerated() {
             guard let lamp = registry.entity(named: "F09_RUNTIME_CEILING_\(index)") as? SpotLight else { continue }
             lamp.shadow = rank < graphicsQuality.shadowLightCount ? SpotLightComponent.Shadow() : nil
         }
