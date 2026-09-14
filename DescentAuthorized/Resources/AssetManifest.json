@@ -418,8 +418,8 @@
         "WarningSignSet",
         "env_light"
       ],
-      "bytes": 2449665,
-      "sha256": "915fac1c99f5d564d7a5dd17df452b96b5568408183eaee8c4f059462fb53b8d",
+      "bytes": 2597500,
+      "sha256": "79adb1559bc63d3b0bdd15423a0671a1dbd9f1f275597741c8941161fde305a3",
       "sourceBlend": "DA_F08_F09_F10_Combined_v020_f09_right_scroll_fix.blend",
       "runtimeRewardMotion": {
         "path": "Reality/Scenes/Floor09/ArchiveRedesign/floor09_reward_motion.json",
@@ -430,7 +430,18 @@
         ],
         "policy": "Sampled local transforms; Swift owns playback. No automatic USD animation."
       },
-      "upAxis": "Z"
+      "upAxis": "Z",
+      "bakedSurfaces": {
+        "sourceBlend": "DA_F08_F09_F10_Combined_v022_combat_composition.blend",
+        "materials": 4,
+        "resolution": 2048,
+        "channels": [
+          "basecolor",
+          "roughness",
+          "normal"
+        ],
+        "mapping": "8 meter world-planar tiles"
+      }
     },
     {
       "id": "floor08_residue_isolation",

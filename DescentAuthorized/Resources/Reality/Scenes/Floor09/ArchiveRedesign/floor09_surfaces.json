@@ -1,0 +1,642 @@
+[
+  {
+    "entity": "Cube_223",
+    "material": "F09_Worn_Concrete"
+  },
+  {
+    "entity": "Cube_259",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_249",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_250",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_226",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_261",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_252",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_253",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_254",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_251",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_255",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_256",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_257",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_260",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_224",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_258",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_225",
+    "material": "F09_Aged_Plaster"
+  },
+  {
+    "entity": "Cube_393",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_329",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_300",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_374",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_290",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_366",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_280",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_238",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_394",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_348",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_321",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_384",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_340",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_375",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_330",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_301",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_378",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_291",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_367",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_281",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_358",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_335",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_239",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_349",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_229",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_322",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_382",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_331",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_302",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_383",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_292",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_339",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_368",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_272",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_282",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_385",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_240",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_262",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_350",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_230",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_323",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_386",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_387",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_313",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_332",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_303",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_293",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_343",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_369",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_273",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_283",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_344",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_241",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_263",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_351",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_231",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_324",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_296",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_314",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_333",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_304",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_359",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_227",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_294",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_370",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_284",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_242",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_264",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_274",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_228",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_232",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_388",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_334",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_295",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_352",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_285",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_243",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_275",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_353",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_354",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_233",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_389",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_316",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_379",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_306",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_325",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_311",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_286",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_237",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_244",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_276",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_310",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_234",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_390",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_305",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_345",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_317",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_380",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_336",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_312",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_307",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_326",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_297",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_287",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_363",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_245",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_267",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_277",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_315",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_355",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_235",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_391",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_265",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_318",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_381",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_337",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_266",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_308",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_327",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_298",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_288",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_364",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_268",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_278",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_320",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_236",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_392",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_270",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_319",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_338",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_271",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_309",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_360",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_373",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_328",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_299",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_289",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_365",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_269",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_279",
+    "material": "F09_Service_Iron"
+  },
+  {
+    "entity": "Cube_248",
+    "material": "F09_Faded_Marking"
+  },
+  {
+    "entity": "Cube_246",
+    "material": "F09_Faded_Marking"
+  },
+  {
+    "entity": "Cube_247",
+    "material": "F09_Faded_Marking"
+  }
+]

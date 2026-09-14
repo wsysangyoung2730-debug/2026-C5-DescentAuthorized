@@ -1230,6 +1230,7 @@ final class RealitySceneController: ObservableObject {
         sceneAnchor = anchor
         cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
+        if descriptor.sceneID == .floor09ArchiveRedesign { installFloor9Lighting(in: root) }
         installInvestigationAnchors(
             in: root,
             sceneAnchor: anchor,
@@ -1692,5 +1693,25 @@ final class RealitySceneController: ObservableObject {
         actorLoadCancellable = nil
         loadingProgress = 0
         loadState = .failed(sceneID, message)
+    }
+}
+
+
+extension RealitySceneController {
+    /// Runtime counterparts for the authored ceiling fixtures; USD area lights are not equivalent.
+    private func installFloor9Lighting(in root: Entity) {
+        let positions: [SIMD3<Float>] = [SIMD3(-5, 4, 6.9), SIMD3(1, 7, 6.9), SIMD3(4, 12, 6.9), SIMD3(-2, 15, 6.9)]
+        for (index, position) in positions.enumerated() {
+            let lamp = SpotLight()
+            lamp.name = "F09_RUNTIME_CEILING_\(index)"
+            lamp.light.color = .init(red: 1, green: 0.94, blue: 0.84, alpha: 1)
+            lamp.light.intensity = 3500
+            lamp.light.innerAngleInDegrees = 55
+            lamp.light.outerAngleInDegrees = 105
+            lamp.light.attenuationRadius = 20
+            if index == 1 || index == 3 { lamp.shadow = SpotLightComponent.Shadow() }
+            root.addChild(lamp)
+            lamp.look(at: SIMD3(position.x, position.y, 0), from: position, upVector: SIMD3(0, 1, 0), relativeTo: root)
+        }
     }
 }
