@@ -20,7 +20,10 @@ enum GraphicsQuality: String, Codable, CaseIterable, Sendable {
 
     func resourceName(for sceneID: FloorSceneID) -> String {
         switch sceneID {
-        case .floor09ArchiveRedesign, .floor10ClosedOffice, .floor08ResidueIsolation:
+        case .floor09ArchiveRedesign,
+             .floor10ClosedOffice,
+             .floor08ResidueIsolation,
+             .floor08AdministratorObservatory:
             sceneID.rawValue + (self == .high ? "" : "_" + rawValue)
         default:
             sceneID.rawValue
