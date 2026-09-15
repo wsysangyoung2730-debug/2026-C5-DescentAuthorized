@@ -385,3 +385,18 @@ struct DemoScenePresentation: Equatable, Sendable {
         }
     }
 }
+
+// Asset routing belongs to the rendering layer, not the portable game core.
+extension GraphicsQuality {
+    func resourceName(for sceneID: FloorSceneID) -> String {
+        switch sceneID {
+        case .floor09ArchiveRedesign,
+             .floor10ClosedOffice,
+             .floor08ResidueIsolation,
+             .floor08AdministratorObservatory:
+            sceneID.rawValue + (self == .high ? "" : "_" + rawValue)
+        default:
+            sceneID.rawValue
+        }
+    }
+}

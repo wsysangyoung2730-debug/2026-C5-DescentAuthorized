@@ -18,18 +18,6 @@ enum GraphicsQuality: String, Codable, CaseIterable, Sendable {
         switch self { case .low: "낮음"; case .medium: "보통"; case .high: "높음" }
     }
 
-    func resourceName(for sceneID: FloorSceneID) -> String {
-        switch sceneID {
-        case .floor09ArchiveRedesign,
-             .floor10ClosedOffice,
-             .floor08ResidueIsolation,
-             .floor08AdministratorObservatory:
-            sceneID.rawValue + (self == .high ? "" : "_" + rawValue)
-        default:
-            sceneID.rawValue
-        }
-    }
-
     var textureResolution: Int {
         switch self { case .low: 512; case .medium: 1024; case .high: 2048 }
     }

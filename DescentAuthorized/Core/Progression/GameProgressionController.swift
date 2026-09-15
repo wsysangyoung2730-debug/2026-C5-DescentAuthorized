@@ -37,6 +37,168 @@ struct GameProgressionController: Sendable {
 
     init(progress: GameProgress = .newGame) {
         self.progress = progress
+        self.progress.synchronizeLoadout()
+        switch self.progress.currentScene {
+        case .floor9RecordsBattle: self.progress.currentScene = .floor9RecordsEncounter; self.progress.playerHP = 100
+        case .floor8ResidualBattle: self.progress.currentScene = .floor8ResidualEncounter; self.progress.playerHP = 100
+        case .floor8AdministratorBattle: self.progress.currentScene = .floor8AdministratorEncounter; self.progress.playerHP = 100
+        default: break
+        }
+        if let expansion = self.progress.expansion, expansion.stage.isBattle {
+            self.progress.expansion?.stage = expansion.resumableStage
+            self.progress.playerHP = Self.maximumPlayerHP
+        }
+    }
+
+    // MARK: - 7–5F extension foundation
+
+    /// The completed 8F save remains the compatibility anchor for the extension.
+    mutating func beginExpansion() throws {
+        try requireScene(.demoComplete)
+        guard progress.isDemoComplete else {
+            throw ProgressionError.requirementMissing("8층 하강 승인 완료")
+        }
+        if progress.expansion == nil {
+            progress.expansion = ExpansionProgress()
+            progress.playerHP = min(100, progress.playerHP + 30)
+        }
+        progress.synchronizeLoadout()
+    }
+
+    mutating func advanceExpansion() throws -> [ProgressionEvent] {
+        guard var current = progress.expansion else {
+            try beginExpansion()
+            return []
+        }
+        switch current.stage {
+        case .entrance:
+            current.stage = current.floorNumber == 6 && !progress.learnedSpells.contains(.outputReduction) ? .learnDebuff : .preparation
+        case .preparation, .bossPreparation:
+            guard progress.loadoutIssues.isEmpty,
+                  ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: current.stage == .bossPreparation) != nil else {
+                throw ProgressionError.requirementMissing("유효한 출전 준비")
+            }
+            current.stage = current.stage == .preparation ? .residualBattle : .bossBattle
+        case .residualDefeated: current.stage = .sealedDoor
+        case .bossDefeated: current.stage = .reward
+        case .descent:
+            guard current.descentStage == 2 else { throw ProgressionError.requirementMissing("하강 승인 2단계 완료") }
+            current.floorNumber -= 1
+            current.stage = current.floorNumber == 4 ? .complete : .entrance
+            current.descentStage = 0
+            progress.playerHP = min(100, progress.playerHP + 30)
+        default: throw ProgressionError.requirementMissing("현재 단계의 절차를 먼저 완료하세요.")
+        }
+        try updateExpansion(current)
+        return []
+    }
+
+    mutating func learnExpansionDebuff(grade: CastingGrade) throws -> [ProgressionEvent] {
+        guard progress.expansion?.floorNumber == 6, progress.expansion?.stage == .learnDebuff else {
+            throw ProgressionError.requirementMissing("6층 고정 주문 학습")
+        }
+        let events = try learnExpansionSpell(.outputReduction, grade: grade)
+        progress.expansion?.stage = .preparation
+        return events
+    }
+
+    mutating func releaseExpansionSeal(grade: CastingGrade) throws -> [ProgressionEvent] {
+        guard progress.expansion?.stage == .sealedDoor,
+              progress.learnedSpells.contains(.sealRelease), grade != .rejected else {
+            throw ProgressionError.requirementMissing("봉인 해제 각인 성공")
+        }
+        progress.expansion?.stage = .bossPreparation
+        return [updateMastery(spell: .sealRelease, grade: grade)]
+    }
+
+    mutating func approveExpansionStage(_ count: Int) throws {
+        guard let current = progress.expansion, current.stage == .descent,
+              (1...2).contains(count), count == current.descentStage || count == current.descentStage + 1 else {
+            throw ProgressionError.requirementMissing("순서에 맞는 하강 승인")
+        }
+        progress.expansion?.descentStage = count
+    }
+
+    mutating func updateExpansion(_ expansion: ExpansionProgress) throws {
+        try requireScene(.demoComplete)
+        guard progress.expansion != nil else {
+            throw ProgressionError.requirementMissing("확장 구간 진입")
+        }
+        guard (4...7).contains(expansion.floorNumber),
+              (0...2).contains(expansion.descentStage),
+              (expansion.floorNumber == 4) == (expansion.stage == .complete),
+              expansion.stage != .learnDebuff || expansion.floorNumber == 6 else {
+            throw ProgressionError.requirementMissing("유효한 확장 진행 단계")
+        }
+        progress.expansion = expansion
+    }
+
+    mutating func configureLoadout(
+        _ spells: [SpellID], protectedAttack: SpellID? = nil, protectedDefense: SpellID? = nil
+    ) throws {
+        let legacyBattleScenes: Set<SceneID> = [
+            .floor9RecordsBattle, .floor8ResidualBattle, .floor8AdministratorBattle
+        ]
+        guard progress.expansion?.stage.isBattle != true,
+              !legacyBattleScenes.contains(progress.currentScene) else {
+            throw ProgressionError.requirementMissing("전투 시작 전에만 주문 변경 가능")
+        }
+        guard progress.setLoadout(
+            spells, protectedAttack: protectedAttack, protectedDefense: protectedDefense
+        ) else {
+            throw ProgressionError.requirementMissing(
+                LoadoutRules.issues(for: spells, learned: progress.learnedSpells)
+                    .map(\.message).joined(separator: " ")
+            )
+        }
+    }
+
+    mutating func markLoadoutTutorial(_ flag: LoadoutTutorialFlag) {
+        progress.loadoutTutorials.insert(flag)
+    }
+
+    mutating func learnExpansionSpell(
+        _ spell: SpellID, grade: CastingGrade = .approved
+    ) throws -> [ProgressionEvent] {
+        guard progress.expansion != nil, grade != .rejected else {
+            throw ProgressionError.requirementMissing("확장 구간 주문 학습 완료")
+        }
+        var events: [ProgressionEvent] = []
+        if progress.learnedSpells.insert(spell).inserted {
+            events.append(.spellLearned(spell))
+        }
+        progress.completedTrainingSpells.insert(spell)
+        events.append(updateMastery(spell: spell, grade: grade))
+        events.append(.trainingCompleted(spell: spell, grade: grade))
+        return events
+    }
+
+    /// Effects remain in combat; only the durable encounter result is recorded here.
+    mutating func recordExpansionVictory(
+        enemy: EnemyID, remainingPlayerHP: Int
+    ) throws -> [ProgressionEvent] {
+        guard let expansion = progress.expansion, expansion.stage.isBattle else {
+            throw ProgressionError.requirementMissing("진행 중인 확장 전투")
+        }
+        let remaining = min(max(remainingPlayerHP, 1), Self.maximumPlayerHP)
+        progress.playerHP = expansion.stage == .residualBattle ? min(100, max(60, remaining + 20)) : remaining
+        progress.defeatedEnemies.insert(enemy)
+        progress.expansion?.stage = expansion.stage == .residualBattle
+            ? .residualDefeated : .bossDefeated
+        return [.enemyDefeated(enemy)]
+    }
+
+    mutating func setExpansionPlayerHP(_ hp: Int) {
+        guard progress.expansion != nil else { return }
+        progress.playerHP = min(max(hp, 1), Self.maximumPlayerHP)
+    }
+
+    mutating func retryExpansionBattle() throws {
+        guard let expansion = progress.expansion, expansion.stage.isBattle else {
+            throw ProgressionError.requirementMissing("재도전할 확장 전투")
+        }
+        progress.expansion?.stage = expansion.resumableStage
+        progress.playerHP = Self.maximumPlayerHP
     }
 
     mutating func leaveMeetingRoom() throws -> [ProgressionEvent] {
@@ -94,7 +256,7 @@ struct GameProgressionController: Sendable {
             try requireScene(.floor8SealedDoor)
             destination = nil
 
-        case .barrierPiercing:
+        default:
             throw ProgressionError.unexpectedSpell(spell)
         }
 
@@ -133,7 +295,7 @@ struct GameProgressionController: Sendable {
                 throw ProgressionError.requirementMissing("afterglow training")
             }
             destination = .floor10DescentDoor
-        case .barrierPiercing, .basicBarrier, .sealRelease:
+        default:
             throw ProgressionError.unexpectedSpell(spell)
         }
 
@@ -161,8 +323,11 @@ struct GameProgressionController: Sendable {
             ]
 
         case .floor9DescentDoor:
-            guard progress.learnedSpells.contains(.barrierPiercing) else {
-                throw ProgressionError.requirementMissing("floor 9 reward")
+            guard RewardCatalog.candidates(for: .floor9).contains(where: {
+                progress.selectedRewardIDs.contains($0.id)
+                    && progress.learnedSpells.contains(RewardCatalog.learningSpell(for: $0))
+            }) else {
+                throw ProgressionError.requirementMissing("9층 보상 주문 학습 완료")
             }
             let recovery = restoreHP(by: 30)
             progress.currentFloor = .floor8
@@ -183,6 +348,7 @@ struct GameProgressionController: Sendable {
             progress.currentScene = .demoComplete
             reachCheckpoint(.demoComplete)
             progress.isDemoComplete = true
+            try beginExpansion()
             return [
                 .checkpointChanged(.demoComplete),
                 .sceneChanged(.demoComplete),
@@ -319,6 +485,23 @@ struct GameProgressionController: Sendable {
         ]
     }
 
+    mutating func returnToBattlePreparation() throws -> [ProgressionEvent] {
+        if progress.expansion != nil {
+            try retryExpansionBattle()
+            return []
+        }
+        var events = try restartCurrentEncounter()
+        let scene: SceneID
+        switch progress.currentScene {
+        case .floor9RecordsBattle: scene = .floor9RecordsEncounter
+        case .floor8ResidualBattle: scene = .floor8ResidualEncounter
+        case .floor8AdministratorBattle: scene = .floor8AdministratorEncounter
+        default: throw ProgressionError.requirementMissing("재도전할 전투")
+        }
+        events.append(.sceneChanged(setScene(scene)))
+        return events
+    }
+
     mutating func completeEncounter(
         enemy: EnemyID,
         remainingPlayerHP: Int
@@ -378,80 +561,53 @@ struct GameProgressionController: Sendable {
                 .checkpointChanged(.observationDefeated),
                 .sceneChanged(setScene(.floor8AdministratorDefeated))
             ]
+        default:
+            throw ProgressionError.unexpectedEnemy(enemy)
+        }
+    }
+
+    private func currentRewardFloor() throws -> Int {
+        if let expansion = progress.expansion, expansion.stage == .reward {
+            return expansion.floorNumber
+        }
+        switch progress.currentScene {
+        case .floor9RewardVault: return 9
+        case .floor8Reward: return 8
+        default: throw ProgressionError.requirementMissing("보상 선택 단계")
         }
     }
 
     mutating func selectReward(candidateID: String) throws -> [ProgressionEvent] {
-        let floor: FloorID
-        switch progress.currentScene {
-        case .floor9RewardVault:
-            floor = .floor9
-        case .floor8Reward:
-            floor = .floor8
-        default:
-            throw ProgressionError.invalidScene(
-                expected: [.floor9RewardVault, .floor8Reward],
-                actual: progress.currentScene
-            )
-        }
-
-        let candidates = RewardCatalog.candidates(for: floor)
+        let candidates = RewardCatalog.candidates(forFloorNumber: try currentRewardFloor())
         guard !candidates.contains(where: { progress.selectedRewardIDs.contains($0.id) }) else {
             throw ProgressionError.rewardAlreadySelected
         }
         guard let selected = candidates.first(where: { $0.id == candidateID }) else {
             throw ProgressionError.unknownReward(candidateID)
         }
-
         progress.selectedRewardIDs.append(selected.id)
-        return [
-            .rewardSelected(candidateID: selected.id, spell: selected.resolvedSpell)
-        ]
+        return [.rewardSelected(candidateID: selected.id, spell: selected.resolvedSpell)]
     }
 
-    mutating func completeRewardLearning(
-        candidateID: String,
-        grade: CastingGrade
-    ) throws -> [ProgressionEvent] {
-        guard grade != .rejected else {
-            throw ProgressionError.requirementMissing("successful reward scroll tracing")
+    mutating func completeRewardLearning(candidateID: String, grade: CastingGrade) throws -> [ProgressionEvent] {
+        guard grade != .rejected else { throw ProgressionError.requirementMissing("성공한 시험 각인") }
+        let floor = try currentRewardFloor()
+        guard progress.selectedRewardIDs.contains(candidateID),
+              let selected = RewardCatalog.candidates(forFloorNumber: floor).first(where: { $0.id == candidateID }) else {
+            throw ProgressionError.requirementMissing("선택한 보상 두루마리")
         }
-
-        let floor: FloorID
-        let destination: SceneID
-        switch progress.currentScene {
-        case .floor9RewardVault:
-            floor = .floor9
-            destination = .floor9DescentDoor
-        case .floor8Reward:
-            floor = .floor8
-            destination = .floor8DescentDoor
-        default:
-            throw ProgressionError.invalidScene(
-                expected: [.floor9RewardVault, .floor8Reward],
-                actual: progress.currentScene
-            )
-        }
-
-        guard progress.selectedRewardIDs.contains(candidateID) else {
-            throw ProgressionError.requirementMissing("selected reward scroll")
-        }
-        guard let selected = RewardCatalog.candidates(for: floor)
-            .first(where: { $0.id == candidateID }) else {
-            throw ProgressionError.unknownReward(candidateID)
-        }
-
         let spell = RewardCatalog.learningSpell(for: selected)
-        let isNewSpell = progress.learnedSpells.insert(spell).inserted
+        let isNew = progress.learnedSpells.insert(spell).inserted
         progress.completedTrainingSpells.insert(spell)
-
-        var events: [ProgressionEvent] = []
-        if isNewSpell {
-            events.append(.spellLearned(spell))
-        }
+        var events: [ProgressionEvent] = isNew ? [.spellLearned(spell)] : []
         events.append(.trainingCompleted(spell: spell, grade: grade))
         events.append(updateMastery(spell: spell, grade: grade))
-        events.append(.sceneChanged(setScene(destination)))
+        if progress.expansion != nil {
+            progress.expansion?.stage = .descent
+            progress.expansion?.descentStage = 0
+        } else {
+            events.append(.sceneChanged(setScene(floor == 9 ? .floor9DescentDoor : .floor8DescentDoor)))
+        }
         return events
     }
 
@@ -474,6 +630,7 @@ struct GameProgressionController: Sendable {
         progress.checkpoint = checkpoint
         progress.playerHP = Self.maximumPlayerHP
         progress.isDemoComplete = checkpoint == .demoComplete
+        progress.expansion = checkpoint == .demoComplete ? ExpansionProgress() : nil
         progress.learnedSpells = []
         progress.completedTrainingSpells = []
         progress.defeatedEnemies = []

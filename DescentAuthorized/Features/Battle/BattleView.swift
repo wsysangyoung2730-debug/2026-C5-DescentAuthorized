@@ -79,16 +79,7 @@ private extension SpellDefinition {
         case .attack: "BattleCardFrameAttack"
         case .defense: "BattleCardFrameDefense"
         case .dispel: "BattleCardFrameSeal"
-        }
-    }
-
-    var battleGlyphAssetName: String {
-        switch id {
-        case .afterglowErasure: "BattleGlyphAfterglowErasure"
-        case .riftSeverance: "BattleGlyphRiftSeverance"
-        case .barrierPiercing: "BattleGlyphBarrierPiercing"
-        case .basicBarrier: "BattleGlyphBasicBarrier"
-        case .sealRelease: "BattleGlyphSealRelease"
+        case .debuff: "BattleCardFrameSeal"
         }
     }
 
@@ -111,12 +102,7 @@ private extension SpellDefinition {
     }
 
     var battleEffectRangeTitle: String {
-        let range = effect.range
-        switch category {
-        case .attack: return "공격 \(range.lowerBound)~\(range.upperBound)"
-        case .defense: return "방벽 \(range.lowerBound)~\(range.upperBound)"
-        case .dispel: return "해제 \(range.lowerBound)~\(range.upperBound)"
-        }
+        compactEffectDescription
     }
 
     var battleCategoryTitle: String {
@@ -124,15 +110,23 @@ private extension SpellDefinition {
         case .attack: return "공격"
         case .defense: return "방어"
         case .dispel: return "해제"
+        case .debuff: return "디버프"
         }
     }
 
     var battleDetailEffectTitle: String {
+        if case .expansion = effect { return "주요 효과" }
         switch category {
         case .attack: return "피해"
         case .defense: return "방벽"
         case .dispel: return "해제 횟수"
+        case .debuff: return "디버프"
         }
+    }
+
+    var battleDetailEffectValue: String {
+        if case .expansion = effect { return compactEffectDescription }
+        return "\(effect.range.lowerBound)~\(effect.range.upperBound)"
     }
 
     var battleDifficultyTitle: String {
@@ -157,18 +151,8 @@ private extension SpellDefinition {
     }
 
     var battleDetailDescription: String {
-        switch id {
-        case .afterglowErasure:
-            return "잔류 관측광을 지워 대상에게 피해를 줍니다."
-        case .riftSeverance:
-            return "균열을 절단해 대상에게 강한 피해를 줍니다."
-        case .barrierPiercing:
-            return "일반 방벽을 관통하고 제거한 뒤 대상에게 피해를 줍니다."
-        case .basicBarrier:
-            return "봉인관에게 피해를 흡수하는 일반 방벽을 부여합니다."
-        case .sealRelease:
-            return "대상에게 적용된 절대 방벽의 충전을 해제합니다."
-        }
+        let metadata = SpellCatalog.metadata(for: id)
+        return "\(metadata.effectSummary) \(metadata.usageNote)"
     }
 }
 
@@ -197,6 +181,7 @@ struct BattleView: View {
     @Binding var restartLoadingPresentation: SceneRetryLoadingPresentation?
 
     @State private var selectedSpellID: SpellID?
+    @State private var selectedEffectTarget: ExpansionEffectTarget?
     @State private var enemyHitFlash = false
     @State private var playerHitFlash = false
     @State private var strongAttackFlash = false
@@ -228,7 +213,13 @@ struct BattleView: View {
 
     var body: some View {
         ZStack {
-            if realitySceneID != nil {
+            if isExpansionBattle, let expansion = gameSession.progress.expansion {
+                ExpansionBackdropView(
+                    floorNumber: expansion.floorNumber,
+                    isBoss: expansion.stage == .bossBattle
+                )
+                .brightness(enemyHitFlash && !appSettings.reducedFlashes ? 0.07 : 0)
+            } else if realitySceneID != nil {
                 Color.black.opacity(0.2)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
@@ -238,6 +229,9 @@ struct BattleView: View {
 
             if let battle = gameSession.battleState {
                 battleContent(presentation(for: battle))
+                    .overlay(alignment: .top) {
+                        ExpansionCombatStatusView(battle: battle)
+                    }
             } else {
                 encounterStandby
             }
@@ -279,12 +273,17 @@ struct BattleView: View {
             }
 
         }
-        .task(id: gameSession.progress.currentScene) {
+        .task(id: encounterIdentity) {
             battleLogEntries = []
             lastLoggedEventSequence = nil
             previewMana = nil
             previewStrokes = nil
             detailedSpell = nil
+            selectedSpellID = nil
+            selectedEffectTarget = nil
+            showsFirstTurnBriefing = false
+            didExperienceAbsoluteBarrier = false
+            clearTransientBattleEffects()
             startEncounterIfNeeded()
             appendBattleLog(
                 gameSession.latestEvents,
@@ -295,14 +294,16 @@ struct BattleView: View {
                gameSession.battleState?.turnNumber == 1 {
                 showsFirstTurnBriefing = true
             }
-            realityController.synchronizeCombatState(
-                gameSession.battleState,
-                reducedMotion: appSettings.reducedMotion
-            )
-            realityController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
-            realityController.setBattleCameraInteractionEnabled(isBattleScene)
-            if isBattleScene {
-                realityController.resetBattleCamera(animated: false)
+            if !isExpansionBattle {
+                realityController.synchronizeCombatState(
+                    gameSession.battleState,
+                    reducedMotion: appSettings.reducedMotion
+                )
+                realityController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+                realityController.setBattleCameraInteractionEnabled(isBattleScene)
+                if isBattleScene {
+                    realityController.resetBattleCamera(animated: false)
+                }
             }
             updateDefeatPresentation(for: gameSession.battleState?.phase)
         }
@@ -498,6 +499,29 @@ struct BattleView: View {
     @ViewBuilder
     private func glyphInputPanel(_ presentation: BattleUIPresentation) -> some View {
         if let spell = presentation.selectedSpell {
+            let options = gameSession.battleState?.availableEffectTargets(for: spell) ?? []
+            let selectedOption = options.first { $0.id == selectedEffectTarget }
+            VStack(spacing: 6) {
+                if !options.isEmpty {
+                    Menu {
+                        ForEach(options) { option in
+                            Button("\(option.title) · \(option.detail)") {
+                                selectedEffectTarget = option.id
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text(selectedOption.map { "대상: \($0.title)" } ?? "대상을 선택하세요")
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(DAColor.gold)
+                        .padding(10)
+                        .background(.black.opacity(0.9), in: RoundedRectangle(cornerRadius: 5))
+                    }
+                    .disabled(presentation.phase != .playerTurn)
+                }
             GlyphCastingPanel(
                 spell: spell,
                 inputPreference: appSettings.inputPreference,
@@ -516,15 +540,18 @@ struct BattleView: View {
                     gameSession.send(.castSpell(
                         spell: spell.id,
                         strokes: submission.strokes,
-                        inputMethod: submission.inputMethod
+                        inputMethod: submission.inputMethod,
+                        target: selectedOption?.id
                     ))
                 }
             )
             .disabled(
                 presentation.phase != .playerTurn
                     || showsFirstTurnBriefing || detailedSpell != nil || isRestartLoading
+                    || (!options.isEmpty && selectedOption == nil)
             )
             .tutorialTarget("battle.input")
+            }
         } else {
             Text("시전할 수 있는 주문이 없습니다")
                 .foregroundStyle(.secondary)
@@ -549,12 +576,12 @@ struct BattleView: View {
 
     private func enemyStage(_ presentation: BattleUIPresentation) -> some View {
         ZStack {
-            if realitySceneID == nil {
+            if usesFallbackEnemySymbol {
                 stageGrid
             }
 
             VStack(spacing: 8) {
-                if realitySceneID == nil {
+                if usesFallbackEnemySymbol {
                     ZStack {
                         Image(systemName: enemySymbol)
                             .font(.system(size: 104, weight: .thin))
@@ -571,7 +598,7 @@ struct BattleView: View {
                 }
             }
         }
-        .background(realitySceneID == nil ? Color.black.opacity(0.28) : Color.clear)
+        .background(usesFallbackEnemySymbol ? Color.black.opacity(0.28) : Color.clear)
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(DAColor.gold.opacity(0.22))
@@ -594,7 +621,7 @@ struct BattleView: View {
                 )
                 .tutorialTarget("battle.intent-symbol")
                 .allowsHitTesting(false)
-        } else if realitySceneID == nil {
+        } else if usesFallbackEnemySymbol {
             Color.clear
                 .frame(width: 126, height: 126)
                 .position(x: proxy.size.width / 2, y: 108)
@@ -610,6 +637,7 @@ struct BattleView: View {
         let isCompact = availableWidth < 1_100
         let logWidth: CGFloat = isCompact ? 210 : 248
         let itemSpacing: CGFloat = isCompact ? 14 : 28
+        let cardWidth = min(132, max(82, (availableWidth - logWidth - 184 - itemSpacing * 2 - 40) / 6))
 
         return HStack(alignment: .bottom, spacing: itemSpacing) {
             battleLogPanel(presentation)
@@ -623,7 +651,7 @@ struct BattleView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(presentation.spells) { spellState in
-                            spellCard(spellState)
+                            spellCard(spellState, width: cardWidth)
                         }
                     }
                 }
@@ -822,7 +850,7 @@ struct BattleView: View {
         return DAColor.body.opacity(0.86)
     }
 
-    private func spellCard(_ state: BattleUISpellState) -> some View {
+    private func spellCard(_ state: BattleUISpellState, width: CGFloat) -> some View {
         let spell = state.spell
 
         return ZStack {
@@ -839,18 +867,15 @@ struct BattleView: View {
             VStack(spacing: 5) {
                 Spacer(minLength: 30)
 
-                Image(spell.battleGlyphAssetName)
-                    .resizable()
-                    .scaledToFit()
-                    .blendMode(.screen)
-                    .frame(width: 76, height: 76)
+                SpellGlyphPreview(spell: spell)
+                    .frame(width: min(76, width - 24), height: 76)
 
                 Spacer(minLength: 2)
 
                 Text(spell.name)
                     .font(.system(size: 14, weight: .semibold, design: .serif))
                     .foregroundStyle(DAColor.body)
-                    .lineLimit(1)
+                    .lineLimit(1).minimumScaleFactor(0.68)
 
                 Text("\(spell.battleEffectRangeTitle) · \(spell.requiredStrokes)획")
                     .font(.caption2.monospacedDigit())
@@ -879,7 +904,13 @@ struct BattleView: View {
             }
             .padding(10)
         }
-        .frame(width: 132, height: 176)
+        .frame(width: width, height: 176)
+        .overlay(alignment: .topLeading) {
+            if gameSession.battleState?.expansion.lockedSpells[spell.id] != nil {
+                Text("봉인").font(.caption2.bold()).foregroundStyle(.white)
+                    .padding(5).background(.red.opacity(0.86)).padding(5)
+            }
+        }
         .clipped()
         .contentShape(Rectangle())
         .simultaneousGesture(
@@ -959,13 +990,13 @@ struct BattleView: View {
     private func selectSpellFromUser(_ spellID: SpellID) {
         gameFeedback.playInterface(.select, settings: appSettings.settings)
         selectedSpellID = spellID
+        selectedEffectTarget = nil
     }
 
     private func spellDetailOverlay(_ spell: SpellDefinition) -> some View {
         GeometryReader { proxy in
             let panelWidth = min(760, proxy.size.width * 0.58)
             let panelHeight = panelWidth * 0.75
-            let effectRange = spell.effect.range
 
             ZStack {
                 Color.black.opacity(0.42)
@@ -993,19 +1024,16 @@ struct BattleView: View {
                     .frame(width: panelWidth * 0.86, height: panelHeight * 0.12, alignment: .leading)
                     .position(x: panelWidth * 0.50, y: panelHeight * 0.135)
 
-                    Image(spell.battleGlyphAssetName)
-                        .resizable()
-                        .scaledToFit()
-                        .blendMode(.screen)
+                    SpellGlyphPreview(spell: spell)
                         .frame(width: panelWidth * 0.20, height: panelHeight * 0.25)
                         .position(x: panelWidth * 0.228, y: panelHeight * 0.46)
 
                     VStack(spacing: 0) {
                         spellDetailRow(
                             spell.battleDetailEffectTitle,
-                            "\(effectRange.lowerBound)~\(effectRange.upperBound)"
+                            spell.battleDetailEffectValue
                         )
-                        spellDetailRow("소모 마나", "\(Int(spell.recommendedMana.rounded()))%")
+                        spellDetailRow("기준 마나", "약 \(Int(spell.recommendedMana.rounded()))%")
                         spellDetailRow("필요 획", "\(spell.requiredStrokes)")
                         spellDetailRow("구현 난이도", spell.battleDifficultyTitle)
                         spellDetailRow("필수 핵심점", spell.battleRequiredPointTitle)
@@ -1015,16 +1043,22 @@ struct BattleView: View {
                     .position(x: panelWidth * 0.66, y: panelHeight * 0.465)
 
                     Text(spell.battleDetailDescription)
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(DAColor.body.opacity(0.9))
-                        .frame(width: panelWidth * 0.86, height: panelHeight * 0.08, alignment: .leading)
-                        .position(x: panelWidth * 0.50, y: panelHeight * 0.77)
+                        .lineLimit(4)
+                        .minimumScaleFactor(0.8)
+                        .frame(width: panelWidth * 0.86, height: panelHeight * 0.15, alignment: .leading)
+                        .position(x: panelWidth * 0.50, y: panelHeight * 0.755)
 
-                    Text("누르는 동안 상세 표시 · 손을 떼면 닫힘")
+                    HStack {
+                        Text(SpellCatalog.metadata(for: spell.id).acquisitionLabel)
+                        Spacer(minLength: 8)
+                        Text("누르는 동안 상세 표시 · 손을 떼면 닫힘")
+                    }
                         .font(.caption)
                         .foregroundStyle(DAColor.secondary.opacity(0.86))
                         .frame(width: panelWidth * 0.82, alignment: .trailing)
-                        .position(x: panelWidth * 0.50, y: panelHeight * 0.85)
+                        .position(x: panelWidth * 0.50, y: panelHeight * 0.87)
                 }
                 .frame(width: panelWidth, height: panelHeight)
             }
@@ -1172,6 +1206,10 @@ struct BattleView: View {
             return "관리자 무력화"
         case .defeat:
             return "하강 봉인 절차 중단"
+        case let .healingApplied(amount, _):
+            return "생명력 회복 \(amount)"
+        case let .expansionChanged(message):
+            return message
         }
     }
 
@@ -1240,17 +1278,19 @@ struct BattleView: View {
     }
 
     private func availableSpells(in battle: BattleState) -> [SpellDefinition] {
-        SpellID.allCases
+        (battle.expansion.equippedSpells ?? SpellID.allCases)
             .filter(battle.learnedSpells.contains)
             .map(SpellCatalog.spell)
     }
 
     private func present(_ events: [DemoSessionEvent]) {
-        realityController.presentCombat(
-            events: events,
-            battleState: gameSession.battleState,
-            reducedMotion: appSettings.reducedMotion
-        )
+        if !isExpansionBattle {
+            realityController.presentCombat(
+                events: events,
+                battleState: gameSession.battleState,
+                reducedMotion: appSettings.reducedMotion
+            )
+        }
         var enemyWasHit = false
         var playerWasHit = false
         var playerBarrierWasHit = false
@@ -1278,7 +1318,7 @@ struct BattleView: View {
                 if case .player = target {
                     playerBarrierWasHit = true
                 } else if case .enemy = target, amount > 0 {
-                    banner = ("문서 방벽 전개", .cyan)
+                    banner = (isExpansionBattle ? "교정 방벽 전개" : "문서 방벽 전개", .cyan)
                 }
             case .erasureZoneAdded:
                 banner = ("말소 구역 발생", .red)
@@ -1293,7 +1333,7 @@ struct BattleView: View {
 
         if enemyWasHit { pulseEnemy() }
         if playerWasHit { pulsePlayer(strong: strongAttack) }
-        if strongAttack, playerWasHit || playerBarrierWasHit {
+        if !isExpansionBattle, strongAttack, playerWasHit || playerBarrierWasHit {
             realityController.playStrongAttackCameraImpact(
                 guarded: playerBarrierWasHit && !playerWasHit,
                 reducedMotion: appSettings.reducedMotion
@@ -1353,7 +1393,8 @@ struct BattleView: View {
     }
 
     private var isBattleScene: Bool {
-        switch gameSession.progress.currentScene {
+        if isExpansionBattle { return true }
+        return switch gameSession.progress.currentScene {
         case .floor9RecordsBattle, .floor8ResidualBattle, .floor8AdministratorBattle:
             true
         default:
@@ -1362,19 +1403,34 @@ struct BattleView: View {
     }
 
     private var realitySceneID: FloorSceneID? {
-        gameSession.presentation.floorSceneID
+        isExpansionBattle ? nil : gameSession.presentation.floorSceneID
+    }
+
+    private var isExpansionBattle: Bool {
+        gameSession.progress.expansion?.stage.isBattle == true
+    }
+
+    private var usesFallbackEnemySymbol: Bool {
+        realitySceneID == nil && !isExpansionBattle
+    }
+
+    private var encounterIdentity: String {
+        if let expansion = gameSession.progress.expansion, expansion.stage.isBattle {
+            return "expansion-\(expansion.floorNumber)-\(expansion.stage.rawValue)"
+        }
+        return gameSession.progress.currentScene.rawValue
     }
 
     private var isRecordsBattle: Bool {
-        gameSession.progress.currentScene == .floor9RecordsBattle
+        !isExpansionBattle && gameSession.progress.currentScene == .floor9RecordsBattle
     }
 
     private var isResidualBattle: Bool {
-        gameSession.progress.currentScene == .floor8ResidualBattle
+        !isExpansionBattle && gameSession.progress.currentScene == .floor8ResidualBattle
     }
 
     private var isObservationBattle: Bool {
-        gameSession.progress.currentScene == .floor8AdministratorBattle
+        !isExpansionBattle && gameSession.progress.currentScene == .floor8AdministratorBattle
     }
 
     private var shouldShowFirstTurnBriefing: Bool {
@@ -1576,6 +1632,7 @@ struct BattleView: View {
             }
             if wasPresentingDefeat,
                isBattleScene,
+               !isExpansionBattle,
                !isRestartLoading {
                 realityController.resetBattleCamera(animated: false)
                 realityController.setBattleCameraInteractionEnabled(true)
@@ -1597,6 +1654,10 @@ struct BattleView: View {
         isCameraLooking = false
         isCameraZooming = false
         cameraLookTranslationOrigin = nil
+        if isExpansionBattle {
+            isDefeatPanelVisible = true
+            return
+        }
         realityController.setBattleCameraInteractionEnabled(false)
 
         defeatPresentationTask = Task { @MainActor in
@@ -1620,58 +1681,12 @@ struct BattleView: View {
     private func restartDefeatedBattle() {
         guard !isRestartLoading else { return }
         gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-
-        defeatPresentationTask?.cancel()
-        defeatPresentationTask = nil
-        restartTask?.cancel()
-        clearTransientBattleEffects()
-        let loadingContext = restartLoadingContext
-        let loadingTip = LoadingTipCatalog.randomTip(for: loadingContext)
-        realityController.setBattleCameraInteractionEnabled(false)
-
-        withAnimation(.easeInOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
+        if gameSession.sendChecked(.restartEncounter) {
+            defeatPresentationTask?.cancel()
+            restartTask?.cancel()
+            restartLoadingPresentation = nil
             isDefeatPanelVisible = false
-            restartLoadingPresentation = SceneRetryLoadingPresentation(
-                context: loadingContext,
-                progress: 0.08,
-                tip: loadingTip
-            )
-        }
-
-        restartTask = Task { @MainActor in
-            defer { restartTask = nil }
-
-            guard await waitForRestartStep(milliseconds: 180) else { return }
-            restartLoadingPresentation?.progress = 0.34
-
-            gameSession.send(.restartEncounter)
-            guard gameSession.battleState?.phase != .defeat else {
-                restoreDefeatPanelAfterRestartFailure()
-                return
-            }
-
-            battleLogEntries.removeAll(keepingCapacity: true)
             clearTransientBattleEffects()
-            previewMana = nil
-            previewStrokes = nil
-            detailedSpell = nil
-            selectedSpellID = nil
-            realityController.resetBattleCamera(animated: false)
-            realityController.synchronizeCombatState(
-                gameSession.battleState,
-                reducedMotion: appSettings.reducedMotion
-            )
-            restartLoadingPresentation?.progress = 0.82
-
-            guard await waitForRestartStep(milliseconds: 420) else { return }
-            selectAvailableSpell()
-            restartLoadingPresentation?.progress = 1
-
-            guard await waitForRestartStep(milliseconds: 180) else { return }
-            realityController.setBattleCameraInteractionEnabled(isBattleScene)
-            withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.2)) {
-                restartLoadingPresentation = nil
-            }
         }
     }
 
@@ -1759,6 +1774,7 @@ struct BattleView: View {
     }
 
     private func isSpellPermitted(_ spell: SpellDefinition, battle: BattleState) -> Bool {
+        guard battle.spellUnavailabilityReason(for: spell) == nil else { return false }
         if isObservationBattle, spell.id == .sealRelease {
             return battle.enemy.absoluteBarrierCharges > 0
                 && didExperienceAbsoluteBarrier
@@ -1779,6 +1795,7 @@ struct BattleView: View {
         case .attack: "sparkles"
         case .defense: "shield.fill"
         case .dispel: "lock.open.fill"
+        case .debuff: "sparkle.magnifyingglass"
         }
     }
 
@@ -1787,6 +1804,7 @@ struct BattleView: View {
         case .attack: DAColor.attack
         case .defense: DAColor.defense
         case .dispel: DAColor.dispel
+        case .debuff: DAColor.debuff
         }
     }
 
@@ -1795,6 +1813,7 @@ struct BattleView: View {
         case .attack: "공격"
         case .defense: "방어"
         case .dispel: "해제"
+        case .debuff: "디버프"
         }
     }
 

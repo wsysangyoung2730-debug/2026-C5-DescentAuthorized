@@ -856,6 +856,7 @@ struct GlyphCastingPanel: View {
         case .attack: Color(red: 0.86, green: 0.2, blue: 0.38)
         case .defense: Color(red: 0.2, green: 0.72, blue: 0.92)
         case .dispel: Color(red: 0.94, green: 0.68, blue: 0.18)
+        case .debuff: DAColor.debuff
         }
     }
 
@@ -864,12 +865,12 @@ struct GlyphCastingPanel: View {
         case .attack: "공격"
         case .defense: "방어"
         case .dispel: "해제"
+        case .debuff: "디버프"
         }
     }
 
     private var effectRangeTitle: String {
-        let range = spell.effect.range
-        return "\(categoryTitle) \(range.lowerBound)~\(range.upperBound)"
+        spell.compactEffectDescription
     }
 
     private func updateDrawing(_ state: RuneDrawingState) {

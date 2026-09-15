@@ -76,6 +76,12 @@ struct HomeView: View {
             startupProgress = 1
         }
         try? await Task.sleep(for: .milliseconds(160))
+        #if DEBUG
+        if ExpansionPreviewSupport.floor != nil {
+            isPlaying = true
+            if ExpansionPreviewSupport.isBattle { gameSession.send(.advanceExpansion) }
+        }
+        #endif
         withAnimation(.easeOut(duration: 0.2)) {
             isStartupReady = true
         }

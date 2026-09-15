@@ -22,9 +22,9 @@ final class DemoFlowIntegrationTests: XCTestCase {
         _ = try session.handle(.beginRecordsBattle)
         try winCurrentEncounter(in: &session)
         _ = try session.handle(.continueAfterRecordsDefeat)
-        _ = try session.handle(.selectReward("floor9-worn-a"))
+        _ = try session.handle(.selectReward("floor9-barrier"))
         _ = try session.handle(.completeRewardLearning(
-            candidateID: "floor9-worn-a",
+            candidateID: "floor9-barrier",
             grade: .perfect
         ))
         _ = try session.handle(.approveDescentDoor)
@@ -45,17 +45,17 @@ final class DemoFlowIntegrationTests: XCTestCase {
         _ = try session.handle(.beginAdministratorBattle)
         try winCurrentEncounter(in: &session)
         _ = try session.handle(.continueAfterAdministratorDefeat)
-        _ = try session.handle(.selectReward("floor8-forbidden"))
+        _ = try session.handle(.selectReward("floor8-rupture"))
         _ = try session.handle(.completeRewardLearning(
-            candidateID: "floor8-forbidden",
+            candidateID: "floor8-rupture",
             grade: .perfect
         ))
         let endingEvents = try session.handle(.approveDescentDoor)
 
         XCTAssertEqual(session.progress.currentFloor, .floor7)
         XCTAssertEqual(session.progress.currentScene, .demoComplete)
-        XCTAssertEqual(session.progress.defeatedEnemies, Set(EnemyID.allCases))
-        XCTAssertEqual(session.progress.learnedSpells, Set(SpellID.allCases))
+        XCTAssertEqual(session.progress.defeatedEnemies, Set([EnemyID.recordsAdministrator, .observationResidual, .observationAdministrator]))
+        XCTAssertEqual(session.progress.learnedSpells, Set([SpellID.afterglowErasure, .riftSeverance, .barrierPiercing, .basicBarrier, .sealRelease, .focusedRupture]))
         XCTAssertTrue(session.progress.isDemoComplete)
         XCTAssertTrue(endingEvents.contains(.progression(.demoCompleted)))
         XCTAssertNoThrow(try GameProgressValidator().validate(session.progress))

@@ -367,6 +367,8 @@ final class GameFeedbackManager: ObservableObject {
             [EffectPlayback(asset: .managerHit)]
         case .playerDamaged:
             [EffectPlayback(asset: .playerHit)]
+        case .playerHealed:
+            [EffectPlayback(asset: .barrierActivate, volume: 0.6, rate: 1.12)]
         case .barrierDamaged, .absoluteBarrierNegated:
             [EffectPlayback(asset: .barrierBreak)]
         case .barrierBroken, .barrierDispelled:
@@ -635,6 +637,8 @@ final class GameFeedbackManager: ObservableObject {
                 .impactOccurred(intensity: strong ? 0.9 : 0.65)
         case .barrierApplied:
             UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.7)
+        case .playerHealed:
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.45)
         case .absoluteBarrierNegated, .barrierDispelled:
             UIImpactFeedbackGenerator(style: .rigid).impactOccurred(intensity: 1)
         case .victory, .rewardSelected:
