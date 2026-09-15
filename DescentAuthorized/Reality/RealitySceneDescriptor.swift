@@ -164,7 +164,8 @@ struct RealitySceneDescriptor: Sendable {
             resourceSubdirectory: "Reality/Scenes/Floor08/ResidueIsolation",
             cameraNames: [
                 .main: "F08A_iPadCamera",
-                .battle: "F08A_iPadCamera"
+                .battle: "F08A_iPadCamera",
+                .descentInput: "CAM_F08A_BossAccessDoor"
             ],
             entityNames: [
                 .magicInputBoard: "F08A_MagicInputBoard",
@@ -335,7 +336,7 @@ struct DemoScenePresentation: Equatable, Sendable {
         case .floor8SealedDoor:
             .init(
                 progressSceneID: sceneID,
-                floorSceneID: .floor08AdministratorObservatory,
+                floorSceneID: .floor08ResidueIsolation,
                 cameraPreset: .descentInput,
                 experience: .floor8Exploration
             )

@@ -35,6 +35,7 @@ enum SceneCameraID: String, CaseIterable {
     case floor09Reward = "CAM_F09_RewardSelection"
     case floor09DescentDoor = "CAM_F09_DescentDoor"
     case floor08ResidueCombat = "F08A_iPadCamera"
+    case floor08ResidueBossAccess = "CAM_F08A_BossAccessDoor"
     case floor08AdministratorCombat = "F08_iPad_MainCamera"
     case floor08AdministratorReward = "CAM_F08_RewardSelection"
     case floor08AdministratorDescentDoor = "CAM_F08_DescentDoor"
