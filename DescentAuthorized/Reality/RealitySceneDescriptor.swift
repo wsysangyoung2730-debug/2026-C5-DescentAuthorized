@@ -242,14 +242,14 @@ struct DemoScenePresentation: Equatable, Sendable {
 
     static func presentation(for sceneID: SceneID) -> DemoScenePresentation {
         switch sceneID {
-        case .floor10MeetingRoom, .floor10Office, .floor10GlyphArchive:
+        case .floor10MeetingRoom:
             .init(
                 progressSceneID: sceneID,
                 floorSceneID: .floor10ClosedOffice,
                 cameraPreset: .tutorial,
                 experience: .floor10Tutorial
             )
-        case .floor10TrainingWall:
+        case .floor10Office, .floor10GlyphArchive, .floor10TrainingWall:
             .init(
                 progressSceneID: sceneID,
                 floorSceneID: .floor10ClosedOffice,
