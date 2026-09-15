@@ -195,9 +195,7 @@ final class RealitySceneController: ObservableObject {
         loadingProgress = 0.2
         loadStartedAt = Date()
         Self.loadLog.notice("room.begin \(sceneID.rawValue, privacy: .public) quality=\(self.graphicsQuality.rawValue, privacy: .public)")
-        loadCancellable = (sceneID == .floor09ArchiveRedesign
-            ? Floor9PreparedAssets.shared.takeRoom(url: url)
-            : Entity.loadAsync(contentsOf: url).eraseToAnyPublisher())
+        loadCancellable = PreparedRealityAssets.shared.takeRoom(url: url)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { [weak self] completion in
@@ -1825,11 +1823,23 @@ extension RealitySceneController {
 
 
 extension RealitySceneController {
+    func prefetchRoom(
+        sceneID: FloorSceneID,
+        quality: GraphicsQuality,
+        bundle: Bundle = .main
+    ) {
+        let descriptor = RealitySceneDescriptor.descriptor(for: sceneID)
+        guard let url = bundle.url(
+            forResource: quality.resourceName(for: sceneID),
+            withExtension: "usdc",
+            subdirectory: descriptor.resourceSubdirectory
+        ) else { return }
+        PreparedRealityAssets.shared.preloadRoom(url: url)
+    }
+
     func prefetchFloor9(quality: GraphicsQuality, bundle: Bundle = .main) {
-        guard let url = bundle.url(forResource: quality.resourceName(for: .floor09ArchiveRedesign), withExtension: "usdc",
-                                   subdirectory: "Reality/Scenes/Floor09/ArchiveRedesign") else { return }
-        Floor9PreparedAssets.shared.preloadRoom(url: url)
-        Floor9PreparedAssets.shared.prepareEnvironment(bundle: bundle)
+        prefetchRoom(sceneID: .floor09ArchiveRedesign, quality: quality, bundle: bundle)
+        PreparedRealityAssets.shared.prepareEnvironment(bundle: bundle)
     }
 
     func waitForEnemyReady() async -> Bool {
@@ -1847,7 +1857,7 @@ extension RealitySceneController {
         let generation = sceneLoadGeneration
         environmentTask?.cancel()
         environmentTask = Task { @MainActor [weak self] in
-            let resource = await Floor9PreparedAssets.shared.environment(bundle: bundle)
+            let resource = await PreparedRealityAssets.shared.environment(bundle: bundle)
             guard let self, !Task.isCancelled, self.sceneLoadGeneration == generation,
                   self.requestedSceneID == .floor09ArchiveRedesign else { return }
             self.arView?.environment.lighting.resource = resource
@@ -1860,8 +1870,8 @@ extension RealitySceneController {
 /// At most one upcoming room. Consuming it releases the unmodified template;
 /// the live scene receives a clone sharing mesh/texture resources.
 @MainActor
-private final class Floor9PreparedAssets {
-    static let shared = Floor9PreparedAssets()
+private final class PreparedRealityAssets {
+    static let shared = PreparedRealityAssets()
     private final class Entry {
         let url: URL
         let result = CurrentValueSubject<Entity?, Error>(nil)

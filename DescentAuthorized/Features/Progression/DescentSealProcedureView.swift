@@ -118,14 +118,10 @@ struct DescentDoorSceneView: View {
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             sceneController.resetDescentCamera()
             setDescentState(.ready)
-            if configuration.loadingContext == .floor10 {
-                sceneController.prefetchFloor9(quality: appSettings.graphicsQuality)
-            }
+            prefetchNextRoom(quality: appSettings.graphicsQuality)
         }
         .onChange(of: appSettings.graphicsQuality) { _, quality in
-            if configuration.loadingContext == .floor10 {
-                sceneController.prefetchFloor9(quality: quality)
-            }
+            prefetchNextRoom(quality: quality)
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
             sceneController.setDescentPresentation(descentState, reducedMotion: reducedMotion)
@@ -135,6 +131,17 @@ struct DescentDoorSceneView: View {
             transitionTask = nil
             retryLoadingPresentation = nil
             sceneController.resetDescentCamera()
+        }
+    }
+
+    private func prefetchNextRoom(quality: GraphicsQuality) {
+        if configuration.loadingContext == .floor10 {
+            sceneController.prefetchFloor9(quality: quality)
+        } else if configuration.loadingContext == .floor9 {
+            sceneController.prefetchRoom(
+                sceneID: .floor08ResidueIsolation,
+                quality: quality
+            )
         }
     }
 

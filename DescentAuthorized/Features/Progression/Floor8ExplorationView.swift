@@ -78,6 +78,10 @@ struct Floor8ExplorationView: View {
         }
         .onAppear {
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+            prefetchBossRoomIfNeeded(for: gameSession.progress.currentScene)
+        }
+        .onChange(of: gameSession.progress.currentScene) { _, scene in
+            prefetchBossRoomIfNeeded(for: scene)
         }
     }
 
@@ -190,6 +194,14 @@ struct Floor8ExplorationView: View {
         case .floor8ProtectionRoom: 720
         default: 500
         }
+    }
+
+    private func prefetchBossRoomIfNeeded(for scene: SceneID) {
+        guard scene == .floor8SealedDoor else { return }
+        sceneController.prefetchRoom(
+            sceneID: .floor08AdministratorObservatory,
+            quality: appSettings.graphicsQuality
+        )
     }
 
     private func sceneCode(_ text: String) -> some View {
