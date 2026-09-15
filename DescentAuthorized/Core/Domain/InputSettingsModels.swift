@@ -11,8 +11,24 @@ enum DrawingPadPosition: String, Codable, CaseIterable, Sendable {
     case right
 }
 
+enum GraphicsQuality: String, Codable, CaseIterable, Sendable {
+    case low, medium, high
+
+    var title: String {
+        switch self { case .low: "낮음"; case .medium: "보통"; case .high: "높음" }
+    }
+
+    var textureResolution: Int {
+        switch self { case .low: 512; case .medium: 1024; case .high: 2048 }
+    }
+
+    var shadowLightCount: Int {
+        switch self { case .low: 0; case .medium: 2; case .high: 4 }
+    }
+}
+
 struct GameSettings: Codable, Equatable, Sendable {
-    static let currentVersion = 3
+    static let currentVersion = 4
     static let defaults = GameSettings(
         saveVersion: currentVersion,
         inputPreference: .automatic,
@@ -32,6 +48,7 @@ struct GameSettings: Codable, Equatable, Sendable {
     var hapticsEnabled: Bool
     var reducedFlashes: Bool
     var reducedMotion: Bool
+    var graphicsQuality: GraphicsQuality
 
     init(
         saveVersion: Int = currentVersion,
@@ -41,7 +58,8 @@ struct GameSettings: Codable, Equatable, Sendable {
         musicEnabled: Bool = true,
         hapticsEnabled: Bool = true,
         reducedFlashes: Bool = false,
-        reducedMotion: Bool = false
+        reducedMotion: Bool = false,
+        graphicsQuality: GraphicsQuality = .medium
     ) {
         self.saveVersion = saveVersion
         self.inputPreference = inputPreference
@@ -51,6 +69,7 @@ struct GameSettings: Codable, Equatable, Sendable {
         self.hapticsEnabled = hapticsEnabled
         self.reducedFlashes = reducedFlashes
         self.reducedMotion = reducedMotion
+        self.graphicsQuality = graphicsQuality
     }
 
     func migratedToCurrentVersion() -> GameSettings {
@@ -68,6 +87,7 @@ struct GameSettings: Codable, Equatable, Sendable {
         case hapticsEnabled
         case reducedFlashes
         case reducedMotion
+        case graphicsQuality
     }
 
     init(from decoder: Decoder) throws {
@@ -97,6 +117,7 @@ struct GameSettings: Codable, Equatable, Sendable {
             Bool.self,
             forKey: .reducedFlashes
         ) ?? false
+        graphicsQuality = (try? container.decode(GraphicsQuality.self, forKey: .graphicsQuality)) ?? .medium
         reducedMotion = try container.decodeIfPresent(
             Bool.self,
             forKey: .reducedMotion

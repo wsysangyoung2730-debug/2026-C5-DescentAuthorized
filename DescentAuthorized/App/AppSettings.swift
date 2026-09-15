@@ -22,6 +22,11 @@ final class AppSettings: ObservableObject {
 
     var reducedFlashes: Bool { settings.reducedFlashes }
     var reducedMotion: Bool { settings.reducedMotion }
+    var graphicsQuality: GraphicsQuality { settings.graphicsQuality }
+
+    func setGraphicsQuality(_ quality: GraphicsQuality) {
+        update { try $0.setGraphicsQuality(quality) }
+    }
 
     func setInputPreference(_ preference: DrawingInputPreference) {
         update { try $0.setInputPreference(preference) }

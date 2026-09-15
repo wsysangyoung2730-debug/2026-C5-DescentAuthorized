@@ -8,6 +8,7 @@ struct DemoFlowView: View {
     let onExit: () -> Void
     let onSystemOverlayVisibilityChange: (Bool) -> Void
 
+    @State private var preparedBattle: PreparedLegacyBattle?
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
     @State private var retryLoadingPresentation: SceneRetryLoadingPresentation?
@@ -36,7 +37,8 @@ struct DemoFlowView: View {
                     cameraPreset: gameSession.presentation.cameraPreset,
                     erasureZones: gameSession.battleState?.activeErasureZones ?? [],
                     reducedMotion: appSettings.reducedMotion,
-                    controller: sceneController
+                    controller: sceneController,
+                    onReturnToTitle: onExit
                 )
             } else {
                 Color.black.ignoresSafeArea()
@@ -110,11 +112,15 @@ struct DemoFlowView: View {
             }
         }
         .tutorialCoach(
-            step: battleTutorialStep,
+            step: isPresentationReady ? battleTutorialStep : nil,
             onNext: advanceBattleTutorial,
             onSkip: skipBattleTutorial
         )
         .ignoresSafeArea(edges: .top)
+        .environment(
+            \.isGlyphInputSuspended,
+            isShowingPauseMenu || isShowingSettings || retryLoadingPresentation != nil
+        )
         .sheet(isPresented: $isShowingPauseMenu) {
             PauseMenuView(
                 onTravelToCheckpoint: { checkpoint in
@@ -122,6 +128,11 @@ struct DemoFlowView: View {
                 },
                 onExitToTitle: onExit
             )
+        }
+        .fullScreenCover(item: $preparedBattle) { battle in
+            LoadoutPreparationView(onBegin: {
+                if gameSession.sendChecked(battle.command) { preparedBattle = nil }
+            }, onCancel: { preparedBattle = nil })
         }
         .fullScreenCover(isPresented: $isShowingSettings) {
             SettingsView()
@@ -418,6 +429,9 @@ struct DemoFlowView: View {
     }
 
     private var descentTopHUDConfiguration: DescentTopHUDConfiguration? {
+        if let current = gameSession.progress.expansion, current.stage == .descent {
+            return DescentTopHUDConfiguration(areaTitle: "제\(current.floorNumber)층 · \(current.areaName)", inspectionTitle: "이중 문양 검수")
+        }
         if gameSession.progress.currentScene == .floor10DescentDoor {
             return DescentTopHUDConfiguration(
                 areaTitle: "제10층 · 승인 관리 구역",
@@ -539,7 +553,8 @@ struct DemoFlowView: View {
                 } else {
                     FloorTitleAssetView(
                         floor: gameSession.progress.currentFloor,
-                        size: .standard
+                        size: .standard,
+                        floorNumber: gameSession.progress.displayedFloorNumber
                     )
                     .frame(width: min(proxy.size.width * 0.54, 560), height: 72)
                     .position(
@@ -623,7 +638,8 @@ struct DemoFlowView: View {
                 BattleTopHUDView(
                     battle: battle,
                     floor: gameSession.progress.currentFloor,
-                    enemyToNextActionSpacing: battlePlateToStatusSpacing
+                    enemyToNextActionSpacing: battlePlateToStatusSpacing,
+                    floorNumber: gameSession.progress.displayedFloorNumber
                 )
                 .frame(
                     width: statusAreaWidth,
@@ -725,15 +741,15 @@ struct DemoFlowView: View {
             ) {
                 switch sequence {
                 case .floor9Encounter:
-                    gameSession.send(.beginRecordsBattle)
+                    preparedBattle = .records
                 case .floor9Defeated:
                     gameSession.send(.continueAfterRecordsDefeat)
                 case .floor8ResidualEncounter:
-                    gameSession.send(.beginResidualBattle)
+                    preparedBattle = .residual
                 case .floor8ResidualDefeated:
                     gameSession.send(.continueAfterResidualDefeat)
                 case .floor8AdministratorEncounter:
-                    gameSession.send(.beginAdministratorBattle)
+                    preparedBattle = .administrator
                 case .floor8AdministratorDefeated:
                     gameSession.send(.continueAfterAdministratorDefeat)
                 }
@@ -764,7 +780,8 @@ struct DemoFlowView: View {
                 )
             }
         case .completion:
-            DemoCompleteView(onReturnToTitle: onExit)
+            ExpansionFlowView(sceneController: sceneController, retryLoadingPresentation: $retryLoadingPresentation, onExit: onExit)
+                .id("\(gameSession.progress.expansion?.floorNumber ?? 7)-\(gameSession.progress.expansion?.stage.rawValue ?? "entrance")")
         }
     }
 }
@@ -1216,4 +1233,16 @@ private enum SharedHUDPalette {
     static let brass = Color(red: 184 / 255, green: 139 / 255, blue: 77 / 255)
     static let title = Color(red: 225 / 255, green: 202 / 255, blue: 164 / 255)
     static let icon = Color(red: 222 / 255, green: 216 / 255, blue: 202 / 255)
+}
+
+private enum PreparedLegacyBattle: String, Identifiable {
+    case records, residual, administrator
+    var id: String { rawValue }
+    var command: DemoCommand {
+        switch self {
+        case .records: .beginRecordsBattle
+        case .residual: .beginResidualBattle
+        case .administrator: .beginAdministratorBattle
+        }
+    }
 }

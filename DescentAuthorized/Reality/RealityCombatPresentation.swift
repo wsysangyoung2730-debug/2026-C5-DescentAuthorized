@@ -43,7 +43,11 @@ struct RealityCombatPresentationMapper {
             guard case let .combat(battleEvent) = event else { continue }
             switch battleEvent {
             case let .turnStarted(_, intent):
-                cues.append(.intent(intentCue(for: intent)))
+                if let cue = intentCue(for: intent) {
+                    cues.append(.intent(cue))
+                } else {
+                    cues.append(.clearIntent)
+                }
 
             case let .spellResolved(_, grade):
                 resolvedGrade = grade
@@ -74,6 +78,9 @@ struct RealityCombatPresentationMapper {
             case .victory, .defeat:
                 cues.append(.clearIntent)
 
+            case .expansionChanged, .healingApplied:
+                break
+
             default:
                 break
             }
@@ -84,7 +91,11 @@ struct RealityCombatPresentationMapper {
             if let intent = battleState.currentEnemyIntent,
                battleState.phase != .victory,
                battleState.phase != .defeat {
-                cues.append(.intent(intentCue(for: intent)))
+                if let cue = intentCue(for: intent) {
+                    cues.append(.intent(cue))
+                } else {
+                    cues.append(.clearIntent)
+                }
             }
         }
         return cues
@@ -96,7 +107,7 @@ struct RealityCombatPresentationMapper {
         return .none
     }
 
-    static func intentCue(for action: EnemyAction) -> RealityEnemyIntentCue {
+    static func intentCue(for action: EnemyAction) -> RealityEnemyIntentCue? {
         switch action {
         case let .attack(_, _, isStrong):
             isStrong ? .heavyAttack : .attack
@@ -106,6 +117,20 @@ struct RealityCombatPresentationMapper {
             .absoluteShield
         case let .telegraph(name, upcomingActionName):
             inferredIntentCue(from: "\(name) \(upcomingActionName)")
+        case let .expansion(_, action):
+            expansionIntentCue(for: action)
+        }
+    }
+
+    private static func expansionIntentCue(for action: ExpansionEnemyAction) -> RealityEnemyIntentCue? {
+        switch action {
+        case .correctionBarrier: .generalShield
+        case .correctionStrike: .heavyAttack
+        case .copyReaction: .attack
+        case let .sequence(actions): actions.compactMap { expansionIntentCue(for: $0) }.first
+        case .amplify, .schedule, .recordLastSpell, .lockAndSchedule, .preparedLockAndSchedule, .wait:
+            // These rules are described by the HUD, without inventing a shield or attack cue.
+            nil
         }
     }
 

@@ -282,14 +282,14 @@ struct FloorEntrancePanel: View {
                 .padding(.trailing, panelWidth)
                 .allowsHitTesting(false)
 
-                panel(width: panelWidth)
+                panel(width: panelWidth, viewportHeight: proxy.size.height)
             }
         }
         .ignoresSafeArea(edges: .bottom)
     }
 
-    private func panel(width: CGFloat) -> some View {
-        ScrollView(showsIndicators: false) {
+    private func panel(width: CGFloat, viewportHeight: CGFloat) -> some View {
+        ScrollView(showsIndicators: true) {
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 16) {
                     if let code = configuration.code {
@@ -345,7 +345,7 @@ struct FloorEntrancePanel: View {
             .padding(.horizontal, 32)
             .padding(.top, 34)
             .padding(.bottom, 30)
-            .frame(minHeight: 760, alignment: .top)
+            .frame(minHeight: min(760, viewportHeight), alignment: .top)
         }
         .frame(width: width)
         .frame(maxHeight: .infinity)
@@ -514,7 +514,7 @@ struct FloorEntranceConfiguration {
         signalTitle: "확인된 신호",
         signalBody: "보호 절차실의 비상동력이 작동 중이다.",
         buttonAsset: "Floor8ProtectionButtonPlate",
-        actionTitle: "보호 절차실 진입",
+        actionTitle: "관측 구역 진입",
         actionIcon: "shield.lefthalf.filled"
     )
 }

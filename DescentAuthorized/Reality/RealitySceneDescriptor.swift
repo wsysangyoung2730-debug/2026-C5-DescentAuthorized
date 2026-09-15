@@ -115,7 +115,7 @@ struct RealitySceneDescriptor: Sendable {
             cameraNames: [
                 .main: "F10_iPad_MainCamera",
                 .tutorial: "F10_iPad_MainCamera",
-                .battle: "F10_iPad_MainCamera",
+                .battle: "CAM_F10_TrainingBoard",
                 .rewardSelection: "CAM_F10_RewardSelection",
                 .descentInput: "CAM_F10_DescentDoor"
             ],
@@ -145,9 +145,9 @@ struct RealitySceneDescriptor: Sendable {
                 .descentStele: "F09_DescentStele",
                 .descentPedestal: "F09_DescentPedestal",
                 .rewardStand: "F09_RewardStand",
-                .rewardScrollLeft: "F09_RewardScroll_Left_HoleAnchor",
-                .rewardScrollCenter: "F09_RewardScroll_Center_HoleAnchor",
-                .rewardScrollRight: "F09_RewardScroll_Right_HoleAnchor",
+                .rewardScrollLeft: "F09_RewardScroll_Left_Idle",
+                .rewardScrollCenter: "F09_RewardScroll_Center_Idle",
+                .rewardScrollRight: "F09_RewardScroll_Right_Idle",
                 .generalShield: "F09_GeneralShield"
             ],
             descentDoorAnimation: .init(prefix: "F09"),
@@ -164,7 +164,8 @@ struct RealitySceneDescriptor: Sendable {
             resourceSubdirectory: "Reality/Scenes/Floor08/ResidueIsolation",
             cameraNames: [
                 .main: "F08A_iPadCamera",
-                .battle: "F08A_iPadCamera"
+                .battle: "F08A_iPadCamera",
+                .descentInput: "CAM_F08A_BossAccessDoor"
             ],
             entityNames: [
                 .magicInputBoard: "F08A_MagicInputBoard",
@@ -196,9 +197,9 @@ struct RealitySceneDescriptor: Sendable {
                 .descentStele: "F08B_DescentStele",
                 .descentPedestal: "F08B_DescentPedestal",
                 .rewardStand: "F08B_RewardStand",
-                .rewardScrollLeft: "F08B_RewardScroll_Left_HoleAnchor",
-                .rewardScrollCenter: "F08B_RewardScroll_Center_HoleAnchor",
-                .rewardScrollRight: "F08B_RewardScroll_Right_HoleAnchor",
+                .rewardScrollLeft: "F08B_RewardScroll_Left_Idle",
+                .rewardScrollCenter: "F08B_RewardScroll_Center_Idle",
+                .rewardScrollRight: "F08B_RewardScroll_Right_Idle",
                 .absoluteShield: "F08B_AbsoluteShield"
             ],
             descentDoorAnimation: .init(prefix: "F08B"),
@@ -241,14 +242,14 @@ struct DemoScenePresentation: Equatable, Sendable {
 
     static func presentation(for sceneID: SceneID) -> DemoScenePresentation {
         switch sceneID {
-        case .floor10MeetingRoom, .floor10Office, .floor10GlyphArchive:
+        case .floor10MeetingRoom:
             .init(
                 progressSceneID: sceneID,
                 floorSceneID: .floor10ClosedOffice,
                 cameraPreset: .tutorial,
                 experience: .floor10Tutorial
             )
-        case .floor10TrainingWall:
+        case .floor10Office, .floor10GlyphArchive, .floor10TrainingWall:
             .init(
                 progressSceneID: sceneID,
                 floorSceneID: .floor10ClosedOffice,
@@ -335,7 +336,7 @@ struct DemoScenePresentation: Equatable, Sendable {
         case .floor8SealedDoor:
             .init(
                 progressSceneID: sceneID,
-                floorSceneID: .floor08AdministratorObservatory,
+                floorSceneID: .floor08ResidueIsolation,
                 cameraPreset: .descentInput,
                 experience: .floor8Exploration
             )
@@ -381,6 +382,21 @@ struct DemoScenePresentation: Equatable, Sendable {
                 cameraPreset: .main,
                 experience: .completion
             )
+        }
+    }
+}
+
+// Asset routing belongs to the rendering layer, not the portable game core.
+extension GraphicsQuality {
+    func resourceName(for sceneID: FloorSceneID) -> String {
+        switch sceneID {
+        case .floor09ArchiveRedesign,
+             .floor10ClosedOffice,
+             .floor08ResidueIsolation,
+             .floor08AdministratorObservatory:
+            sceneID.rawValue + (self == .high ? "" : "_" + rawValue)
+        default:
+            sceneID.rawValue
         }
     }
 }

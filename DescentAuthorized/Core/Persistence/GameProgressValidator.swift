@@ -11,6 +11,7 @@ enum GameProgressValidationError: Error, Equatable, Sendable {
     case invalidMastery(SpellID)
     case invalidTutorialState(String)
     case completionStateMismatch
+    case invalidExpansionState(String)
 }
 
 struct GameProgressValidator: Sendable {
@@ -32,6 +33,35 @@ struct GameProgressValidator: Sendable {
         try validateCollectionIntegrity(progress)
         try validateTutorialState(progress.tutorialProgress)
         try validateProgressionRequirements(progress)
+        try validateExpansion(progress)
+    }
+
+    private func validateExpansion(_ progress: GameProgress) throws {
+        guard let expansion = progress.expansion else { return }
+        guard progress.currentScene == .demoComplete,
+              progress.checkpoint == .demoComplete,
+              progress.isDemoComplete else {
+            throw GameProgressValidationError.invalidExpansionState("8층 완료 지점 필요")
+        }
+        guard (4...7).contains(expansion.floorNumber),
+              (0...2).contains(expansion.descentStage),
+              (expansion.floorNumber == 4) == (expansion.stage == .complete),
+              expansion.stage != .learnDebuff || expansion.floorNumber == 6 else {
+            throw GameProgressValidationError.invalidExpansionState("유효하지 않은 층 또는 진행 단계")
+        }
+        guard progress.loadoutIssues.isEmpty else {
+            throw GameProgressValidationError.invalidExpansionState(
+                progress.loadoutIssues.map(\.message).joined(separator: " ")
+            )
+        }
+        guard progress.protectedAttack.map({
+            progress.equippedSpells.contains($0) && SpellCatalog.all[$0]?.category == .attack
+        }) == true,
+              progress.protectedDefense.map({
+            progress.equippedSpells.contains($0) && SpellCatalog.all[$0]?.category == .defense
+        }) == true else {
+            throw GameProgressValidationError.invalidExpansionState("기본 대응 공격·방어 지정 필요")
+        }
     }
 
     private func validateLocation(_ progress: GameProgress) throws {
@@ -78,8 +108,7 @@ struct GameProgressValidator: Sendable {
         }
 
         let knownRewards = Dictionary(
-            uniqueKeysWithValues: [FloorID.floor9, .floor8]
-                .flatMap { RewardCatalog.candidates(for: $0) }
+            uniqueKeysWithValues: RewardCatalog.allCandidates
                 .map { ($0.id, $0) }
         )
         var selectedRewards = Set<String>()
@@ -92,11 +121,11 @@ struct GameProgressValidator: Sendable {
             }
         }
 
-        for floor in [FloorID.floor9, .floor8] {
-            let floorRewardIDs = Set(RewardCatalog.candidates(for: floor).map(\.id))
+        for floor in 5...9 {
+            let floorRewardIDs = Set(RewardCatalog.candidates(forFloorNumber: floor).map(\.id))
             let count = progress.selectedRewardIDs.filter(floorRewardIDs.contains).count
             guard count <= 1 else {
-                throw GameProgressValidationError.duplicateReward("floor\(floor.rawValue)")
+                throw GameProgressValidationError.duplicateReward("floor\(floor)")
             }
         }
     }
@@ -181,7 +210,10 @@ struct GameProgressValidator: Sendable {
         if scene == .floor9DescentDoor || progress.currentFloor.rawValue <= FloorID.floor8.rawValue {
             try require(
                 progress.selectedRewardIDs.contains(where: floor9RewardIDs.contains)
-                    && progress.learnedSpells.contains(.barrierPiercing),
+                    && RewardCatalog.candidates(for: .floor9).contains { candidate in
+                        progress.selectedRewardIDs.contains(candidate.id)
+                            && progress.learnedSpells.contains(RewardCatalog.learningSpell(for: candidate))
+                    },
                 "9층 주문서 선택"
             )
         }

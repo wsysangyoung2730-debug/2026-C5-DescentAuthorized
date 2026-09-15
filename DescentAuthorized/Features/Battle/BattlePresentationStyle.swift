@@ -12,6 +12,7 @@ enum DAColor {
     static let attack = Color(red: 196 / 255, green: 69 / 255, blue: 63 / 255)
     static let defense = Color(red: 111 / 255, green: 182 / 255, blue: 217 / 255)
     static let dispel = Color(red: 201 / 255, green: 162 / 255, blue: 39 / 255)
+    static let debuff = Color(red: 177 / 255, green: 126 / 255, blue: 218 / 255)
     static let gold = Color(red: 213 / 255, green: 174 / 255, blue: 67 / 255)
 }
 
@@ -23,6 +24,9 @@ enum FloorTitlePresentationSize {
 struct FloorTitleAssetView: View {
     let floor: FloorID
     let size: FloorTitlePresentationSize
+    var floorNumber: Int? = nil
+
+    private var displayedFloorNumber: Int { floorNumber ?? floor.rawValue }
 
     var body: some View {
         HStack(spacing: ornamentSpacing) {
@@ -35,7 +39,7 @@ struct FloorTitleAssetView: View {
         }
         .frame(height: totalHeight)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("제\(floor.rawValue)층")
+        .accessibilityLabel("제\(displayedFloorNumber)층")
     }
 
     private var ornament: some View {
@@ -57,7 +61,7 @@ struct FloorTitleAssetView: View {
                 .clipped()
                 .accessibilityHidden(true)
         } else {
-            Text("제\(floor.rawValue)층")
+            Text("제\(displayedFloorNumber)층")
                 .font(.system(size: fallbackFontSize, weight: .medium, design: .serif))
                 .foregroundStyle(DAColor.gold)
                 .frame(width: titleWidth, height: titleHeight)
@@ -65,11 +69,11 @@ struct FloorTitleAssetView: View {
     }
 
     private var floorTitleAssetName: String? {
-        switch floor {
-        case .floor10: "FloorTitle10"
-        case .floor9: "FloorTitle9"
-        case .floor8: "FloorTitle8"
-        case .floor7: nil
+        switch displayedFloorNumber {
+        case 10: "FloorTitle10"
+        case 9: "FloorTitle9"
+        case 8: "FloorTitle8"
+        default: nil
         }
     }
 
@@ -106,6 +110,7 @@ struct BattleTopHUDView: View {
     let battle: BattleState
     let floor: FloorID
     let enemyToNextActionSpacing: CGFloat
+    var floorNumber: Int? = nil
 
     var body: some View {
         HStack(alignment: .center, spacing: enemyToNextActionSpacing) {
@@ -120,7 +125,7 @@ struct BattleTopHUDView: View {
                 Spacer(minLength: 8)
 
                 VStack(spacing: 1) {
-                    FloorTitleAssetView(floor: floor, size: .battle)
+                    FloorTitleAssetView(floor: floor, size: .battle, floorNumber: floorNumber)
 
                     HStack(spacing: 5) {
                         Text("TURN \(battle.turnNumber)")
@@ -248,7 +253,8 @@ struct BattleTopHUDView: View {
                 Text(intentDetail(intent))
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(DAColor.body)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
             } else {
                 Text("분석 중")
                     .font(.caption.weight(.semibold))
@@ -302,6 +308,8 @@ struct BattleTopHUDView: View {
             "절대 방벽 \(charges)회"
         case let .telegraph(_, upcoming):
             upcoming
+        case let .expansion(_, action):
+            action.detail
         }
     }
 
@@ -311,6 +319,19 @@ struct BattleTopHUDView: View {
         case .grantNormalBarrier: DAColor.defense
         case .grantAbsoluteBarrier: DAColor.gold
         case .telegraph: DAColor.magicGlow
+        case let .expansion(_, action): expansionIntentColor(action)
+        }
+    }
+
+    private func expansionIntentColor(_ action: ExpansionEnemyAction) -> Color {
+        switch action {
+        case .correctionBarrier: DAColor.defense
+        case .correctionStrike, .copyReaction: DAColor.attack
+        case .amplify: DAColor.gold
+        case .schedule: DAColor.magicGlow
+        case .recordLastSpell, .lockAndSchedule, .preparedLockAndSchedule: DAColor.debuff
+        case let .sequence(actions): actions.first.map(expansionIntentColor) ?? DAColor.secondary
+        case .wait: DAColor.secondary
         }
     }
 }

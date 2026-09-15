@@ -1,6 +1,9 @@
 import Combine
 import Foundation
 import RealityKit
+import UIKit
+import ImageIO
+import os
 
 struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     let maximumYaw: Float
@@ -85,13 +88,23 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var isDescentFailurePresentationActive = false
     @Published private(set) var loadingProgress: Double = 0
 
+    @Published private(set) var isRewardAppearanceComplete = false
+    private var rewardAppearanceStartTask: Task<Void, Never>?
+
     let registry = RealityEntityRegistry()
 
     private weak var arView: ARView?
+    private var graphicsQuality: GraphicsQuality = .medium
+    private var appliedGraphicsQuality: GraphicsQuality?
+    private weak var graphicsQualityView: ARView?
     private var sceneAnchor: AnchorEntity?
     private var cameraEntity: PerspectiveCamera?
     private var loadCancellable: AnyCancellable?
     private var actorLoadCancellable: AnyCancellable?
+    private var environmentTask: Task<Void, Never>?
+    private var loadStartedAt = Date()
+    private var actorStartedAt = Date()
+    private static let loadLog = Logger(subsystem: "com.wsysangyoung.DescentAuthorized", category: "SceneLoading")
     private var cameraTransitionTask: Task<Void, Never>?
     private var battleCameraImpactTask: Task<Void, Never>?
     private var actorIdleMotionTask: Task<Void, Never>?
@@ -165,7 +178,7 @@ final class RealitySceneController: ObservableObject {
         guard let arView else { return }
         let descriptor = RealitySceneDescriptor.descriptor(for: sceneID)
         guard let url = bundle.url(
-            forResource: descriptor.resourceName,
+            forResource: graphicsQuality.resourceName(for: sceneID),
             withExtension: "usdc",
             subdirectory: descriptor.resourceSubdirectory
         ) else {
@@ -180,7 +193,9 @@ final class RealitySceneController: ObservableObject {
         loadingProgress = 0.12
         let loadGeneration = sceneLoadGeneration
         loadingProgress = 0.2
-        loadCancellable = Entity.loadAsync(contentsOf: url)
+        loadStartedAt = Date()
+        Self.loadLog.notice("room.begin \(sceneID.rawValue, privacy: .public) quality=\(self.graphicsQuality.rawValue, privacy: .public)")
+        loadCancellable = PreparedRealityAssets.shared.takeRoom(url: url)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { [weak self] completion in
@@ -199,6 +214,7 @@ final class RealitySceneController: ObservableObject {
                         self.sceneLoadGeneration == loadGeneration,
                         self.requestedSceneID == sceneID
                     else { return }
+                    Self.loadLog.notice("room.decoded seconds=\(Date().timeIntervalSince(self.loadStartedAt))")
                     self.loadingProgress = 0.72
                     self.install(root: root, descriptor: descriptor, in: arView, bundle: bundle)
                 }
@@ -1113,13 +1129,43 @@ final class RealitySceneController: ObservableObject {
         _ state: RealityRewardPresentationState,
         reducedMotion: Bool
     ) {
+        rewardAppearanceStartTask?.cancel()
+        rewardAppearanceStartTask = nil
         requestedRewardState = state
         requestedReducedMotion = reducedMotion
+        if state == .inactive || state == .appearing { isRewardAppearanceComplete = false }
+        if let sceneID = requestedSceneID,
+           [.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(sceneID), state == .appearing {
+            // Wait for loading and camera travel; otherwise the rise occurs off-screen.
+            rewardAppearanceStartTask = Task { @MainActor [weak self] in
+                guard let self else { return }
+                while !Task.isCancelled {
+                    guard self.requestedRewardState == .appearing else { return }
+                    if case .failed = self.loadState { return }
+                    if case .ready(let readyScene) = self.loadState, readyScene == sceneID,
+                       self.isReady(sceneID: sceneID, cameraPreset: .rewardSelection) {
+                        self.progressionVFXRenderer.presentReward(.appearing, registry: self.registry, reducedMotion: reducedMotion)
+                        return
+                    }
+                    do { try await Task.sleep(for: .milliseconds(30)) } catch { return }
+                }
+            }
+            return
+        }
         progressionVFXRenderer.presentReward(
             state,
             registry: registry,
             reducedMotion: reducedMotion
         )
+    }
+
+    func waitForRewardAppearance() async -> Bool {
+        while !Task.isCancelled {
+            if isRewardAppearanceComplete { return true }
+            if case .failed = loadState { return false }
+            do { try await Task.sleep(for: .milliseconds(30)) } catch { return false }
+        }
+        return false
     }
 
     func resetProgressionPresentation(reducedMotion: Bool) {
@@ -1132,6 +1178,13 @@ final class RealitySceneController: ObservableObject {
     }
 
     func unload() {
+        environmentTask?.cancel()
+        environmentTask = nil
+        arView?.environment.lighting.resource = nil
+        arView?.environment.lighting.intensityExponent = 0
+        rewardAppearanceStartTask?.cancel()
+        rewardAppearanceStartTask = nil
+        isRewardAppearanceComplete = false
         sceneLoadGeneration &+= 1
         floor10OpeningCameraGeneration &+= 1
         loadCancellable?.cancel()
@@ -1195,6 +1248,13 @@ final class RealitySceneController: ObservableObject {
         sceneAnchor = anchor
         cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
+        if descriptor.sceneID == .floor09ArchiveRedesign {
+            installFloor9Lighting(in: root)
+        } else {
+            installPortableRoomLighting(in: root, descriptor: descriptor)
+        }
+        applyFloor9ShadowQuality()
+        installRoomEnvironment(bundle: bundle, sceneID: descriptor.sceneID)
         installInvestigationAnchors(
             in: root,
             sceneAnchor: anchor,
@@ -1206,11 +1266,22 @@ final class RealitySceneController: ObservableObject {
         // visible while the renderer adds and removes the active energy shell.
         registry.setEnabled(true, for: .generalShield)
         registry.setEnabled(true, for: .absoluteShield)
-        progressionVFXRenderer.attach(to: registry)
+        progressionVFXRenderer.onRewardAppearanceCompleted = { [weak self] in
+            self?.isRewardAppearanceComplete = true
+        }
+        progressionVFXRenderer.attach(to: registry, bundle: bundle)
+        if let error = progressionVFXRenderer.rewardMotionError {
+            fail(sceneID: descriptor.sceneID, message: error)
+            return
+        }
         if let cameraName = descriptor.cameraName(for: requestedCameraPreset) {
             applyCamera(named: cameraName)
         }
 
+        // Investigation becomes usable without waiting for the hidden boss.
+        let isBackgroundActor = descriptor.sceneID == .floor09ArchiveRedesign
+            && !requestedEnemyPreviewVisibility
+        if isBackgroundActor { completeInstallation(descriptor: descriptor) }
         guard let actor = descriptor.actor else {
             completeInstallation(descriptor: descriptor)
             return
@@ -1220,7 +1291,8 @@ final class RealitySceneController: ObservableObject {
             return
         }
         guard let actorURL = bundle.url(
-            forResource: actor.resourceName,
+            forResource: descriptor.sceneID == .floor09ArchiveRedesign && graphicsQuality != .high
+                ? actor.resourceName + "_" + graphicsQuality.rawValue : actor.resourceName,
             withExtension: "usdc",
             subdirectory: actor.resourceSubdirectory
         ) else {
@@ -1228,7 +1300,9 @@ final class RealitySceneController: ObservableObject {
             return
         }
 
-        loadingProgress = 0.88
+        if !isBackgroundActor { loadingProgress = 0.88 }
+        actorStartedAt = Date()
+        Self.loadLog.notice("actor.begin background=\(isBackgroundActor)")
         let actorLoadGeneration = sceneLoadGeneration
         actorLoadCancellable = Entity.loadAsync(contentsOf: actorURL)
             .receive(on: DispatchQueue.main)
@@ -1281,8 +1355,13 @@ final class RealitySceneController: ObservableObject {
                         targetHeight: actor.targetHeight,
                         reducedMotion: self.requestedReducedMotion
                     )
-                    self.loadingProgress = 0.94
-                    self.completeInstallation(descriptor: descriptor)
+                    Self.loadLog.notice("actor.ready seconds=\(Date().timeIntervalSince(self.actorStartedAt))")
+                    if !isBackgroundActor {
+                        self.loadingProgress = 0.94
+                        self.completeInstallation(descriptor: descriptor)
+                    } else {
+                        self.scheduleBoardProjectionRefresh()
+                    }
                 }
             )
     }
@@ -1416,11 +1495,13 @@ final class RealitySceneController: ObservableObject {
             registry: registry,
             reducedMotion: requestedReducedMotion
         )
-        progressionVFXRenderer.presentReward(
-            requestedRewardState,
-            registry: registry,
-            reducedMotion: requestedReducedMotion
-        )
+        if [.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(descriptor.sceneID), requestedRewardState == .appearing {
+            setRewardPresentation(.appearing, reducedMotion: requestedReducedMotion)
+        } else {
+            progressionVFXRenderer.presentReward(
+                requestedRewardState, registry: registry, reducedMotion: requestedReducedMotion
+            )
+        }
         loadingProgress = 0.97
         missingEntityRoles = registry.missingRequiredRoles
         guard
@@ -1440,6 +1521,8 @@ final class RealitySceneController: ObservableObject {
                 self.sceneLoadGeneration == readyGeneration,
                 self.requestedSceneID == descriptor.sceneID
             else { return }
+            Self.loadLog.notice("room.ready seconds=\(Date().timeIntervalSince(self.loadStartedAt))")
+            if case .failed = self.loadState { return }
             self.loadState = .ready(descriptor.sceneID)
         }
     }
@@ -1648,5 +1731,258 @@ final class RealitySceneController: ObservableObject {
         actorLoadCancellable = nil
         loadingProgress = 0
         loadState = .failed(sceneID, message)
+    }
+}
+
+
+extension RealitySceneController {
+    /// Blender's Cycles area lights do not survive the RealityKit USD import.
+    /// Positions and aim points use the authored F09 scene's local, Z-up coordinates.
+    private func installFloor9Lighting(in root: Entity) {
+        struct Fixture {
+            let name: String
+            let position: SIMD3<Float>
+            let target: SIMD3<Float>
+            let color: UIColor
+            let intensity: Float
+            let radius: Float
+            let outerAngle: Float
+        }
+
+        let ceiling = UIColor(red: 1, green: 0.95, blue: 0.87, alpha: 1)
+        let warm = UIColor(red: 1, green: 0.94, blue: 0.84, alpha: 1)
+        let door = UIColor(red: 1, green: 0.70, blue: 0.36, alpha: 1)
+        // RealityKit may normalize a Z-up USD stage to Y-up on import. Compare
+        // an authored lamp with its Blender coordinates before placing lights.
+        let lampTube = root.findEntity(named: "F09D_Lamp_Tube_0")
+        let lampPosition = lampTube?.visualBounds(relativeTo: root).center
+        let isYUp = lampPosition.map { abs($0.y - 7.045) < abs($0.z - 7.045) } ?? false
+        Self.loadLog.notice("lighting.yUp=\(isYUp) lamp=\(String(describing: lampPosition), privacy: .public)")
+        func importedPosition(_ source: SIMD3<Float>) -> SIMD3<Float> {
+            isYUp ? SIMD3(source.x, source.z, -source.y) : source
+        }
+        let upVector: SIMD3<Float> = isYUp ? [0, 0, -1] : [0, 1, 0]
+        // Six working fluorescent fixtures from DA_F09_Archive_Redesign in v022.
+        let fixtures: [Fixture] = [
+            Fixture(name: "CEILING_0", position: [-6, -3, 6.93], target: [-6, -3, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
+            Fixture(name: "CEILING_1", position: [2, -3, 6.93], target: [2, -3, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
+            Fixture(name: "CEILING_3", position: [-5, 4, 6.93], target: [-5, 4, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
+            Fixture(name: "CEILING_4", position: [1, 7, 6.93], target: [1, 7, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
+            Fixture(name: "CEILING_6", position: [4, 12, 6.93], target: [4, 12, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
+            Fixture(name: "CEILING_7", position: [-2, 15, 6.93], target: [-2, 15, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
+            // These broad spotlights stand in for the six 5 m Cycles area lights.
+            Fixture(name: "BOSS_KEY", position: [-4.5, 8.5, 7.1], target: [-0.26, 10.29, 1.82], color: warm, intensity: 1500, radius: 12, outerAngle: 115),
+            Fixture(name: "BOSS_RIM", position: [4.8, 13.8, 5.8], target: [0.15, 10.51, 1.73], color: warm, intensity: 1500, radius: 12, outerAngle: 115),
+            Fixture(name: "INPUT_KEY", position: [-3.8, -3.5, 6.5], target: [-0.36, -1.87, 0.62], color: warm, intensity: 1500, radius: 12, outerAngle: 115),
+            Fixture(name: "DOOR", position: [8, 12, 5.7], target: [8.2, 13.3, -0.15], color: door, intensity: 1700, radius: 10, outerAngle: 110),
+            Fixture(name: "REWARD", position: [-8, 10.2, 5.4], target: [-8, 12.22, -0.25], color: warm, intensity: 1500, radius: 10, outerAngle: 110),
+            Fixture(name: "FRONT_FILL", position: [0, -11, 4.5], target: [0, -2.31, 2.16], color: warm, intensity: 1900, radius: 16, outerAngle: 120)
+        ]
+        for fixture in fixtures {
+            let lamp = SpotLight()
+            lamp.name = "F09_RUNTIME_\(fixture.name)"
+            lamp.light.color = fixture.color
+            // Fixed -0.5 EV direct-light gain avoids flattening the material with added fill.
+            lamp.light.intensity = fixture.intensity * pow(2, -0.5)
+            lamp.light.innerAngleInDegrees = fixture.outerAngle * 0.64
+            lamp.light.outerAngleInDegrees = fixture.outerAngle
+            lamp.light.attenuationRadius = fixture.radius
+            root.addChild(lamp)
+            lamp.look(
+                at: importedPosition(fixture.target),
+                from: importedPosition(fixture.position),
+                upVector: upVector,
+                relativeTo: root
+            )
+        }
+    }
+
+    private func installPortableRoomLighting(in root: Entity, descriptor: RealitySceneDescriptor) {
+        // Blender area lights do not illuminate RealityKit. Keep a bounded set
+        // of broad spots; the captured environment supplies indirect light.
+        func removeImportedLights(from entity: Entity) {
+            entity.components.remove(PointLightComponent.self)
+            entity.components.remove(SpotLightComponent.self)
+            entity.components.remove(DirectionalLightComponent.self)
+            for child in entity.children { removeImportedLights(from: child) }
+        }
+        removeImportedLights(from: root)
+        typealias Fixture = (position: SIMD3<Float>, target: SIMD3<Float>, power: Float)
+        let fixtures: [Fixture]
+        switch descriptor.sceneID {
+        case .floor10ClosedOffice:
+            fixtures = [([-4.8,1.2,6.82],[-4.8,1.2,0],2200), ([5,2.8,6.82],[5,2.8,0],2600),
+                        ([-4.6,8.5,6.82],[-4.6,8.5,0],2300), ([4.8,8,6.82],[4.8,8,0],2000),
+                        ([0,-6,6.82],[0,-6,0],2400), ([-10.6,4,6.1],[0,5,2],1600)]
+        case .floor08ResidueIsolation:
+            fixtures = [([-5,1,6.4],[0,5,1],2300), ([5,3,6.4],[0,6,1],2300),
+                        ([0,11,6.4],[0,9,1],2000), ([0,-5,6],[0,2,1],1600)]
+        case .floor08AdministratorObservatory:
+            fixtures = [([-6,1,8],[0,7,2],2600), ([6,1,8],[0,7,2],2600),
+                        ([0,12,9],[0,11,1],3000), ([0,-8,6],[0,7,3],1800),
+                        ([-8,9,6],[-8,12,1],1700), ([8,10,6],[8,13,1],1700)]
+        default: return
+        }
+        let matrix = descriptor.cameraNames[.main].flatMap { authoredCameraSnapshots[$0]?.transformMatrix }
+        let cameraPosition = matrix.map {
+            root.convert(position: SIMD3($0.columns.3.x, $0.columns.3.y, $0.columns.3.z), from: nil)
+        }
+        let isYUp = cameraPosition.map { abs($0.y) < abs($0.z) } ?? false
+        func position(_ value: SIMD3<Float>) -> SIMD3<Float> { isYUp ? [value.x,value.z,-value.y] : value }
+        for (index, fixture) in fixtures.enumerated() {
+            let lamp = SpotLight(); lamp.name = "ROOM_RUNTIME_\(index)"
+            lamp.light.color = UIColor(red: 1, green: 0.95, blue: 0.88, alpha: 1)
+            lamp.light.intensity = fixture.power * pow(2, 0.5)
+            lamp.light.innerAngleInDegrees = 70; lamp.light.outerAngleInDegrees = 115
+            lamp.light.attenuationRadius = 20
+            root.addChild(lamp)
+            lamp.look(at: position(fixture.target), from: position(fixture.position),
+                      upVector: isYUp ? [0,0,-1] : [0,1,0], relativeTo: root)
+        }
+    }
+}
+
+
+extension RealitySceneController {
+    func setGraphicsQuality(_ quality: GraphicsQuality) {
+        graphicsQuality = quality
+        guard appliedGraphicsQuality != quality || graphicsQualityView !== arView else { return }
+        appliedGraphicsQuality = quality
+        graphicsQualityView = arView
+        // Preserve HDR brightness and UI resolution across all presets.
+        arView?.renderOptions.insert(.disableMotionBlur)
+        if quality == .low {
+            arView?.renderOptions.formUnion([.disableDepthOfField, .disableGroundingShadows])
+        } else {
+            arView?.renderOptions.subtract([.disableDepthOfField, .disableGroundingShadows])
+        }
+        applyFloor9ShadowQuality()
+    }
+
+    private func applyFloor9ShadowQuality() {
+        for index in 0..<6 {
+            guard let lamp = registry.entity(named: "ROOM_RUNTIME_\(index)") as? SpotLight else { continue }
+            lamp.shadow = index < graphicsQuality.shadowLightCount ? SpotLightComponent.Shadow() : nil
+        }
+        // Alternate fixtures retain even coverage when only two shadows are enabled.
+        for (rank, index) in [3, 4, 0, 7].enumerated() {
+            guard let lamp = registry.entity(named: "F09_RUNTIME_CEILING_\(index)") as? SpotLight else { continue }
+            lamp.shadow = rank < graphicsQuality.shadowLightCount ? SpotLightComponent.Shadow() : nil
+        }
+    }
+}
+
+
+extension RealitySceneController {
+    func prefetchRoom(
+        sceneID: FloorSceneID,
+        quality: GraphicsQuality,
+        bundle: Bundle = .main
+    ) {
+        let descriptor = RealitySceneDescriptor.descriptor(for: sceneID)
+        guard let url = bundle.url(
+            forResource: quality.resourceName(for: sceneID),
+            withExtension: "usdc",
+            subdirectory: descriptor.resourceSubdirectory
+        ) else { return }
+        PreparedRealityAssets.shared.preloadRoom(url: url)
+    }
+
+    func prefetchFloor9(quality: GraphicsQuality, bundle: Bundle = .main) {
+        prefetchRoom(sceneID: .floor09ArchiveRedesign, quality: quality, bundle: bundle)
+        PreparedRealityAssets.shared.prepareEnvironment(bundle: bundle)
+    }
+
+    func waitForEnemyReady() async -> Bool {
+        let generation = sceneLoadGeneration
+        while !Task.isCancelled, generation == sceneLoadGeneration {
+            if registry.entity(for: .enemyActor) != nil { return true }
+            if case .failed = loadState { return false }
+            if registry.descriptor?.actor == nil, case .ready = loadState { return true }
+            do { try await Task.sleep(for: .milliseconds(30)) } catch { return false }
+        }
+        return false
+    }
+
+    private func installRoomEnvironment(bundle: Bundle, sceneID: FloorSceneID) {
+        let generation = sceneLoadGeneration
+        environmentTask?.cancel()
+        environmentTask = Task { @MainActor [weak self] in
+            let resource = await PreparedRealityAssets.shared.environment(bundle: bundle, sceneID: sceneID)
+            guard let self, !Task.isCancelled, self.sceneLoadGeneration == generation,
+                  self.requestedSceneID == sceneID else { return }
+            self.arView?.environment.lighting.resource = resource
+            // Calibrate captured radiance for RealityKit; fixtures shape local shadows.
+            self.arView?.environment.lighting.intensityExponent = 2.5
+        }
+    }
+}
+
+/// At most one upcoming room. Consuming it releases the unmodified template;
+/// the live scene receives a clone sharing mesh/texture resources.
+@MainActor
+private final class PreparedRealityAssets {
+    static let shared = PreparedRealityAssets()
+    private final class Entry {
+        let url: URL
+        let result = CurrentValueSubject<Entity?, Error>(nil)
+        var request: AnyCancellable?
+        init(url: URL) {
+            self.url = url
+            request = Entity.loadAsync(contentsOf: url).receive(on: DispatchQueue.main).sink(
+                receiveCompletion: { [weak self] completion in
+                    if case let .failure(error) = completion { self?.result.send(completion: .failure(error)) }
+                }, receiveValue: { [weak self] root in self?.result.send(root) })
+        }
+    }
+    private var room: Entry?
+    private var memoryWarning: AnyCancellable?
+    private var environmentTasks: [FloorSceneID: Task<EnvironmentResource?, Never>] = [:]
+    private init() {
+        memoryWarning = NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)
+            .receive(on: DispatchQueue.main).sink { [weak self] _ in self?.room = nil }
+    }
+    func preloadRoom(url: URL) {
+        guard room?.url != url else { return }
+        room = Entry(url: url)
+    }
+    func takeRoom(url: URL) -> AnyPublisher<Entity, Error> {
+        guard let entry = room, entry.url == url else {
+            room = nil
+            return Entity.loadAsync(contentsOf: url).eraseToAnyPublisher()
+        }
+        room = nil
+        return entry.result.compactMap { $0 }.prefix(1)
+            .map { $0.clone(recursive: true) }
+            .handleEvents(receiveCompletion: { _ in _ = entry }, receiveCancel: { _ = entry })
+            .eraseToAnyPublisher()
+    }
+    func prepareEnvironment(bundle: Bundle, sceneID: FloorSceneID = .floor09ArchiveRedesign) {
+        guard environmentTasks[sceneID] == nil else { return }
+        let name: String
+        switch sceneID {
+        case .floor09ArchiveRedesign: name = "floor09_environment"
+        case .floor10ClosedOffice: name = "floor10_environment"
+        case .floor08ResidueIsolation: name = "floor08_residue_environment"
+        case .floor08AdministratorObservatory: name = "floor08_boss_environment"
+        default: return
+        }
+        let directory = RealitySceneDescriptor.descriptor(for: sceneID).resourceSubdirectory
+        environmentTasks[sceneID] = Task { @MainActor in
+            guard let url = bundle.url(forResource: name, withExtension: "hdr",
+                                       subdirectory: directory),
+                  let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+                  let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
+            do { return try await EnvironmentResource(equirectangular: image, withName: name) }
+            catch {
+                Logger(subsystem: "com.wsysangyoung.DescentAuthorized", category: "SceneLoading")
+                    .error("environment.failed \(error.localizedDescription, privacy: .public)")
+                return nil
+            }
+        }
+    }
+    func environment(bundle: Bundle, sceneID: FloorSceneID = .floor09ArchiveRedesign) async -> EnvironmentResource? {
+        prepareEnvironment(bundle: bundle, sceneID: sceneID)
+        return await environmentTasks[sceneID]?.value
     }
 }

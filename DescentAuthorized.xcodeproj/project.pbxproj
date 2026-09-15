@@ -7,8 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		100000000000000000000076 /* GlyphCheckpointTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000076 /* GlyphCheckpointTracker.swift */; };
+		100000000000000000000077 /* GlyphPracticeDemonstration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000077 /* GlyphPracticeDemonstration.swift */; };
+		100000000000000000000078 /* GlyphInputFeedbackOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000078 /* GlyphInputFeedbackOverlay.swift */; };
+		100000000000000000000079 /* GlyphInputFeedbackMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000079 /* GlyphInputFeedbackMode.swift */; };
 		100000000000000000000054 /* RealityAssetIDs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000054 /* RealityAssetIDs.swift */; };
 		100000000000000000000055 /* AssetManifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000055 /* AssetManifest.json */; };
+		100000000000000000000075 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000075 /* PrivacyInfo.xcprivacy */; };
 		100000000000000000000056 /* Reality in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000056 /* Reality */; };
 		100000000000000000000067 /* Audio in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000067 /* Audio */; };
 		100000000000000000000057 /* RealitySceneDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000057 /* RealitySceneDescriptor.swift */; };
@@ -76,11 +81,28 @@
 		100000000000000000000072 /* InvestigationFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000072 /* InvestigationFlow.swift */; };
 		100000000000000000000073 /* ScrollSpellLearningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000073 /* ScrollSpellLearningView.swift */; };
 		100000000000000000000074 /* ArcaneNavigationButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000074 /* ArcaneNavigationButton.swift */; };
+		0E4EB4F5CDE8D923787595C0 /* ExpansionProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E44F77750E0CB3904476235 /* ExpansionProgress.swift */; };
+		B6DC40859EEA9499B5F3C8CE /* ExpansionBackdropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4B466720AADD1752CF1C1F /* ExpansionBackdropView.swift */; };
+		DEAAE5D0E8EC60E4E06D12AC /* ExpansionCombatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EE05552E0088B791F83B0EC /* ExpansionCombatModels.swift */; };
+		A9D7E7DE37C6297EDA264C86 /* ExpansionCombatStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B26BCC5CC0FA38C5DED2DC9 /* ExpansionCombatStatusView.swift */; };
+		ACD1AF82D2B3105E7D0A843E /* RewardMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236557319E433CE6FBF68FE0 /* RewardMigration.swift */; };
+		3BDC2885BAED33F7B8955426 /* SpellGlyphPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = B15A5E3910E0F2516CC052C0 /* SpellGlyphPreview.swift */; };
+		5990144D0032DF0E807BD4F3 /* SpellPracticeSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42EC4FAA5B72FA40A80E4909 /* SpellPracticeSheet.swift */; };
+		F3D2677D04CAE5CAF2FD64AC /* LoadoutPreparationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB2CE49C2AD00937B89FDD4 /* LoadoutPreparationView.swift */; };
+		1B4C39B22FDD13EBC8A43D04 /* ExpansionEnemyCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B78A42DDCE290DDD306D33 /* ExpansionEnemyCatalog.swift */; };
+		4D4DB959837B19118F6E0A4B /* ExpansionFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5884690AA8046D1C96B64881 /* ExpansionFlowView.swift */; };
+		F0ED0993C01A519FB92D34CE /* ExpansionCombatGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CC104F7F1D8E1F17AA010EC /* ExpansionCombatGuideView.swift */; };
+		EEE88AD52DDCC2CC7918BE6D /* ExpansionPreviewSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40995EAF59B8A2F114F385D6 /* ExpansionPreviewSupport.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		200000000000000000000076 /* GlyphCheckpointTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphCheckpointTracker.swift; sourceTree = "<group>"; };
+		200000000000000000000077 /* GlyphPracticeDemonstration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphPracticeDemonstration.swift; sourceTree = "<group>"; };
+		200000000000000000000078 /* GlyphInputFeedbackOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphInputFeedbackOverlay.swift; sourceTree = "<group>"; };
+		200000000000000000000079 /* GlyphInputFeedbackMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphInputFeedbackMode.swift; sourceTree = "<group>"; };
 		200000000000000000000054 /* RealityAssetIDs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityAssetIDs.swift; sourceTree = "<group>"; };
 		200000000000000000000055 /* AssetManifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = AssetManifest.json; sourceTree = "<group>"; };
+		200000000000000000000075 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		200000000000000000000056 /* Reality */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Reality; sourceTree = "<group>"; };
 		200000000000000000000067 /* Audio */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Audio; sourceTree = "<group>"; };
 		200000000000000000000057 /* RealitySceneDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealitySceneDescriptor.swift; sourceTree = "<group>"; };
@@ -150,6 +172,18 @@
 		200000000000000000000072 /* InvestigationFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvestigationFlow.swift; sourceTree = "<group>"; };
 		200000000000000000000073 /* ScrollSpellLearningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollSpellLearningView.swift; sourceTree = "<group>"; };
 		200000000000000000000074 /* ArcaneNavigationButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArcaneNavigationButton.swift; sourceTree = "<group>"; };
+		9E44F77750E0CB3904476235 /* ExpansionProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Progression/ExpansionProgress.swift"; sourceTree = SOURCE_ROOT; };
+		9B4B466720AADD1752CF1C1F /* ExpansionBackdropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/ExpansionBackdropView.swift"; sourceTree = SOURCE_ROOT; };
+		8EE05552E0088B791F83B0EC /* ExpansionCombatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/CombatEngine/ExpansionCombatModels.swift"; sourceTree = SOURCE_ROOT; };
+		2B26BCC5CC0FA38C5DED2DC9 /* ExpansionCombatStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Battle/ExpansionCombatStatusView.swift"; sourceTree = SOURCE_ROOT; };
+		236557319E433CE6FBF68FE0 /* RewardMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Persistence/RewardMigration.swift"; sourceTree = SOURCE_ROOT; };
+		B15A5E3910E0F2516CC052C0 /* SpellGlyphPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Battle/SpellGlyphPreview.swift"; sourceTree = SOURCE_ROOT; };
+		42EC4FAA5B72FA40A80E4909 /* SpellPracticeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/SpellPracticeSheet.swift"; sourceTree = SOURCE_ROOT; };
+		AAB2CE49C2AD00937B89FDD4 /* LoadoutPreparationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/LoadoutPreparationView.swift"; sourceTree = SOURCE_ROOT; };
+		F5B78A42DDCE290DDD306D33 /* ExpansionEnemyCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/ExpansionEnemyCatalog.swift"; sourceTree = SOURCE_ROOT; };
+		5884690AA8046D1C96B64881 /* ExpansionFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/ExpansionFlowView.swift"; sourceTree = SOURCE_ROOT; };
+		1CC104F7F1D8E1F17AA010EC /* ExpansionCombatGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Battle/ExpansionCombatGuideView.swift"; sourceTree = SOURCE_ROOT; };
+		40995EAF59B8A2F114F385D6 /* ExpansionPreviewSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/App/ExpansionPreviewSupport.swift"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -177,6 +211,18 @@
 		400000000000000000000002 /* DescentAuthorized */ = {
 			isa = PBXGroup;
 			children = (
+				40995EAF59B8A2F114F385D6 /* ExpansionPreviewSupport.swift */,
+				1CC104F7F1D8E1F17AA010EC /* ExpansionCombatGuideView.swift */,
+				5884690AA8046D1C96B64881 /* ExpansionFlowView.swift */,
+				F5B78A42DDCE290DDD306D33 /* ExpansionEnemyCatalog.swift */,
+				AAB2CE49C2AD00937B89FDD4 /* LoadoutPreparationView.swift */,
+				42EC4FAA5B72FA40A80E4909 /* SpellPracticeSheet.swift */,
+				B15A5E3910E0F2516CC052C0 /* SpellGlyphPreview.swift */,
+				236557319E433CE6FBF68FE0 /* RewardMigration.swift */,
+				2B26BCC5CC0FA38C5DED2DC9 /* ExpansionCombatStatusView.swift */,
+				8EE05552E0088B791F83B0EC /* ExpansionCombatModels.swift */,
+				9B4B466720AADD1752CF1C1F /* ExpansionBackdropView.swift */,
+				9E44F77750E0CB3904476235 /* ExpansionProgress.swift */,
 				400000000000000000000003 /* App */,
 				400000000000000000000004 /* Core */,
 				400000000000000000000006 /* Features */,
@@ -249,6 +295,7 @@
 			children = (
 				200000000000000000000067 /* Audio */,
 				200000000000000000000055 /* AssetManifest.json */,
+				200000000000000000000075 /* PrivacyInfo.xcprivacy */,
 				200000000000000000000056 /* Reality */,
 				200000000000000000000005 /* Assets.xcassets */,
 				200000000000000000000049 /* DescentAuthorized.entitlements */,
@@ -301,6 +348,9 @@
 			children = (
 				200000000000000000000022 /* DrawingInputPolicy.swift */,
 				200000000000000000000014 /* GlyphGeometry.swift */,
+				200000000000000000000076 /* GlyphCheckpointTracker.swift */,
+				200000000000000000000077 /* GlyphPracticeDemonstration.swift */,
+				200000000000000000000079 /* GlyphInputFeedbackMode.swift */,
 				200000000000000000000015 /* GlyphEvaluator.swift */,
 				200000000000000000000032 /* GlyphManaEstimator.swift */,
 				200000000000000000000024 /* StrokeProcessor.swift */,
@@ -341,6 +391,7 @@
 			children = (
 				200000000000000000000025 /* RuneDrawingCanvasView.swift */,
 				200000000000000000000026 /* RuneDrawingCanvas.swift */,
+				200000000000000000000078 /* GlyphInputFeedbackOverlay.swift */,
 			);
 			path = Input;
 			sourceTree = "<group>";
@@ -476,6 +527,7 @@
 				100000000000000000000067 /* Audio in Resources */,
 				100000000000000000000005 /* Assets.xcassets in Resources */,
 				100000000000000000000055 /* AssetManifest.json in Resources */,
+				100000000000000000000075 /* PrivacyInfo.xcprivacy in Resources */,
 				100000000000000000000056 /* Reality in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -487,6 +539,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EEE88AD52DDCC2CC7918BE6D /* ExpansionPreviewSupport.swift in Sources */,
+				F0ED0993C01A519FB92D34CE /* ExpansionCombatGuideView.swift in Sources */,
+				4D4DB959837B19118F6E0A4B /* ExpansionFlowView.swift in Sources */,
+				1B4C39B22FDD13EBC8A43D04 /* ExpansionEnemyCatalog.swift in Sources */,
+				F3D2677D04CAE5CAF2FD64AC /* LoadoutPreparationView.swift in Sources */,
+				5990144D0032DF0E807BD4F3 /* SpellPracticeSheet.swift in Sources */,
+				3BDC2885BAED33F7B8955426 /* SpellGlyphPreview.swift in Sources */,
+				ACD1AF82D2B3105E7D0A843E /* RewardMigration.swift in Sources */,
+				A9D7E7DE37C6297EDA264C86 /* ExpansionCombatStatusView.swift in Sources */,
+				DEAAE5D0E8EC60E4E06D12AC /* ExpansionCombatModels.swift in Sources */,
+				B6DC40859EEA9499B5F3C8CE /* ExpansionBackdropView.swift in Sources */,
+				0E4EB4F5CDE8D923787595C0 /* ExpansionProgress.swift in Sources */,
 				100000000000000000000001 /* DescentAuthorizedApp.swift in Sources */,
 				100000000000000000000054 /* RealityAssetIDs.swift in Sources */,
 				100000000000000000000057 /* RealitySceneDescriptor.swift in Sources */,
@@ -506,6 +570,10 @@
 				100000000000000000000012 /* EnemyCatalog.swift in Sources */,
 				100000000000000000000013 /* RewardCatalog.swift in Sources */,
 				100000000000000000000014 /* GlyphGeometry.swift in Sources */,
+				100000000000000000000076 /* GlyphCheckpointTracker.swift in Sources */,
+				100000000000000000000077 /* GlyphPracticeDemonstration.swift in Sources */,
+				100000000000000000000078 /* GlyphInputFeedbackOverlay.swift in Sources */,
+				100000000000000000000079 /* GlyphInputFeedbackMode.swift in Sources */,
 				100000000000000000000015 /* GlyphEvaluator.swift in Sources */,
 				100000000000000000000016 /* CombatEngine.swift in Sources */,
 				100000000000000000000017 /* EncounterController.swift in Sources */,

@@ -37,7 +37,7 @@ enum RealityRewardPresentationState: Equatable, Sendable {
 }
 
 enum RealityRewardTransitionTiming {
-    // Both reward scenes describe a 30 fps, 66 frame emergence sequence.
+    // Both reward scenes are authored Z-up and describe a 30 fps, 66 frame emergence sequence.
     static let authoredFrameRate: Double = 30
     static let appearanceEndFrame: Double = 66
     static let interfaceFadeDuration: TimeInterval = 0.36
@@ -63,14 +63,27 @@ final class RealityProgressionVFXRenderer {
     private var doorControllerBaseTransforms: [String: Transform] = [:]
     private var transitionGeneration = 0
     private var rewardIdleTask: Task<Void, Never>?
+    private var authoredRewardPlayer: AuthoredRewardPlayer?
+    private(set) var rewardMotionError: String?
+    var onRewardAppearanceCompleted: (() -> Void)?
 
-    func attach(to registry: RealityEntityRegistry) {
+    func attach(to registry: RealityEntityRegistry, bundle: Bundle = .main) {
+        authoredRewardPlayer?.cancel()
+        authoredRewardPlayer = nil
+        rewardMotionError = nil
         baseTransforms.removeAll()
         doorControllerBaseTransforms.removeAll()
         for role in controlledRoles {
             if let entity = registry.entity(for: role) {
                 baseTransforms[role] = entity.transform
             }
+        }
+        if [FloorSceneID.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(registry.descriptor?.sceneID ?? .floor10ClosedOffice) {
+            do {
+                authoredRewardPlayer = try AuthoredRewardPlayer(registry: registry, bundle: bundle)
+                authoredRewardPlayer?.close()
+            }
+            catch { rewardMotionError = "두루마리 모션 데이터 또는 장치 연결을 확인해 주세요: \(error.localizedDescription)" }
         }
         if let doorAnimation = registry.descriptor?.descentDoorAnimation {
             for name in doorAnimation.controllerNames {
@@ -128,6 +141,11 @@ final class RealityProgressionVFXRenderer {
         let generation = transitionGeneration
         let roles = rewardRoles
 
+        if [FloorSceneID.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(registry.descriptor?.sceneID ?? .floor10ClosedOffice) {
+            presentAuthoredReward(state, registry: registry, reducedMotion: reducedMotion, generation: generation)
+            return
+        }
+
         restore(.rewardStand, in: registry)
         registry.setEnabled(state != .inactive, for: .rewardStand)
         for role in roles {
@@ -143,7 +161,7 @@ final class RealityProgressionVFXRenderer {
             for (index, role) in roles.enumerated() {
                 guard let entity = registry.entity(for: role), let base = baseTransforms[role] else { continue }
                 var hidden = base
-                hidden.translation.y -= reducedMotion ? 0 : 0.44
+                hidden.translation.z -= reducedMotion ? 0 : 0.44
                 hidden.scale *= reducedMotion ? 1 : 0.68
                 entity.transform = hidden
                 entity.move(
@@ -163,10 +181,10 @@ final class RealityProgressionVFXRenderer {
                 guard let entity = registry.entity(for: role), let base = baseTransforms[role] else { continue }
                 var destination = base
                 if index == selectedIndex {
-                    destination.translation.y += reducedMotion ? 0 : 0.14
+                    destination.translation.z += reducedMotion ? 0 : 0.14
                     destination.scale *= reducedMotion ? 1 : 1.08
                 } else {
-                    destination.translation.y -= reducedMotion ? 0 : 0.22
+                    destination.translation.z -= reducedMotion ? 0 : 0.22
                     destination.scale = SIMD3(repeating: reducedMotion ? 0.01 : 0.04)
                 }
                 entity.move(
@@ -189,11 +207,69 @@ final class RealityProgressionVFXRenderer {
     }
 
     func reset() {
+        authoredRewardPlayer?.cancel()
+        authoredRewardPlayer = nil
+        rewardMotionError = nil
         rewardIdleTask?.cancel()
         rewardIdleTask = nil
         transitionGeneration += 1
         baseTransforms.removeAll()
         doorControllerBaseTransforms.removeAll()
+    }
+
+    private func presentAuthoredReward(
+        _ state: RealityRewardPresentationState,
+        registry: RealityEntityRegistry,
+        reducedMotion: Bool,
+        generation: Int
+    ) {
+        guard let player = authoredRewardPlayer else { return }
+        player.cancel()
+        for role in rewardRoles {
+            registry.entity(for: role)?.stopAllAnimations(recursive: false)
+            registry.setEnabled(state != .inactive, for: role)
+        }
+        // The physical pedestal stays fixed and visible even before rewards appear.
+        registry.setEnabled(true, for: .rewardStand)
+        switch state {
+        case .inactive:
+            player.close()
+        case .appearing:
+            player.play(reducedMotion: reducedMotion) { [weak self] in
+                guard let self, self.transitionGeneration == generation else { return }
+                self.onRewardAppearanceCompleted?()
+            }
+        case .choosing:
+            player.finish()
+            captureScrollRestPose(in: registry)
+            startRewardIdleMotion(in: registry, generation: generation, reducedMotion: reducedMotion)
+        case let .resolving(index), let .resolved(index):
+            player.finish()
+            captureScrollRestPose(in: registry)
+            for (slot, role) in rewardRoles.enumerated() {
+                guard let entity = registry.entity(for: role), var target = baseTransforms[role] else { continue }
+                // These roles point to scroll-local pivots, never the scene-offset HoleAnchor.
+                if slot == index {
+                    target.translation.z += reducedMotion ? 0 : 0.14
+                    target.scale *= reducedMotion ? 1 : 1.08
+                } else {
+                    target.translation.z -= reducedMotion ? 0 : 0.22
+                    target.scale *= 0.04
+                }
+                entity.move(to: target, relativeTo: entity.parent,
+                            duration: reducedMotion ? 0.01 : 0.42, timingFunction: .easeInOut)
+            }
+            if case .resolved = state {
+                disableDiscardedRewards(selectedIndex: index, registry: registry,
+                                        generation: generation, delay: reducedMotion ? 0.01 : 0.42)
+            }
+        }
+    }
+
+    private func captureScrollRestPose(in registry: RealityEntityRegistry) {
+        for role in rewardRoles {
+            if let entity = registry.entity(for: role) { baseTransforms[role] = entity.transform }
+        }
     }
 
     private var controlledRoles: [RealityEntityRole] {
@@ -281,7 +357,7 @@ final class RealityProgressionVFXRenderer {
         guard let entity = registry.entity(for: .rewardStand),
               let base = baseTransforms[.rewardStand] else { return }
         var hidden = base
-        hidden.translation.y -= reducedMotion ? 0 : 0.1
+        hidden.translation.z -= reducedMotion ? 0 : 0.1
         hidden.scale *= reducedMotion ? 1 : 0.97
         entity.transform = hidden
         entity.move(
@@ -306,7 +382,7 @@ final class RealityProgressionVFXRenderer {
                 for (index, role) in roles.enumerated() {
                     guard let entity = registry.entity(for: role),
                           var target = self.baseTransforms[role] else { continue }
-                    target.translation.y += isRaised
+                    target.translation.z += isRaised
                         ? 0.018 + Float(index) * 0.004
                         : -0.006
                     entity.move(
@@ -369,6 +445,119 @@ final class RealityProgressionVFXRenderer {
             for (index, role) in self.rewardRoles.enumerated() where index != selectedIndex {
                 registry.setEnabled(false, for: role)
             }
+        }
+    }
+}
+
+// Reward rooms use sampled controller transforms. The scene is exported at
+// frame 1 without USD time samples, so there is only one animation owner.
+private struct AuthoredRewardMotion: Decodable {
+    struct Track: Decodable {
+        let entity: String
+        let matrices: [[Float]] // Column-major, parent-local, matching the USD xform.
+    }
+    let fps: Double
+    let frames: Int
+    let tracks: [Track]
+}
+
+@MainActor
+private final class AuthoredRewardPlayer {
+    private struct Track {
+        let entity: Entity
+        let samples: [Transform]
+    }
+    private let tracks: [Track]
+    private let fps: Double
+    private let frames: Int
+    private var task: Task<Void, Never>?
+    private var generation = 0
+
+    init(registry: RealityEntityRegistry, bundle: Bundle) throws {
+        guard let directory = registry.descriptor?.resourceSubdirectory,
+              let url = bundle.url(forResource: registry.descriptor?.sceneID == .floor08AdministratorObservatory ? "floor08_reward_motion" : "floor09_reward_motion", withExtension: "json", subdirectory: directory) else {
+            throw CocoaError(.fileNoSuchFile)
+        }
+        let data = try JSONDecoder().decode(AuthoredRewardMotion.self, from: Data(contentsOf: url))
+        guard data.fps == 30, data.frames == 66, data.tracks.count == 13,
+              Set(data.tracks.map(\.entity)).count == data.tracks.count else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        fps = data.fps
+        frames = data.frames
+        tracks = try data.tracks.map { track in
+            guard let entity = registry.entity(named: track.entity),
+                  track.matrices.count == data.frames else { throw CocoaError(.fileReadCorruptFile) }
+            let samples = try track.matrices.map { values -> Transform in
+                guard values.count == 16, values.allSatisfy(\.isFinite) else {
+                    throw CocoaError(.fileReadCorruptFile)
+                }
+                return Transform(matrix: simd_float4x4(columns: (
+                    SIMD4(values[0], values[1], values[2], values[3]),
+                    SIMD4(values[4], values[5], values[6], values[7]),
+                    SIMD4(values[8], values[9], values[10], values[11]),
+                    SIMD4(values[12], values[13], values[14], values[15])
+                )))
+            }
+            return Track(entity: entity, samples: samples)
+        }
+    }
+
+    func cancel() {
+        generation += 1
+        task?.cancel()
+        task = nil
+    }
+
+    func close() {
+        cancel()
+        apply(sample: 0)
+    }
+
+    func finish() {
+        cancel()
+        apply(sample: Double(frames - 1))
+    }
+
+    func play(reducedMotion: Bool, completion: @escaping @MainActor () -> Void) {
+        close()
+        if reducedMotion {
+            finish()
+            completion()
+            return
+        }
+        let generation = generation
+        task = Task { @MainActor [weak self] in
+            guard let self else { return }
+            let clock = ContinuousClock()
+            let start = clock.now
+            while !Task.isCancelled, self.generation == generation {
+                let components = start.duration(to: clock.now).components
+                let elapsed = Double(components.seconds) + Double(components.attoseconds) / 1e18
+                let sample = min(elapsed * self.fps, Double(self.frames - 1))
+                self.apply(sample: sample)
+                if sample >= Double(self.frames - 1) {
+                    completion()
+                    return
+                }
+                do { try await Task.sleep(for: .milliseconds(16)) }
+                catch { return }
+            }
+        }
+    }
+
+    private func apply(sample: Double) {
+        let lower = min(Int(sample), frames - 1)
+        let upper = min(lower + 1, frames - 1)
+        let fraction = Float(sample - Double(lower))
+        for track in tracks {
+            let a = track.samples[lower]
+            let b = track.samples[upper]
+            track.entity.transform = Transform(
+                scale: a.scale + (b.scale - a.scale) * fraction,
+                rotation: simd_slerp(a.rotation, b.rotation, fraction),
+                translation: a.translation + (b.translation - a.translation) * fraction
+            )
         }
     }
 }
