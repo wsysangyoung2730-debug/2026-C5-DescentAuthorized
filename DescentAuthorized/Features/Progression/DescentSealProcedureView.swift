@@ -118,6 +118,14 @@ struct DescentDoorSceneView: View {
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             sceneController.resetDescentCamera()
             setDescentState(.ready)
+            if configuration.loadingContext == .floor10 {
+                sceneController.prefetchFloor9(quality: appSettings.graphicsQuality)
+            }
+        }
+        .onChange(of: appSettings.graphicsQuality) { _, quality in
+            if configuration.loadingContext == .floor10 {
+                sceneController.prefetchFloor9(quality: quality)
+            }
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
             sceneController.setDescentPresentation(descentState, reducedMotion: reducedMotion)

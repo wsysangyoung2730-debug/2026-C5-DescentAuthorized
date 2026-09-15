@@ -320,6 +320,8 @@ private struct RealityARView: UIViewRepresentable {
         var quality = appSettings.graphicsQuality
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--floor9-preview") {
+            if ProcessInfo.processInfo.arguments.contains("--graphics-medium") { quality = .medium }
+            if ProcessInfo.processInfo.arguments.contains("--entrance") { controller.setEnemyPreviewVisible(false) }
             if ProcessInfo.processInfo.arguments.contains("--graphics-low") { quality = .low }
             if ProcessInfo.processInfo.arguments.contains("--graphics-high") { quality = .high }
         }

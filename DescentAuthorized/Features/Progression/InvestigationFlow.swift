@@ -169,13 +169,14 @@ struct InvestigationFlow<EntranceContent: View>: View {
         ) {
             guard isActive, revealGeneration == generation else { return }
             entranceRevealTask?.cancel()
-            if appSettings.reducedMotion {
-                isEntrancePresented = true
-                sceneController.revealEnemyPreview(reducedMotion: true)
-                return
-            }
-
             entranceRevealTask = Task { @MainActor in
+                guard await sceneController.waitForEnemyReady(),
+                      isActive, revealGeneration == generation else { return }
+                if appSettings.reducedMotion {
+                    isEntrancePresented = true
+                    sceneController.revealEnemyPreview(reducedMotion: true)
+                    return
+                }
                 withAnimation(.easeOut(duration: 0.16)) {
                     isBossRevealTransition = true
                 }
