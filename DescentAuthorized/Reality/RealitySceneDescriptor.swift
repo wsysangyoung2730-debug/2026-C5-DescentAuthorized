@@ -115,7 +115,7 @@ struct RealitySceneDescriptor: Sendable {
             cameraNames: [
                 .main: "F10_iPad_MainCamera",
                 .tutorial: "F10_iPad_MainCamera",
-                .battle: "F10_iPad_MainCamera",
+                .battle: "CAM_F10_TrainingBoard",
                 .rewardSelection: "CAM_F10_RewardSelection",
                 .descentInput: "CAM_F10_DescentDoor"
             ],

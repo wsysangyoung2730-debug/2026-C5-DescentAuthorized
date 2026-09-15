@@ -28,6 +28,7 @@ enum GameAssetID: String, CaseIterable {
 
 enum SceneCameraID: String, CaseIterable {
     case floor10Combat = "F10_iPad_MainCamera"
+    case floor10TrainingBoard = "CAM_F10_TrainingBoard"
     case floor10Reward = "CAM_F10_RewardSelection"
     case floor10DescentDoor = "CAM_F10_DescentDoor"
     case floor09Combat = "F09_iPad_MainCamera"
