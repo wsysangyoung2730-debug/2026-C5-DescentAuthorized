@@ -343,14 +343,21 @@ private struct RealityARView: UIViewRepresentable {
 #if DEBUG
 /// Isolated asset review, entered only with --floor9-preview. Does not advance a save.
 struct Floor9MotionPreview: View {
+    private var sceneID: FloorSceneID {
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("--floor10") { return .floor10ClosedOffice }
+        if args.contains("--floor8-residue") { return .floor08ResidueIsolation }
+        if args.contains("--floor8-boss") { return .floor08AdministratorObservatory }
+        return .floor09ArchiveRedesign
+    }
     @StateObject private var controller = RealitySceneController()
-    @State private var camera: RealityCameraPreset = ProcessInfo.processInfo.arguments.contains("--descent")
+    @State private var camera: RealityCameraPreset = ProcessInfo.processInfo.arguments.contains("--main") ? .main : ProcessInfo.processInfo.arguments.contains("--descent")
         ? .descentInput : (ProcessInfo.processInfo.arguments.contains("--boss") ? .battle : .rewardSelection)
     @State private var replay = 0
     @State private var reducedMotion = false
 
     var body: some View {
-        RealityStageView(sceneID: .floor09ArchiveRedesign, cameraPreset: camera,
+        RealityStageView(sceneID: sceneID, cameraPreset: camera,
                          reducedMotion: reducedMotion, controller: controller, onReturnToTitle: {})
             .overlay(alignment: .top) {
                 HStack(spacing: 16) {
@@ -364,7 +371,7 @@ struct Floor9MotionPreview: View {
                 .padding(12).background(.ultraThinMaterial)
             }
             .task(id: "\(camera.rawValue)-\(replay)-\(reducedMotion)") {
-                while !controller.isReady(sceneID: .floor09ArchiveRedesign, cameraPreset: camera) {
+                while !controller.isReady(sceneID: sceneID, cameraPreset: camera) {
                     if Task.isCancelled { return }
                     if case .failed = controller.loadState { return }
                     do { try await Task.sleep(for: .milliseconds(30)) } catch { return }
