@@ -744,7 +744,7 @@ struct InvestigationConfiguration {
             )
         ],
         completionAction: .init(
-            title: "주문 기록 확인하기",
+            title: "훈련 표적 앞으로 이동하기",
             symbol: .forward,
             width: 390,
             showsWaypoint: true,
