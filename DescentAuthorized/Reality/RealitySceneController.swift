@@ -1249,9 +1249,11 @@ final class RealitySceneController: ObservableObject {
         registry.rebuild(root: root, descriptor: descriptor)
         if descriptor.sceneID == .floor09ArchiveRedesign {
             installFloor9Lighting(in: root)
-            applyFloor9ShadowQuality()
-            installFloor9Environment(bundle: bundle)
+        } else {
+            installPortableRoomLighting(in: root, descriptor: descriptor)
         }
+        applyFloor9ShadowQuality()
+        installRoomEnvironment(bundle: bundle, sceneID: descriptor.sceneID)
         installInvestigationAnchors(
             in: root,
             sceneAnchor: anchor,
@@ -1793,6 +1795,41 @@ extension RealitySceneController {
             )
         }
     }
+
+    private func installPortableRoomLighting(in root: Entity, descriptor: RealitySceneDescriptor) {
+        // Blender area lights do not illuminate RealityKit. Keep a bounded set
+        // of broad spots; the captured environment supplies indirect light.
+        typealias Fixture = (position: SIMD3<Float>, target: SIMD3<Float>, power: Float)
+        let fixtures: [Fixture]
+        switch descriptor.sceneID {
+        case .floor10ClosedOffice:
+            fixtures = [([-4.8,1.2,6.82],[-4.8,1.2,0],2200), ([5,2.8,6.82],[5,2.8,0],2600),
+                        ([-4.6,8.5,6.82],[-4.6,8.5,0],2300), ([4.8,8,6.82],[4.8,8,0],2000),
+                        ([0,-6,6.82],[0,-6,0],2400), ([-10.6,4,6.1],[0,5,2],1600)]
+        case .floor08ResidueIsolation:
+            fixtures = [([-5,1,6.4],[0,5,1],2300), ([5,3,6.4],[0,6,1],2300),
+                        ([0,11,6.4],[0,9,1],2000), ([0,-5,6],[0,2,1],1600)]
+        case .floor08AdministratorObservatory:
+            fixtures = [([-6,1,8],[0,7,2],2600), ([6,1,8],[0,7,2],2600),
+                        ([0,12,9],[0,11,1],3000), ([0,-8,6],[0,7,3],1800),
+                        ([-8,9,6],[-8,12,1],1700), ([8,10,6],[8,13,1],1700)]
+        default: return
+        }
+        let matrix = descriptor.cameraNames[.main].flatMap { authoredCameraSnapshots[$0]?.transformMatrix }
+        let cameraPosition = matrix.map { SIMD3($0.columns.3.x, $0.columns.3.y, $0.columns.3.z) }
+        let isYUp = cameraPosition.map { abs($0.y) < abs($0.z) } ?? false
+        func position(_ value: SIMD3<Float>) -> SIMD3<Float> { isYUp ? [value.x,value.z,-value.y] : value }
+        for (index, fixture) in fixtures.enumerated() {
+            let lamp = SpotLight(); lamp.name = "ROOM_RUNTIME_\(index)"
+            lamp.light.color = UIColor(red: 1, green: 0.95, blue: 0.88, alpha: 1)
+            lamp.light.intensity = fixture.power * pow(2, -0.5)
+            lamp.light.innerAngleInDegrees = 70; lamp.light.outerAngleInDegrees = 115
+            lamp.light.attenuationRadius = 20
+            root.addChild(lamp)
+            lamp.look(at: position(fixture.target), from: position(fixture.position),
+                      upVector: isYUp ? [0,0,-1] : [0,1,0], relativeTo: root)
+        }
+    }
 }
 
 
@@ -1813,6 +1850,10 @@ extension RealitySceneController {
     }
 
     private func applyFloor9ShadowQuality() {
+        for index in 0..<6 {
+            guard let lamp = registry.entity(named: "ROOM_RUNTIME_\(index)") as? SpotLight else { continue }
+            lamp.shadow = index < graphicsQuality.shadowLightCount ? SpotLightComponent.Shadow() : nil
+        }
         // Alternate fixtures retain even coverage when only two shadows are enabled.
         for (rank, index) in [3, 4, 0, 7].enumerated() {
             guard let lamp = registry.entity(named: "F09_RUNTIME_CEILING_\(index)") as? SpotLight else { continue }
@@ -1853,16 +1894,16 @@ extension RealitySceneController {
         return false
     }
 
-    private func installFloor9Environment(bundle: Bundle) {
+    private func installRoomEnvironment(bundle: Bundle, sceneID: FloorSceneID) {
         let generation = sceneLoadGeneration
         environmentTask?.cancel()
         environmentTask = Task { @MainActor [weak self] in
-            let resource = await PreparedRealityAssets.shared.environment(bundle: bundle)
+            let resource = await PreparedRealityAssets.shared.environment(bundle: bundle, sceneID: sceneID)
             guard let self, !Task.isCancelled, self.sceneLoadGeneration == generation,
-                  self.requestedSceneID == .floor09ArchiveRedesign else { return }
+                  self.requestedSceneID == sceneID else { return }
             self.arView?.environment.lighting.resource = resource
             // Calibrate captured radiance for RealityKit; fixtures shape local shadows.
-            self.arView?.environment.lighting.intensityExponent = 2.5
+            self.arView?.environment.lighting.intensityExponent = sceneID == .floor09ArchiveRedesign ? 2.5 : 2
         }
     }
 }
@@ -1886,7 +1927,7 @@ private final class PreparedRealityAssets {
     }
     private var room: Entry?
     private var memoryWarning: AnyCancellable?
-    private var environmentTask: Task<EnvironmentResource?, Never>?
+    private var environmentTasks: [FloorSceneID: Task<EnvironmentResource?, Never>] = [:]
     private init() {
         memoryWarning = NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)
             .receive(on: DispatchQueue.main).sink { [weak self] _ in self?.room = nil }
@@ -1906,14 +1947,23 @@ private final class PreparedRealityAssets {
             .handleEvents(receiveCompletion: { _ in _ = entry }, receiveCancel: { _ = entry })
             .eraseToAnyPublisher()
     }
-    func prepareEnvironment(bundle: Bundle) {
-        guard environmentTask == nil else { return }
-        environmentTask = Task { @MainActor in
-            guard let url = bundle.url(forResource: "floor09_environment", withExtension: "hdr",
-                                       subdirectory: "Reality/Scenes/Floor09/ArchiveRedesign"),
+    func prepareEnvironment(bundle: Bundle, sceneID: FloorSceneID = .floor09ArchiveRedesign) {
+        guard environmentTasks[sceneID] == nil else { return }
+        let name: String
+        switch sceneID {
+        case .floor09ArchiveRedesign: name = "floor09_environment"
+        case .floor10ClosedOffice: name = "floor10_environment"
+        case .floor08ResidueIsolation: name = "floor08_residue_environment"
+        case .floor08AdministratorObservatory: name = "floor08_boss_environment"
+        default: return
+        }
+        let directory = RealitySceneDescriptor.descriptor(for: sceneID).resourceSubdirectory
+        environmentTasks[sceneID] = Task { @MainActor in
+            guard let url = bundle.url(forResource: name, withExtension: "hdr",
+                                       subdirectory: directory),
                   let source = CGImageSourceCreateWithURL(url as CFURL, nil),
                   let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
-            do { return try await EnvironmentResource(equirectangular: image, withName: "F09_ArchiveReflection") }
+            do { return try await EnvironmentResource(equirectangular: image, withName: name) }
             catch {
                 Logger(subsystem: "com.wsysangyoung.DescentAuthorized", category: "SceneLoading")
                     .error("environment.failed \(error.localizedDescription, privacy: .public)")
@@ -1921,8 +1971,8 @@ private final class PreparedRealityAssets {
             }
         }
     }
-    func environment(bundle: Bundle) async -> EnvironmentResource? {
-        prepareEnvironment(bundle: bundle)
-        return await environmentTask?.value
+    func environment(bundle: Bundle, sceneID: FloorSceneID = .floor09ArchiveRedesign) async -> EnvironmentResource? {
+        prepareEnvironment(bundle: bundle, sceneID: sceneID)
+        return await environmentTasks[sceneID]?.value
     }
 }
