@@ -1134,15 +1134,16 @@ final class RealitySceneController: ObservableObject {
         requestedRewardState = state
         requestedReducedMotion = reducedMotion
         if state == .inactive || state == .appearing { isRewardAppearanceComplete = false }
-        if requestedSceneID == .floor09ArchiveRedesign, state == .appearing {
+        if let sceneID = requestedSceneID,
+           [.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(sceneID), state == .appearing {
             // Wait for loading and camera travel; otherwise the rise occurs off-screen.
             rewardAppearanceStartTask = Task { @MainActor [weak self] in
                 guard let self else { return }
                 while !Task.isCancelled {
                     guard self.requestedRewardState == .appearing else { return }
                     if case .failed = self.loadState { return }
-                    if case .ready(.floor09ArchiveRedesign) = self.loadState,
-                       self.isReady(sceneID: .floor09ArchiveRedesign, cameraPreset: .rewardSelection) {
+                    if case .ready(let readyScene) = self.loadState, readyScene == sceneID,
+                       self.isReady(sceneID: sceneID, cameraPreset: .rewardSelection) {
                         self.progressionVFXRenderer.presentReward(.appearing, registry: self.registry, reducedMotion: reducedMotion)
                         return
                     }
@@ -1494,7 +1495,7 @@ final class RealitySceneController: ObservableObject {
             registry: registry,
             reducedMotion: requestedReducedMotion
         )
-        if descriptor.sceneID == .floor09ArchiveRedesign, requestedRewardState == .appearing {
+        if [.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(descriptor.sceneID), requestedRewardState == .appearing {
             setRewardPresentation(.appearing, reducedMotion: requestedReducedMotion)
         } else {
             progressionVFXRenderer.presentReward(

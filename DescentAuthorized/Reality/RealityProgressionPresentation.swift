@@ -63,13 +63,13 @@ final class RealityProgressionVFXRenderer {
     private var doorControllerBaseTransforms: [String: Transform] = [:]
     private var transitionGeneration = 0
     private var rewardIdleTask: Task<Void, Never>?
-    private var floor9RewardPlayer: Floor9RewardPlayer?
+    private var authoredRewardPlayer: AuthoredRewardPlayer?
     private(set) var rewardMotionError: String?
     var onRewardAppearanceCompleted: (() -> Void)?
 
     func attach(to registry: RealityEntityRegistry, bundle: Bundle = .main) {
-        floor9RewardPlayer?.cancel()
-        floor9RewardPlayer = nil
+        authoredRewardPlayer?.cancel()
+        authoredRewardPlayer = nil
         rewardMotionError = nil
         baseTransforms.removeAll()
         doorControllerBaseTransforms.removeAll()
@@ -78,12 +78,12 @@ final class RealityProgressionVFXRenderer {
                 baseTransforms[role] = entity.transform
             }
         }
-        if registry.descriptor?.sceneID == .floor09ArchiveRedesign {
+        if [FloorSceneID.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(registry.descriptor?.sceneID ?? .floor10ClosedOffice) {
             do {
-                floor9RewardPlayer = try Floor9RewardPlayer(registry: registry, bundle: bundle)
-                floor9RewardPlayer?.close()
+                authoredRewardPlayer = try AuthoredRewardPlayer(registry: registry, bundle: bundle)
+                authoredRewardPlayer?.close()
             }
-            catch { rewardMotionError = "9층 두루마리 모션 데이터 또는 장치 연결을 확인해 주세요: \(error.localizedDescription)" }
+            catch { rewardMotionError = "두루마리 모션 데이터 또는 장치 연결을 확인해 주세요: \(error.localizedDescription)" }
         }
         if let doorAnimation = registry.descriptor?.descentDoorAnimation {
             for name in doorAnimation.controllerNames {
@@ -141,8 +141,8 @@ final class RealityProgressionVFXRenderer {
         let generation = transitionGeneration
         let roles = rewardRoles
 
-        if registry.descriptor?.sceneID == .floor09ArchiveRedesign {
-            presentFloor9Reward(state, registry: registry, reducedMotion: reducedMotion, generation: generation)
+        if [FloorSceneID.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(registry.descriptor?.sceneID ?? .floor10ClosedOffice) {
+            presentAuthoredReward(state, registry: registry, reducedMotion: reducedMotion, generation: generation)
             return
         }
 
@@ -207,8 +207,8 @@ final class RealityProgressionVFXRenderer {
     }
 
     func reset() {
-        floor9RewardPlayer?.cancel()
-        floor9RewardPlayer = nil
+        authoredRewardPlayer?.cancel()
+        authoredRewardPlayer = nil
         rewardMotionError = nil
         rewardIdleTask?.cancel()
         rewardIdleTask = nil
@@ -217,13 +217,13 @@ final class RealityProgressionVFXRenderer {
         doorControllerBaseTransforms.removeAll()
     }
 
-    private func presentFloor9Reward(
+    private func presentAuthoredReward(
         _ state: RealityRewardPresentationState,
         registry: RealityEntityRegistry,
         reducedMotion: Bool,
         generation: Int
     ) {
-        guard let player = floor9RewardPlayer else { return }
+        guard let player = authoredRewardPlayer else { return }
         player.cancel()
         for role in rewardRoles {
             registry.entity(for: role)?.stopAllAnimations(recursive: false)
@@ -241,11 +241,11 @@ final class RealityProgressionVFXRenderer {
             }
         case .choosing:
             player.finish()
-            captureFloor9ScrollRestPose(in: registry)
+            captureScrollRestPose(in: registry)
             startRewardIdleMotion(in: registry, generation: generation, reducedMotion: reducedMotion)
         case let .resolving(index), let .resolved(index):
             player.finish()
-            captureFloor9ScrollRestPose(in: registry)
+            captureScrollRestPose(in: registry)
             for (slot, role) in rewardRoles.enumerated() {
                 guard let entity = registry.entity(for: role), var target = baseTransforms[role] else { continue }
                 // These roles point to scroll-local pivots, never the scene-offset HoleAnchor.
@@ -266,7 +266,7 @@ final class RealityProgressionVFXRenderer {
         }
     }
 
-    private func captureFloor9ScrollRestPose(in registry: RealityEntityRegistry) {
+    private func captureScrollRestPose(in registry: RealityEntityRegistry) {
         for role in rewardRoles {
             if let entity = registry.entity(for: role) { baseTransforms[role] = entity.transform }
         }
@@ -449,9 +449,9 @@ final class RealityProgressionVFXRenderer {
     }
 }
 
-// Floor 9 uses sampled Blender controller transforms. The scene is exported at
+// Reward rooms use sampled controller transforms. The scene is exported at
 // frame 1 without USD time samples, so there is only one animation owner.
-private struct Floor9RewardMotion: Decodable {
+private struct AuthoredRewardMotion: Decodable {
     struct Track: Decodable {
         let entity: String
         let matrices: [[Float]] // Column-major, parent-local, matching the USD xform.
@@ -462,7 +462,7 @@ private struct Floor9RewardMotion: Decodable {
 }
 
 @MainActor
-private final class Floor9RewardPlayer {
+private final class AuthoredRewardPlayer {
     private struct Track {
         let entity: Entity
         let samples: [Transform]
@@ -475,10 +475,10 @@ private final class Floor9RewardPlayer {
 
     init(registry: RealityEntityRegistry, bundle: Bundle) throws {
         guard let directory = registry.descriptor?.resourceSubdirectory,
-              let url = bundle.url(forResource: "floor09_reward_motion", withExtension: "json", subdirectory: directory) else {
+              let url = bundle.url(forResource: registry.descriptor?.sceneID == .floor08AdministratorObservatory ? "floor08_reward_motion" : "floor09_reward_motion", withExtension: "json", subdirectory: directory) else {
             throw CocoaError(.fileNoSuchFile)
         }
-        let data = try JSONDecoder().decode(Floor9RewardMotion.self, from: Data(contentsOf: url))
+        let data = try JSONDecoder().decode(AuthoredRewardMotion.self, from: Data(contentsOf: url))
         guard data.fps == 30, data.frames == 66, data.tracks.count == 13,
               Set(data.tracks.map(\.entity)).count == data.tracks.count else {
             throw CocoaError(.fileReadCorruptFile)
