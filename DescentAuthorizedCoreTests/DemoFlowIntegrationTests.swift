@@ -59,6 +59,16 @@ final class DemoFlowIntegrationTests: XCTestCase {
         XCTAssertTrue(session.progress.isDemoComplete)
         XCTAssertTrue(endingEvents.contains(.progression(.demoCompleted)))
         XCTAssertNoThrow(try GameProgressValidator().validate(session.progress))
+        XCTAssertEqual(session.progress.expansion?.floorNumber, 7)
+        XCTAssertEqual(session.progress.expansion?.stage, .entrance)
+        _ = try session.handle(.advanceExpansion)
+        XCTAssertEqual(session.progress.expansion?.stage, .preparation)
+        _ = try session.handle(.advanceExpansion)
+        XCTAssertEqual(session.progress.expansion?.stage, .residualBattle)
+        _ = try session.handle(.startEncounter)
+        XCTAssertNotNil(session.battleState)
+        XCTAssertEqual(session.battleState?.enemy.id,
+            .enemy(try XCTUnwrap(ExpansionEnemyCatalog.enemy(floor: 7, isBoss: false)).id))
     }
 
     private func winCurrentEncounter(
