@@ -178,7 +178,7 @@ final class RealitySceneController: ObservableObject {
         guard let arView else { return }
         let descriptor = RealitySceneDescriptor.descriptor(for: sceneID)
         guard let url = bundle.url(
-            forResource: sceneID == .floor09ArchiveRedesign ? graphicsQuality.floor9ResourceName : descriptor.resourceName,
+            forResource: graphicsQuality.resourceName(for: sceneID),
             withExtension: "usdc",
             subdirectory: descriptor.resourceSubdirectory
         ) else {
@@ -1826,7 +1826,7 @@ extension RealitySceneController {
 
 extension RealitySceneController {
     func prefetchFloor9(quality: GraphicsQuality, bundle: Bundle = .main) {
-        guard let url = bundle.url(forResource: quality.floor9ResourceName, withExtension: "usdc",
+        guard let url = bundle.url(forResource: quality.resourceName(for: .floor09ArchiveRedesign), withExtension: "usdc",
                                    subdirectory: "Reality/Scenes/Floor09/ArchiveRedesign") else { return }
         Floor9PreparedAssets.shared.preloadRoom(url: url)
         Floor9PreparedAssets.shared.prepareEnvironment(bundle: bundle)
