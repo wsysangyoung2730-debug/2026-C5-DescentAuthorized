@@ -3,7 +3,7 @@
 Run before export_v27_game_assets.py in the same Blender process. Source blend
 is never saved. No light/shadow information is baked into base color.
 """
-import bpy
+import bpy, math
 from pathlib import Path
 from mathutils import Vector
 
@@ -27,6 +27,12 @@ def repair():
     plane = bpy.context.object
     replacements = {}
     for source in sorted(materials, key=lambda m: m.name):
+        # Wall shaders include height-dependent damp/dirt masks. Sampling them
+        # on a horizontal floor would bake only the darkest bottom edge.
+        vertical = source.name in {'DA_Reference_AgedCharcoal_Wall', 'F10_Carved_BlackStone', 'F09_Aged_Plaster'}
+        plane.location = (TILE_METERS/2, 0, TILE_METERS/2) if vertical else (TILE_METERS/2, TILE_METERS/2, 0)
+        plane.rotation_euler = (math.pi/2,0,0) if vertical else (0,0,0)
+        bpy.context.view_layer.update()
         material = source.copy()
         plane.data.materials.clear(); plane.data.materials.append(material)
         nodes = material.node_tree.nodes; links = material.node_tree.links
