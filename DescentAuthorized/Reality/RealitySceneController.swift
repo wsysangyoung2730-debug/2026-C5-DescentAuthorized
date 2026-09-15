@@ -1800,6 +1800,13 @@ extension RealitySceneController {
     private func installPortableRoomLighting(in root: Entity, descriptor: RealitySceneDescriptor) {
         // Blender area lights do not illuminate RealityKit. Keep a bounded set
         // of broad spots; the captured environment supplies indirect light.
+        func removeImportedLights(from entity: Entity) {
+            entity.components.remove(PointLightComponent.self)
+            entity.components.remove(SpotLightComponent.self)
+            entity.components.remove(DirectionalLightComponent.self)
+            for child in entity.children { removeImportedLights(from: child) }
+        }
+        removeImportedLights(from: root)
         typealias Fixture = (position: SIMD3<Float>, target: SIMD3<Float>, power: Float)
         let fixtures: [Fixture]
         switch descriptor.sceneID {
@@ -1817,13 +1824,15 @@ extension RealitySceneController {
         default: return
         }
         let matrix = descriptor.cameraNames[.main].flatMap { authoredCameraSnapshots[$0]?.transformMatrix }
-        let cameraPosition = matrix.map { SIMD3($0.columns.3.x, $0.columns.3.y, $0.columns.3.z) }
+        let cameraPosition = matrix.map {
+            root.convert(position: SIMD3($0.columns.3.x, $0.columns.3.y, $0.columns.3.z), from: nil)
+        }
         let isYUp = cameraPosition.map { abs($0.y) < abs($0.z) } ?? false
         func position(_ value: SIMD3<Float>) -> SIMD3<Float> { isYUp ? [value.x,value.z,-value.y] : value }
         for (index, fixture) in fixtures.enumerated() {
             let lamp = SpotLight(); lamp.name = "ROOM_RUNTIME_\(index)"
             lamp.light.color = UIColor(red: 1, green: 0.95, blue: 0.88, alpha: 1)
-            lamp.light.intensity = fixture.power * pow(2, -0.5)
+            lamp.light.intensity = fixture.power * pow(2, 0.5)
             lamp.light.innerAngleInDegrees = 70; lamp.light.outerAngleInDegrees = 115
             lamp.light.attenuationRadius = 20
             root.addChild(lamp)
@@ -1904,7 +1913,7 @@ extension RealitySceneController {
                   self.requestedSceneID == sceneID else { return }
             self.arView?.environment.lighting.resource = resource
             // Calibrate captured radiance for RealityKit; fixtures shape local shadows.
-            self.arView?.environment.lighting.intensityExponent = sceneID == .floor09ArchiveRedesign ? 2.5 : 2
+            self.arView?.environment.lighting.intensityExponent = 2.5
         }
     }
 }
