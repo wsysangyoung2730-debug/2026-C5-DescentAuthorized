@@ -2045,8 +2045,12 @@ extension RealitySceneController {
         cameraEntity.setTransformMatrix(adjustedBattleCameraMatrix(from: snapshot), relativeTo: nil)
         await capture("02-yaw")
         guard !Task.isCancelled else { return }
-        cameraEntity.setTransformMatrix(floor10OpeningTransform(from: snapshot, yaw: -0.12,
-            pitch: 0.2, roll: -0.28, verticalOffset: -0.72, forwardOffset: -0.08).matrix, relativeTo: nil)
+        if requestedCameraPreset == .battle {
+            await playBattleDefeatCamera(reducedMotion: false)
+        } else {
+            cameraEntity.setTransformMatrix(floor10OpeningTransform(from: snapshot, yaw: -0.12,
+                pitch: 0.2, roll: -0.28, verticalOffset: -0.72, forwardOffset: -0.08).matrix, relativeTo: nil)
+        }
         await capture("03-fallen")
         print("C5_RENDER_DIAGNOSTICS complete")
     }

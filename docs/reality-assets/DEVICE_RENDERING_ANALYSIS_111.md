@@ -78,3 +78,15 @@
 수정 전 수치 증거는 `diagnostics-111/before-device`와 `before-simulator`에 보관한다. 이 결과는 위의 초기 미확정 분석을 갱신한다. 이전에 정상으로 보았던 실행과의 빌드·품질·경로 차이는 확보하지 못했지만, 현재 동일 조건에서는 시뮬레이터에서도 재현된다.
 
 10층 보정 후에도 양 플랫폼 세 상태의 네 행렬은 최대 차이 0으로 일치했다. 카메라는 `(0, 1.65, 8.2)`, 스케일 약 1이며, 좌우 회전은 위치를 유지하고 넘어짐은 높이 약 0.928m의 실내 시점으로 끝난다. 직접 조명과 HDR 강도·텍스처는 변경하지 않았다. 수정 전후 PNG도 직접 확인했다. 수치는 `diagnostics-111/after-device`, `after-simulator`에 보관한다.
+
+8층 보스방도 양 플랫폼에서 비교했다. 고정 좌우 회전과 `playBattleDefeatCamera(reducedMotion: false)`의 실제 두 단계 애니메이션을 실행해 세 상태의 화면 및 행렬을 수집했고, 단위 스케일·활성 카메라 일치·수평 회전·1m 미만 낙하 검사와 양 플랫폼 행렬 비교가 통과했다. 쓰러짐의 의도된 롤은 유지하고, 방 전체가 멀어지는 현상을 제거했다.
+
+## 재검증 방법
+
+Debug 자산 미리보기의 기존 인자에 `--render-diagnostics`를 추가한다. 예: `--floor9-preview --floor10 --main --graphics-medium --render-diagnostics`. 보스 패배는 `--floor9-preview --floor8-boss --boss --graphics-medium --render-diagnostics`로 확인한다. 앱 Documents/RenderDiagnostics에 세 상태의 JSON과 PNG가 저장된다. 미리보기에서만 실행하며 실제 진행을 조작하지 않는다. PNG 저장은 진단 실행 시에만 수행한다.
+
+`python3 docs/reality-assets/validate_render_diagnostics.py <실기기 결과 폴더> <시뮬레이터 결과 폴더>`로 실제 카메라 스케일/축/활성 시점/회전/낙하를 검사한다. 수정 전 0.01 스케일 자료는 실패하고, 수정 후 10층과 8층 보스 자료는 통과한다. 전체 테스트 반복 대신 양 플랫폼 Debug 빌드와 해당 실행 경로를 확인했다.
+
+## 보상 UI 후속 변경
+
+`선택 주문 시험 각인` 버튼, 보상 화면의 연습 상태와 팝업 연결을 제거했다. 수령 버튼 옆 HStack을 제거하여 기존 중앙 좌표에서 버튼 하나만 표시한다. 실제 수령·학습·카드 상세 흐름과 다른 준비 화면의 연습 기능은 유지한다. UI 변경은 별도 커밋 `8ff7c25`이며 양 플랫폼 Debug 빌드를 통과했다.
