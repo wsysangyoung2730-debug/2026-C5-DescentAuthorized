@@ -29,6 +29,15 @@ struct LoadoutPreparationView: View {
                         equippedSection
                         collection
                     }
+                    .padding(14)
+                    .background {
+                        Image("LoadoutMainPanelFrame")
+                            .resizable(
+                                capInsets: EdgeInsets(top: 84, leading: 84, bottom: 84, trailing: 84),
+                                resizingMode: .stretch
+                            )
+                            .renderingMode(.original)
+                    }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                     commandPanel
@@ -92,13 +101,18 @@ struct LoadoutPreparationView: View {
                 gameFeedback.playInterface(.back, settings: appSettings.settings)
                 onCancel()
             } label: {
-                Label("돌아가기", systemImage: "chevron.left")
-                    .font(.callout.weight(.semibold))
-                    .foregroundStyle(DAColor.secondary)
-                    .frame(minWidth: 104, minHeight: 44)
+                ZStack {
+                    Image("LoadoutBackButton")
+                        .resizable()
+                        .scaledToFill()
+                    Label("돌아가기", systemImage: "chevron.left")
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(DAColor.secondary)
+                }
+                .frame(width: 124, height: 48)
+                .clipped()
             }
-            .buttonStyle(.bordered)
-            .tint(DAColor.secondary)
+            .buttonStyle(.plain)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("제\(floorNumber)층 · 출전 준비")
@@ -126,7 +140,12 @@ struct LoadoutPreparationView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 9)
-            .daStatusPanel(accent: DAColor.gold)
+            .background {
+                Image("LoadoutProgressBadge")
+                    .resizable()
+                    .scaledToFill()
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 8))
             .accessibilityElement(children: .combine)
             .accessibilityLabel("준비한 주문 \(selected.count)개, 최대 \(LoadoutRules.maximumEquipped)개")
         }
@@ -172,9 +191,7 @@ struct LoadoutPreparationView: View {
             }
         }
         .padding(14)
-        .background(DAColor.panel.opacity(0.82))
-        .overlay { RoundedRectangle(cornerRadius: 8).stroke(DAColor.divider) }
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .background(DAColor.background.opacity(0.36))
     }
 
     private func sectionHeader(title: String, note: String) -> some View {
@@ -201,10 +218,12 @@ struct LoadoutPreparationView: View {
         .foregroundStyle(DAColor.secondary.opacity(0.58))
         .frame(maxWidth: .infinity)
         .frame(height: 78)
-        .overlay {
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(DAColor.divider, style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+        .background {
+            Image("LoadoutEquippedSlotEmpty")
+                .resizable()
+                .scaledToFill()
         }
+        .clipped()
         .accessibilityLabel("\(index + 1)번 빈 주문 자리")
     }
 
@@ -237,11 +256,12 @@ struct LoadoutPreparationView: View {
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity)
             .frame(height: 78)
-            .background(inspected == id ? DAColor.magic.opacity(0.14) : DAColor.card)
-            .overlay {
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(inspected == id ? DAColor.gold : DAColor.divider, lineWidth: inspected == id ? 2 : 1)
+            .background {
+                Image(inspected == id ? "LoadoutEquippedSlotSelected" : "LoadoutEquippedSlotDefault")
+                    .resizable()
+                    .scaledToFill()
             }
+            .clipped()
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(index + 1)번 \(spell.name)\(protectedIDs.contains(id) ? ", 봉인 보호" : "")")
@@ -281,9 +301,7 @@ struct LoadoutPreparationView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .padding(14)
-        .background(DAColor.panel.opacity(0.62))
-        .overlay { RoundedRectangle(cornerRadius: 8).stroke(DAColor.divider) }
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .background(DAColor.background.opacity(0.28))
     }
 
     private func categoryButton(_ category: SpellCategory?) -> some View {
@@ -363,12 +381,10 @@ struct LoadoutPreparationView: View {
         }
         .frame(minHeight: 100)
         .background {
-            Image(frameAsset(for: spell.category))
+            Image(inspected == id ? "LoadoutSpellCardSelected" : "LoadoutSpellCardDefault")
                 .resizable()
                 .scaledToFill()
-                .opacity(isEquipped ? 0.62 : 0.32)
         }
-        .background(DAColor.card)
         .overlay(alignment: .topLeading) {
             if isEquipped {
                 Text("편성 \((selected.firstIndex(of: id) ?? 0) + 1)")
@@ -380,11 +396,6 @@ struct LoadoutPreparationView: View {
                     .clipShape(Capsule())
                     .padding(6)
             }
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 7)
-                .stroke(inspected == id ? DAColor.gold : isEquipped ? DAColor.gold.opacity(0.5) : DAColor.divider,
-                        lineWidth: inspected == id ? 2 : 1)
         }
         .clipShape(RoundedRectangle(cornerRadius: 7))
     }
@@ -404,7 +415,7 @@ struct LoadoutPreparationView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 13)
-            .background(DAColor.card.opacity(0.8))
+            .background(DAColor.card.opacity(0.46))
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
@@ -425,9 +436,17 @@ struct LoadoutPreparationView: View {
             Rectangle().fill(DAColor.divider).frame(height: 1)
             launchControls
         }
-        .background(DAColor.panel)
-        .overlay { RoundedRectangle(cornerRadius: 8).stroke(DAColor.gold.opacity(0.42)) }
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .background {
+            ZStack {
+                DAColor.background.opacity(0.5)
+                Image("LoadoutInspectorPanelFrame")
+                    .resizable(
+                        capInsets: EdgeInsets(top: 110, leading: 72, bottom: 110, trailing: 72),
+                        resizingMode: .stretch
+                    )
+                    .renderingMode(.original)
+            }
+        }
     }
 
     private func inspectedDetail(_ spell: SpellDefinition) -> some View {
@@ -514,8 +533,11 @@ struct LoadoutPreparationView: View {
                     Spacer()
                 }
                 .padding(10)
-                .background(DAColor.card.opacity(0.72))
-                .overlay { RoundedRectangle(cornerRadius: 6).stroke(DAColor.divider) }
+                .background {
+                    Image("LoadoutProtectionSelector")
+                        .resizable()
+                        .scaledToFill()
+                }
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             }
         }
@@ -557,8 +579,11 @@ struct LoadoutPreparationView: View {
             }
             .padding(.horizontal, 11)
             .frame(minHeight: 52)
-            .background(DAColor.card)
-            .overlay { RoundedRectangle(cornerRadius: 6).stroke(DAColor.divider) }
+            .background {
+                Image("LoadoutProtectionSelector")
+                    .resizable()
+                    .scaledToFill()
+            }
             .clipShape(RoundedRectangle(cornerRadius: 6))
         }
         .buttonStyle(.plain)
@@ -585,10 +610,12 @@ struct LoadoutPreparationView: View {
             Button(action: beginBattle) {
                 Label("전투 시작", systemImage: "arrow.right")
                     .font(.system(size: 18, weight: .semibold, design: .serif))
-                    .foregroundStyle(DAColor.body)
+                    .foregroundStyle(readyToBegin && !isStarting ? DAColor.body : DAColor.secondary.opacity(0.62))
                     .frame(maxWidth: .infinity, minHeight: 58)
                     .background {
-                        Image("Floor9EntryButtonPlate")
+                        Image(readyToBegin && !isStarting
+                              ? "LoadoutBattleStartEnabled"
+                              : "LoadoutBattleStartDisabled")
                             .resizable()
                             .scaledToFill()
                     }
@@ -596,7 +623,6 @@ struct LoadoutPreparationView: View {
             }
             .buttonStyle(.plain)
             .disabled(!readyToBegin || isStarting)
-            .opacity(readyToBegin && !isStarting ? 1 : 0.38)
         }
         .padding(16)
         .background(DAColor.background.opacity(0.42))
@@ -707,11 +733,4 @@ struct LoadoutPreparationView: View {
         }
     }
 
-    private func frameAsset(for category: SpellCategory) -> String {
-        switch category {
-        case .attack: "BattleCardFrameAttack"
-        case .defense: "BattleCardFrameDefense"
-        case .dispel, .debuff: "BattleCardFrameSeal"
-        }
-    }
 }
