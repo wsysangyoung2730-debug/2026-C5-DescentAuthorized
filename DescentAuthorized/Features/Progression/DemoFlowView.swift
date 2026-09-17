@@ -138,7 +138,14 @@ struct DemoFlowView: View {
                 }
                 preparedBeforeNarrative.insert(battle)
                 preparedBattle = nil
-            }, onCancel: { preparedBattle = nil })
+            }, onCancel: {
+                preparedBattle = nil
+                guard battle.preparationCompletionCommand == nil else { return }
+                Task { @MainActor in
+                    await Task.yield()
+                    queueEncounterPreparationIfNeeded()
+                }
+            })
         }
         .fullScreenCover(isPresented: $isShowingSettings) {
             SettingsView()
@@ -175,6 +182,7 @@ struct DemoFlowView: View {
             synchronizeFloorMusic()
         }
         .onChange(of: gameSession.progress.currentScene) { _, _ in
+            resetPreparationAfterBattleEntry()
             queueEncounterPreparationIfNeeded()
             synchronizeRewardLearningHUD()
             synchronizeFloorMusic()
@@ -210,6 +218,19 @@ struct DemoFlowView: View {
               !preparedBeforeNarrative.contains(battle),
               preparedBattle == nil else { return }
         preparedBattle = battle
+    }
+
+    private func resetPreparationAfterBattleEntry() {
+        switch gameSession.progress.currentScene {
+        case .floor9RecordsBattle:
+            preparedBeforeNarrative.remove(.records)
+        case .floor8ResidualBattle:
+            preparedBeforeNarrative.remove(.residual)
+        case .floor8AdministratorBattle:
+            preparedBeforeNarrative.remove(.administrator)
+        default:
+            break
+        }
     }
 
     private func synchronizeRewardLearningHUD() {
