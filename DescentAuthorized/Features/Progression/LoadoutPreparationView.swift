@@ -1,5 +1,35 @@
 import SwiftUI
 
+// Source PNGs retain transparent canvas margins. Crop only that canvas once,
+// so the visible border and the SwiftUI control have the same bounds.
+private enum LoadoutArtwork {
+    static let images: [String: UIImage] = {
+        let bounds: [String: CGRect] = [
+            "LoadoutBackButton": CGRect(x: 47, y: 160, width: 1850, height: 485),
+            "LoadoutBattleStartDisabled": CGRect(x: 14, y: 138, width: 1994, height: 459),
+            "LoadoutBattleStartEnabled": CGRect(x: 18, y: 181, width: 1921, height: 431),
+            "LoadoutMainPanelFrame": CGRect(x: 29, y: 31, width: 1614, height: 872),
+            "LoadoutInspectorPanelFrame": CGRect(x: 39, y: 37, width: 947, height: 1460),
+            "LoadoutSpellCardDefault": CGRect(x: 41, y: 206, width: 1867, height: 387),
+            "LoadoutSpellCardSelected": CGRect(x: 55, y: 96, width: 1984, height: 540),
+            "LoadoutProgressBadge": CGRect(x: 59, y: 206, width: 1742, height: 427),
+            "LoadoutEquippedSlotEmpty": CGRect(x: 55, y: 275, width: 1503, height: 455),
+            "LoadoutEquippedSlotSelected": CGRect(x: 36, y: 265, width: 1542, height: 441),
+            "LoadoutProtectionSelector": CGRect(x: 37, y: 83, width: 2023, height: 554),
+            "LoadoutEquippedSlotDefault": CGRect(x: 13, y: 91, width: 616, height: 203)
+        ]
+        return bounds.reduce(into: [:]) { result, entry in
+            guard let source = UIImage(named: entry.key),
+                  let cropped = source.cgImage?.cropping(to: entry.value) else { return }
+            result[entry.key] = UIImage(cgImage: cropped, scale: 2, orientation: .up)
+        }
+    }()
+
+    static func image(_ name: String) -> Image {
+        images[name].map { Image(uiImage: $0) } ?? Image(name)
+    }
+}
+
 struct LoadoutPreparationView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
@@ -29,11 +59,11 @@ struct LoadoutPreparationView: View {
                         equippedSection
                         collection
                     }
-                    .padding(14)
+                    .padding(24)
                     .background {
-                        Image("LoadoutMainPanelFrame")
+                        LoadoutArtwork.image("LoadoutMainPanelFrame")
                             .resizable(
-                                capInsets: EdgeInsets(top: 84, leading: 84, bottom: 84, trailing: 84),
+                                capInsets: EdgeInsets(top: 28, leading: 28, bottom: 28, trailing: 28),
                                 resizingMode: .stretch
                             )
                             .renderingMode(.original)
@@ -102,9 +132,9 @@ struct LoadoutPreparationView: View {
                 onCancel()
             } label: {
                 ZStack {
-                    Image("LoadoutBackButton")
+                    LoadoutArtwork.image("LoadoutBackButton")
                         .resizable()
-                        .scaledToFill()
+
                     Label("돌아가기", systemImage: "chevron.left")
                         .font(.callout.weight(.semibold))
                         .foregroundStyle(DAColor.secondary)
@@ -141,9 +171,9 @@ struct LoadoutPreparationView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 9)
             .background {
-                Image("LoadoutProgressBadge")
+                LoadoutArtwork.image("LoadoutProgressBadge")
                     .resizable()
-                    .scaledToFill()
+
             }
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .accessibilityElement(children: .combine)
@@ -219,9 +249,9 @@ struct LoadoutPreparationView: View {
         .frame(maxWidth: .infinity)
         .frame(height: 78)
         .background {
-            Image("LoadoutEquippedSlotEmpty")
+            LoadoutArtwork.image("LoadoutEquippedSlotEmpty")
                 .resizable()
-                .scaledToFill()
+
         }
         .clipped()
         .accessibilityLabel("\(index + 1)번 빈 주문 자리")
@@ -257,9 +287,9 @@ struct LoadoutPreparationView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 78)
             .background {
-                Image(inspected == id ? "LoadoutEquippedSlotSelected" : "LoadoutEquippedSlotDefault")
+                LoadoutArtwork.image(inspected == id ? "LoadoutEquippedSlotSelected" : "LoadoutEquippedSlotDefault")
                     .resizable()
-                    .scaledToFill()
+
             }
             .clipped()
         }
@@ -380,10 +410,11 @@ struct LoadoutPreparationView: View {
             .accessibilityLabel(isEquipped ? "\(spell.name) 준비에서 빼기" : "\(spell.name) 준비하기")
         }
         .frame(minHeight: 100)
+        .padding(10)
         .background {
-            Image(inspected == id ? "LoadoutSpellCardSelected" : "LoadoutSpellCardDefault")
+            LoadoutArtwork.image(inspected == id ? "LoadoutSpellCardSelected" : "LoadoutSpellCardDefault")
                 .resizable()
-                .scaledToFill()
+
         }
         .overlay(alignment: .topLeading) {
             if isEquipped {
@@ -436,12 +467,13 @@ struct LoadoutPreparationView: View {
             Rectangle().fill(DAColor.divider).frame(height: 1)
             launchControls
         }
+        .padding(24)
         .background {
             ZStack {
                 DAColor.background.opacity(0.5)
-                Image("LoadoutInspectorPanelFrame")
+                LoadoutArtwork.image("LoadoutInspectorPanelFrame")
                     .resizable(
-                        capInsets: EdgeInsets(top: 110, leading: 72, bottom: 110, trailing: 72),
+                        capInsets: EdgeInsets(top: 44, leading: 28, bottom: 44, trailing: 28),
                         resizingMode: .stretch
                     )
                     .renderingMode(.original)
@@ -534,9 +566,9 @@ struct LoadoutPreparationView: View {
                 }
                 .padding(10)
                 .background {
-                    Image("LoadoutProtectionSelector")
+                    LoadoutArtwork.image("LoadoutProtectionSelector")
                         .resizable()
-                        .scaledToFill()
+
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             }
@@ -580,9 +612,9 @@ struct LoadoutPreparationView: View {
             .padding(.horizontal, 11)
             .frame(minHeight: 52)
             .background {
-                Image("LoadoutProtectionSelector")
+                LoadoutArtwork.image("LoadoutProtectionSelector")
                     .resizable()
-                    .scaledToFill()
+
             }
             .clipShape(RoundedRectangle(cornerRadius: 6))
         }
@@ -613,11 +645,11 @@ struct LoadoutPreparationView: View {
                     .foregroundStyle(readyToBegin && !isStarting ? DAColor.body : DAColor.secondary.opacity(0.62))
                     .frame(maxWidth: .infinity, minHeight: 58)
                     .background {
-                        Image(readyToBegin && !isStarting
+                        LoadoutArtwork.image(readyToBegin && !isStarting
                               ? "LoadoutBattleStartEnabled"
                               : "LoadoutBattleStartDisabled")
                             .resizable()
-                            .scaledToFill()
+
                     }
                     .clipped()
             }
