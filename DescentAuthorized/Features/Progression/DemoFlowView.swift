@@ -203,6 +203,8 @@ struct DemoFlowView: View {
         switch gameSession.progress.currentScene {
         case .floor9RecordsEncounter:
             battle = .records
+        case .floor8ResidualEncounter:
+            battle = .residual
         default:
             battle = nil
         }
@@ -775,7 +777,7 @@ struct DemoFlowView: View {
                     case .floor9Defeated:
                         gameSession.send(.continueAfterRecordsDefeat)
                     case .floor8ResidualEncounter:
-                        preparedBattle = .residual
+                        gameSession.send(.beginResidualBattle)
                     case .floor8ResidualDefeated:
                         gameSession.send(.continueAfterResidualDefeat)
                     case .floor8AdministratorEncounter:
@@ -1270,7 +1272,7 @@ private enum PreparedLegacyBattle: String, Identifiable {
     case records, residual, administrator
     var id: String { rawValue }
     var preparesBeforeNarrative: Bool {
-        self == .records
+        self == .records || self == .residual
     }
     var battleCommand: DemoCommand {
         switch self {
