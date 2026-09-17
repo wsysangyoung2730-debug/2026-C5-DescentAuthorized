@@ -362,9 +362,9 @@ struct LoadoutPreparationView: View {
                 inspected = id
                 playSelection()
             } label: {
-                HStack(spacing: 10) {
+                HStack(spacing: 14) {
                     SpellGlyphPreview(spell: spell)
-                        .frame(width: 62, height: 62)
+                        .frame(width: 52, height: 52)
                     VStack(alignment: .leading, spacing: 5) {
                         HStack(spacing: 5) {
                             Text(spell.name)
@@ -390,7 +390,8 @@ struct LoadoutPreparationView: View {
                     Spacer(minLength: 2)
                 }
                 .padding(.leading, 12)
-                .padding(.vertical, 10)
+                .padding(.top, 24)
+                .padding(.bottom, 10)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -425,7 +426,8 @@ struct LoadoutPreparationView: View {
                     .padding(.vertical, 4)
                     .background(DAColor.background.opacity(0.9))
                     .clipShape(Capsule())
-                    .padding(6)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 7))
