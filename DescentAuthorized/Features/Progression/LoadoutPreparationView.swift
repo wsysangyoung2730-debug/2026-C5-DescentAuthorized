@@ -148,7 +148,7 @@ struct LoadoutPreparationView: View {
                 Text("제\(floorNumber)층 · 출전 준비")
                     .font(.system(size: 26, weight: .semibold, design: .serif))
                     .foregroundStyle(DAColor.gold)
-                Text("전투에 가져갈 주문과 봉인에서 보호할 주문을 정하세요.")
+                Text("전투에 가져갈 주문을 선택하세요.")
                     .font(.callout)
                     .foregroundStyle(DAColor.secondary)
             }
@@ -190,7 +190,7 @@ struct LoadoutPreparationView: View {
                 Text(tutorialFlags.contains(.firstOverflowLoadout) ? "보유 주문 중 최대 6종을 선택합니다" : "공격·방어·봉인 해제를 포함해 준비하세요")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(DAColor.body)
-                Text("공격과 방어 주문은 각각 하나씩 봉인에서 보호할 수 있습니다.")
+                Text("공격과 방어 주문은 각각 하나씩 자동으로 봉인에서 보호됩니다.")
                     .font(.caption)
                     .foregroundStyle(DAColor.secondary)
             }
@@ -461,7 +461,7 @@ struct LoadoutPreparationView: View {
                             .frame(maxWidth: .infinity, minHeight: 120, alignment: .center)
                     }
                     Rectangle().fill(DAColor.divider).frame(height: 1)
-                    protectionSelection
+                    protectionStatus
                 }
                 .padding(16)
             }
@@ -537,91 +537,51 @@ struct LoadoutPreparationView: View {
         }
     }
 
-    private var protectionSelection: some View {
-        VStack(alignment: .leading, spacing: 11) {
-            VStack(alignment: .leading, spacing: 4) {
-                Label("봉인 보호", systemImage: "lock.shield.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(DAColor.gold)
-                Text("선택한 공격·방어 주문과 봉인 해제는 카드 봉인 대상에서 제외됩니다.")
-                    .font(.caption)
-                    .foregroundStyle(DAColor.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            protectedRole(.attack, selectedID: $protectedAttack)
-            protectedRole(.defense, selectedID: $protectedDefense)
-
+    private var protectionStatus: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("봉인 보호", systemImage: "lock.shield.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(DAColor.gold)
+            Text("공격·방어 주문 각 하나와 봉인 해제는 자동으로 보호됩니다.")
+                .font(.caption)
+                .foregroundStyle(DAColor.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            protectionRow(title: "보호 중인 공격 주문", name: protectedAttack.map { SpellCatalog.spell($0).name },
+                          missing: "공격 주문을 추가해 주세요", icon: "burst.fill", color: DAColor.attack)
+            protectionRow(title: "보호 중인 방어 주문", name: protectedDefense.map { SpellCatalog.spell($0).name },
+                          missing: "방어 주문을 추가해 주세요", icon: "shield.fill", color: DAColor.defense)
             if gameSession.progress.learnedSpells.contains(.sealRelease) {
-                HStack(spacing: 9) {
-                    Image(systemName: selected.contains(.sealRelease) ? "checkmark.shield.fill" : "exclamationmark.triangle.fill")
-                        .foregroundStyle(selected.contains(.sealRelease) ? DAColor.gold : DAColor.attack)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("봉인 해제")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(DAColor.body)
-                        Text(selected.contains(.sealRelease) ? "필수 보호 적용" : "전투 편성에 추가해야 합니다")
-                            .font(.caption2)
-                            .foregroundStyle(selected.contains(.sealRelease) ? DAColor.gold : DAColor.attack)
-                    }
-                    Spacer()
-                }
-                .padding(10)
-                .background {
-                    LoadoutArtwork.image("LoadoutProtectionSelector")
-                        .resizable()
-
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                protectionRow(title: "봉인 해제", name: selected.contains(.sealRelease) ? "필수 보호 적용" : nil,
+                              missing: "전투 편성에 추가해야 합니다", icon: "lock.shield.fill", color: DAColor.gold)
             }
         }
     }
 
-    private func protectedRole(_ category: SpellCategory, selectedID: Binding<SpellID?>) -> some View {
-        let options = selected.filter { SpellCatalog.spell($0).category == category }
-        let currentName = selectedID.wrappedValue.map { SpellCatalog.spell($0).name }
-        return Menu {
-            ForEach(options, id: \.rawValue) { id in
-                Button {
-                    selectedID.wrappedValue = id
-                    playSelection()
-                } label: {
-                    if selectedID.wrappedValue == id {
-                        Label(SpellCatalog.spell(id).name, systemImage: "checkmark")
-                    } else {
-                        Text(SpellCatalog.spell(id).name)
-                    }
-                }
-            }
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: category == .attack ? "burst.fill" : "shield.fill")
-                    .foregroundStyle(categoryColor(category))
-                    .frame(width: 22)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("보호할 \(categoryTitle(category)) 주문")
-                        .font(.caption2)
-                        .foregroundStyle(DAColor.secondary)
-                    Text(currentName ?? "편성된 주문이 없습니다")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(currentName == nil ? DAColor.attack : DAColor.body)
-                }
-                Spacer(minLength: 4)
-                Image(systemName: "chevron.up.chevron.down")
+    private func protectionRow(title: String, name: String?, missing: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .foregroundStyle(color.opacity(name == nil ? 0.45 : 1))
+                .frame(width: 22)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
                     .font(.caption2)
                     .foregroundStyle(DAColor.secondary)
+                Text(name ?? missing)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(name == nil ? DAColor.attack : DAColor.body)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal, 11)
-            .frame(minHeight: 52)
-            .background {
-                LoadoutArtwork.image("LoadoutProtectionSelector")
-                    .resizable()
-
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            Spacer(minLength: 8)
         }
-        .buttonStyle(.plain)
-        .disabled(options.isEmpty)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+        .background {
+            LoadoutArtwork.image("LoadoutProtectionSelector")
+                .resizable()
+                .opacity(name == nil ? 0.4 : 1)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private var launchControls: some View {
