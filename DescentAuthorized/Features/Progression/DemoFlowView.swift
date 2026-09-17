@@ -9,6 +9,7 @@ struct DemoFlowView: View {
     let onSystemOverlayVisibilityChange: (Bool) -> Void
 
     @State private var preparedBattle: PreparedLegacyBattle?
+    @State private var preparedBeforeNarrative: Set<PreparedLegacyBattle> = []
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
     @State private var retryLoadingPresentation: SceneRetryLoadingPresentation?
@@ -132,13 +133,19 @@ struct DemoFlowView: View {
         }
         .fullScreenCover(item: $preparedBattle) { battle in
             LoadoutPreparationView(onBegin: {
-                if gameSession.sendChecked(battle.command) { preparedBattle = nil }
+                if battle.preparesBeforeNarrative {
+                    preparedBeforeNarrative.insert(battle)
+                    preparedBattle = nil
+                } else if gameSession.sendChecked(battle.battleCommand) {
+                    preparedBattle = nil
+                }
             }, onCancel: { preparedBattle = nil })
         }
         .fullScreenCover(isPresented: $isShowingSettings) {
             SettingsView()
         }
         .onAppear {
+            queueEncounterPreparationIfNeeded()
             synchronizeRewardLearningHUD()
             reportSystemOverlayVisibility()
             synchronizeFloorMusic()
@@ -170,6 +177,7 @@ struct DemoFlowView: View {
         }
         .onChange(of: gameSession.progress.currentScene) { _, _ in
             hasConfirmedFloor8AdministratorEntry = false
+            queueEncounterPreparationIfNeeded()
             synchronizeRewardLearningHUD()
             synchronizeFloorMusic()
             synchronizeRecordsBattleTutorial()
@@ -188,6 +196,20 @@ struct DemoFlowView: View {
 
     private func reportSystemOverlayVisibility() {
         onSystemOverlayVisibilityChange(isShowingPauseMenu || isShowingSettings)
+    }
+
+    private func queueEncounterPreparationIfNeeded() {
+        let battle: PreparedLegacyBattle?
+        switch gameSession.progress.currentScene {
+        case .floor9RecordsEncounter:
+            battle = .records
+        default:
+            battle = nil
+        }
+        guard let battle,
+              !preparedBeforeNarrative.contains(battle),
+              preparedBattle == nil else { return }
+        preparedBattle = battle
     }
 
     private func synchronizeRewardLearningHUD() {
@@ -749,7 +771,7 @@ struct DemoFlowView: View {
                 ) {
                     switch sequence {
                     case .floor9Encounter:
-                        preparedBattle = .records
+                        gameSession.send(.beginRecordsBattle)
                     case .floor9Defeated:
                         gameSession.send(.continueAfterRecordsDefeat)
                     case .floor8ResidualEncounter:
@@ -1247,7 +1269,10 @@ private enum SharedHUDPalette {
 private enum PreparedLegacyBattle: String, Identifiable {
     case records, residual, administrator
     var id: String { rawValue }
-    var command: DemoCommand {
+    var preparesBeforeNarrative: Bool {
+        self == .records
+    }
+    var battleCommand: DemoCommand {
         switch self {
         case .records: .beginRecordsBattle
         case .residual: .beginResidualBattle
