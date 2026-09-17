@@ -16,6 +16,7 @@ struct DemoFlowView: View {
     @State private var battleTutorialStep: TutorialCoachStep?
     @State private var isNarrativeAutoAdvanceEnabled = true
     @State private var isRewardLearningInputActive = false
+    @State private var hasConfirmedFloor8AdministratorEntry = false
     @StateObject private var sceneController = RealitySceneController()
 
     private let topHUDRailSourceSize = CGSize(width: 1774, height: 887)
@@ -168,6 +169,7 @@ struct DemoFlowView: View {
             synchronizeFloorMusic()
         }
         .onChange(of: gameSession.progress.currentScene) { _, _ in
+            hasConfirmedFloor8AdministratorEntry = false
             synchronizeRewardLearningHUD()
             synchronizeFloorMusic()
             synchronizeRecordsBattleTutorial()
@@ -735,23 +737,30 @@ struct DemoFlowView: View {
         case .floor9Entrance:
             Floor9EntranceView(sceneController: sceneController)
         case let .narrative(sequence):
-            BossNarrativeView(
-                sequence: sequence,
-                isAutoAdvanceEnabled: $isNarrativeAutoAdvanceEnabled
-            ) {
-                switch sequence {
-                case .floor9Encounter:
-                    preparedBattle = .records
-                case .floor9Defeated:
-                    gameSession.send(.continueAfterRecordsDefeat)
-                case .floor8ResidualEncounter:
-                    preparedBattle = .residual
-                case .floor8ResidualDefeated:
-                    gameSession.send(.continueAfterResidualDefeat)
-                case .floor8AdministratorEncounter:
-                    preparedBattle = .administrator
-                case .floor8AdministratorDefeated:
-                    gameSession.send(.continueAfterAdministratorDefeat)
+            if sequence == .floor8AdministratorEncounter,
+               !hasConfirmedFloor8AdministratorEntry {
+                FloorEntrancePanel(configuration: .floor8Administrator) {
+                    hasConfirmedFloor8AdministratorEntry = true
+                }
+            } else {
+                BossNarrativeView(
+                    sequence: sequence,
+                    isAutoAdvanceEnabled: $isNarrativeAutoAdvanceEnabled
+                ) {
+                    switch sequence {
+                    case .floor9Encounter:
+                        preparedBattle = .records
+                    case .floor9Defeated:
+                        gameSession.send(.continueAfterRecordsDefeat)
+                    case .floor8ResidualEncounter:
+                        preparedBattle = .residual
+                    case .floor8ResidualDefeated:
+                        gameSession.send(.continueAfterResidualDefeat)
+                    case .floor8AdministratorEncounter:
+                        preparedBattle = .administrator
+                    case .floor8AdministratorDefeated:
+                        gameSession.send(.continueAfterAdministratorDefeat)
+                    }
                 }
             }
         case .battle:
