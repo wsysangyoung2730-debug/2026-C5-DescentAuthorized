@@ -143,6 +143,7 @@ final class RealitySceneController: ObservableObject {
     private let erasureZoneRenderer = RealityErasureZoneRenderer()
     private let combatVFXRenderer = RealityCombatVFXRenderer()
     private let progressionVFXRenderer = RealityProgressionVFXRenderer()
+    private let observatoryAmbientMotion = ObservatoryAmbientMotion()
 
     func attach(to arView: ARView) {
         combatVFXRenderer.onIntentLayoutChanged = { [weak self] in
@@ -1078,6 +1079,7 @@ final class RealitySceneController: ObservableObject {
     func setEnemyIdleMotion(reducedMotion: Bool) {
         requestedReducedMotion = reducedMotion
         updateEnemyIdleMotion(reducedMotion: reducedMotion)
+        observatoryAmbientMotion.setReducedMotion(reducedMotion)
     }
 
     func presentCombat(
@@ -1088,6 +1090,7 @@ final class RealitySceneController: ObservableObject {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
         updateEnemyIdleMotion(reducedMotion: reducedMotion)
+        observatoryAmbientMotion.setReducedMotion(reducedMotion)
         let cues = RealityCombatPresentationMapper.cues(for: events, battleState: battleState)
         guard registry.root != nil else {
             pendingCombatCues.append(contentsOf: cues)
@@ -1104,6 +1107,7 @@ final class RealitySceneController: ObservableObject {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
         updateEnemyIdleMotion(reducedMotion: reducedMotion)
+        observatoryAmbientMotion.setReducedMotion(reducedMotion)
         guard let battleState, registry.root != nil else { return }
         combatVFXRenderer.present(
             RealityCombatPresentationMapper.cues(for: [], battleState: battleState),
@@ -1178,6 +1182,7 @@ final class RealitySceneController: ObservableObject {
     }
 
     func unload() {
+        observatoryAmbientMotion.reset()
         environmentTask?.cancel()
         environmentTask = nil
         arView?.environment.lighting.resource = nil
@@ -1259,10 +1264,11 @@ final class RealitySceneController: ObservableObject {
         registry.rebuild(root: root, descriptor: descriptor)
         if descriptor.sceneID == .floor08AdministratorObservatory {
             // Remove the added flat optical discs, keeping the textured sensor pods.
-            for entity in Array(root.children) where entity.name == "F08B_Sensor_Lens"
-                || entity.name.hasPrefix("F08B_Sensor_Lens_") {
+            for entity in Self.observatoryOpticalDiscs(in: root) {
                 entity.removeFromParent()
             }
+            observatoryAmbientMotion.install(in: root, view: arView)
+            observatoryAmbientMotion.setReducedMotion(requestedReducedMotion)
         }
         if descriptor.sceneID == .floor09ArchiveRedesign {
             installFloor9Lighting(in: root)
@@ -2063,3 +2069,61 @@ extension RealitySceneController {
     }
 }
 #endif
+
+#if DEBUG
+extension RealitySceneController {
+    func runObservatoryAmbientDiagnostics() async {
+        guard requestedSceneID == .floor08AdministratorObservatory,
+              let root = registry.root, let cameraEntity, let arView else { return }
+        await environmentTask?.value
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("AmbientDiagnostics", isDirectory: true)
+        do { try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true) }
+        catch { print("C5_AMBIENT error=\(error)"); return }
+        cameraEntity.look(at: [0, 10, 7.3], from: [0, -5, 4.8], upVector: [0, 0, 1], relativeTo: root)
+        cameraEntity.camera.fieldOfViewInDegrees = 65
+        var frames: [[String: Any]] = []
+        observatoryAmbientMotion.setReducedMotion(true)
+        frames.append(observatoryAmbientMotion.diagnosticSnapshot)
+        observatoryAmbientMotion.setReducedMotion(false)
+        for index in 1...2 {
+            do { try await Task.sleep(for: .seconds(3)) } catch { return }
+            frames.append(observatoryAmbientMotion.diagnosticSnapshot)
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                arView.snapshot(saveToHDR: false) { image in
+                    if let data = image?.pngData() {
+                        try? data.write(to: directory.appendingPathComponent("motion-\(index).png"), options: .atomic)
+                    }
+                    continuation.resume()
+                }
+            }
+        }
+        observatoryAmbientMotion.setReducedMotion(true)
+        frames.append(observatoryAmbientMotion.diagnosticSnapshot)
+        do { try await Task.sleep(for: .milliseconds(250)) } catch { return }
+        frames.append(observatoryAmbientMotion.diagnosticSnapshot)
+        let report: [String: Any] = ["frames": frames,
+            "remainingDiscs": Self.observatoryOpticalDiscs(in: root).count]
+        do {
+            try JSONSerialization.data(withJSONObject: report, options: [.sortedKeys, .prettyPrinted])
+                .write(to: directory.appendingPathComponent("report.json"), options: .atomic)
+            print("C5_AMBIENT complete")
+        } catch { print("C5_AMBIENT error=\(error)") }
+        observatoryAmbientMotion.setReducedMotion(requestedReducedMotion)
+    }
+}
+#endif
+
+private extension RealitySceneController {
+    static func observatoryOpticalDiscs(in root: Entity) -> [Entity] {
+        var result: [Entity] = []
+        for child in root.children {
+            if child.name == "F08B_Sensor_Lens" || child.name.hasPrefix("F08B_Sensor_Lens_") {
+                result.append(child)
+            } else {
+                result.append(contentsOf: observatoryOpticalDiscs(in: child))
+            }
+        }
+        return result
+    }
+}
