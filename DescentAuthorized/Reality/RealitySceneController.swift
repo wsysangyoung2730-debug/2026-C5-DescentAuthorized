@@ -1234,6 +1234,15 @@ final class RealitySceneController: ObservableObject {
     ) {
         let anchor = AnchorEntity(world: .zero)
         anchor.name = "DA_RUNTIME_SCENE_ANCHOR"
+        // These room exports have an identity default prim, authored in meters/Z-up.
+        // Entity.load adds a 0.01 scale without converting the scene's up axis.
+        // Normalize that import wrapper before capturing world-space cameras. This
+        // also gives physical lights and camera animation offsets meter distances.
+        root.transform = Transform(
+            scale: SIMD3<Float>(repeating: 1),
+            rotation: simd_quatf(angle: -.pi / 2, axis: SIMD3<Float>(1, 0, 0)),
+            translation: .zero
+        )
         anchor.addChild(root)
 
         authoredCameraSnapshots = captureAuthoredCameras(in: root, descriptor: descriptor)
@@ -1752,16 +1761,8 @@ extension RealitySceneController {
         let ceiling = UIColor(red: 1, green: 0.95, blue: 0.87, alpha: 1)
         let warm = UIColor(red: 1, green: 0.94, blue: 0.84, alpha: 1)
         let door = UIColor(red: 1, green: 0.70, blue: 0.36, alpha: 1)
-        // RealityKit may normalize a Z-up USD stage to Y-up on import. Compare
-        // an authored lamp with its Blender coordinates before placing lights.
-        let lampTube = root.findEntity(named: "F09D_Lamp_Tube_0")
-        let lampPosition = lampTube?.visualBounds(relativeTo: root).center
-        let isYUp = lampPosition.map { abs($0.y - 7.045) < abs($0.z - 7.045) } ?? false
-        Self.loadLog.notice("lighting.yUp=\(isYUp) lamp=\(String(describing: lampPosition), privacy: .public)")
-        func importedPosition(_ source: SIMD3<Float>) -> SIMD3<Float> {
-            isYUp ? SIMD3(source.x, source.z, -source.y) : source
-        }
-        let upVector: SIMD3<Float> = isYUp ? [0, 0, -1] : [0, 1, 0]
+        // The room root maps authored Z-up coordinates into the Y-up runtime.
+        // Local fixture coordinates remain exactly as exported from Blender.
         // Six working fluorescent fixtures from DA_F09_Archive_Redesign in v022.
         let fixtures: [Fixture] = [
             Fixture(name: "CEILING_0", position: [-6, -3, 6.93], target: [-6, -3, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
@@ -1789,9 +1790,9 @@ extension RealitySceneController {
             lamp.light.attenuationRadius = fixture.radius
             root.addChild(lamp)
             lamp.look(
-                at: importedPosition(fixture.target),
-                from: importedPosition(fixture.position),
-                upVector: upVector,
+                at: fixture.target,
+                from: fixture.position,
+                upVector: [0, 1, 0],
                 relativeTo: root
             )
         }
@@ -1823,12 +1824,6 @@ extension RealitySceneController {
                         ([-8,9,6],[-8,12,1],1700), ([8,10,6],[8,13,1],1700)]
         default: return
         }
-        let matrix = descriptor.cameraNames[.main].flatMap { authoredCameraSnapshots[$0]?.transformMatrix }
-        let cameraPosition = matrix.map {
-            root.convert(position: SIMD3($0.columns.3.x, $0.columns.3.y, $0.columns.3.z), from: nil)
-        }
-        let isYUp = cameraPosition.map { abs($0.y) < abs($0.z) } ?? false
-        func position(_ value: SIMD3<Float>) -> SIMD3<Float> { isYUp ? [value.x,value.z,-value.y] : value }
         for (index, fixture) in fixtures.enumerated() {
             let lamp = SpotLight(); lamp.name = "ROOM_RUNTIME_\(index)"
             lamp.light.color = UIColor(red: 1, green: 0.95, blue: 0.88, alpha: 1)
@@ -1836,8 +1831,8 @@ extension RealitySceneController {
             lamp.light.innerAngleInDegrees = 70; lamp.light.outerAngleInDegrees = 115
             lamp.light.attenuationRadius = 20
             root.addChild(lamp)
-            lamp.look(at: position(fixture.target), from: position(fixture.position),
-                      upVector: isYUp ? [0,0,-1] : [0,1,0], relativeTo: root)
+            lamp.look(at: fixture.target, from: fixture.position,
+                      upVector: [0, 1, 0], relativeTo: root)
         }
     }
 }
