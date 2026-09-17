@@ -194,6 +194,7 @@ struct GameProgressValidator: Sendable {
             .floor8ResidualBattle,
             .floor8ResidualDefeated,
             .floor8SealedDoor,
+            .floor8AdministratorPreparation,
             .floor8AdministratorEncounter,
             .floor8AdministratorBattle,
             .floor8AdministratorDefeated,
@@ -223,6 +224,7 @@ struct GameProgressValidator: Sendable {
             .floor8ResidualBattle,
             .floor8ResidualDefeated,
             .floor8SealedDoor,
+            .floor8AdministratorPreparation,
             .floor8AdministratorBattle,
             .floor8Reward,
             .floor8DescentDoor,
@@ -238,6 +240,7 @@ struct GameProgressValidator: Sendable {
         if [
             SceneID.floor8ResidualDefeated,
             .floor8SealedDoor,
+            .floor8AdministratorPreparation,
             .floor8AdministratorEncounter,
             .floor8AdministratorBattle,
             .floor8AdministratorDefeated,
@@ -253,6 +256,7 @@ struct GameProgressValidator: Sendable {
 
         if [
             SceneID.floor8AdministratorEncounter,
+            .floor8AdministratorPreparation,
             .floor8AdministratorBattle,
             .floor8AdministratorDefeated,
             .floor8Reward,
@@ -328,6 +332,7 @@ struct GameProgressValidator: Sendable {
              .floor8ResidualBattle,
              .floor8ResidualDefeated,
              .floor8SealedDoor,
+             .floor8AdministratorPreparation,
              .floor8AdministratorEncounter,
              .floor8AdministratorBattle,
              .floor8AdministratorDefeated,
@@ -359,7 +364,7 @@ struct GameProgressValidator: Sendable {
             [.residualBattle]
         case .floor8ResidualDefeated, .floor8SealedDoor:
             [.residualDefeated]
-        case .floor8AdministratorEncounter, .floor8AdministratorBattle:
+        case .floor8AdministratorPreparation, .floor8AdministratorEncounter, .floor8AdministratorBattle:
             [.observationBattle]
         case .floor8AdministratorDefeated, .floor8Reward, .floor8DescentDoor:
             [.observationDefeated]

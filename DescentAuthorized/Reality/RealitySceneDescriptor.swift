@@ -340,6 +340,13 @@ struct DemoScenePresentation: Equatable, Sendable {
                 cameraPreset: .descentInput,
                 experience: .floor8Exploration
             )
+        case .floor8AdministratorPreparation:
+            .init(
+                progressSceneID: sceneID,
+                floorSceneID: .floor08ResidueIsolation,
+                cameraPreset: .descentInput,
+                experience: .floor8Exploration
+            )
         case .floor8AdministratorEncounter:
             .init(
                 progressSceneID: sceneID,

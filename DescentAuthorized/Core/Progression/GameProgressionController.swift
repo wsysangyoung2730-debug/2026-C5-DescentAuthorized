@@ -445,8 +445,13 @@ struct GameProgressionController: Sendable {
         progress.tutorials.formUnion([.absoluteBarrier, .dispel, .strongAttack])
         return [
             .checkpointChanged(.observationBattle),
-            .sceneChanged(setScene(.floor8AdministratorEncounter))
+            .sceneChanged(setScene(.floor8AdministratorPreparation))
         ]
+    }
+
+    mutating func enterAdministratorEncounter() throws -> [ProgressionEvent] {
+        try requireScene(.floor8AdministratorPreparation)
+        return [.sceneChanged(setScene(.floor8AdministratorEncounter))]
     }
 
     mutating func beginAdministratorBattle() throws -> [ProgressionEvent] {
@@ -823,7 +828,7 @@ private extension CheckpointID {
         case .residualDefeated:
             (.floor8, .floor8ResidualDefeated)
         case .observationBattle:
-            (.floor8, .floor8AdministratorEncounter)
+            (.floor8, .floor8AdministratorPreparation)
         case .observationDefeated:
             (.floor8, .floor8AdministratorDefeated)
         case .demoComplete:

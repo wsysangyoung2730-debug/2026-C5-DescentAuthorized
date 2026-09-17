@@ -17,7 +17,6 @@ struct DemoFlowView: View {
     @State private var battleTutorialStep: TutorialCoachStep?
     @State private var isNarrativeAutoAdvanceEnabled = true
     @State private var isRewardLearningInputActive = false
-    @State private var hasConfirmedFloor8AdministratorEntry = false
     @StateObject private var sceneController = RealitySceneController()
 
     private let topHUDRailSourceSize = CGSize(width: 1774, height: 887)
@@ -133,12 +132,12 @@ struct DemoFlowView: View {
         }
         .fullScreenCover(item: $preparedBattle) { battle in
             LoadoutPreparationView(onBegin: {
-                if battle.preparesBeforeNarrative {
-                    preparedBeforeNarrative.insert(battle)
-                    preparedBattle = nil
-                } else if gameSession.sendChecked(battle.battleCommand) {
-                    preparedBattle = nil
+                if let command = battle.preparationCompletionCommand,
+                   !gameSession.sendChecked(command) {
+                    return
                 }
+                preparedBeforeNarrative.insert(battle)
+                preparedBattle = nil
             }, onCancel: { preparedBattle = nil })
         }
         .fullScreenCover(isPresented: $isShowingSettings) {
@@ -176,7 +175,6 @@ struct DemoFlowView: View {
             synchronizeFloorMusic()
         }
         .onChange(of: gameSession.progress.currentScene) { _, _ in
-            hasConfirmedFloor8AdministratorEntry = false
             queueEncounterPreparationIfNeeded()
             synchronizeRewardLearningHUD()
             synchronizeFloorMusic()
@@ -761,30 +759,23 @@ struct DemoFlowView: View {
         case .floor9Entrance:
             Floor9EntranceView(sceneController: sceneController)
         case let .narrative(sequence):
-            if sequence == .floor8AdministratorEncounter,
-               !hasConfirmedFloor8AdministratorEntry {
-                FloorEntrancePanel(configuration: .floor8Administrator) {
-                    hasConfirmedFloor8AdministratorEntry = true
-                }
-            } else {
-                BossNarrativeView(
-                    sequence: sequence,
-                    isAutoAdvanceEnabled: $isNarrativeAutoAdvanceEnabled
-                ) {
-                    switch sequence {
-                    case .floor9Encounter:
-                        gameSession.send(.beginRecordsBattle)
-                    case .floor9Defeated:
-                        gameSession.send(.continueAfterRecordsDefeat)
-                    case .floor8ResidualEncounter:
-                        gameSession.send(.beginResidualBattle)
-                    case .floor8ResidualDefeated:
-                        gameSession.send(.continueAfterResidualDefeat)
-                    case .floor8AdministratorEncounter:
-                        preparedBattle = .administrator
-                    case .floor8AdministratorDefeated:
-                        gameSession.send(.continueAfterAdministratorDefeat)
-                    }
+            BossNarrativeView(
+                sequence: sequence,
+                isAutoAdvanceEnabled: $isNarrativeAutoAdvanceEnabled
+            ) {
+                switch sequence {
+                case .floor9Encounter:
+                    gameSession.send(.beginRecordsBattle)
+                case .floor9Defeated:
+                    gameSession.send(.continueAfterRecordsDefeat)
+                case .floor8ResidualEncounter:
+                    gameSession.send(.beginResidualBattle)
+                case .floor8ResidualDefeated:
+                    gameSession.send(.continueAfterResidualDefeat)
+                case .floor8AdministratorEncounter:
+                    gameSession.send(.beginAdministratorBattle)
+                case .floor8AdministratorDefeated:
+                    gameSession.send(.continueAfterAdministratorDefeat)
                 }
             }
         case .battle:
@@ -799,7 +790,10 @@ struct DemoFlowView: View {
                 isLearningInputActive: $isRewardLearningInputActive
             )
         case .floor8Exploration:
-            Floor8ExplorationView(sceneController: sceneController)
+            Floor8ExplorationView(
+                sceneController: sceneController,
+                onPrepareAdministratorEntry: { preparedBattle = .administrator }
+            )
         case let .descent(floor):
             if floor == .floor9 {
                 Floor9DescentDoorView(
@@ -1271,14 +1265,10 @@ private enum SharedHUDPalette {
 private enum PreparedLegacyBattle: String, Identifiable {
     case records, residual, administrator
     var id: String { rawValue }
-    var preparesBeforeNarrative: Bool {
-        self == .records || self == .residual
-    }
-    var battleCommand: DemoCommand {
+    var preparationCompletionCommand: DemoCommand? {
         switch self {
-        case .records: .beginRecordsBattle
-        case .residual: .beginResidualBattle
-        case .administrator: .beginAdministratorBattle
+        case .records, .residual: nil
+        case .administrator: .enterAdministratorEncounter
         }
     }
 }

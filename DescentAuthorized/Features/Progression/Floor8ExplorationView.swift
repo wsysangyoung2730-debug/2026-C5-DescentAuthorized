@@ -5,6 +5,15 @@ struct Floor8ExplorationView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let sceneController: RealitySceneController
+    let onPrepareAdministratorEntry: () -> Void
+
+    init(
+        sceneController: RealitySceneController,
+        onPrepareAdministratorEntry: @escaping () -> Void = {}
+    ) {
+        self.sceneController = sceneController
+        self.onPrepareAdministratorEntry = onPrepareAdministratorEntry
+    }
 
     var body: some View {
         Group {
@@ -54,6 +63,11 @@ struct Floor8ExplorationView: View {
                 }
             } else if gameSession.progress.currentScene == .floor8SealedDoor {
                 sealedDoor
+            } else if gameSession.progress.currentScene == .floor8AdministratorPreparation {
+                FloorEntrancePanel(
+                    configuration: .floor8Administrator,
+                    action: onPrepareAdministratorEntry
+                )
             } else {
                 ZStack {
                     LinearGradient(

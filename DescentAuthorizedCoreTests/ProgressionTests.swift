@@ -101,6 +101,8 @@ final class ProgressionTests: XCTestCase {
         _ = try controller.continueAfterResidualDefeat()
         _ = try controller.completeScrollLearning(spell: .sealRelease, grade: .approved)
         _ = try controller.releaseObservationDoor()
+        XCTAssertEqual(controller.progress.currentScene, .floor8AdministratorPreparation)
+        _ = try controller.enterAdministratorEncounter()
         _ = try controller.beginAdministratorBattle()
         _ = try controller.completeEncounter(
             enemy: .observationAdministrator,
@@ -200,6 +202,7 @@ final class ProgressionTests: XCTestCase {
         _ = try controller.continueAfterResidualDefeat()
         _ = try controller.completeScrollLearning(spell: .sealRelease, grade: .approved)
         _ = try controller.releaseObservationDoor()
+        _ = try controller.enterAdministratorEncounter()
         _ = try controller.beginAdministratorBattle()
         _ = try controller.completeEncounter(
             enemy: .observationAdministrator,

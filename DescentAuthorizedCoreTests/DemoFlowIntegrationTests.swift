@@ -42,6 +42,8 @@ final class DemoFlowIntegrationTests: XCTestCase {
         ))
 
         _ = try session.handle(.releaseObservationDoor)
+        XCTAssertEqual(session.progress.currentScene, .floor8AdministratorPreparation)
+        _ = try session.handle(.enterAdministratorEncounter)
         _ = try session.handle(.beginAdministratorBattle)
         try winCurrentEncounter(in: &session)
         _ = try session.handle(.continueAfterAdministratorDefeat)
