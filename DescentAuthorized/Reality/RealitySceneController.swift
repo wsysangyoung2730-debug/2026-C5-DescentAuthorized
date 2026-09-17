@@ -1257,6 +1257,13 @@ final class RealitySceneController: ObservableObject {
         sceneAnchor = anchor
         cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
+        if descriptor.sceneID == .floor08AdministratorObservatory {
+            // Remove the added flat optical discs, keeping the textured sensor pods.
+            for entity in Array(root.children) where entity.name == "F08B_Sensor_Lens"
+                || entity.name.hasPrefix("F08B_Sensor_Lens_") {
+                entity.removeFromParent()
+            }
+        }
         if descriptor.sceneID == .floor09ArchiveRedesign {
             installFloor9Lighting(in: root)
         } else {
