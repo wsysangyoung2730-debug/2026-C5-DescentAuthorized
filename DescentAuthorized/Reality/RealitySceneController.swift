@@ -1986,3 +1986,74 @@ private final class PreparedRealityAssets {
         return await environmentTasks[sceneID]?.value
     }
 }
+
+
+#if DEBUG
+extension RealitySceneController {
+    /// Opt-in, fixed-input comparison. Runs only inside the asset preview.
+    /// Writes diagnostic images and transforms, never gameplay progress.
+    func runDeviceRenderDiagnostics() async {
+        guard ProcessInfo.processInfo.arguments.contains("--render-diagnostics"),
+              let cameraEntity, let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName], let arView else { return }
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("RenderDiagnostics", isDirectory: true)
+        do { try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true) }
+        catch { print("C5_RENDER_DIAGNOSTICS error=\(error)"); return }
+        let initialMatrix = cameraEntity.transformMatrix(relativeTo: nil)
+        let initialYaw = battleCameraYaw
+        let initialPitch = battleCameraPitch
+        defer {
+            cameraEntity.setTransformMatrix(initialMatrix, relativeTo: nil)
+            battleCameraYaw = initialYaw
+            battleCameraPitch = initialPitch
+        }
+        func values(_ matrix: simd_float4x4) -> [Float] {
+            (0..<4).flatMap { column in (0..<4).map { matrix[column][$0] } }
+        }
+        func capture(_ label: String) async {
+            do { try await Task.sleep(for: .seconds(1)) } catch { return }
+            let matrix = cameraEntity.transformMatrix(relativeTo: nil)
+            let report: [String: Any] = [
+                "event": label, "os": UIDevice.current.systemVersion,
+                "scene": requestedSceneID?.rawValue ?? "", "quality": graphicsQuality.rawValue,
+                "camera": activeCameraName, "yaw": battleCameraYaw, "pitch": battleCameraPitch,
+                "rootMatrix": values(registry.root?.transformMatrix(relativeTo: nil) ?? matrix_identity_float4x4),
+                "authoredCamera": values(snapshot.transformMatrix),
+                "decomposedAuthored": values(Transform(matrix: snapshot.transformMatrix).matrix),
+                "entityCamera": values(matrix), "renderedCamera": values(arView.cameraTransform.matrix),
+                "fov": cameraEntity.camera.fieldOfViewInDegrees,
+                "environmentExponent": arView.environment.lighting.intensityExponent,
+                "environmentLoaded": arView.environment.lighting.resource != nil,
+                "viewportWidth": arView.bounds.width, "viewportHeight": arView.bounds.height
+            ]
+            do {
+                let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+                try data.write(to: directory.appendingPathComponent(label + ".json"), options: .atomic)
+                print("C5_RENDER_DIAGNOSTICS \(String(decoding: data, as: UTF8.self))")
+            } catch { print("C5_RENDER_DIAGNOSTICS error=\(error)") }
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                arView.snapshot(saveToHDR: false) { image in
+                    if let data = image?.pngData() {
+                        try? data.write(to: directory.appendingPathComponent(label + ".png"), options: .atomic)
+                    }
+                    continuation.resume()
+                }
+            }
+        }
+        // Await the existing lighting task so both captures include the same environment.
+        await environmentTask?.value
+        guard !Task.isCancelled else { return }
+        await capture("01-baseline")
+        battleCameraYaw = 0.2
+        battleCameraPitch = 0
+        cameraEntity.setTransformMatrix(adjustedBattleCameraMatrix(from: snapshot), relativeTo: nil)
+        await capture("02-yaw")
+        guard !Task.isCancelled else { return }
+        cameraEntity.setTransformMatrix(floor10OpeningTransform(from: snapshot, yaw: -0.12,
+            pitch: 0.2, roll: -0.28, verticalOffset: -0.72, forwardOffset: -0.08).matrix, relativeTo: nil)
+        await capture("03-fallen")
+        print("C5_RENDER_DIAGNOSTICS complete")
+    }
+}
+#endif
