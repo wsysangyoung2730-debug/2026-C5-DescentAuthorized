@@ -387,7 +387,11 @@ struct DescentSealProcedureView: View {
             onNext: advanceCoach,
             onSkip: skipCoach
         )
-        .onAppear {
+        .task {
+            // Restore approval after the parent's scene reset, regardless of
+            // SwiftUI's parent/child onAppear ordering.
+            await Task.yield()
+            guard !Task.isCancelled else { return }
             if completedStageCount == configuration.stages.count {
                 phase = .approved
                 onStateChanged(.approved)

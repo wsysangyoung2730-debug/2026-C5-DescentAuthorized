@@ -219,16 +219,17 @@ struct DemoFlowView: View {
     }
 
     private func synchronizeRewardLearningHUD() {
-        guard case let .reward(floor) = gameSession.presentation.experience else {
+        let candidates: [RewardCandidate]
+        if let current = gameSession.progress.expansion, current.stage == .reward {
+            candidates = RewardCatalog.candidates(forFloorNumber: current.floorNumber)
+        } else if case let .reward(floor) = gameSession.presentation.experience {
+            candidates = RewardCatalog.candidates(for: floor)
+        } else {
             isRewardLearningInputActive = false
             return
         }
-
-        let hasPendingLearning = RewardCatalog.candidates(for: floor).contains { candidate in
-            gameSession.progress.selectedRewardIDs.contains(candidate.id)
-        }
-        if hasPendingLearning {
-            isRewardLearningInputActive = true
+        isRewardLearningInputActive = candidates.contains {
+            gameSession.progress.selectedRewardIDs.contains($0.id)
         }
     }
 
@@ -440,6 +441,7 @@ struct DemoFlowView: View {
     }
 
     private var isNarrativePresentation: Bool {
+        if gameSession.progress.expansion?.stage == .reward { return true }
         switch gameSession.presentation.experience {
         case .narrative, .reward:
             return true
@@ -449,6 +451,7 @@ struct DemoFlowView: View {
     }
 
     private var showsRewardLearningTopBar: Bool {
+        if gameSession.progress.expansion?.stage == .reward { return isRewardLearningInputActive }
         guard case .reward = gameSession.presentation.experience else { return false }
         return isRewardLearningInputActive
     }
@@ -814,7 +817,7 @@ struct DemoFlowView: View {
                 )
             }
         case .completion:
-            ExpansionFlowView(sceneController: sceneController, retryLoadingPresentation: $retryLoadingPresentation, onExit: onExit)
+            ExpansionFlowView(sceneController: sceneController, retryLoadingPresentation: $retryLoadingPresentation, onExit: onExit, learningInputActive: $isRewardLearningInputActive)
                 .id("\(gameSession.progress.expansion?.floorNumber ?? 7)-\(gameSession.progress.expansion?.stage.rawValue ?? "entrance")")
         }
     }

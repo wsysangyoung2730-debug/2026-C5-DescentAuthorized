@@ -111,7 +111,13 @@ final class ExpansionIntegrationTests: XCTestCase {
             XCTAssertEqual(progress.progress.expansion?.descentStage, 1)
             XCTAssertThrowsError(try progress.advanceExpansion())
             try progress.approveExpansionStage(2)
+            // Relaunch after the final glyph but before the door transition.
+            progress = GameProgressionController(progress: try JSONDecoder().decode(GameProgress.self, from: JSONEncoder().encode(progress.progress)))
+            XCTAssertEqual(ExpansionSceneRoute(try XCTUnwrap(progress.progress.expansion))?.camera, .descentInput)
+            XCTAssertEqual(progress.progress.expansion?.descentStage, 2)
             _ = try progress.advanceExpansion()
+            XCTAssertEqual(progress.progress.expansion?.floorNumber, floor - 1)
+            XCTAssertEqual(progress.progress.expansion?.descentStage, 0)
             try GameProgressValidator().validate(progress.progress)
         }
         XCTAssertTrue(progress.progress.expansion?.isComplete == true)

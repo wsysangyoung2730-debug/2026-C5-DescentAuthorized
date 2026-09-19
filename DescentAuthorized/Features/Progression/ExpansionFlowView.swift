@@ -9,7 +9,7 @@ struct ExpansionFlowView: View {
     @Binding var retryLoadingPresentation: SceneRetryLoadingPresentation?
     let onExit: () -> Void
     @State private var showsBag = false
-    @State private var learningInputActive = false
+    @Binding var learningInputActive: Bool
     @State private var practiceSpell: SpellID?
     @State private var showsPractice = false
 
@@ -40,6 +40,7 @@ struct ExpansionFlowView: View {
     private func synchronizeScene(_ current: ExpansionProgress) {
         let hidden: [ExpansionStage] = [.sealedDoor, .reward, .descent, .learnDebuff, .complete]
         sceneController.setEnemyPreviewVisible(!hidden.contains(current.stage))
+        sceneController.setLimitedCameraInteractionEnabled(current.stage.isBattle)
         sceneController.setActorMotionSuspended(inheritedInputSuspension || combatGuide != nil)
         switch current.stage {
         case .preparation, .bossPreparation, .entrance:
