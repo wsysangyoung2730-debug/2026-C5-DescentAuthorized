@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DemoFlowView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @EnvironmentObject private var gameSession: GameSessionStore
     @EnvironmentObject private var appSettings: AppSettings
@@ -135,7 +136,7 @@ struct DemoFlowView: View {
         .ignoresSafeArea(edges: .top)
         .environment(
             \.isGlyphInputSuspended,
-            isShowingPauseMenu || isShowingSettings || retryLoadingPresentation != nil
+            isShowingPauseMenu || isShowingSettings || retryLoadingPresentation != nil || scenePhase != .active
         )
         .sheet(isPresented: $isShowingPauseMenu) {
             PauseMenuView(
