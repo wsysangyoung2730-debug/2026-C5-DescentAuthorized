@@ -6,6 +6,7 @@ struct Floor9EntranceView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let sceneController: RealitySceneController
+    var onPrepareEntry: () -> Void = {}
 
     var body: some View {
         InvestigationFlow(
@@ -283,7 +284,11 @@ struct Floor9EntranceView: View {
     private var enterButton: some View {
         Button {
             gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-            gameSession.send(.enterRecordsBattle)
+            if gameSession.progress.currentScene == .floor9RecordsPreparation {
+                onPrepareEntry()
+            } else {
+                gameSession.send(.enterRecordsBattle)
+            }
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "door.left.hand.open")

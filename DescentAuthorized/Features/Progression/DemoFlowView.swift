@@ -9,7 +9,6 @@ struct DemoFlowView: View {
     let onSystemOverlayVisibilityChange: (Bool) -> Void
 
     @State private var preparedBattle: PreparedLegacyBattle?
-    @State private var preparedBeforeNarrative: Set<PreparedLegacyBattle> = []
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
     @State private var retryLoadingPresentation: SceneRetryLoadingPresentation?
@@ -45,7 +44,7 @@ struct DemoFlowView: View {
                 Color.black.ignoresSafeArea()
             }
 
-            if isPresentationReady {
+            if isPresentationReady && preparedBattle == nil {
                 if showsFloor10Opening {
                     Floor10OpeningExperienceView(
                         sceneController: sceneController,
@@ -90,6 +89,19 @@ struct DemoFlowView: View {
                 }
             }
 
+            if let battle = preparedBattle {
+                LoadoutPreparationView(onBegin: {
+                    withAnimation(preparationTransition) {
+                        guard gameSession.sendChecked(battle.preparationCompletionCommand) else { return }
+                        preparedBattle = nil
+                    }
+                }, onCancel: {
+                    withAnimation(preparationTransition) { preparedBattle = nil }
+                })
+                .transition(.opacity)
+                .zIndex(10)
+            }
+
             Color.black
                 .opacity(sceneController.cameraFadeOpacity)
                 .ignoresSafeArea()
@@ -130,23 +142,6 @@ struct DemoFlowView: View {
                 onExitToTitle: onExit
             )
         }
-        .fullScreenCover(item: $preparedBattle) { battle in
-            LoadoutPreparationView(onBegin: {
-                if let command = battle.preparationCompletionCommand,
-                   !gameSession.sendChecked(command) {
-                    return
-                }
-                preparedBeforeNarrative.insert(battle)
-                preparedBattle = nil
-            }, onCancel: {
-                preparedBattle = nil
-                guard battle.preparationCompletionCommand == nil else { return }
-                Task { @MainActor in
-                    await Task.yield()
-                    queueEncounterPreparationIfNeeded()
-                }
-            })
-        }
         .fullScreenCover(isPresented: $isShowingSettings) {
             SettingsView()
         }
@@ -182,7 +177,6 @@ struct DemoFlowView: View {
             synchronizeFloorMusic()
         }
         .onChange(of: gameSession.progress.currentScene) { _, _ in
-            resetPreparationAfterBattleEntry()
             queueEncounterPreparationIfNeeded()
             synchronizeRewardLearningHUD()
             synchronizeFloorMusic()
@@ -204,32 +198,19 @@ struct DemoFlowView: View {
         onSystemOverlayVisibilityChange(isShowingPauseMenu || isShowingSettings)
     }
 
-    private func queueEncounterPreparationIfNeeded() {
-        let battle: PreparedLegacyBattle?
-        switch gameSession.progress.currentScene {
-        case .floor9RecordsEncounter:
-            battle = .records
-        case .floor8ResidualEncounter:
-            battle = .residual
-        default:
-            battle = nil
-        }
-        guard let battle,
-              !preparedBeforeNarrative.contains(battle),
-              preparedBattle == nil else { return }
-        preparedBattle = battle
+    private var preparationTransition: Animation? {
+        appSettings.reducedMotion ? nil : .easeInOut(duration: 0.24)
     }
 
-    private func resetPreparationAfterBattleEntry() {
+    private func showPreparation(_ battle: PreparedLegacyBattle) {
+        withAnimation(preparationTransition) { preparedBattle = battle }
+    }
+
+    private func queueEncounterPreparationIfNeeded() {
         switch gameSession.progress.currentScene {
-        case .floor9RecordsBattle:
-            preparedBeforeNarrative.remove(.records)
-        case .floor8ResidualBattle:
-            preparedBeforeNarrative.remove(.residual)
-        case .floor8AdministratorBattle:
-            preparedBeforeNarrative.remove(.administrator)
-        default:
-            break
+        case .floor9RecordsPreparation: showPreparation(.records)
+        case .floor8ResidualPreparation: showPreparation(.residual)
+        default: break
         }
     }
 
@@ -778,7 +759,7 @@ struct DemoFlowView: View {
                 retryLoadingPresentation: $retryLoadingPresentation
             )
         case .floor9Entrance:
-            Floor9EntranceView(sceneController: sceneController)
+            Floor9EntranceView(sceneController: sceneController, onPrepareEntry: { showPreparation(.records) })
         case let .narrative(sequence):
             BossNarrativeView(
                 sequence: sequence,
@@ -813,7 +794,8 @@ struct DemoFlowView: View {
         case .floor8Exploration:
             Floor8ExplorationView(
                 sceneController: sceneController,
-                onPrepareAdministratorEntry: { preparedBattle = .administrator }
+                onPrepareResidualEntry: { showPreparation(.residual) },
+                onPrepareAdministratorEntry: { showPreparation(.administrator) }
             )
         case let .descent(floor):
             if floor == .floor9 {
@@ -1286,9 +1268,10 @@ private enum SharedHUDPalette {
 private enum PreparedLegacyBattle: String, Identifiable {
     case records, residual, administrator
     var id: String { rawValue }
-    var preparationCompletionCommand: DemoCommand? {
+    var preparationCompletionCommand: DemoCommand {
         switch self {
-        case .records, .residual: nil
+        case .records: .enterRecordsEncounter
+        case .residual: .enterResidualEncounter
         case .administrator: .enterAdministratorEncounter
         }
     }

@@ -39,9 +39,12 @@ struct GameProgressionController: Sendable {
         self.progress = progress
         self.progress.synchronizeLoadout()
         switch self.progress.currentScene {
-        case .floor9RecordsBattle: self.progress.currentScene = .floor9RecordsEncounter; self.progress.playerHP = 100
-        case .floor8ResidualBattle: self.progress.currentScene = .floor8ResidualEncounter; self.progress.playerHP = 100
-        case .floor8AdministratorBattle: self.progress.currentScene = .floor8AdministratorEncounter; self.progress.playerHP = 100
+        case .floor9RecordsBattle: self.progress.currentScene = .floor9RecordsPreparation; self.progress.playerHP = 100
+        case .floor8ResidualBattle: self.progress.currentScene = .floor8ResidualPreparation; self.progress.playerHP = 100
+        case .floor8AdministratorBattle: self.progress.currentScene = .floor8AdministratorPreparation; self.progress.playerHP = 100
+        case .floor9RecordsEncounter: self.progress.currentScene = .floor9RecordsPreparation
+        case .floor8ResidualEncounter: self.progress.currentScene = .floor8ResidualPreparation
+        case .floor8AdministratorEncounter: self.progress.currentScene = .floor8AdministratorPreparation
         default: break
         }
         if let expansion = self.progress.expansion, expansion.stage.isBattle {
@@ -369,8 +372,13 @@ struct GameProgressionController: Sendable {
         progress.tutorials.formUnion([.mana, .strokeCount, .enemyIntent, .hp])
         return [
             .checkpointChanged(.recordsBattle),
-            .sceneChanged(setScene(.floor9RecordsEncounter))
+            .sceneChanged(setScene(.floor9RecordsPreparation))
         ]
+    }
+
+    mutating func enterRecordsEncounter() throws -> [ProgressionEvent] {
+        try requireScene(.floor9RecordsPreparation)
+        return [.sceneChanged(setScene(.floor9RecordsEncounter))]
     }
 
     mutating func beginRecordsBattle() throws -> [ProgressionEvent] {
@@ -392,7 +400,7 @@ struct GameProgressionController: Sendable {
             reachCheckpoint(.residualBattle)
             return [
                 .checkpointChanged(.residualBattle),
-                .sceneChanged(setScene(.floor8ResidualEncounter))
+                .sceneChanged(setScene(.floor8ResidualPreparation))
             ]
         }
         return move(to: .floor8ProtectionRoom)
@@ -422,8 +430,13 @@ struct GameProgressionController: Sendable {
             .trainingCompleted(spell: .basicBarrier, grade: grade),
             updateMastery(spell: .basicBarrier, grade: grade),
             .checkpointChanged(.residualBattle),
-            .sceneChanged(setScene(.floor8ResidualEncounter))
+            .sceneChanged(setScene(.floor8ResidualPreparation))
         ]
+    }
+
+    mutating func enterResidualEncounter() throws -> [ProgressionEvent] {
+        try requireScene(.floor8ResidualPreparation)
+        return [.sceneChanged(setScene(.floor8ResidualEncounter))]
     }
 
     mutating func beginResidualBattle() throws -> [ProgressionEvent] {
@@ -498,9 +511,9 @@ struct GameProgressionController: Sendable {
         var events = try restartCurrentEncounter()
         let scene: SceneID
         switch progress.currentScene {
-        case .floor9RecordsBattle: scene = .floor9RecordsEncounter
-        case .floor8ResidualBattle: scene = .floor8ResidualEncounter
-        case .floor8AdministratorBattle: scene = .floor8AdministratorEncounter
+        case .floor9RecordsBattle: scene = .floor9RecordsPreparation
+        case .floor8ResidualBattle: scene = .floor8ResidualPreparation
+        case .floor8AdministratorBattle: scene = .floor8AdministratorPreparation
         default: throw ProgressionError.requirementMissing("재도전할 전투")
         }
         events.append(.sceneChanged(setScene(scene)))
@@ -818,13 +831,13 @@ private extension CheckpointID {
         case .floor10Complete:
             (.floor9, .floor9Entrance)
         case .recordsBattle:
-            (.floor9, .floor9RecordsEncounter)
+            (.floor9, .floor9RecordsPreparation)
         case .recordsDefeated:
             (.floor9, .floor9RecordsDefeated)
         case .floor8Start:
             (.floor8, .floor8Antechamber)
         case .residualBattle:
-            (.floor8, .floor8ResidualEncounter)
+            (.floor8, .floor8ResidualPreparation)
         case .residualDefeated:
             (.floor8, .floor8ResidualDefeated)
         case .observationBattle:

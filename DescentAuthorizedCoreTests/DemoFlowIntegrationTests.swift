@@ -2,6 +2,50 @@ import XCTest
 @testable import DescentAuthorizedCore
 
 final class DemoFlowIntegrationTests: XCTestCase {
+    func testRecordsPreparationWaitsForExplicitStartAndSurvivesRestore() throws {
+        var seed = GameProgress.newGame
+        seed.furthestCheckpoint = .recordsBattle
+        var session = DemoGameSession(progress: seed)
+        _ = try session.handle(.travelToCheckpoint(.recordsBattle))
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsPreparation)
+        XCTAssertThrowsError(try session.handle(.beginRecordsBattle))
+        XCTAssertNil(session.encounter)
+        XCTAssertNoThrow(try GameProgressValidator().validate(session.progress))
+
+        let store = InMemoryGameSaveStore()
+        try session.save(to: store)
+        session = try DemoGameSession.restore(from: store)
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsPreparation)
+        _ = try session.handle(.configureLoadout([.riftSeverance], protectedAttack: nil, protectedDefense: nil))
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsPreparation)
+        _ = try session.handle(.enterRecordsEncounter)
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsEncounter)
+        XCTAssertThrowsError(try session.handle(.enterRecordsEncounter))
+        XCTAssertNil(session.encounter)
+        _ = try session.handle(.beginRecordsBattle)
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsBattle)
+    }
+
+    func testLegacyEncounterSaveReturnsToPreparationWithoutLosingHP() throws {
+        for (checkpoint, encounter, preparation) in [
+            (CheckpointID.recordsBattle, SceneID.floor9RecordsEncounter, SceneID.floor9RecordsPreparation),
+            (.residualBattle, .floor8ResidualEncounter, .floor8ResidualPreparation),
+            (.observationBattle, .floor8AdministratorEncounter, .floor8AdministratorPreparation)
+        ] {
+            var seed = GameProgress.newGame
+            seed.furthestCheckpoint = .observationBattle
+            var controller = GameProgressionController(progress: seed)
+            _ = try controller.travel(to: checkpoint)
+            var progress = controller.progress
+            progress.currentScene = encounter
+            progress.playerHP = 73
+            let session = DemoGameSession(progress: progress)
+            XCTAssertEqual(session.progress.currentScene, preparation)
+            XCTAssertEqual(session.progress.playerHP, 73)
+            XCTAssertNoThrow(try GameProgressValidator().validate(session.progress))
+        }
+    }
+
     func testReferencePlaythroughReachesDemoEndingThroughAllBattles() throws {
         var session = DemoGameSession()
 
@@ -19,6 +63,7 @@ final class DemoFlowIntegrationTests: XCTestCase {
         _ = try session.handle(.approveDescentDoor)
 
         _ = try session.handle(.enterRecordsBattle)
+        _ = try session.handle(.enterRecordsEncounter)
         _ = try session.handle(.beginRecordsBattle)
         try winCurrentEncounter(in: &session)
         _ = try session.handle(.continueAfterRecordsDefeat)
@@ -32,6 +77,7 @@ final class DemoFlowIntegrationTests: XCTestCase {
         _ = try session.handle(.enterProtectionRoom)
         _ = try session.handle(.learnSpell(.basicBarrier))
         _ = try session.handle(.completeProtectionTraining(grade: .perfect))
+        _ = try session.handle(.enterResidualEncounter)
         _ = try session.handle(.beginResidualBattle)
         try winCurrentEncounter(in: &session)
 
