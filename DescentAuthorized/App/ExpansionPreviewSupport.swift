@@ -9,9 +9,25 @@ enum ExpansionPreviewSupport {
               let floor = Int(args[index + 1]), (5...7).contains(floor) else { return nil }
         return floor
     }
+    static var loadoutFloor: Int? {
+        let args = ProcessInfo.processInfo.arguments
+        guard let index = args.firstIndex(of: "--preview-loadout-floor"), args.indices.contains(index + 1),
+              let floor = Int(args[index + 1]), (8...9).contains(floor) else { return nil }
+        return floor
+    }
+
     static var isBattle: Bool { ProcessInfo.processInfo.arguments.contains("--preview-battle") }
     static var isBoss: Bool { ProcessInfo.processInfo.arguments.contains("--preview-boss") }
     static func makeStore() -> (any GameSaveStore)? {
+        if let loadoutFloor {
+            var seed = GameProgress.newGame
+            seed.furthestCheckpoint = .observationBattle
+            var controller = GameProgressionController(progress: seed)
+            do {
+                _ = try controller.travel(to: loadoutFloor == 9 ? .recordsBattle : (isBoss ? .observationBattle : .residualBattle))
+                return InMemoryGameSaveStore(progress: controller.progress)
+            } catch { return nil }
+        }
         guard let floor else { return nil }
         var seed = GameProgress.newGame
         seed.furthestCheckpoint = .demoComplete
