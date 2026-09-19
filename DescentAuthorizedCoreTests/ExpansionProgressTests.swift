@@ -3,6 +3,22 @@ import XCTest
 @testable import DescentAuthorizedCore
 
 final class ExpansionProgressTests: XCTestCase {
+    func testUnlearnedDefenseDoesNotAppearInPreparationRequirements() {
+        let learned: Set<SpellID> = [.afterglowErasure, .riftSeverance]
+        XCTAssertEqual(LoadoutRules.learnedProtectionCategories(in: learned), [.attack])
+        XCTAssertFalse(LoadoutRules.protectionSummary(for: learned).contains("방어"))
+        XCTAssertFalse(LoadoutRules.protectionSummary(for: learned).contains("봉인 해제"))
+        XCTAssertTrue(LoadoutRules.issues(for: [.riftSeverance], learned: learned).isEmpty)
+    }
+
+    func testLearnedDefenseStillRequiresEquippingAndShowsProtection() {
+        let learned: Set<SpellID> = [.riftSeverance, .basicBarrier, .sealRelease]
+        XCTAssertEqual(LoadoutRules.learnedProtectionCategories(in: learned), [.attack, .defense])
+        XCTAssertTrue(LoadoutRules.protectionSummary(for: learned).contains("방어"))
+        XCTAssertEqual(LoadoutRules.issues(for: [.riftSeverance, .sealRelease], learned: learned), [.missingDefense])
+        XCTAssertTrue(LoadoutRules.issues(for: [.riftSeverance, .basicBarrier, .sealRelease], learned: learned).isEmpty)
+    }
+
     func testLegacySaveMigratesLearnedCardsAndKeepsFurthestCheckpoint() throws {
         var original = GameProgress.newGame
         original.learnedSpells = [.afterglowErasure, .riftSeverance, .basicBarrier, .sealRelease]

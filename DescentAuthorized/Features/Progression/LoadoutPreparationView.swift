@@ -542,14 +542,19 @@ struct LoadoutPreparationView: View {
             Label("봉인 보호", systemImage: "lock.shield.fill")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(DAColor.gold)
-            Text("공격·방어 주문 각 하나와 봉인 해제는 자동으로 보호됩니다.")
+            Text(LoadoutRules.protectionSummary(for: gameSession.progress.learnedSpells))
                 .font(.caption)
                 .foregroundStyle(DAColor.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            protectionRow(title: "보호 중인 공격 주문", name: protectedAttack.map { SpellCatalog.spell($0).name },
-                          missing: "공격 주문을 추가해 주세요", icon: "burst.fill", color: DAColor.attack)
-            protectionRow(title: "보호 중인 방어 주문", name: protectedDefense.map { SpellCatalog.spell($0).name },
-                          missing: "방어 주문을 추가해 주세요", icon: "shield.fill", color: DAColor.defense)
+            ForEach(LoadoutRules.learnedProtectionCategories(in: gameSession.progress.learnedSpells), id: \.self) { category in
+                protectionRow(
+                    title: "보호 중인 \(categoryTitle(category)) 주문",
+                    name: (category == .attack ? protectedAttack : protectedDefense).map { SpellCatalog.spell($0).name },
+                    missing: "\(categoryTitle(category)) 주문을 추가해 주세요",
+                    icon: category == .attack ? "burst.fill" : "shield.fill",
+                    color: categoryColor(category)
+                )
+            }
             if gameSession.progress.learnedSpells.contains(.sealRelease) {
                 protectionRow(title: "봉인 해제", name: selected.contains(.sealRelease) ? "필수 보호 적용" : nil,
                               missing: "전투 편성에 추가해야 합니다", icon: "lock.shield.fill", color: DAColor.gold)

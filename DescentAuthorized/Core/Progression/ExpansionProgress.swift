@@ -76,6 +76,19 @@ enum LoadoutValidationIssue: Equatable, Sendable {
 enum LoadoutRules {
     static let maximumEquipped = 6
 
+    static func learnedProtectionCategories(in learned: Set<SpellID>) -> [SpellCategory] {
+        [.attack, .defense].filter { role in
+            learned.contains { category(of: $0) == role }
+        }
+    }
+
+    static func protectionSummary(for learned: Set<SpellID>) -> String {
+        var roles = learnedProtectionCategories(in: learned).map { $0 == .attack ? "공격 주문 하나" : "방어 주문 하나" }
+        if learned.contains(.sealRelease) { roles.append("봉인 해제") }
+        return roles.isEmpty ? "주문을 배우면 봉인 보호 상태를 확인할 수 있습니다."
+            : roles.joined(separator: ", ") + "는 자동으로 봉인에서 보호됩니다."
+    }
+
     static func defaultSpells(from learned: Set<SpellID>) -> [SpellID] {
         normalized(SpellID.allCases.filter(learned.contains), learned: learned)
     }
