@@ -174,6 +174,7 @@ private struct BattleUIPresentation {
 }
 
 struct BattleView: View {
+    @Environment(\.isGlyphInputSuspended) private var isInputSuspended
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
@@ -341,10 +342,11 @@ struct BattleView: View {
             let isDefeated = presentation.phase == .defeat
             let bottomBarHeight: CGFloat = isDefeated ? 0 : 242
             let horizontalContentInset: CGFloat = 18
+            let verticalContentInset: CGFloat = 10
             let contentWidth = max(0, proxy.size.width - (horizontalContentInset * 2))
             let inputPanelWidth = min(520, max(390, contentWidth * 0.36))
             let inputPanelHeight = min(390, max(280, inputPanelWidth * 0.76))
-            let stageHeight = proxy.size.height - bottomBarHeight
+            let stageHeight = max(0, proxy.size.height - verticalContentInset * 2 - bottomBarHeight)
             let inputPanelCenterY = min(
                 stageHeight * 0.55,
                 stageHeight - (inputPanelHeight / 2) - 12
@@ -430,7 +432,7 @@ struct BattleView: View {
                     .allowsHitTesting(false)
             }
             .padding(.horizontal, horizontalContentInset)
-            .padding(.vertical, 10)
+            .padding(.vertical, verticalContentInset)
         }
     }
 
@@ -461,6 +463,7 @@ struct BattleView: View {
         DragGesture(minimumDistance: 4)
             .onChanged { value in
                 guard isBattleScene, realitySceneID != nil,
+                      !isInputSuspended, detailedSpell == nil, !showsFirstTurnBriefing,
                       gameSession.battleState?.phase != .defeat,
                       !isCameraZooming,
                       CGRect(origin: .zero, size: viewportSize).contains(value.startLocation),

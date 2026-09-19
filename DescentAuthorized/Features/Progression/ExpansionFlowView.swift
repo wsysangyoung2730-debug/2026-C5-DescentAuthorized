@@ -23,7 +23,9 @@ struct ExpansionFlowView: View {
                     .environment(\.isGlyphInputSuspended, inheritedInputSuspension || combatGuide != nil)
                 if let guide = combatGuide { ExpansionCombatGuideView(guide: guide) }
             }
-            .task(id: current.stage) { synchronizeScene(current) }
+            .task(id: current.stage) {
+                synchronizeScene(current)
+            }
             .onChange(of: inheritedInputSuspension) { _, suspended in
                 sceneController.setActorMotionSuspended(suspended || combatGuide != nil)
             }
@@ -39,8 +41,15 @@ struct ExpansionFlowView: View {
 
     private func synchronizeScene(_ current: ExpansionProgress) {
         let hidden: [ExpansionStage] = [.sealedDoor, .reward, .descent, .learnDebuff, .complete]
-        // InvestigationFlow owns visibility and camera locking until entry finishes.
-        if current.stage != .entrance && current.stage != .preparation {
+        // Initialize entry before the first frame; InvestigationFlow then owns
+        // the transition from exploration to the locked enemy reveal.
+        if current.stage == .entrance || current.stage == .preparation {
+            let completed = ExpansionInvestigationCatalog.isComplete(
+                floor: current.floorNumber, readRecordIDs: gameSession.progress.readRecordIDs
+            )
+            sceneController.setEnemyPreviewVisible(completed)
+            sceneController.setLimitedCameraInteractionEnabled(!completed)
+        } else {
             sceneController.setEnemyPreviewVisible(!hidden.contains(current.stage))
             sceneController.setLimitedCameraInteractionEnabled(current.stage.isBattle)
         }
