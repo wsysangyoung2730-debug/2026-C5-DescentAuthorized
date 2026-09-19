@@ -57,7 +57,9 @@ struct LoadoutPreparationView: View {
                 HStack(alignment: .top, spacing: 16) {
                     VStack(spacing: 14) {
                         equippedSection
+                            .tutorialTarget("loadout.slots")
                         collection
+                            .tutorialTarget("loadout.collection")
                     }
                     .padding(24)
                     .background {
@@ -77,6 +79,8 @@ struct LoadoutPreparationView: View {
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 16)
+            .allowsHitTesting(preparationCoachStep == nil)
+            .accessibilityHidden(preparationCoachStep != nil)
             .background {
                 ZStack {
                     LinearGradient(
@@ -94,8 +98,74 @@ struct LoadoutPreparationView: View {
                 .ignoresSafeArea()
             }
         }
+        .tutorialCoach(
+            step: preparationCoachStep,
+            nextTitle: guideStep == .loadoutStart ? "준비하기" : "다음",
+            onNext: advancePreparationGuide,
+            onSkip: {}
+        )
         .preferredColorScheme(.dark)
-        .onAppear(perform: loadSavedSelection)
+        .onAppear {
+            loadSavedSelection()
+            synchronizePreparationGuide()
+        }
+        .onChange(of: gameSession.progress.tutorialProgress.requestedReplay) { _, _ in
+            synchronizePreparationGuide()
+        }
+    }
+
+    private var guideStep: TutorialStepID? {
+        Floor9LoadoutGuide.currentStep(in: gameSession.progress)
+    }
+
+    private var preparationCoachStep: TutorialCoachStep? {
+        guard let step = guideStep else { return nil }
+        let page = (Floor9LoadoutGuide.steps.firstIndex(of: step) ?? 0) + 1
+        let title: String
+        let message: String
+        let targets: [TutorialTargetID]
+        let placement: TutorialCoachStep.Placement
+        switch step {
+        case .loadoutOverview:
+            title = "전투에 가져갈 주문을 준비하세요"
+            message = "이곳에서 배운 주문을 골라 전투에 가져갑니다. 지금은 알고 있는 주문만으로 준비할 수 있습니다. 화면을 차례로 살펴볼게요."
+            targets = []
+            placement = .center
+        case .loadoutCollection:
+            title = "보유 주문에서 골라 담기"
+            message = "주문을 누르면 오른쪽에서 효과를 확인할 수 있습니다. 카드의 + 버튼으로 편성하고, − 버튼으로 뺄 수 있습니다."
+            targets = ["loadout.collection"]
+            placement = .top
+        case .loadoutSlots:
+            title = "최대 여섯 칸, 원하는 순서로"
+            message = "위쪽 슬롯의 왼쪽부터 전투 카드에 표시됩니다. 선택 주문의 ‘앞으로·뒤로’로 순서를 바꿀 수 있습니다. 여섯 칸을 모두 채울 필요는 없지만 공격 주문은 하나 이상 남겨 주세요."
+            targets = ["loadout.slots"]
+            placement = .bottom
+        default:
+            title = "준비가 끝나면 시작하기"
+            message = "아래 ‘준비하기’를 누르면 직접 편성할 수 있습니다. ‘시작하기’를 눌러야 관리자의 대화가 시작됩니다. ‘돌아가기’를 누르면 진입 화면으로 돌아갑니다."
+            targets = ["loadout.start"]
+            placement = .top
+        }
+        return TutorialCoachStep(id: step, title: "\(page) / 4 · \(title)", message: message,
+                                 targetIDs: targets, placement: placement, showsSkip: false)
+    }
+
+    private func synchronizePreparationGuide() {
+        guard let step = guideStep,
+              gameSession.progress.tutorialProgress.activeSequence != .floor9Loadout else { return }
+        gameSession.send(.beginTutorial(sequence: .floor9Loadout, step: step))
+    }
+
+    private func advancePreparationGuide() {
+        guard let step = guideStep else { return }
+        let next = Floor9LoadoutGuide.next(after: step)
+        // Keep a valid resumable step until completing the sequence is saved.
+        guard gameSession.sendChecked(.completeTutorialStep(step: step, next: next ?? step)) else { return }
+        if next == nil {
+            guard gameSession.sendChecked(.completeTutorial(.floor9Loadout)) else { return }
+        }
+        gameFeedback.playInterface(.confirm, settings: appSettings.settings)
     }
 
     private var learned: [SpellID] {
@@ -154,6 +224,15 @@ struct LoadoutPreparationView: View {
             }
 
             Spacer(minLength: 12)
+
+            if floorNumber == 9 {
+                Button("사용법") {
+                    gameSession.send(.requestTutorialReplay(.floor9Loadout))
+                }
+                .buttonStyle(.bordered)
+                .tint(DAColor.gold)
+                .accessibilityLabel("출전 준비 사용법 다시 보기")
+            }
 
             VStack(alignment: .trailing, spacing: 5) {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -607,7 +686,7 @@ struct LoadoutPreparationView: View {
             }
 
             Button(action: beginBattle) {
-                Label("전투 시작", systemImage: "arrow.right")
+                Label("시작하기", systemImage: "arrow.right")
                     .font(.system(size: 18, weight: .semibold, design: .serif))
                     .foregroundStyle(readyToBegin && !isStarting ? DAColor.body : DAColor.secondary.opacity(0.62))
                     .frame(maxWidth: .infinity, minHeight: 58)
@@ -622,13 +701,14 @@ struct LoadoutPreparationView: View {
             }
             .buttonStyle(.plain)
             .disabled(!readyToBegin || isStarting)
+            .tutorialTarget("loadout.start")
         }
         .padding(16)
         .background(DAColor.background.opacity(0.42))
     }
 
     private var readyToBegin: Bool {
-        issues.isEmpty && tutorialFlags.isEmpty
+        issues.isEmpty && tutorialFlags.isEmpty && guideStep == nil
     }
 
     private var readinessMessage: String {
@@ -690,7 +770,7 @@ struct LoadoutPreparationView: View {
     }
 
     private func beginBattle() {
-        guard issues.isEmpty, tutorialFlags.isEmpty, !isStarting else { return }
+        guard readyToBegin, !isStarting else { return }
         isStarting = true
         guard gameSession.sendChecked(.configureLoadout(selected, protectedAttack: protectedAttack, protectedDefense: protectedDefense)) else {
             isStarting = false

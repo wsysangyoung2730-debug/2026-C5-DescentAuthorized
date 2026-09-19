@@ -2,6 +2,55 @@ import XCTest
 @testable import DescentAuthorizedCore
 
 final class TutorialRuntimeTests: XCTestCase {
+    func testLoadoutGuideResumesEveryPageWithoutStartingEncounter() throws {
+        var seed = GameProgress.newGame
+        seed.furthestCheckpoint = .recordsBattle
+        var session = DemoGameSession(progress: seed)
+        _ = try session.handle(.travelToCheckpoint(.recordsBattle))
+        let spells = session.progress.equippedSpells
+        let store = InMemoryGameSaveStore()
+        _ = try session.handle(.beginTutorial(sequence: .floor9Loadout, step: .loadoutOverview))
+        for step in Floor9LoadoutGuide.steps {
+            XCTAssertEqual(Floor9LoadoutGuide.currentStep(in: session.progress), step)
+            try session.save(to: store)
+            session = try DemoGameSession.restore(from: store)
+            XCTAssertEqual(Floor9LoadoutGuide.currentStep(in: session.progress), step)
+            XCTAssertEqual(session.progress.currentScene, .floor9RecordsPreparation)
+            XCTAssertEqual(session.progress.equippedSpells, spells)
+            XCTAssertNil(session.encounter)
+            _ = try session.handle(.completeTutorialStep(step: step, next: Floor9LoadoutGuide.next(after: step) ?? step))
+        }
+        _ = try session.handle(.completeTutorial(.floor9Loadout))
+        try session.save(to: store)
+        session = try DemoGameSession.restore(from: store)
+        XCTAssertNil(Floor9LoadoutGuide.currentStep(in: session.progress))
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsPreparation)
+        _ = try session.handle(.requestTutorialReplay(.floor9Loadout))
+        XCTAssertEqual(Floor9LoadoutGuide.currentStep(in: session.progress), .loadoutOverview)
+    }
+
+    func testLoadoutGuideIsRestrictedToFloor9Preparation() {
+        var progress = GameProgress.newGame
+        XCTAssertNil(Floor9LoadoutGuide.currentStep(in: progress))
+        progress.currentFloor = .floor9
+        progress.currentScene = .floor9RecordsPreparation
+        XCTAssertEqual(Floor9LoadoutGuide.currentStep(in: progress), .loadoutOverview)
+        progress.currentScene = .floor9RecordsEncounter
+        XCTAssertNil(Floor9LoadoutGuide.currentStep(in: progress))
+        progress.currentFloor = .floor8
+        progress.currentScene = .floor8ResidualPreparation
+        XCTAssertNil(Floor9LoadoutGuide.currentStep(in: progress))
+    }
+
+    func testExistingSaveWithoutLoadoutGuideFlagCanOpenNewGuide() throws {
+        var progress = GameProgress.newGame
+        progress.currentFloor = .floor9
+        progress.currentScene = .floor9RecordsPreparation
+        progress.tutorialProgress.completedSequences = [.afterglowDiscovery, .recordsBattleBasics]
+        let restored = try JSONDecoder().decode(GameProgress.self, from: JSONEncoder().encode(progress))
+        XCTAssertEqual(Floor9LoadoutGuide.currentStep(in: restored), .loadoutOverview)
+    }
+
     func testTutorialSequenceCanResumeCompleteAndSkip() throws {
         var session = DemoGameSession()
 
