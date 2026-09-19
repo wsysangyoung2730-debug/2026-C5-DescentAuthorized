@@ -413,6 +413,7 @@ struct BattleView: View {
                         .padding(.vertical, 12)
                 }
             }
+            .contentShape(Rectangle())
             // Receive background drags at the container: positioned input views
             // occupy the stage's layout bounds even outside their visible frame.
             .simultaneousGesture(battleCameraLookGesture(
