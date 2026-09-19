@@ -1,0 +1,14 @@
+{
+  "file": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F05_TwoRooms_v040.blend",
+  "scenes": {
+    "DA_F05A_MemoryOmissionResidue": {
+      "objects": 549,
+      "camera": "F05A_Overview"
+    },
+    "DA_F05B_OriginalMemoryAdministrator": {
+      "objects": 726,
+      "camera": "F05B_Overview"
+    }
+  },
+  "missing_images": []
+}
