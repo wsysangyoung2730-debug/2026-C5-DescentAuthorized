@@ -1,0 +1,15 @@
+{
+  "DA_ACTOR_ObservationAdministrator": "c71316949bc909b7cc94c3407c7b7cf9248b036ecde1ba555f8233fa82ad85de",
+  "DA_ACTOR_ObservationResidue": "9be5e97ed7bb03937a62e444603f7fce7e54692018cd321720c4cd3bbc044797",
+  "DA_ACTOR_RecordAdministrator": "012c1441fe25e356b89671cf4cf94a0455a314269008483c2cfc03ec45a87dec",
+  "DA_F06A_ResultDelayResidue": "e05faee3c1d4e87963eea0e6b94377c2c72d73a1f45b769a153bf1c05840491d",
+  "DA_F06B_CausalityAdministrator": "4a7b342ce8cb3a17f20694a13c2aa5176937af3adbfd90e09e7a8fddb6f77357",
+  "DA_F07_CoordinateAdministrator": "e30fccfb8ba0d0a4db20b52dd7452aaeff2240e9b0205d988b6c3870566b730a",
+  "DA_F07A_CoordinateResidue": "acd08e261b88b75e0991d59b029de150ee0f907295da84959639bf966dfacd1c",
+  "DA_F08_AdministratorObservatory": "1eac122ceca8ef7190bc0be87b1cd7baf4fa945c13335109a889dcb750bbe0de",
+  "DA_F08A_ResidueIsolation": "851bbe758da3733365dd52f949c38043a33080447c84604dc4aa69339206dc0d",
+  "DA_F09_Archive_Redesign": "f382428aaed84b37a040d27749cc7ff6eceb41519233b4eded9d7666d84ae5e1",
+  "DA_F10_ClosedOffice": "1d54214a936e428ec580ccab713a250ae3da173f8fc1fa1dd5a1da0780205230",
+  "DA_VFX_CombatIndicators": "4bbf073df7bec129d0f1314e2fc4640b13d6388f41a9d1fd7081eefc0762c0a4",
+  "DA_VFX_ErasureZones": "300de8b8d7b30ea6ad512f608d5986bb2313da50d2ed933aebfdda5fcfcedda7"
+}

@@ -41,7 +41,7 @@ final class ProgressionTests: XCTestCase {
 
         _ = try controller.enterProtectionRoom()
 
-        XCTAssertEqual(controller.progress.currentScene, .floor8ResidualEncounter)
+        XCTAssertEqual(controller.progress.currentScene, .floor8ResidualPreparation)
         XCTAssertEqual(controller.progress.checkpoint, .residualBattle)
     }
 
@@ -49,6 +49,7 @@ final class ProgressionTests: XCTestCase {
         var controller = try makeFloor8AntechamberController()
         _ = try controller.completeScrollLearning(spell: .basicBarrier, grade: .approved)
         _ = try controller.enterProtectionRoom()
+        _ = try controller.enterResidualEncounter()
         _ = try controller.beginResidualBattle()
         let victoryEvents = try controller.completeEncounter(
             enemy: .observationResidual,
@@ -77,6 +78,7 @@ final class ProgressionTests: XCTestCase {
         _ = try controller.approveDescentDoor()
 
         _ = try controller.enterRecordsBattle()
+        _ = try controller.enterRecordsEncounter()
         _ = try controller.beginRecordsBattle()
         _ = try controller.completeEncounter(
             enemy: .recordsAdministrator,
@@ -93,6 +95,7 @@ final class ProgressionTests: XCTestCase {
         _ = try controller.enterProtectionRoom()
         _ = try controller.learnBasicBarrier()
         _ = try controller.completeProtectionTraining(grade: .approved)
+        _ = try controller.enterResidualEncounter()
         _ = try controller.beginResidualBattle()
         _ = try controller.completeEncounter(
             enemy: .observationResidual,
@@ -101,6 +104,8 @@ final class ProgressionTests: XCTestCase {
         _ = try controller.continueAfterResidualDefeat()
         _ = try controller.completeScrollLearning(spell: .sealRelease, grade: .approved)
         _ = try controller.releaseObservationDoor()
+        XCTAssertEqual(controller.progress.currentScene, .floor8AdministratorPreparation)
+        _ = try controller.enterAdministratorEncounter()
         _ = try controller.beginAdministratorBattle()
         _ = try controller.completeEncounter(
             enemy: .observationAdministrator,
@@ -192,6 +197,7 @@ final class ProgressionTests: XCTestCase {
         var controller = try makeFloor8AntechamberController()
         _ = try controller.completeScrollLearning(spell: .basicBarrier, grade: .approved)
         _ = try controller.enterProtectionRoom()
+        _ = try controller.enterResidualEncounter()
         _ = try controller.beginResidualBattle()
         _ = try controller.completeEncounter(
             enemy: .observationResidual,
@@ -200,6 +206,7 @@ final class ProgressionTests: XCTestCase {
         _ = try controller.continueAfterResidualDefeat()
         _ = try controller.completeScrollLearning(spell: .sealRelease, grade: .approved)
         _ = try controller.releaseObservationDoor()
+        _ = try controller.enterAdministratorEncounter()
         _ = try controller.beginAdministratorBattle()
         _ = try controller.completeEncounter(
             enemy: .observationAdministrator,
@@ -211,7 +218,7 @@ final class ProgressionTests: XCTestCase {
         _ = try controller.travel(to: .recordsBattle)
 
         XCTAssertEqual(controller.progress.currentFloor, .floor9)
-        XCTAssertEqual(controller.progress.currentScene, .floor9RecordsEncounter)
+        XCTAssertEqual(controller.progress.currentScene, .floor9RecordsPreparation)
         XCTAssertEqual(controller.progress.checkpoint, .recordsBattle)
         XCTAssertEqual(controller.progress.furthestCheckpoint, .observationDefeated)
         XCTAssertTrue(controller.progress.defeatedEnemies.isEmpty)
@@ -251,6 +258,7 @@ final class ProgressionTests: XCTestCase {
         _ = try controller.enterProtectionRoom()
         _ = try controller.learnBasicBarrier()
         _ = try controller.completeProtectionTraining(grade: .approved)
+        _ = try controller.enterResidualEncounter()
         _ = try controller.beginResidualBattle()
         _ = try controller.completeEncounter(
             enemy: .observationResidual,
@@ -336,6 +344,7 @@ final class ProgressionTests: XCTestCase {
         _ = try controller.completeTraining(spell: .riftSeverance, grade: .approved)
         _ = try controller.approveDescentDoor()
         _ = try controller.enterRecordsBattle()
+        _ = try controller.enterRecordsEncounter()
         _ = try controller.beginRecordsBattle()
         _ = try controller.completeEncounter(
             enemy: .recordsAdministrator,

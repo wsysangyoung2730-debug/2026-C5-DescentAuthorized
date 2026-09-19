@@ -1,0 +1,83 @@
+{
+  "checks": {
+    "other_scenes_including_boss_unchanged": true,
+    "residue_stage_removed": true,
+    "boss_stage_retained": true,
+    "reward_scrolls_absent": true,
+    "new_props_do_not_overlap": true,
+    "central_floor_clear": true,
+    "spawn_in_combat_view": true,
+    "spawn_sightline_clear": true,
+    "all_textures_available": true
+  },
+  "overlaps": [],
+  "ray_hit": null,
+  "spawn": [
+    0.0,
+    5.0,
+    0.029999999329447746
+  ],
+  "missing_textures": [],
+  "added_bounds": {
+    "F05A_ArchiveWork_CollationDesk": [
+      [
+        -1.2481707334518433,
+        9.803048133850098,
+        0.0
+      ],
+      [
+        1.2481707334518433,
+        10.99695110321045,
+        1.75
+      ]
+    ],
+    "F05A_ArchiveWork_LeftCase": [
+      [
+        -4.709507465362549,
+        7.0582780838012695,
+        0.0
+      ],
+      [
+        -2.5904927253723145,
+        8.44172191619873,
+        0.8678311109542847
+      ]
+    ],
+    "F05A_ArchiveWork_MaskFragments": [
+      [
+        -4.070000171661377,
+        7.272101402282715,
+        0.8928310871124268
+      ],
+      [
+        -3.2300000190734863,
+        8.227898597717285,
+        1.365827202796936
+      ]
+    ],
+    "F05A_ArchiveWork_RightCase": [
+      [
+        2.8872804641723633,
+        7.966267108917236,
+        0.0
+      ],
+      [
+        4.712719440460205,
+        9.133733749389648,
+        1.0655105113983154
+      ]
+    ],
+    "F05A_ArchiveWork_UnclaimedTags": [
+      [
+        3.490000009536743,
+        8.330138206481934,
+        1.0905104875564575
+      ],
+      [
+        4.110000133514404,
+        8.769862174987793,
+        1.7920804023742676
+      ]
+    ]
+  }
+}

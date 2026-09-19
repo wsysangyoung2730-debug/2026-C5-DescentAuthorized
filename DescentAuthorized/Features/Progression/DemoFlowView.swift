@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DemoFlowView: View {
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @EnvironmentObject private var gameSession: GameSessionStore
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
@@ -40,11 +41,13 @@ struct DemoFlowView: View {
                     controller: sceneController,
                     onReturnToTitle: onExit
                 )
+                .allowsHitTesting(preparedBattle == nil)
+                .accessibilityHidden(preparedBattle != nil)
             } else {
                 Color.black.ignoresSafeArea()
             }
 
-            if isPresentationReady {
+            if isPresentationReady && preparedBattle == nil {
                 if showsFloor10Opening {
                     Floor10OpeningExperienceView(
                         sceneController: sceneController,
@@ -89,6 +92,19 @@ struct DemoFlowView: View {
                 }
             }
 
+            if let battle = preparedBattle {
+                LoadoutPreparationView(onBegin: {
+                    withAnimation(preparationTransition) {
+                        guard gameSession.sendChecked(battle.preparationCompletionCommand) else { return }
+                        preparedBattle = nil
+                    }
+                }, onCancel: {
+                    withAnimation(preparationTransition) { preparedBattle = nil }
+                })
+                .transition(.opacity)
+                .zIndex(10)
+            }
+
             Color.black
                 .opacity(sceneController.cameraFadeOpacity)
                 .ignoresSafeArea()
@@ -129,15 +145,11 @@ struct DemoFlowView: View {
                 onExitToTitle: onExit
             )
         }
-        .fullScreenCover(item: $preparedBattle) { battle in
-            LoadoutPreparationView(onBegin: {
-                if gameSession.sendChecked(battle.command) { preparedBattle = nil }
-            }, onCancel: { preparedBattle = nil })
-        }
         .fullScreenCover(isPresented: $isShowingSettings) {
             SettingsView()
         }
         .onAppear {
+            queueEncounterPreparationIfNeeded()
             synchronizeRewardLearningHUD()
             reportSystemOverlayVisibility()
             synchronizeFloorMusic()
@@ -168,6 +180,7 @@ struct DemoFlowView: View {
             synchronizeFloorMusic()
         }
         .onChange(of: gameSession.progress.currentScene) { _, _ in
+            queueEncounterPreparationIfNeeded()
             synchronizeRewardLearningHUD()
             synchronizeFloorMusic()
             synchronizeRecordsBattleTutorial()
@@ -186,6 +199,22 @@ struct DemoFlowView: View {
 
     private func reportSystemOverlayVisibility() {
         onSystemOverlayVisibilityChange(isShowingPauseMenu || isShowingSettings)
+    }
+
+    private var preparationTransition: Animation? {
+        appSettings.reducedMotion || systemReduceMotion ? nil : .easeInOut(duration: 0.24)
+    }
+
+    private func showPreparation(_ battle: PreparedLegacyBattle) {
+        withAnimation(preparationTransition) { preparedBattle = battle }
+    }
+
+    private func queueEncounterPreparationIfNeeded() {
+        switch gameSession.progress.currentScene {
+        case .floor9RecordsPreparation: showPreparation(.records)
+        case .floor8ResidualPreparation: showPreparation(.residual)
+        default: break
+        }
     }
 
     private func synchronizeRewardLearningHUD() {
@@ -733,7 +762,7 @@ struct DemoFlowView: View {
                 retryLoadingPresentation: $retryLoadingPresentation
             )
         case .floor9Entrance:
-            Floor9EntranceView(sceneController: sceneController)
+            Floor9EntranceView(sceneController: sceneController, onPrepareEntry: { showPreparation(.records) })
         case let .narrative(sequence):
             BossNarrativeView(
                 sequence: sequence,
@@ -741,15 +770,15 @@ struct DemoFlowView: View {
             ) {
                 switch sequence {
                 case .floor9Encounter:
-                    preparedBattle = .records
+                    gameSession.send(.beginRecordsBattle)
                 case .floor9Defeated:
                     gameSession.send(.continueAfterRecordsDefeat)
                 case .floor8ResidualEncounter:
-                    preparedBattle = .residual
+                    gameSession.send(.beginResidualBattle)
                 case .floor8ResidualDefeated:
                     gameSession.send(.continueAfterResidualDefeat)
                 case .floor8AdministratorEncounter:
-                    preparedBattle = .administrator
+                    gameSession.send(.beginAdministratorBattle)
                 case .floor8AdministratorDefeated:
                     gameSession.send(.continueAfterAdministratorDefeat)
                 }
@@ -766,7 +795,11 @@ struct DemoFlowView: View {
                 isLearningInputActive: $isRewardLearningInputActive
             )
         case .floor8Exploration:
-            Floor8ExplorationView(sceneController: sceneController)
+            Floor8ExplorationView(
+                sceneController: sceneController,
+                onPrepareResidualEntry: { showPreparation(.residual) },
+                onPrepareAdministratorEntry: { showPreparation(.administrator) }
+            )
         case let .descent(floor):
             if floor == .floor9 {
                 Floor9DescentDoorView(
@@ -1238,11 +1271,11 @@ private enum SharedHUDPalette {
 private enum PreparedLegacyBattle: String, Identifiable {
     case records, residual, administrator
     var id: String { rawValue }
-    var command: DemoCommand {
+    var preparationCompletionCommand: DemoCommand {
         switch self {
-        case .records: .beginRecordsBattle
-        case .residual: .beginResidualBattle
-        case .administrator: .beginAdministratorBattle
+        case .records: .enterRecordsEncounter
+        case .residual: .enterResidualEncounter
+        case .administrator: .enterAdministratorEncounter
         }
     }
 }

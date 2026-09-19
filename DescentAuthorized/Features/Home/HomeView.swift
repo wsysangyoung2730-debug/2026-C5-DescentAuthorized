@@ -77,9 +77,9 @@ struct HomeView: View {
         }
         try? await Task.sleep(for: .milliseconds(160))
         #if DEBUG
-        if ExpansionPreviewSupport.floor != nil {
+        if ExpansionPreviewSupport.floor != nil || ExpansionPreviewSupport.loadoutFloor != nil {
             isPlaying = true
-            if ExpansionPreviewSupport.isBattle { gameSession.send(.advanceExpansion) }
+            if ExpansionPreviewSupport.floor != nil && ExpansionPreviewSupport.isBattle { gameSession.send(.advanceExpansion) }
         }
         #endif
         withAnimation(.easeOut(duration: 0.2)) {

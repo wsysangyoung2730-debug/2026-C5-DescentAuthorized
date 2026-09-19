@@ -49,8 +49,6 @@ struct RewardSelectionView: View {
     @Binding var isLearningInputActive: Bool
 
     @State private var selectedCandidateID: String?
-    @State private var practiceSpell: SpellDefinition?
-    @State private var showsPractice = false
     @State private var isResolving = false
     @State private var rewardState: RealityRewardPresentationState = .appearing
     @State private var transitionTask: Task<Void, Never>?
@@ -89,9 +87,6 @@ struct RewardSelectionView: View {
             }
         }
         .preferredColorScheme(.dark)
-        .sheet(isPresented: $showsPractice) {
-            if let practiceSpell { SpellPracticeSheet(spell: practiceSpell) }
-        }
         .onAppear {
             if let pendingLearningCandidate,
                let selectedIndex = candidates.firstIndex(where: {
@@ -329,16 +324,6 @@ struct RewardSelectionView: View {
 
     private func footer(metrics: RewardLayoutMetrics) -> some View {
         VStack(spacing: 3) {
-            HStack(spacing: 16) {
-            Button("선택 주문 시험 각인") {
-                guard let selectedCandidateID,
-                      let candidate = candidates.first(where: { $0.id == selectedCandidateID }) else { return }
-                practiceSpell = displayedSpell(for: candidate)
-                showsPractice = true
-            }
-            .buttonStyle(.bordered)
-            .tint(RewardSelectionPalette.gold)
-            .disabled(selectedCandidateID == nil || isResolving)
             Button(action: confirmSelection) {
                 Text(isResolving ? "선택 기록 복원 중" : "선택 두루마리 수령")
                     .font(.system(size: metrics.confirmTextSize, weight: .medium, design: .serif))
@@ -348,7 +333,6 @@ struct RewardSelectionView: View {
             .frame(width: metrics.confirmWidth, height: metrics.confirmHeight)
             .clipped()
             .disabled(selectedCandidateID == nil || isResolving)
-            }
 
             Text("수령 후 나머지 기록은 즉시 말소됩니다.")
                 .font(.system(size: metrics.footerSize, design: .serif))

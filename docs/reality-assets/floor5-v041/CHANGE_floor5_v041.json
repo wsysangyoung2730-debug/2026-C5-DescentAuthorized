@@ -1,0 +1,19 @@
+{
+  "removed": [
+    "F05A_CombatStage",
+    "F05A_CombatStage__BossStage_F06",
+    "F05A_CombatStage__BossStage_F06__BossStage_F08",
+    "F05A_CombatStage__BossStage_F06__tripo_node_a5258cfb-67e2-4da1-bcc8-c6206d5eb96d",
+    "F05A_ArenaCircuit",
+    "F05A_ArenaCircuit.001",
+    "F05A_ArenaCircuit.002"
+  ],
+  "added": [
+    "F05A_ArchiveWork_CollationDesk",
+    "F05A_ArchiveWork_LeftCase",
+    "F05A_ArchiveWork_MaskFragments",
+    "F05A_ArchiveWork_RightCase",
+    "F05A_ArchiveWork_UnclaimedTags"
+  ],
+  "spawn_height": 0.03
+}

@@ -1,0 +1,23 @@
+{
+  "total": 17,
+  "done": [
+    "F06B_DomeReview",
+    "F06_iPad_MainCamera",
+    "F08_iPad_MainCamera",
+    "CAM_F06_RewardSelection",
+    "CAM_F06_DescentDoor",
+    "CAM_F07_RewardSelection",
+    "CAM_F07_DescentDoor",
+    "CAM_F08_RewardSelection",
+    "CAM_F08_DescentDoor",
+    "CAM_F10_DescentDoor",
+    "F06B_SideCheck_Left",
+    "F06B_SideCheck_Right",
+    "F08B_SideCheck_Left",
+    "F08B_SideCheck_Right",
+    "F10_SideCheck_Right",
+    "F06B_RedesignOverview",
+    "F07B_RedesignOverview"
+  ],
+  "errors": []
+}

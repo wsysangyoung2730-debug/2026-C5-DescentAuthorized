@@ -376,6 +376,14 @@ struct Floor9MotionPreview: View {
                     if case .failed = controller.loadState { return }
                     do { try await Task.sleep(for: .milliseconds(30)) } catch { return }
                 }
+                if ProcessInfo.processInfo.arguments.contains("--ambient-diagnostics") {
+                    await controller.runObservatoryAmbientDiagnostics()
+                    return
+                }
+                if ProcessInfo.processInfo.arguments.contains("--render-diagnostics") {
+                    await controller.runDeviceRenderDiagnostics()
+                    return
+                }
                 controller.setRewardPresentation(.inactive, reducedMotion: reducedMotion)
                 controller.setDescentPresentation(camera == .descentInput ? .ready : .inactive,
                                                   reducedMotion: reducedMotion)

@@ -1,0 +1,1809 @@
+{
+  "file": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F06_F07_F08_F09_F10_Combined_v038_floor6_dome.blend",
+  "rooms": {
+    "F06A": {
+      "object_count": 251,
+      "texture_count": 17,
+      "missing_textures": [],
+      "side_cameras": [
+        "F06A_SideCheck_Left",
+        "F06A_SideCheck_Right"
+      ]
+    },
+    "F06B": {
+      "object_count": 449,
+      "texture_count": 87,
+      "missing_textures": [],
+      "side_cameras": [
+        "F06B_SideCheck_Left",
+        "F06B_SideCheck_Right"
+      ],
+      "descent_projection": {
+        "F06B_DescentStele": {
+          "min": [
+            0.4436269998550415,
+            0.23465920984745026,
+            7.209832668304443
+          ],
+          "max": [
+            0.5563728213310242,
+            0.5758348107337952,
+            8.827553749084473
+          ]
+        },
+        "F06B_DescentPedestal": {
+          "min": [
+            0.33450621366500854,
+            0.029105300083756447,
+            4.756166934967041
+          ],
+          "max": [
+            0.6654934883117676,
+            0.2469414621591568,
+            7.059235572814941
+          ]
+        }
+      },
+      "reward_scrolls_emerged_at_frame66": true
+    },
+    "F07A": {
+      "object_count": 222,
+      "texture_count": 17,
+      "missing_textures": [],
+      "side_cameras": [
+        "F07A_SideCheck_Left",
+        "F07A_SideCheck_Right"
+      ]
+    },
+    "F07B": {
+      "object_count": 497,
+      "texture_count": 156,
+      "missing_textures": [],
+      "side_cameras": [
+        "F07B_SideCheck_Left",
+        "F07B_SideCheck_Right"
+      ],
+      "descent_projection": {
+        "F07B_DescentStele": {
+          "min": [
+            0.4436269998550415,
+            0.23465920984745026,
+            7.209832668304443
+          ],
+          "max": [
+            0.5563728213310242,
+            0.5758348107337952,
+            8.827553749084473
+          ]
+        },
+        "F07B_DescentPedestal": {
+          "min": [
+            0.33450621366500854,
+            0.029105300083756447,
+            4.756166934967041
+          ],
+          "max": [
+            0.6654934883117676,
+            0.2469414621591568,
+            7.059235572814941
+          ]
+        }
+      },
+      "reward_scrolls_emerged_at_frame66": true
+    },
+    "F08A": {
+      "object_count": 316,
+      "texture_count": 17,
+      "missing_textures": [],
+      "side_cameras": [
+        "F08A_SideCheck_Left",
+        "F08A_SideCheck_Right"
+      ]
+    },
+    "F08B": {
+      "object_count": 460,
+      "texture_count": 212,
+      "missing_textures": [],
+      "side_cameras": [
+        "F08B_SideCheck_Left",
+        "F08B_SideCheck_Right"
+      ],
+      "descent_projection": {
+        "F08B_DescentStele": {
+          "min": [
+            0.443595826625824,
+            0.2346433699131012,
+            7.209368705749512
+          ],
+          "max": [
+            0.5564039945602417,
+            0.5759800672531128,
+            8.827879905700684
+          ]
+        },
+        "F08B_DescentPedestal": {
+          "min": [
+            0.35333386063575745,
+            0.0036153041291981936,
+            4.550957202911377
+          ],
+          "max": [
+            0.6466658711433411,
+            0.2569112777709961,
+            7.264432907104492
+          ]
+        }
+      },
+      "reward_scrolls_emerged_at_frame66": true
+    },
+    "F09": {
+      "object_count": 548,
+      "texture_count": 211,
+      "missing_textures": [],
+      "side_cameras": [
+        "F09_SideCheck_Left",
+        "F09_SideCheck_Right"
+      ],
+      "descent_projection": {
+        "F09_DescentStele": {
+          "min": [
+            0.443595826625824,
+            0.2346433699131012,
+            7.209368705749512
+          ],
+          "max": [
+            0.5564039945602417,
+            0.5759800672531128,
+            8.827879905700684
+          ]
+        },
+        "F09_DescentPedestal": {
+          "min": [
+            0.35333386063575745,
+            0.0036153041291981936,
+            4.550957202911377
+          ],
+          "max": [
+            0.6466658711433411,
+            0.2569112777709961,
+            7.264432907104492
+          ]
+        }
+      },
+      "reward_scrolls_emerged_at_frame66": true
+    },
+    "F10": {
+      "object_count": 468,
+      "texture_count": 143,
+      "missing_textures": [],
+      "side_cameras": [
+        "F10_SideCheck_Left",
+        "F10_SideCheck_Right"
+      ],
+      "descent_projection": {
+        "F10_DescentStele": {
+          "min": [
+            0.443595826625824,
+            0.2346433699131012,
+            7.209368705749512
+          ],
+          "max": [
+            0.5564039945602417,
+            0.5759800672531128,
+            8.827879905700684
+          ]
+        },
+        "F10_DescentPedestal": {
+          "min": [
+            0.35333386063575745,
+            0.0036153041291981936,
+            4.550957202911377
+          ],
+          "max": [
+            0.6466658711433411,
+            0.2569112777709961,
+            7.264432907104492
+          ]
+        }
+      }
+    }
+  },
+  "checks": [
+    "104/104 supplied source assets have render-enabled scene placements",
+    "Texture references valid in all 8 room scenes",
+    "All 5 descent steles and floor platforms fit their camera frames",
+    "Three reward scrolls emerge at frame 66 in floors 6–9",
+    "10F retains the existing instructor-desk interaction",
+    "6F dome uses an open circular ceiling aperture, curved ribs and a 3.2m rise; 8F flat ceiling restored"
+  ],
+  "source_assets": {
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_바닥 레일케이블 채널 패널.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "MainRail_0"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_674adcab-e179-4c7d-9322-1ef39fcbd139.002"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_격리 유리 파티션 모듈.glb": [
+      [
+        "DA_F08A_ResidueIsolation",
+        "GlassPartition_L"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_cbdc313a-8b84-4ef0-8b26-910211e8ed6a"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "GlassPartition_R"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_cbdc313a-8b84-4ef0-8b26-910211e8ed6a.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_샘플 운반 크레이트.glb": [
+      [
+        "DA_F08A_ResidueIsolation",
+        "SampleCrate"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_e95faab9-e3c8-4e8e-b9d4-96b7a873fa86"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "F08A_RearSupplyCrate"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_e95faab9-e3c8-4e8e-b9d4-96b7a873fa86.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_관측 로그 슬레이트 클립보드.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "ObservationLog"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_3a510401-d602-4280-9f64-a7aacf084b97"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "F08A_ObservationLog"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_3a510401-d602-4280-9f64-a7aacf084b97.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_벽면 관측 모니터 클러스터(확장).glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "MonitorWall_L"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_718ced08-2479-42c1-a44c-903c52539d0e"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "MonitorWall_R"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_718ced08-2479-42c1-a44c-903c52539d0e.001"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "F08B_LeftSideMonitor"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "F08B_RightSideMonitor"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_관측 데이터 기둥.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "DataPillar_0"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_adf8e9c4-511c-4b98-bbef-13b569300e8f"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "DataPillar_1"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_adf8e9c4-511c-4b98-bbef-13b569300e8f.001"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "DataPillar_2"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_adf8e9c4-511c-4b98-bbef-13b569300e8f.002"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "DataPillar_3"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_adf8e9c4-511c-4b98-bbef-13b569300e8f.003"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_관측 렌즈 게이트.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "PrimaryObservationGate"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_6ba70398-1e8b-402d-9e4e-c72c13a61d74.001"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "IsolationLensGate"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_6ba70398-1e8b-402d-9e4e-c72c13a61d74"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_관측 유리렌즈 파편.glb": [
+      [
+        "DA_F08A_ResidueIsolation",
+        "F08A_LensDebris"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_a0f49e77-ae7a-4ae5-b300-6a7b1e97f27c"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_관측 제어 콘솔.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "ControlConsole_L"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_2dc72510-76d1-4c9b-ac33-71ba766780be.001"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "ControlConsole_R"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_2dc72510-76d1-4c9b-ac33-71ba766780be.002"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "ControlConsole_L_02"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_2dc72510-76d1-4c9b-ac33-71ba766780be.003"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "ControlConsole_R_02"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_2dc72510-76d1-4c9b-ac33-71ba766780be.004"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "IsolationConsole"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_2dc72510-76d1-4c9b-ac33-71ba766780be"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_현수식 케이블-렌즈 센서 포드.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "SensorPod_0"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_42893929-ce1d-410a-96a3-bec6067251ab"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "SensorPod_1"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_42893929-ce1d-410a-96a3-bec6067251ab.001"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "SensorPod_2"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_42893929-ce1d-410a-96a3-bec6067251ab.002"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "SensorPod_3"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_42893929-ce1d-410a-96a3-bec6067251ab.003"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "F08B_SensorPod_Upper"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_42893929-ce1d-410a-96a3-bec6067251ab.004"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_프리즘 관측 랙.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "PrismRack_L"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_b77fbb38-411d-4eca-882a-2ad20d81997b"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "PrismRack_R"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_b77fbb38-411d-4eca-882a-2ad20d81997b.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_관측 케이블 코일.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "ObservationCableCoil_L"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_d2fb9768-e8eb-476e-8f5f-45f896821fb6"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "ObservationCableCoil_R"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_d2fb9768-e8eb-476e-8f5f-45f896821fb6.001"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "F08A_ServiceCableCoil"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_d2fb9768-e8eb-476e-8f5f-45f896821fb6.002"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_경고 봉인유리 태그 세트.glb": [
+      [
+        "DA_F08A_ResidueIsolation",
+        "IsolationWarningTags"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_e72f7973-8f29-4371-97f2-9f9c8dda1ab3"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_마나 파형 기록기.glb": [
+      [
+        "DA_F08A_ResidueIsolation",
+        "ManaWaveRecorder"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_bfee3b51-e5cc-43ab-9b0e-f58c09de8afc"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_샘플 바이알 트레이.glb": [
+      [
+        "DA_F08A_ResidueIsolation",
+        "SampleVials"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_d0b4aedb-6bd6-416f-bf3b-43e1c5d5e2c0"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_벽면 관측 모니터 클러스터(기본).glb": [
+      [
+        "DA_F08A_ResidueIsolation",
+        "IsolationMonitor"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_d66f33ef-9e2d-44e6-9ded-34ecd7ea4bbd"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "F08A_SideMonitor"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_바닥 격리 앵커 노드.glb": [
+      [
+        "DA_F08A_ResidueIsolation",
+        "Anchor_0"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_b0b5e672-45e1-4fd0-b94b-885e77a5b2ce"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "Anchor_1"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_b0b5e672-45e1-4fd0-b94b-885e77a5b2ce.001"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "Anchor_2"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_b0b5e672-45e1-4fd0-b94b-885e77a5b2ce.002"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "Anchor_3"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_b0b5e672-45e1-4fd0-b94b-885e77a5b2ce.003"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_잔류체 격리 캡슐.glb": [
+      [
+        "DA_F08A_ResidueIsolation",
+        "IsolationCapsule_L_Front"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_41cff188-8b47-4a39-8ba4-fb986fb692b5"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "IsolationCapsule_L_Rear"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_41cff188-8b47-4a39-8ba4-fb986fb692b5.001"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "IsolationCapsule_R_Front"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_41cff188-8b47-4a39-8ba4-fb986fb692b5.002"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "IsolationCapsule_R_Rear"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_41cff188-8b47-4a39-8ba4-fb986fb692b5.003"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_삼각대 관측 렌즈.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "TripodLens_L"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_bff8e927-e16d-4539-a55d-de05fc063b98"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "TripodLens_R"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_bff8e927-e16d-4539-a55d-de05fc063b98.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_회전식 캘리브레이션 링.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "CalibrationRing_Backdrop"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_2768e6c4-d3e5-485c-b2b4-e776dc267de5"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층_관측 장비 보관 캐비닛.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "ObservationCabinet_L"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_23c1d141-500e-4350-b4b2-33da8d13bfed"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "ObservationCabinet_R"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_23c1d141-500e-4350-b4b2-33da8d13bfed.001"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "F08A_EquipmentCabinet"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "tripo_node_23c1d141-500e-4350-b4b2-33da8d13bfed.002"
+      ],
+      [
+        "DA_F08A_ResidueIsolation",
+        "F08A_ForwardEquipmentCabinet"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층 보스방 추가소품/8층_대형 다중 관측 링.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_b9079535-6764-4f84-be6e-b2c9f4ba535d"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층 보스방 추가소품/8층_대형 다중 관측 링 2.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "F08B_ForwardObservationRing"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_b270a4d4-8040-41c1-bf17-0b0d02c0bf62"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/8층 소품/8층 보스방 추가소품/8층_천장 지지 프레임.glb": [
+      [
+        "DA_F08_AdministratorObservatory",
+        "F08B_ForwardSuspensionFrame"
+      ],
+      [
+        "DA_F08_AdministratorObservatory",
+        "tripo_node_b31924a6-26a2-454a-a0e2-24665dfd5a07"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/1. 2차 테스트 구현/9층_수직 케이블 기둥.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "VerticalCablePillar"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_6303d494-88a5-41ed-bc89-3307e4ca76ce"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/1. 2차 테스트 구현/9층_경고 표지판 세트.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "WarningSignSet"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_2c847652-6e38-4df8-91a9-086df0de6a8e"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/1. 2차 테스트 구현/9층_깨진 유리 조각 세트.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "BrokenGlassDebris"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_c8b094fb-45bb-4e90-b4f8-7ab4463ebcbe"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/1. 2차 테스트 구현/9층_오픈 기록 선반.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "OpenRecordShelf"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_04b21434-2e1f-4eaa-a442-31a152279dab"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "F09_SetDress_OpenShelf_Back"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_04b21434-2e1f-4eaa-a442-31a152279dab.001"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "F09D_Record_Back_02"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_04b21434-2e1f-4eaa-a442-31a152279dab.002"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "F09D_Record_Left_02"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_04b21434-2e1f-4eaa-a442-31a152279dab.003"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "F09D_Record_Left_03"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_04b21434-2e1f-4eaa-a442-31a152279dab.004"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/1. 2차 테스트 구현/9층_끊어진 케이블 코일.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "BrokenCableCoil"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_4c2dbbf9-8dda-44d1-bd40-da80fdace3cc"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "F09_SetDress_CableCoil_LeftRear"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_4c2dbbf9-8dda-44d1-bd40-da80fdace3cc.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/1. 2차 테스트 구현/9층_좁은 이동식 보조 선반.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "NarrowAuxShelf"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_c87e626c-f329-4acd-8dcf-b0029fc9606a"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "F09_ForwardLeftShelf"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/1. 2차 테스트 구현/9층_소형 벽면 모니터.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "SmallWallMonitor"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_7f06413a-155f-4ef4-908c-458d89b517b4"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "F09_SetDress_Monitor_Center"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_7f06413a-155f-4ef4-908c-458d89b517b4.001"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "F09_SetDress_Monitor_Right"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_7f06413a-155f-4ef4-908c-458d89b517b4.002"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "F09_ForwardRightMonitor"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/1. 2차 테스트 구현/9층_낮은 케이블 허브.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "LowCableHub"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_2c5041e2-469d-4d10-a1bb-b146c6751a1f"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/1. 2차 테스트 구현/9층_강화 장비 케이스.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "ReinforcedEquipmentCase"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_d679ef6a-c7a2-4a16-96e6-04eb6c908026"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/1. 2차 테스트 구현/9층_닫힌 장비 캐비닛.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "ClosedEquipmentCabinet"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_53af9319-b0ad-47ae-81ea-258702d8dc11"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/0. 1차 테스트 구현/9층_검은 끈 문서 묶음.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "BlackBoundDocuments_L"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_78501151-d004-44ca-84bf-af069bef30d5"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/0. 1차 테스트 구현/9층_벽면 배전함.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "WallDistributionBox_L"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_223e629a-d707-4574-9292-9da54693bcf7"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/0. 1차 테스트 구현/9층_깨진 유리문 보관장.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "BrokenGlassCabinet_R"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_c036b947-7e7b-4e06-99ea-dc14735d97b9"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/0. 1차 테스트 구현/9층_이동식 기록실 사다리.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "ArchiveLadder_L"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_651a57b0-9fb2-4688-9132-675f7e5449fd"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/0. 1차 테스트 구현/9층_찢어진 보관 박스.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "TornStorageBox_R"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_d0f2d29d-fc75-4272-8aeb-237782db0af1"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/0. 1차 테스트 구현/9층_열린 파일 캐비닛.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "OpenFileCabinet_L"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_4350b94b-a866-4e6a-a556-60efcc422473"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/0. 1차 테스트 구현/9층_서버랙.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "ServerRack_L"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_88d793fb-9939-4aaf-a520-d616d33d54bc"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "F09D_Server_Back_02"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_88d793fb-9939-4aaf-a520-d616d33d54bc.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/0. 1차 테스트 구현/9층_긴 다단 서랍장.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "LongDrawer_L"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_95729c4e-6b07-4f8b-baf2-9c41c41fdaa3"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "F09D_Drawer_Left_02"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_95729c4e-6b07-4f8b-baf2-9c41c41fdaa3.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/0. 1차 테스트 구현/9층_낮은 이동식 서랍 카트.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "DrawerCart_R"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_dd27242e-a181-4fa4-b225-b2e9143d49f8"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/9층 소품/0. 1차 테스트 구현/9층_바닥 케이블 덕트.glb": [
+      [
+        "DA_F09_Archive_Redesign",
+        "CentralCableDuct"
+      ],
+      [
+        "DA_F09_Archive_Redesign",
+        "tripo_node_f6af4a4a-df96-4a47-b6ac-9149fccf6855"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_초급 문양 문서 더미.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "GlyphDocumentPile_A"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_4f33c517-98ba-49d5-8e1f-3f19c58641ae"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "GlyphDocumentPile_B"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_4f33c517-98ba-49d5-8e1f-3f19c58641ae.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_봉인 테이프와 관리국 태그 세트.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "SealTags_L"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_a7178c1b-e6ac-4128-8420-04073dad2d88"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_하강 절차 제어 기둥.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "DescentControlPillar"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_788f393c-ee65-41e5-b41e-63d92643a9f4"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_바닥 케이블 묶음과 전원 접속함.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "CablePowerBox_L"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_2fddebf6-a640-4430-9c1d-5a2b8eaa82a5"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "CablePowerBox_R"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_2fddebf6-a640-4430-9c1d-5a2b8eaa82a5.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_마나 관측 데스크 단말.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "DeskTerminal_L01"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_95299b4c-757a-4360-9bd6-0ec2ef8b48d2"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "DeskTerminal_L02"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_95299b4c-757a-4360-9bd6-0ec2ef8b48d2.001"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "DeskTerminal_L03"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_95299b4c-757a-4360-9bd6-0ec2ef8b48d2.002"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "DeskTerminal_R01"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_95299b4c-757a-4360-9bd6-0ec2ef8b48d2.003"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "DeskTerminal_R02"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_95299b4c-757a-4360-9bd6-0ec2ef8b48d2.004"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "DeskTerminal_R03"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_95299b4c-757a-4360-9bd6-0ec2ef8b48d2.005"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_벽면 경고등사이렌.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "WarningSiren_01"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_f2df02ef-1bcb-4e6e-84d5-3522cfbcdbcc"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "WarningSiren_02"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_f2df02ef-1bcb-4e6e-84d5-3522cfbcdbcc.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_훈련용 펜잉크 키트.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "TrainingInkKit"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_ed881ddb-7b26-482a-8617-64a192d32303"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_초급 주문 보관 캐비닛.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "BeginnerSpellCabinet"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_d2a8dd62-6d17-47c2-8966-bcfd5da50849"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_깨진 천장 형광등.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "CeilingLight_01"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_5cf7e71b-2b3d-4652-85cf-3f70e0ed5989"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "CeilingLight_02"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_5cf7e71b-2b3d-4652-85cf-3f70e0ed5989.001"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "CeilingLight_03"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_5cf7e71b-2b3d-4652-85cf-3f70e0ed5989.002"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "CeilingLight_04"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_5cf7e71b-2b3d-4652-85cf-3f70e0ed5989.003"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "CeilingLight_05"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_5cf7e71b-2b3d-4652-85cf-3f70e0ed5989.004"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "CeilingLight_06"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_5cf7e71b-2b3d-4652-85cf-3f70e0ed5989.005"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "CeilingLight_07"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_5cf7e71b-2b3d-4652-85cf-3f70e0ed5989.006"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "CeilingLight_08"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_5cf7e71b-2b3d-4652-85cf-3f70e0ed5989.007"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "CeilingLight_09"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_5cf7e71b-2b3d-4652-85cf-3f70e0ed5989.008"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_균열 반사가 보이는 깨진 모니터.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "BrokenMonitor_R"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_a282f648-01d0-45fc-baa8-fa94eb7d8f5f"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "F10_ForwardRightMonitor"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_하강 접근 키 캐비닛.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "DescentKeyCabinet"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_e207f310-136e-47ea-accb-0ef9ee108fe9"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_초급 훈련 보급 케이스.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "TrainingSupplyCase_L"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_c4d9918d-6476-4788-b919-18b3abb7227d"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "TrainingSupplyCase_R"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_c4d9918d-6476-4788-b919-18b3abb7227d.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_쓰러진 사무용 의자.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "FallenChair_L01"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_6036cd21-e862-4dbb-9e63-7db58fb13a38"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "FallenChair_L02"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_6036cd21-e862-4dbb-9e63-7db58fb13a38.001"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "FallenChair_R01"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_6036cd21-e862-4dbb-9e63-7db58fb13a38.002"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "FallenChair_R02"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_6036cd21-e862-4dbb-9e63-7db58fb13a38.003"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_초급 주문 자료 보드.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "BeginnerSpellBoard"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_a2cd5dad-1860-4449-b3bd-f0e4c0014c70"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_연습용 충격 표적 패널.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "TargetPanel_L"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_da4e6b40-defe-430f-8eaf-c5c692b92a73"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "TargetPanel_R"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_da4e6b40-defe-430f-8eaf-c5c692b92a73.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_기억침식된 비상 안내판.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "MemoryWarningSign"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_1bfbcab5-2afd-4773-8473-0fd6c2db3fd9"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_흐트러진 교관 책상.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "InstructorDesk"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_f48cfa06-983e-4e08-b5ad-97df37850c26"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_바닥 클러터 세트.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "FloorClutter_L"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_3f9b4cdf-f81d-4506-91f3-6d397afaa75a"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "FloorClutter_R"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_3f9b4cdf-f81d-4506-91f3-6d397afaa75a.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_시전 훈련 벽.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "SpellTrainingWall"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_24fa9521-bb33-4560-94b8-f292806f8817"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/10층 소품/10층_비상 관측 창문 모듈.glb": [
+      [
+        "DA_F10_ClosedOffice",
+        "EmergencyWindow_01"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_99939fa1-36e9-4e93-95cf-b298e19cceb5"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "EmergencyWindow_02"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_99939fa1-36e9-4e93-95cf-b298e19cceb5.001"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "EmergencyWindow_03"
+      ],
+      [
+        "DA_F10_ClosedOffice",
+        "tripo_node_99939fa1-36e9-4e93-95cf-b298e19cceb5.002"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/3000/floor6-event-warning-beacon.glb": [
+      [
+        "DA_F06B_CausalityAdministrator",
+        "floor6-event-warning-beacon"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "tripo_node_6fdbda35-1edf-458d-ae64-6985ca737142"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "floor6-event-warning-beacon.001"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "tripo_node_6fdbda35-1edf-458d-ae64-6985ca737142.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/3000/floor6-two-stage-descent-gate.glb": [
+      [
+        "DA_F06B_CausalityAdministrator",
+        "floor6-two-stage-descent-gate"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "tripo_node_11fb6efd-b9d8-4594-bfb1-fef179a80b82"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/3000/floor6-verdict-seal-press.glb": [
+      [
+        "DA_F06B_CausalityAdministrator",
+        "floor6-verdict-seal-press"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "tripo_node_19b2587c-0181-40dd-b7df-cfb3b13efa19"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/3000/floor6-dual-clock-causality-pillar.glb": [
+      [
+        "DA_F06B_CausalityAdministrator",
+        "floor6-dual-clock-causality-pillar"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "tripo_node_fcde4a66-9194-4258-85cd-1f9cfab9fcb7"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "floor6-dual-clock-causality-pillar.001"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "tripo_node_fcde4a66-9194-4258-85cd-1f9cfab9fcb7.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/3000/floor6-delay-chamber-hourglass.glb": [
+      [
+        "DA_F06B_CausalityAdministrator",
+        "floor6-delay-chamber-hourglass"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "tripo_node_988816c0-606a-4747-b8a9-b3fafd472bbe"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/3000/floor6-split-time-monitor-cluster.glb": [
+      [
+        "DA_F06B_CausalityAdministrator",
+        "floor6-split-time-monitor-cluster"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "tripo_node_659de4d0-a62c-46f8-8d06-7b2ac742dc0d"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "F06B_SideMonitor"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/3000/floor6-causality-archive-gate.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "F06A_ArchiveVault"
+      ],
+      [
+        "DA_F06A_ResultDelayResidue",
+        "tripo_node_2a21d5a7-8543-472b-a6f4-935e9a702b65"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/3000/floor6-cause-effect-chain-loom.glb": [
+      [
+        "DA_F06B_CausalityAdministrator",
+        "floor6-cause-effect-chain-loom"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "tripo_node_002ecb83-86c0-4562-9c23-17ab2fdbbcc1"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/3000/floor6-pendulum-calibration-rack.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-pendulum-calibration-rack"
+      ],
+      [
+        "DA_F06A_ResultDelayResidue",
+        "tripo_node_8c802f3f-16d8-4926-ada9-d7333896b85b"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/1500/floor6-delayed-impact-test-target.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-delayed-impact-test-target"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/1500/floor6-causal-cable-bridge-panel.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-causal-cable-bridge-panel"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "floor6-causal-cable-bridge-panel.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/1500/floor6-event-capsule-transport-crate.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-event-capsule-transport-crate"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "F06B_SideCapsules"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/1500/floor6-consequence-ledger-printer.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-consequence-ledger-printer"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "floor6-consequence-ledger-printer.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/1500/floor6-clockwork-evidence-cabinet.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-clockwork-evidence-cabinet"
+      ],
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-clockwork-evidence-cabinet.001"
+      ],
+      [
+        "DA_F06A_ResultDelayResidue",
+        "F06A_EvidenceBank03"
+      ],
+      [
+        "DA_F06A_ResultDelayResidue",
+        "F06A_BackEvidence"
+      ],
+      [
+        "DA_F06A_ResultDelayResidue",
+        "F06A_SideArchive_-1"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "F06B_SideArchive_-1"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/1500/floor6-sequence-verification-console.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-sequence-verification-console"
+      ],
+      [
+        "DA_F06A_ResultDelayResidue",
+        "tripo_node_9b16b44f-5378-4172-97a3-171ae4f7f418"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "floor6-sequence-verification-console.001"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "tripo_node_9b16b44f-5378-4172-97a3-171ae4f7f418.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/1500/floor6-cause-marker-stake-set.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-cause-marker-stake-set"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/1500/floor6-timeline-strip-table.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-timeline-strip-table"
+      ],
+      [
+        "DA_F06A_ResultDelayResidue",
+        "tripo_node_c01d3266-6dc1-40e0-a7fa-4409d02ed0fe"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "F06B_SideTimeline"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/1500/floor6-broken-chronometer-floor-node.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-broken-chronometer-floor-node"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/1500/floor6-event-spool-cabinet.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-event-spool-cabinet"
+      ],
+      [
+        "DA_F06A_ResultDelayResidue",
+        "floor6-event-spool-cabinet.001"
+      ],
+      [
+        "DA_F06A_ResultDelayResidue",
+        "F06A_ReelBank03"
+      ],
+      [
+        "DA_F06A_ResultDelayResidue",
+        "F06A_BackReels"
+      ],
+      [
+        "DA_F06A_ResultDelayResidue",
+        "F06A_SideArchive_1"
+      ],
+      [
+        "DA_F06B_CausalityAdministrator",
+        "F06B_SideArchive_1"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/6층 소품/1500/floor6-sequence-seal-tag-set.glb": [
+      [
+        "DA_F06A_ResultDelayResidue",
+        "F06A_SequenceSealTools"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/floor7-axis-calibration-gantry(1500).glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_CalibrationGantry"
+      ],
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_CalibrationGantry_Right"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/3000/floor7-calibration-rail-panel.glb": [
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_WallRail"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/3000/floor7-phase-deviation-console.glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_ControlConsole"
+      ],
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_Console"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/3000/floor7-suspended-plumb-lens-sensor.glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_PlumbSensor"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/3000/floor7-coordinate-survey-rack.glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_RearSurveyRack"
+      ],
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_SideSurveyRack"
+      ],
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_SurveyRack"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/3000/floor7-reference-coordinate-gate.glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_ReferenceAxisGate"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/3000/floor7-two-stage-descent-gate.glb": [
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_SealedCalibrationGate"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/3000/floor7-triaxial-theodolite.glb": [
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_Theodolite"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/3000/floor7-phase-prism-array.glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_PhasePrism"
+      ],
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_PhasePrism.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/3000/floor7-drift-warning-beacon.glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_SealWarning"
+      ],
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_DriftBeacon"
+      ],
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_DriftBeacon.001"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/1500/floor7-misalignment-sample-crate.glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_SideSampleCrate"
+      ],
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_SampleCrate"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/1500/floor7-survey-cable-spool.glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_SideCableCart"
+      ],
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_CableSpool"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/1500/floor7-coordinate-log-cabinet.glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_SideLogCabinet_-1"
+      ],
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_SideLogCabinet_1"
+      ],
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_LogCabinet"
+      ],
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_SideLogCabinet_-1"
+      ],
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_SideLogCabinet_1"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/1500/floor7-cracked-floor-axis-node.glb": [
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_DriftAxis"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/1500/floor7-broken-spatial-map-wall.glb": [
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_FracturedMap"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/1500/floor7-coordinate-grid-projector-table.glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_SideProjector"
+      ],
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_ProjectorBench"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/1500/floor7-modular-coordinate-partition.glb": [
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_LeftSurveyPartition"
+      ],
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_RightSurveyPartition"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/1500/floor7-reference-marker-totem.glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_AxisTotem"
+      ],
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_AxisTotem.001"
+      ],
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_BackReference"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/1500/floor7-benchmark-seal-tag-set.glb": [
+      [
+        "DA_F07A_CoordinateResidue",
+        "F07A_SampleTags"
+      ]
+    ],
+    "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/5. 층별 소품/7층 소품/5000/floor7-gyroscopic-reference-anchor.glb": [
+      [
+        "DA_F07_CoordinateAdministrator",
+        "F07B_GyroscopicAnchor"
+      ]
+    ]
+  }
+}

@@ -8,7 +8,7 @@ struct ExpansionFlowView: View {
     @ObservedObject var sceneController: RealitySceneController
     @Binding var retryLoadingPresentation: SceneRetryLoadingPresentation?
     let onExit: () -> Void
-    @State private var showsBag = true
+    @State private var showsBag = false
     @State private var learningInputActive = false
     @State private var practiceSpell: SpellID?
     @State private var showsPractice = false
@@ -39,14 +39,34 @@ struct ExpansionFlowView: View {
         case .entrance:
             procedure(title: "제\(current.floorNumber)층 · \(current.areaName)",
                 detail: "관측 잔류체를 처리하고 봉인 해제로 관리자 구역을 개방하세요.",
-                button: "들어가기", enabled: ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: false) != nil) {
+                button: "입장하기", enabled: ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: false) != nil) {
                 gameSession.send(.advanceExpansion)
             }
-        case .preparation, .bossPreparation:
+        case .preparation:
             if showsBag {
                 LoadoutPreparationView(onBegin: { gameSession.send(.advanceExpansion) }, onCancel: { showsBag = false })
             } else {
-                procedure(title: current.showsBoss ? "관리자 구역" : "잔류체 구역", detail: "전투 전에 주문 구성을 확인하세요.", button: "출전 준비") { showsBag = true }
+                FloorEntrancePanel(
+                    configuration: .expansionPreparation(
+                        floorNumber: current.floorNumber,
+                        areaName: current.areaName,
+                        isBoss: false
+                    ),
+                    action: { showsBag = true }
+                )
+            }
+        case .bossPreparation:
+            if showsBag {
+                LoadoutPreparationView(onBegin: { gameSession.send(.advanceExpansion) }, onCancel: { showsBag = false })
+            } else {
+                FloorEntrancePanel(
+                    configuration: .expansionPreparation(
+                        floorNumber: current.floorNumber,
+                        areaName: current.areaName,
+                        isBoss: true
+                    ),
+                    action: { showsBag = true }
+                )
             }
         case .residualBattle, .bossBattle:
             BattleView(realityController: sceneController, restartLoadingPresentation: $retryLoadingPresentation)

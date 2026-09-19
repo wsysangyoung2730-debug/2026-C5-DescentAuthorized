@@ -797,6 +797,7 @@ private extension TutorialSequenceID {
         case .riftDiscovery: "이전 균열 절단 발견 안내"
         case .floor10DescentSeal: "10층 하강 봉인문"
         case .recordsBattleBasics: "9층 첫 전투"
+        case .floor9Loadout: "9층 출전 준비"
         }
     }
 }

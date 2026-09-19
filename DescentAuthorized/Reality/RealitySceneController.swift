@@ -143,6 +143,7 @@ final class RealitySceneController: ObservableObject {
     private let erasureZoneRenderer = RealityErasureZoneRenderer()
     private let combatVFXRenderer = RealityCombatVFXRenderer()
     private let progressionVFXRenderer = RealityProgressionVFXRenderer()
+    private let observatoryAmbientMotion = ObservatoryAmbientMotion()
 
     func attach(to arView: ARView) {
         combatVFXRenderer.onIntentLayoutChanged = { [weak self] in
@@ -1078,6 +1079,7 @@ final class RealitySceneController: ObservableObject {
     func setEnemyIdleMotion(reducedMotion: Bool) {
         requestedReducedMotion = reducedMotion
         updateEnemyIdleMotion(reducedMotion: reducedMotion)
+        observatoryAmbientMotion.setReducedMotion(reducedMotion)
     }
 
     func presentCombat(
@@ -1088,6 +1090,7 @@ final class RealitySceneController: ObservableObject {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
         updateEnemyIdleMotion(reducedMotion: reducedMotion)
+        observatoryAmbientMotion.setReducedMotion(reducedMotion)
         let cues = RealityCombatPresentationMapper.cues(for: events, battleState: battleState)
         guard registry.root != nil else {
             pendingCombatCues.append(contentsOf: cues)
@@ -1104,6 +1107,7 @@ final class RealitySceneController: ObservableObject {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
         updateEnemyIdleMotion(reducedMotion: reducedMotion)
+        observatoryAmbientMotion.setReducedMotion(reducedMotion)
         guard let battleState, registry.root != nil else { return }
         combatVFXRenderer.present(
             RealityCombatPresentationMapper.cues(for: [], battleState: battleState),
@@ -1178,6 +1182,7 @@ final class RealitySceneController: ObservableObject {
     }
 
     func unload() {
+        observatoryAmbientMotion.reset()
         environmentTask?.cancel()
         environmentTask = nil
         arView?.environment.lighting.resource = nil
@@ -1234,6 +1239,15 @@ final class RealitySceneController: ObservableObject {
     ) {
         let anchor = AnchorEntity(world: .zero)
         anchor.name = "DA_RUNTIME_SCENE_ANCHOR"
+        // These room exports have an identity default prim, authored in meters/Z-up.
+        // Entity.load adds a 0.01 scale without converting the scene's up axis.
+        // Normalize that import wrapper before capturing world-space cameras. This
+        // also gives physical lights and camera animation offsets meter distances.
+        root.transform = Transform(
+            scale: SIMD3<Float>(repeating: 1),
+            rotation: simd_quatf(angle: -.pi / 2, axis: SIMD3<Float>(1, 0, 0)),
+            translation: .zero
+        )
         anchor.addChild(root)
 
         authoredCameraSnapshots = captureAuthoredCameras(in: root, descriptor: descriptor)
@@ -1248,6 +1262,14 @@ final class RealitySceneController: ObservableObject {
         sceneAnchor = anchor
         cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
+        if descriptor.sceneID == .floor08AdministratorObservatory {
+            // Remove the added flat optical discs, keeping the textured sensor pods.
+            for entity in Self.observatoryOpticalDiscs(in: root) {
+                entity.removeFromParent()
+            }
+            observatoryAmbientMotion.install(in: root, view: arView)
+            observatoryAmbientMotion.setReducedMotion(requestedReducedMotion)
+        }
         if descriptor.sceneID == .floor09ArchiveRedesign {
             installFloor9Lighting(in: root)
         } else {
@@ -1752,16 +1774,8 @@ extension RealitySceneController {
         let ceiling = UIColor(red: 1, green: 0.95, blue: 0.87, alpha: 1)
         let warm = UIColor(red: 1, green: 0.94, blue: 0.84, alpha: 1)
         let door = UIColor(red: 1, green: 0.70, blue: 0.36, alpha: 1)
-        // RealityKit may normalize a Z-up USD stage to Y-up on import. Compare
-        // an authored lamp with its Blender coordinates before placing lights.
-        let lampTube = root.findEntity(named: "F09D_Lamp_Tube_0")
-        let lampPosition = lampTube?.visualBounds(relativeTo: root).center
-        let isYUp = lampPosition.map { abs($0.y - 7.045) < abs($0.z - 7.045) } ?? false
-        Self.loadLog.notice("lighting.yUp=\(isYUp) lamp=\(String(describing: lampPosition), privacy: .public)")
-        func importedPosition(_ source: SIMD3<Float>) -> SIMD3<Float> {
-            isYUp ? SIMD3(source.x, source.z, -source.y) : source
-        }
-        let upVector: SIMD3<Float> = isYUp ? [0, 0, -1] : [0, 1, 0]
+        // The room root maps authored Z-up coordinates into the Y-up runtime.
+        // Local fixture coordinates remain exactly as exported from Blender.
         // Six working fluorescent fixtures from DA_F09_Archive_Redesign in v022.
         let fixtures: [Fixture] = [
             Fixture(name: "CEILING_0", position: [-6, -3, 6.93], target: [-6, -3, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
@@ -1789,9 +1803,9 @@ extension RealitySceneController {
             lamp.light.attenuationRadius = fixture.radius
             root.addChild(lamp)
             lamp.look(
-                at: importedPosition(fixture.target),
-                from: importedPosition(fixture.position),
-                upVector: upVector,
+                at: fixture.target,
+                from: fixture.position,
+                upVector: [0, 1, 0],
                 relativeTo: root
             )
         }
@@ -1823,12 +1837,6 @@ extension RealitySceneController {
                         ([-8,9,6],[-8,12,1],1700), ([8,10,6],[8,13,1],1700)]
         default: return
         }
-        let matrix = descriptor.cameraNames[.main].flatMap { authoredCameraSnapshots[$0]?.transformMatrix }
-        let cameraPosition = matrix.map {
-            root.convert(position: SIMD3($0.columns.3.x, $0.columns.3.y, $0.columns.3.z), from: nil)
-        }
-        let isYUp = cameraPosition.map { abs($0.y) < abs($0.z) } ?? false
-        func position(_ value: SIMD3<Float>) -> SIMD3<Float> { isYUp ? [value.x,value.z,-value.y] : value }
         for (index, fixture) in fixtures.enumerated() {
             let lamp = SpotLight(); lamp.name = "ROOM_RUNTIME_\(index)"
             lamp.light.color = UIColor(red: 1, green: 0.95, blue: 0.88, alpha: 1)
@@ -1836,8 +1844,8 @@ extension RealitySceneController {
             lamp.light.innerAngleInDegrees = 70; lamp.light.outerAngleInDegrees = 115
             lamp.light.attenuationRadius = 20
             root.addChild(lamp)
-            lamp.look(at: position(fixture.target), from: position(fixture.position),
-                      upVector: isYUp ? [0,0,-1] : [0,1,0], relativeTo: root)
+            lamp.look(at: fixture.target, from: fixture.position,
+                      upVector: [0, 1, 0], relativeTo: root)
         }
     }
 }
@@ -1984,5 +1992,138 @@ private final class PreparedRealityAssets {
     func environment(bundle: Bundle, sceneID: FloorSceneID = .floor09ArchiveRedesign) async -> EnvironmentResource? {
         prepareEnvironment(bundle: bundle, sceneID: sceneID)
         return await environmentTasks[sceneID]?.value
+    }
+}
+
+
+#if DEBUG
+extension RealitySceneController {
+    /// Opt-in, fixed-input comparison. Runs only inside the asset preview.
+    /// Writes diagnostic images and transforms, never gameplay progress.
+    func runDeviceRenderDiagnostics() async {
+        guard ProcessInfo.processInfo.arguments.contains("--render-diagnostics"),
+              let cameraEntity, let activeCameraName,
+              let snapshot = authoredCameraSnapshots[activeCameraName], let arView else { return }
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("RenderDiagnostics", isDirectory: true)
+        do { try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true) }
+        catch { print("C5_RENDER_DIAGNOSTICS error=\(error)"); return }
+        let initialMatrix = cameraEntity.transformMatrix(relativeTo: nil)
+        let initialYaw = battleCameraYaw
+        let initialPitch = battleCameraPitch
+        defer {
+            cameraEntity.setTransformMatrix(initialMatrix, relativeTo: nil)
+            battleCameraYaw = initialYaw
+            battleCameraPitch = initialPitch
+        }
+        func values(_ matrix: simd_float4x4) -> [Float] {
+            (0..<4).flatMap { column in (0..<4).map { matrix[column][$0] } }
+        }
+        func capture(_ label: String) async {
+            do { try await Task.sleep(for: .seconds(1)) } catch { return }
+            let matrix = cameraEntity.transformMatrix(relativeTo: nil)
+            let report: [String: Any] = [
+                "event": label, "os": UIDevice.current.systemVersion,
+                "scene": requestedSceneID?.rawValue ?? "", "quality": graphicsQuality.rawValue,
+                "camera": activeCameraName, "yaw": battleCameraYaw, "pitch": battleCameraPitch,
+                "rootMatrix": values(registry.root?.transformMatrix(relativeTo: nil) ?? matrix_identity_float4x4),
+                "authoredCamera": values(snapshot.transformMatrix),
+                "decomposedAuthored": values(Transform(matrix: snapshot.transformMatrix).matrix),
+                "entityCamera": values(matrix), "renderedCamera": values(arView.cameraTransform.matrix),
+                "fov": cameraEntity.camera.fieldOfViewInDegrees,
+                "environmentExponent": arView.environment.lighting.intensityExponent,
+                "environmentLoaded": arView.environment.lighting.resource != nil,
+                "viewportWidth": arView.bounds.width, "viewportHeight": arView.bounds.height
+            ]
+            do {
+                let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+                try data.write(to: directory.appendingPathComponent(label + ".json"), options: .atomic)
+                print("C5_RENDER_DIAGNOSTICS \(String(decoding: data, as: UTF8.self))")
+            } catch { print("C5_RENDER_DIAGNOSTICS error=\(error)") }
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                arView.snapshot(saveToHDR: false) { image in
+                    if let data = image?.pngData() {
+                        try? data.write(to: directory.appendingPathComponent(label + ".png"), options: .atomic)
+                    }
+                    continuation.resume()
+                }
+            }
+        }
+        // Await the existing lighting task so both captures include the same environment.
+        await environmentTask?.value
+        guard !Task.isCancelled else { return }
+        await capture("01-baseline")
+        battleCameraYaw = 0.2
+        battleCameraPitch = 0
+        cameraEntity.setTransformMatrix(adjustedBattleCameraMatrix(from: snapshot), relativeTo: nil)
+        await capture("02-yaw")
+        guard !Task.isCancelled else { return }
+        if requestedCameraPreset == .battle {
+            await playBattleDefeatCamera(reducedMotion: false)
+        } else {
+            cameraEntity.setTransformMatrix(floor10OpeningTransform(from: snapshot, yaw: -0.12,
+                pitch: 0.2, roll: -0.28, verticalOffset: -0.72, forwardOffset: -0.08).matrix, relativeTo: nil)
+        }
+        await capture("03-fallen")
+        print("C5_RENDER_DIAGNOSTICS complete")
+    }
+}
+#endif
+
+#if DEBUG
+extension RealitySceneController {
+    func runObservatoryAmbientDiagnostics() async {
+        guard requestedSceneID == .floor08AdministratorObservatory,
+              let root = registry.root, let cameraEntity, let arView else { return }
+        await environmentTask?.value
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("AmbientDiagnostics", isDirectory: true)
+        do { try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true) }
+        catch { print("C5_AMBIENT error=\(error)"); return }
+        cameraEntity.look(at: [0, 10, 7.3], from: [0, -5, 4.8], upVector: [0, 0, 1], relativeTo: root)
+        cameraEntity.camera.fieldOfViewInDegrees = 65
+        var frames: [[String: Any]] = []
+        observatoryAmbientMotion.setReducedMotion(true)
+        frames.append(observatoryAmbientMotion.diagnosticSnapshot)
+        observatoryAmbientMotion.setReducedMotion(false)
+        for index in 1...2 {
+            do { try await Task.sleep(for: .seconds(3)) } catch { return }
+            frames.append(observatoryAmbientMotion.diagnosticSnapshot)
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                arView.snapshot(saveToHDR: false) { image in
+                    if let data = image?.pngData() {
+                        try? data.write(to: directory.appendingPathComponent("motion-\(index).png"), options: .atomic)
+                    }
+                    continuation.resume()
+                }
+            }
+        }
+        observatoryAmbientMotion.setReducedMotion(true)
+        frames.append(observatoryAmbientMotion.diagnosticSnapshot)
+        do { try await Task.sleep(for: .milliseconds(250)) } catch { return }
+        frames.append(observatoryAmbientMotion.diagnosticSnapshot)
+        let report: [String: Any] = ["frames": frames,
+            "remainingDiscs": Self.observatoryOpticalDiscs(in: root).count]
+        do {
+            try JSONSerialization.data(withJSONObject: report, options: [.sortedKeys, .prettyPrinted])
+                .write(to: directory.appendingPathComponent("report.json"), options: .atomic)
+            print("C5_AMBIENT complete")
+        } catch { print("C5_AMBIENT error=\(error)") }
+        observatoryAmbientMotion.setReducedMotion(requestedReducedMotion)
+    }
+}
+#endif
+
+private extension RealitySceneController {
+    static func observatoryOpticalDiscs(in root: Entity) -> [Entity] {
+        var result: [Entity] = []
+        for child in root.children {
+            if child.name == "F08B_Sensor_Lens" || child.name.hasPrefix("F08B_Sensor_Lens_") {
+                result.append(child)
+            } else {
+                result.append(contentsOf: observatoryOpticalDiscs(in: child))
+            }
+        }
+        return result
     }
 }
