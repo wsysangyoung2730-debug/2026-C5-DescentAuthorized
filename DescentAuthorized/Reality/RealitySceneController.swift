@@ -2212,6 +2212,61 @@ private extension RealitySceneController {
 #if DEBUG
 extension RealitySceneController {
     /// Isolated preview diagnostics never modify gameplay or its save store.
+    /// Runs only in isolated DEBUG previews. Exercises the actual loaded camera
+    /// and entity hierarchy without synthesizing touches or changing player saves.
+    func runExpansionExplorationDiagnostics(isBattle: Bool) async {
+        guard let id = requestedSceneID, id.isExpansion, let cameraEntity,
+              let arView else { return }
+        await environmentTask?.value
+        let mode = isBattle ? "battle" : "investigation"
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("ExpansionExplorationDiagnostics/\(id.rawValue)/\(mode)")
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        func capture(_ name: String) async {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                arView.snapshot(saveToHDR: false) { image in
+                    try? image?.pngData()?.write(to: directory.appendingPathComponent(name + ".png"))
+                    continuation.resume()
+                }
+            }
+        }
+        // Allow SwiftUI's nested investigation onAppear to finish before sampling.
+        do { try await Task.sleep(for: .milliseconds(350)) } catch { return }
+        let enabledOnEntry = isBattleCameraInteractionEnabled
+        let actorVisibleOnEntry = registry.entity(for: .enemyActor)?.isEnabled == true
+        let base = cameraEntity.transformMatrix(relativeTo: nil)
+        let viewport = CGSize(width: 1000, height: 700)
+        let config: BattleCameraInteractionConfiguration = isBattle ? .standard : .investigation(maximumYawDegrees: 65)
+        await capture("entry")
+        beginBattleCameraLook()
+        updateBattleCameraLook(translation: CGSize(width: 500, height: 60), viewportSize: viewport, configuration: config)
+        let left = cameraEntity.transformMatrix(relativeTo: nil)
+        await capture("look-left")
+        resetBattleCamera(animated: false)
+        beginBattleCameraLook()
+        updateBattleCameraLook(translation: CGSize(width: -500, height: -60), viewportSize: viewport, configuration: config)
+        let right = cameraEntity.transformMatrix(relativeTo: nil)
+        await capture("look-right")
+        resetBattleCamera(animated: false)
+        let reset = cameraEntity.transformMatrix(relativeTo: nil)
+        centerAndLockEntranceCamera(previewYaw: 0, reducedMotion: true, completion: {})
+        beginBattleCameraLook()
+        updateBattleCameraLook(translation: CGSize(width: 400, height: 0), viewportSize: viewport)
+        let locked = cameraEntity.transformMatrix(relativeTo: nil)
+        let report: [String: Any] = [
+            "scene": id.rawValue, "mode": mode,
+            "enabledOnEntry": enabledOnEntry, "actorVisibleOnEntry": actorVisibleOnEntry,
+            "lookLeftChanged": base != left, "lookRightChanged": base != right,
+            "resetRestoredCamera": base == reset, "lockedCameraRejectsLook": base == locked,
+            "anchorIDs": investigationAnchorEntities.keys.sorted(),
+            "missingRoles": missingEntityRoles.map(\.rawValue)
+        ]
+        try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+            .write(to: directory.appendingPathComponent("report.json"))
+        setBattleCameraInteractionEnabled(enabledOnEntry)
+        print("C5_EXPLORATION_DIAGNOSTICS \(id.rawValue) \(mode) complete")
+    }
+
     func runExpansionDiagnostics() async {
         guard let id = requestedSceneID, id.isExpansion, let arView else { return }
         let preset = requestedCameraPreset

@@ -25,6 +25,12 @@ struct ExpansionFlowView: View {
             }
             .task(id: current.stage) {
                 synchronizeScene(current)
+                #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--expansion-exploration-diagnostics"),
+                   ExpansionPreviewSupport.floor != nil {
+                    await sceneController.runExpansionExplorationDiagnostics(isBattle: current.stage.isBattle)
+                }
+                #endif
             }
             .onChange(of: inheritedInputSuspension) { _, suspended in
                 sceneController.setActorMotionSuspended(suspended || combatGuide != nil)
