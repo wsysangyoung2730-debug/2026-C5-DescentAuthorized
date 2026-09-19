@@ -1,0 +1,46 @@
+{
+  "fps": 30,
+  "clips": {
+    "idle": {
+      "start": 0.0,
+      "end": 2.0,
+      "duration": 2.0
+    },
+    "appear": {
+      "start": 2.1,
+      "end": 3.1,
+      "duration": 1.0
+    },
+    "telegraph": {
+      "start": 3.2,
+      "end": 4.4,
+      "duration": 1.2
+    },
+    "attack": {
+      "start": 4.5,
+      "end": 5.5,
+      "duration": 1.0
+    },
+    "heavyAttack": {
+      "start": 5.6,
+      "end": 7.2,
+      "duration": 1.6
+    },
+    "special": {
+      "start": 7.3,
+      "end": 9.3,
+      "duration": 2.0
+    },
+    "hit": {
+      "start": 9.4,
+      "end": 10.2,
+      "duration": 0.8
+    },
+    "death": {
+      "start": 10.3,
+      "end": 12.1,
+      "duration": 1.8
+    }
+  },
+  "actor": "MemoryOmissionResidue"
+}
