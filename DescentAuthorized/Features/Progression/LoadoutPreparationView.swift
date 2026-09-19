@@ -225,15 +225,6 @@ struct LoadoutPreparationView: View {
 
             Spacer(minLength: 12)
 
-            if floorNumber == 9 {
-                Button("사용법") {
-                    gameSession.send(.requestTutorialReplay(.floor9Loadout))
-                }
-                .buttonStyle(.bordered)
-                .tint(DAColor.gold)
-                .accessibilityLabel("출전 준비 사용법 다시 보기")
-            }
-
             VStack(alignment: .trailing, spacing: 5) {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text("\(selected.count)")
