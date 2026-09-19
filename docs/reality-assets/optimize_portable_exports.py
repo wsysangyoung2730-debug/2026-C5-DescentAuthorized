@@ -172,6 +172,11 @@ for source_usdc in sorted(args.source.glob("*/*.usdc")):
         output_usdc = destination / f"{asset_name}_{quality}.usdc"
         stage = Usd.Stage.CreateNew(str(output_usdc))
         stage.GetRootLayer().subLayerPaths = [f"./{asset_name}.usdc"]
+        # Stage metadata is not inherited from sublayers by every USD reader.
+        for key in ("upAxis", "metersPerUnit", "startTimeCode", "endTimeCode",
+                    "timeCodesPerSecond", "framesPerSecond"):
+            if high_stage.HasAuthoredMetadata(key):
+                stage.SetMetadata(key, high_stage.GetMetadata(key))
         for attr, value in asset_attributes(flattened_source):
             resolved = Path(value.resolvedPath) if value.resolvedPath else source_usdc.parent / value.path
             key = normalized(resolved)
