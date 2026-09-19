@@ -411,7 +411,7 @@ struct InvestigationView: View {
                 DragGesture(minimumDistance: 4)
                     .onChanged { value in
                         if cameraLookOrigin == nil {
-                            cameraLookOrigin = value.translation
+                            cameraLookOrigin = .zero
                             sceneController.beginBattleCameraLook()
                         }
 

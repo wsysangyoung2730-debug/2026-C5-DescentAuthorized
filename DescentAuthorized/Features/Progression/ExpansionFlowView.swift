@@ -23,7 +23,7 @@ struct ExpansionFlowView: View {
                     .environment(\.isGlyphInputSuspended, inheritedInputSuspension || combatGuide != nil)
                 if let guide = combatGuide { ExpansionCombatGuideView(guide: guide) }
             }
-            .onAppear { synchronizeScene(current) }
+            .task(id: current.stage) { synchronizeScene(current) }
             .onChange(of: inheritedInputSuspension) { _, suspended in
                 sceneController.setActorMotionSuspended(suspended || combatGuide != nil)
             }
@@ -39,8 +39,11 @@ struct ExpansionFlowView: View {
 
     private func synchronizeScene(_ current: ExpansionProgress) {
         let hidden: [ExpansionStage] = [.sealedDoor, .reward, .descent, .learnDebuff, .complete]
-        sceneController.setEnemyPreviewVisible(!hidden.contains(current.stage))
-        sceneController.setLimitedCameraInteractionEnabled(current.stage.isBattle)
+        // InvestigationFlow owns visibility and camera locking until entry finishes.
+        if current.stage != .entrance && current.stage != .preparation {
+            sceneController.setEnemyPreviewVisible(!hidden.contains(current.stage))
+            sceneController.setLimitedCameraInteractionEnabled(current.stage.isBattle)
+        }
         sceneController.setActorMotionSuspended(inheritedInputSuspension || combatGuide != nil)
         switch current.stage {
         case .preparation, .bossPreparation, .entrance:
@@ -60,24 +63,28 @@ struct ExpansionFlowView: View {
     @ViewBuilder
     private func content(_ current: ExpansionProgress) -> some View {
         switch current.stage {
-        case .entrance:
-            procedure(title: "제\(current.floorNumber)층 · \(current.areaName)",
-                detail: "관측 잔류체를 처리하고 봉인 해제로 관리자 구역을 개방하세요.",
-                button: "입장하기", enabled: ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: false) != nil) {
-                gameSession.send(.advanceExpansion)
-            }
-        case .preparation:
-            if showsBag {
-                LoadoutPreparationView(onBegin: { gameSession.send(.advanceExpansion) }, onCancel: { showsBag = false })
-            } else {
-                FloorEntrancePanel(
-                    configuration: .expansionPreparation(
-                        floorNumber: current.floorNumber,
-                        areaName: current.areaName,
-                        isBoss: false
-                    ),
-                    action: { showsBag = true }
-                )
+        case .entrance, .preparation:
+            InvestigationFlow(
+                sceneController: sceneController,
+                configuration: .expansion(floor: current.floorNumber),
+                hasCompletedInvestigation: ExpansionInvestigationCatalog.isComplete(
+                    floor: current.floorNumber, readRecordIDs: gameSession.progress.readRecordIDs
+                ),
+                restoresEnemyOnDisappear: false
+            ) {
+                if current.stage == .entrance {
+                    procedure(title: "제\(current.floorNumber)층 · \(current.areaName)",
+                        detail: "잔류체의 반응이 드러났습니다. 출전할 주문을 준비하세요.",
+                        button: "입장하기") { gameSession.send(.advanceExpansion) }
+                } else if showsBag {
+                    LoadoutPreparationView(onBegin: { gameSession.send(.advanceExpansion) }, onCancel: { showsBag = false })
+                } else {
+                    FloorEntrancePanel(
+                        configuration: .expansionPreparation(floorNumber: current.floorNumber,
+                            areaName: current.areaName, isBoss: false),
+                        action: { showsBag = true }
+                    )
+                }
             }
         case .bossPreparation:
             if showsBag {

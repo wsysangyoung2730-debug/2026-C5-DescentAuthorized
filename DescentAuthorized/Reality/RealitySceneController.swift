@@ -1706,6 +1706,13 @@ final class RealitySceneController: ObservableObject {
                     normalizedPosition: SIMD3(0.5, 0.72, 0.5)
                 )
             ]
+        case .floor07CoordinateResidue, .floor06CausalityResidue, .floor05MemoryOmissionResidue:
+            let floor = descriptor.sceneID == .floor07CoordinateResidue ? 7
+                : descriptor.sceneID == .floor06CausalityResidue ? 6 : 5
+            definitions = ExpansionInvestigationCatalog.records(for: floor).map {
+                .init(id: $0.id, entityName: $0.entityName,
+                      normalizedPosition: SIMD3(0.5, 0.8, 0.5))
+            }
         default:
             definitions = []
         }

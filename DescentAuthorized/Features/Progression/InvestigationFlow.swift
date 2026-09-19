@@ -12,6 +12,7 @@ struct InvestigationFlow<EntranceContent: View>: View {
     let hasCompletedPostInvestigation: Bool
     let postInvestigationContent: ((@escaping () -> Void) -> AnyView)?
     let entranceContent: EntranceContent
+    let restoresEnemyOnDisappear: Bool
 
     @State private var isEntrancePresented = false
     @State private var isInvestigationPresented = true
@@ -25,11 +26,13 @@ struct InvestigationFlow<EntranceContent: View>: View {
         sceneController: RealitySceneController,
         configuration: InvestigationConfiguration,
         hasCompletedInvestigation: Bool,
+        restoresEnemyOnDisappear: Bool = true,
         @ViewBuilder entranceContent: () -> EntranceContent
     ) {
         self.sceneController = sceneController
         self.configuration = configuration
         self.hasCompletedInvestigation = hasCompletedInvestigation
+        self.restoresEnemyOnDisappear = restoresEnemyOnDisappear
         hasCompletedPostInvestigation = true
         postInvestigationContent = nil
         self.entranceContent = entranceContent()
@@ -49,6 +52,7 @@ struct InvestigationFlow<EntranceContent: View>: View {
         self.sceneController = sceneController
         self.configuration = configuration
         self.hasCompletedInvestigation = hasCompletedInvestigation
+        restoresEnemyOnDisappear = true
         self.hasCompletedPostInvestigation = hasCompletedPostInvestigation
         self.postInvestigationContent = { completion in
             AnyView(postInvestigationContent(completion))
@@ -124,7 +128,7 @@ struct InvestigationFlow<EntranceContent: View>: View {
             revealGeneration += 1
             entranceRevealTask?.cancel()
             entranceRevealTask = nil
-            sceneController.setEnemyPreviewVisible(true)
+            if restoresEnemyOnDisappear { sceneController.setEnemyPreviewVisible(true) }
             sceneController.resetBattleCamera(animated: false)
         }
     }
