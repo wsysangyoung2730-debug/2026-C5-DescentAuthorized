@@ -175,6 +175,8 @@ struct TutorialCoachOverlay: View {
     private var coachPanel: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(step.title)
+                .accessibilityLabel("튜토리얼. \(step.title)")
+                .accessibilityAddTraits(.isHeader)
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(DAColor.gold)
 
@@ -216,7 +218,6 @@ struct TutorialCoachOverlay: View {
         }
         .shadow(color: DAColor.magic.opacity(0.4), radius: 18)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("튜토리얼. \(step.title). \(step.message)")
     }
 
     private func alignment(for placement: TutorialCoachStep.Placement) -> Alignment {

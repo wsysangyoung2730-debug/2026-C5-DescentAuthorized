@@ -12,7 +12,7 @@ struct Floor9EntranceView: View {
         InvestigationFlow(
             sceneController: sceneController,
             configuration: .floor9,
-            hasCompletedInvestigation: isInvestigationComplete
+            hasCompletedInvestigation: isInvestigationComplete || gameSession.progress.currentScene == .floor9RecordsPreparation
         ) {
             GeometryReader { proxy in
                 let panelWidth = min(max(proxy.size.width * 0.43, 520), 650)

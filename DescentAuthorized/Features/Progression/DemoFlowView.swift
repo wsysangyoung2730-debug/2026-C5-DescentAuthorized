@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DemoFlowView: View {
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @EnvironmentObject private var gameSession: GameSessionStore
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
@@ -40,6 +41,8 @@ struct DemoFlowView: View {
                     controller: sceneController,
                     onReturnToTitle: onExit
                 )
+                .allowsHitTesting(preparedBattle == nil)
+                .accessibilityHidden(preparedBattle != nil)
             } else {
                 Color.black.ignoresSafeArea()
             }
@@ -199,7 +202,7 @@ struct DemoFlowView: View {
     }
 
     private var preparationTransition: Animation? {
-        appSettings.reducedMotion ? nil : .easeInOut(duration: 0.24)
+        appSettings.reducedMotion || systemReduceMotion ? nil : .easeInOut(duration: 0.24)
     }
 
     private func showPreparation(_ battle: PreparedLegacyBattle) {
