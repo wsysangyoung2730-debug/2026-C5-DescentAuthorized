@@ -732,6 +732,7 @@ final class ExpansionActorMotionPlayer {
     private var returnTask: Task<Void, Never>?
     private var generation = 0
     private var terminal = false
+    private var terminalMotionStarted = false
     private var reduced = false
     private var suspended = false
 
@@ -758,13 +759,16 @@ final class ExpansionActorMotionPlayer {
 
     func prepareEncounter() {
         terminal = false
+        terminalMotionStarted = false
         play("idle")
     }
 
     func setReducedMotion(_ value: Bool) {
         guard reduced != value else { return }
         reduced = value
-        if value { stop() } else if !terminal { play("idle") }
+        if value { stop() }
+        else if terminal && !terminalMotionStarted { play("death") }
+        else if !terminal { play("idle") }
     }
 
     func setSuspended(_ value: Bool) {
@@ -773,8 +777,9 @@ final class ExpansionActorMotionPlayer {
         if value {
             returnTask?.cancel(); returnTask = nil
             playback?.pause()
-        } else if terminal {
-            playback?.resume()
+        } else if terminal && !reduced {
+            if terminalMotionStarted { playback?.resume() }
+            else { play("death") }
         } else {
             play("idle")
         }
@@ -804,11 +809,12 @@ final class ExpansionActorMotionPlayer {
     func play(_ name: String) {
         guard !terminal || name == "death" else { return }
         if name == "death" {
-            guard !terminal else { return }
+            guard !terminalMotionStarted else { return }
             terminal = true
         }
         guard !reduced, !suspended, let root, let source, let clip = manifest?.clips[name] else { return }
         stop()
+        if name == "death" { terminalMotionStarted = true }
         do {
             let view = AnimationView(source: source.definition, name: name,
                 fillMode: name == "death" ? .forwards : [], trimStart: clip.start, trimEnd: clip.end)
@@ -836,6 +842,6 @@ final class ExpansionActorMotionPlayer {
 
     func reset() {
         stop(); root = nil; source = nil; manifest = nil
-        terminal = false; reduced = false; suspended = false
+        terminal = false; terminalMotionStarted = false; reduced = false; suspended = false
     }
 }

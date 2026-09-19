@@ -1382,6 +1382,11 @@ final class RealitySceneController: ObservableObject {
                     actorContainer.name = "DA_RUNTIME_ENEMY_ACTOR"
                     let installedActor = descriptor.sceneID.isExpansion ? actorRoot : actorEntity
                     installedActor.removeFromParent()
+                    if descriptor.sceneID.isExpansion {
+                        // Retain binding paths but discard Entity.load's outer
+                        // unit/up-axis conversion: the room root already owns it.
+                        installedActor.transform = .identity
+                    }
                     actorContainer.addChild(installedActor)
                     self.normalizeActor(
                         installedActor,
@@ -1419,7 +1424,8 @@ final class RealitySceneController: ObservableObject {
 
     private func installExpansionRewards(bundle: Bundle) throws {
         let directory = "Reality/Interactables/RewardScroll"
-        guard let url = bundle.url(forResource: "reward_scroll", withExtension: "usdc", subdirectory: directory) else {
+        let resourceName = graphicsQuality == .high ? "reward_scroll" : "reward_scroll_\(graphicsQuality.rawValue)"
+        guard let url = bundle.url(forResource: resourceName, withExtension: "usdc", subdirectory: directory) else {
             throw NSError(domain: "RewardAsset", code: 1, userInfo: [NSLocalizedDescriptionKey: "공용 두루마리 모델이 없습니다."])
         }
         let resource = try Entity.load(contentsOf: url)
