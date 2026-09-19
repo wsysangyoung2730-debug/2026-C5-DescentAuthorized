@@ -413,6 +413,16 @@ struct BattleView: View {
                         .padding(.vertical, 12)
                 }
             }
+            // Receive background drags at the container: positioned input views
+            // occupy the stage's layout bounds even outside their visible frame.
+            .simultaneousGesture(battleCameraLookGesture(
+                viewportSize: CGSize(width: contentWidth, height: max(stageHeight, 1)),
+                inputFrame: CGRect(
+                    x: inputPanelX(availableWidth: contentWidth, panelWidth: inputPanelWidth) - inputPanelWidth / 2,
+                    y: inputPanelCenterY - inputPanelHeight / 2,
+                    width: inputPanelWidth, height: inputPanelHeight
+                )
+            ))
             .overlay {
                 Rectangle()
                     .stroke(DAColor.gold.opacity(0.28), lineWidth: 1)
@@ -426,29 +436,6 @@ struct BattleView: View {
     private func battleCameraInteractionSurface(viewportSize: CGSize) -> some View {
         Color.clear
             .contentShape(Rectangle())
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 4)
-                    .onChanged { value in
-                        guard !isCameraZooming else { return }
-                        if !isCameraLooking {
-                            isCameraLooking = true
-                            cameraLookTranslationOrigin = value.translation
-                            realityController.beginBattleCameraLook()
-                        }
-                        let origin = cameraLookTranslationOrigin ?? .zero
-                        realityController.updateBattleCameraLook(
-                            translation: CGSize(
-                                width: value.translation.width - origin.width,
-                                height: value.translation.height - origin.height
-                            ),
-                            viewportSize: viewportSize
-                        )
-                    }
-                    .onEnded { _ in
-                        isCameraLooking = false
-                        cameraLookTranslationOrigin = nil
-                    }
-            )
             .simultaneousGesture(
                 MagnifyGesture(minimumScaleDelta: 0.01)
                     .onChanged { value in
@@ -467,6 +454,32 @@ struct BattleView: View {
                     }
             )
             .accessibilityHidden(true)
+    }
+
+    private func battleCameraLookGesture(viewportSize: CGSize, inputFrame: CGRect) -> some Gesture {
+        DragGesture(minimumDistance: 4)
+            .onChanged { value in
+                guard isBattleScene, realitySceneID != nil,
+                      gameSession.battleState?.phase != .defeat,
+                      !isCameraZooming,
+                      CGRect(origin: .zero, size: viewportSize).contains(value.startLocation),
+                      !inputFrame.contains(value.startLocation) else { return }
+                if !isCameraLooking {
+                    isCameraLooking = true
+                    cameraLookTranslationOrigin = .zero
+                    realityController.beginBattleCameraLook()
+                }
+                let origin = cameraLookTranslationOrigin ?? .zero
+                realityController.updateBattleCameraLook(
+                    translation: CGSize(width: value.translation.width - origin.width,
+                                        height: value.translation.height - origin.height),
+                    viewportSize: viewportSize
+                )
+            }
+            .onEnded { _ in
+                isCameraLooking = false
+                cameraLookTranslationOrigin = nil
+            }
     }
 
     private var battleCameraResetButton: some View {
