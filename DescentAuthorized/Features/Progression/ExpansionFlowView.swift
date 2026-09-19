@@ -16,16 +16,39 @@ struct ExpansionFlowView: View {
     var body: some View {
         if let current = gameSession.progress.expansion {
             ZStack {
-                if !current.stage.isBattle {
+                if gameSession.presentation.floorSceneID == nil && !current.stage.isBattle {
                     ExpansionBackdropView(floorNumber: current.floorNumber, isBoss: current.showsBoss)
                 }
                 content(current)
                     .environment(\.isGlyphInputSuspended, inheritedInputSuspension || combatGuide != nil)
                 if let guide = combatGuide { ExpansionCombatGuideView(guide: guide) }
             }
+            .onAppear { synchronizeScene(current) }
+            .onChange(of: inheritedInputSuspension) { _, suspended in
+                sceneController.setActorMotionSuspended(suspended || combatGuide != nil)
+            }
+            .onChange(of: combatGuide != nil) { _, showing in
+                sceneController.setActorMotionSuspended(showing || inheritedInputSuspension)
+            }
+            .onDisappear { sceneController.setActorMotionSuspended(false) }
             .sheet(isPresented: $showsPractice) {
                 if let practiceSpell { SpellPracticeSheet(spell: SpellCatalog.spell(practiceSpell)) }
             }
+        }
+    }
+
+    private func synchronizeScene(_ current: ExpansionProgress) {
+        let hidden: [ExpansionStage] = [.sealedDoor, .reward, .descent, .learnDebuff, .complete]
+        sceneController.setEnemyPreviewVisible(!hidden.contains(current.stage))
+        sceneController.setActorMotionSuspended(inheritedInputSuspension || combatGuide != nil)
+        switch current.stage {
+        case .preparation, .bossPreparation, .entrance:
+            sceneController.prepareExpansionActor()
+        case .residualBattle, .bossBattle:
+            sceneController.playExpansionActorMotion("appear")
+        case .residualDefeated, .bossDefeated:
+            sceneController.playExpansionActorMotion("death")
+        default: break
         }
     }
 

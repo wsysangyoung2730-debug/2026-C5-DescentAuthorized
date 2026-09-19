@@ -46,7 +46,7 @@ final class GameSessionStore: ObservableObject {
     var battleState: BattleState? { session.battleState }
     var hasSavedProgress: Bool { coordinator.hasSavedProgress }
     var presentation: DemoScenePresentation {
-        .presentation(for: progress.currentScene)
+        .presentation(for: progress.currentScene, expansion: progress.expansion)
     }
 
     @discardableResult

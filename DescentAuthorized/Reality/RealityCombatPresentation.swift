@@ -756,6 +756,11 @@ final class ExpansionActorMotionPlayer {
         play("idle")
     }
 
+    func prepareEncounter() {
+        terminal = false
+        play("idle")
+    }
+
     func setReducedMotion(_ value: Bool) {
         guard reduced != value else { return }
         reduced = value

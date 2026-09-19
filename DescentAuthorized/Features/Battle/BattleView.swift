@@ -213,7 +213,7 @@ struct BattleView: View {
 
     var body: some View {
         ZStack {
-            if isExpansionBattle, let expansion = gameSession.progress.expansion {
+            if realitySceneID == nil, isExpansionBattle, let expansion = gameSession.progress.expansion {
                 ExpansionBackdropView(
                     floorNumber: expansion.floorNumber,
                     isBoss: expansion.stage == .bossBattle
@@ -294,7 +294,7 @@ struct BattleView: View {
                gameSession.battleState?.turnNumber == 1 {
                 showsFirstTurnBriefing = true
             }
-            if !isExpansionBattle {
+            if realitySceneID != nil {
                 realityController.synchronizeCombatState(
                     gameSession.battleState,
                     reducedMotion: appSettings.reducedMotion
@@ -1284,7 +1284,7 @@ struct BattleView: View {
     }
 
     private func present(_ events: [DemoSessionEvent]) {
-        if !isExpansionBattle {
+        if realitySceneID != nil {
             realityController.presentCombat(
                 events: events,
                 battleState: gameSession.battleState,
@@ -1333,7 +1333,7 @@ struct BattleView: View {
 
         if enemyWasHit { pulseEnemy() }
         if playerWasHit { pulsePlayer(strong: strongAttack) }
-        if !isExpansionBattle, strongAttack, playerWasHit || playerBarrierWasHit {
+        if realitySceneID != nil, strongAttack, playerWasHit || playerBarrierWasHit {
             realityController.playStrongAttackCameraImpact(
                 guarded: playerBarrierWasHit && !playerWasHit,
                 reducedMotion: appSettings.reducedMotion
@@ -1403,7 +1403,7 @@ struct BattleView: View {
     }
 
     private var realitySceneID: FloorSceneID? {
-        isExpansionBattle ? nil : gameSession.presentation.floorSceneID
+        gameSession.presentation.floorSceneID
     }
 
     private var isExpansionBattle: Bool {
@@ -1632,7 +1632,7 @@ struct BattleView: View {
             }
             if wasPresentingDefeat,
                isBattleScene,
-               !isExpansionBattle,
+               realitySceneID != nil,
                !isRestartLoading {
                 realityController.resetBattleCamera(animated: false)
                 realityController.setBattleCameraInteractionEnabled(true)
@@ -1654,7 +1654,7 @@ struct BattleView: View {
         isCameraLooking = false
         isCameraZooming = false
         cameraLookTranslationOrigin = nil
-        if isExpansionBattle {
+        if realitySceneID == nil {
             isDefeatPanelVisible = true
             return
         }

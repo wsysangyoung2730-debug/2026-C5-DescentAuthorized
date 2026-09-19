@@ -1077,6 +1077,10 @@ final class RealitySceneController: ObservableObject {
         erasureZoneRenderer.render(zones: zones, on: board)
     }
 
+    func prepareExpansionActor() {
+        expansionActorMotion.prepareEncounter()
+    }
+
     func setActorMotionSuspended(_ suspended: Bool) {
         expansionActorMotion.setSuspended(suspended)
     }
@@ -1547,6 +1551,10 @@ final class RealitySceneController: ObservableObject {
         }
         loadingProgress = 0.97
         missingEntityRoles = registry.missingRequiredRoles
+        if descriptor.sceneID.isExpansion, !missingEntityRoles.isEmpty {
+            fail(sceneID: descriptor.sceneID, message: "장면의 필수 연결이 누락됐습니다: " + missingEntityRoles.map(\.rawValue).sorted().joined(separator: ", "))
+            return
+        }
         guard
             let expectedCameraName = descriptor.cameraName(for: requestedCameraPreset),
             activeCameraName == expectedCameraName
@@ -1856,6 +1864,13 @@ extension RealitySceneController {
             fixtures = [([-6,1,8],[0,7,2],2600), ([6,1,8],[0,7,2],2600),
                         ([0,12,9],[0,11,1],3000), ([0,-8,6],[0,7,3],1800),
                         ([-8,9,6],[-8,12,1],1700), ([8,10,6],[8,13,1],1700)]
+        case .floor07CoordinateResidue, .floor06CausalityResidue, .floor05MemoryOmissionResidue:
+            fixtures = [([-5,1,6],[0,5,1],2000), ([5,3,6],[0,6,1],2000),
+                        ([0,11,6],[0,9,1],1800), ([0,-5,6],[0,2,1],1600)]
+        case .floor07CoordinateAdministrator, .floor06CausalityAdministrator, .floor05OriginalMemoryAdministrator:
+            fixtures = [([-6,1,8],[0,7,2],2500), ([6,1,8],[0,7,2],2500),
+                        ([0,12,9],[0,11,1],2600), ([0,-8,6],[0,7,3],1800),
+                        ([-8,2,6],[-7,2,1],1700), ([8,10,6],[8,13,1],1700)]
         default: return
         }
         for (index, fixture) in fixtures.enumerated() {
@@ -1994,7 +2009,9 @@ private final class PreparedRealityAssets {
         case .floor10ClosedOffice: name = "floor10_environment"
         case .floor08ResidueIsolation: name = "floor08_residue_environment"
         case .floor08AdministratorObservatory: name = "floor08_boss_environment"
-        default: return
+        default:
+            guard sceneID.isExpansion else { return }
+            name = "environment"
         }
         let directory = RealitySceneDescriptor.descriptor(for: sceneID).resourceSubdirectory
         environmentTasks[sceneID] = Task { @MainActor in
