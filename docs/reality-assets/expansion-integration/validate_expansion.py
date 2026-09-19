@@ -44,6 +44,12 @@ for floor,name,stem,boss in configs:
   motion=json.loads((actor.parent/'motion.json').read_text())
   assert set(motion['clips'])=={'idle','appear','telegraph','attack','heavyAttack','special','hit','death'}
   assert len(UsdSkel.Animation(anim[0]).GetRotationsAttr().GetTimeSamples())>100
+  assert s.GetTimeCodesPerSecond()==30 and s.GetEndTimeCode()>350,actor
   report.append({'floor':floor,'boss':boss,'quality':q,'roomTriangles':tris,'roomTextures':tex,'actorTriangles':atr,'actorTextures':atex,'requiredEntities':len(required)})
  assert (directory/'environment.hdr').is_file()
-a.report.write_text(json.dumps(report,indent=2));print('PASS: 18 room variants, 18 actor variants, 6 rigs and 48 motion ranges')
+for quality,cap in [('high',2048),('medium',1024),('low',512)]:
+ suffix='' if quality=='high' else '_'+quality
+ _,names,_,_=inspect(a.root/'Interactables/RewardScroll'/('reward_scroll'+suffix+'.usdc'),cap)
+ assert 'F09_RewardScroll_Center_Idle' in names
+ assert not any('ACTOR_'+name in names for _,name,_,_ in configs)
+a.report.write_text(json.dumps(report,indent=2));print('PASS: 18 room variants, 18 actor variants, 3 scroll variants, 6 rigs and 48 motion ranges')

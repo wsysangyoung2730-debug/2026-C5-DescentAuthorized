@@ -40,6 +40,10 @@ for floor,boss,name,sceneName in rooms:
  cams=([f'F0{floor}_iPad_MainCamera',f'CAM_F0{floor}_RewardSelection',f'CAM_F0{floor}_DescentDoor'] if boss else [f'F0{floor}A_iPadCamera' if floor!=5 else 'F05A_iPad_MainCamera',f'CAM_F0{floor}A_BossAccessDoor' if floor!=5 else 'CAM_F05A_BossAccess'])
  selected=[]
  for o in scene.objects:
+  ancestor=o;runtime_actor=False
+  while ancestor:
+   runtime_actor |= bool(ancestor.get('runtime_actor_preview',False));ancestor=ancestor.parent
+  if runtime_actor:continue # Preview rigs ship separately and spawn at runtime.
   if o.type=='CAMERA' and o.name not in cams:continue
   if o.type=='LIGHT':continue # Captured environment + bounded runtime spots.
   if o.hide_render:continue

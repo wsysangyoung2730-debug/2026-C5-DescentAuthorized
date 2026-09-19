@@ -39,7 +39,16 @@ enum ExpansionPreviewSupport {
                 _ = try controller.learnExpansionSpell(.outputReduction)
             }
             if floor <= 5 { _ = try controller.learnExpansionSpell(.executionDelay) }
-            try controller.updateExpansion(.init(floorNumber: floor, stage: isBoss ? .bossPreparation : .preparation))
+            let args = ProcessInfo.processInfo.arguments
+            var stage: ExpansionStage = isBoss ? .bossPreparation : .preparation
+            if let index = args.firstIndex(of: "--preview-stage"), args.indices.contains(index + 1),
+               let requested = ExpansionStage(rawValue: args[index + 1]),
+               !requested.isBattle, requested != .complete { stage = requested }
+            var approvals = 0
+            if stage == .descent, let index = args.firstIndex(of: "--preview-approvals"), args.indices.contains(index + 1) {
+                approvals = min(2, max(0, Int(args[index + 1]) ?? 0))
+            }
+            try controller.updateExpansion(.init(floorNumber: floor, stage: stage, descentStage: approvals))
             return InMemoryGameSaveStore(progress: controller.progress)
         } catch { return nil }
     }

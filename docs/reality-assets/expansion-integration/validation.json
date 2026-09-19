@@ -1,0 +1,182 @@
+[
+  {
+    "floor": 7,
+    "boss": false,
+    "quality": "high",
+    "roomTriangles": 46524,
+    "roomTextures": 32,
+    "actorTriangles": 19662,
+    "actorTextures": 1,
+    "requiredEntities": 4
+  },
+  {
+    "floor": 7,
+    "boss": false,
+    "quality": "medium",
+    "roomTriangles": 46524,
+    "roomTextures": 32,
+    "actorTriangles": 19662,
+    "actorTextures": 1,
+    "requiredEntities": 4
+  },
+  {
+    "floor": 7,
+    "boss": false,
+    "quality": "low",
+    "roomTriangles": 46524,
+    "roomTextures": 32,
+    "actorTriangles": 19662,
+    "actorTextures": 1,
+    "requiredEntities": 4
+  },
+  {
+    "floor": 7,
+    "boss": true,
+    "quality": "high",
+    "roomTriangles": 65363,
+    "roomTextures": 167,
+    "actorTriangles": 20454,
+    "actorTextures": 1,
+    "requiredEntities": 11
+  },
+  {
+    "floor": 7,
+    "boss": true,
+    "quality": "medium",
+    "roomTriangles": 65363,
+    "roomTextures": 167,
+    "actorTriangles": 20454,
+    "actorTextures": 1,
+    "requiredEntities": 11
+  },
+  {
+    "floor": 7,
+    "boss": true,
+    "quality": "low",
+    "roomTriangles": 65363,
+    "roomTextures": 167,
+    "actorTriangles": 20454,
+    "actorTextures": 1,
+    "requiredEntities": 11
+  },
+  {
+    "floor": 6,
+    "boss": false,
+    "quality": "high",
+    "roomTriangles": 64307,
+    "roomTextures": 30,
+    "actorTriangles": 19541,
+    "actorTextures": 1,
+    "requiredEntities": 4
+  },
+  {
+    "floor": 6,
+    "boss": false,
+    "quality": "medium",
+    "roomTriangles": 64307,
+    "roomTextures": 30,
+    "actorTriangles": 19541,
+    "actorTextures": 1,
+    "requiredEntities": 4
+  },
+  {
+    "floor": 6,
+    "boss": false,
+    "quality": "low",
+    "roomTriangles": 64307,
+    "roomTextures": 30,
+    "actorTriangles": 19541,
+    "actorTextures": 1,
+    "requiredEntities": 4
+  },
+  {
+    "floor": 6,
+    "boss": true,
+    "quality": "high",
+    "roomTriangles": 112034,
+    "roomTextures": 96,
+    "actorTriangles": 19646,
+    "actorTextures": 1,
+    "requiredEntities": 11
+  },
+  {
+    "floor": 6,
+    "boss": true,
+    "quality": "medium",
+    "roomTriangles": 112034,
+    "roomTextures": 96,
+    "actorTriangles": 19646,
+    "actorTextures": 1,
+    "requiredEntities": 11
+  },
+  {
+    "floor": 6,
+    "boss": true,
+    "quality": "low",
+    "roomTriangles": 112034,
+    "roomTextures": 96,
+    "actorTriangles": 19646,
+    "actorTextures": 1,
+    "requiredEntities": 11
+  },
+  {
+    "floor": 5,
+    "boss": false,
+    "quality": "high",
+    "roomTriangles": 139252,
+    "roomTextures": 30,
+    "actorTriangles": 20091,
+    "actorTextures": 1,
+    "requiredEntities": 4
+  },
+  {
+    "floor": 5,
+    "boss": false,
+    "quality": "medium",
+    "roomTriangles": 139252,
+    "roomTextures": 30,
+    "actorTriangles": 20091,
+    "actorTextures": 1,
+    "requiredEntities": 4
+  },
+  {
+    "floor": 5,
+    "boss": false,
+    "quality": "low",
+    "roomTriangles": 139252,
+    "roomTextures": 30,
+    "actorTriangles": 20091,
+    "actorTextures": 1,
+    "requiredEntities": 4
+  },
+  {
+    "floor": 5,
+    "boss": true,
+    "quality": "high",
+    "roomTriangles": 188015,
+    "roomTextures": 101,
+    "actorTriangles": 20602,
+    "actorTextures": 1,
+    "requiredEntities": 11
+  },
+  {
+    "floor": 5,
+    "boss": true,
+    "quality": "medium",
+    "roomTriangles": 188015,
+    "roomTextures": 101,
+    "actorTriangles": 20602,
+    "actorTextures": 1,
+    "requiredEntities": 11
+  },
+  {
+    "floor": 5,
+    "boss": true,
+    "quality": "low",
+    "roomTriangles": 188015,
+    "roomTextures": 101,
+    "actorTriangles": 20602,
+    "actorTextures": 1,
+    "requiredEntities": 11
+  }
+]
