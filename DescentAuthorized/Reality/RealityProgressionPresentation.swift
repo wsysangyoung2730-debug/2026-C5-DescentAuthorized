@@ -62,6 +62,7 @@ final class RealityProgressionVFXRenderer {
     private var baseTransforms: [RealityEntityRole: Transform] = [:]
     private var doorControllerBaseTransforms: [String: Transform] = [:]
     private var transitionGeneration = 0
+    private var rewardAppearanceTask: Task<Void, Never>?
     private var rewardIdleTask: Task<Void, Never>?
     private var authoredRewardPlayer: AuthoredRewardPlayer?
     private(set) var rewardMotionError: String?
@@ -103,8 +104,8 @@ final class RealityProgressionVFXRenderer {
         transitionGeneration += 1
         let generation = transitionGeneration
 
-        registry.setEnabled(state != .inactive, for: .descentStele)
-        registry.setEnabled(state != .inactive, for: .descentPedestal)
+        registry.setEnabled(state != .inactive || registry.descriptor?.sceneID.isExpansion == true, for: .descentStele)
+        registry.setEnabled(state != .inactive || registry.descriptor?.sceneID.isExpansion == true, for: .descentPedestal)
         registry.setDoorOpen(state == .open)
 
         if state != .approved, state != .open {
@@ -135,6 +136,8 @@ final class RealityProgressionVFXRenderer {
         reducedMotion: Bool
     ) {
         guard registry.root != nil else { return }
+        rewardAppearanceTask?.cancel()
+        rewardAppearanceTask = nil
         rewardIdleTask?.cancel()
         rewardIdleTask = nil
         transitionGeneration += 1
@@ -147,7 +150,7 @@ final class RealityProgressionVFXRenderer {
         }
 
         restore(.rewardStand, in: registry)
-        registry.setEnabled(state != .inactive, for: .rewardStand)
+        registry.setEnabled(state != .inactive || registry.descriptor?.sceneID.isExpansion == true, for: .rewardStand)
         for role in roles {
             restore(role, in: registry)
             registry.setEnabled(state != .inactive, for: role)
@@ -157,7 +160,15 @@ final class RealityProgressionVFXRenderer {
         case .inactive:
             return
         case .appearing:
-            animateRewardStandAppearance(in: registry, reducedMotion: reducedMotion)
+            if registry.descriptor?.sceneID.isExpansion != true {
+                animateRewardStandAppearance(in: registry, reducedMotion: reducedMotion)
+            }
+            rewardAppearanceTask = Task { @MainActor [weak self] in
+                do { try await Task.sleep(for: .seconds(RealityRewardTransitionTiming.scrollDuration(at: 2, reducedMotion: reducedMotion))) }
+                catch { return }
+                guard let self, self.transitionGeneration == generation else { return }
+                self.onRewardAppearanceCompleted?()
+            }
             for (index, role) in roles.enumerated() {
                 guard let entity = registry.entity(for: role), let base = baseTransforms[role] else { continue }
                 var hidden = base
@@ -210,6 +221,8 @@ final class RealityProgressionVFXRenderer {
         authoredRewardPlayer?.cancel()
         authoredRewardPlayer = nil
         rewardMotionError = nil
+        rewardAppearanceTask?.cancel()
+        rewardAppearanceTask = nil
         rewardIdleTask?.cancel()
         rewardIdleTask = nil
         transitionGeneration += 1

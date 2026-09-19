@@ -402,6 +402,9 @@ struct Floor9MotionPreview: View {
                         controller.setRewardPresentation(.choosing, reducedMotion: reducedMotion)
                     }
                 }
+                if ProcessInfo.processInfo.arguments.contains("--expansion-diagnostics") {
+                    await controller.runExpansionDiagnostics()
+                }
             }
     }
 }

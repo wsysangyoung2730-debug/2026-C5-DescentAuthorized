@@ -1155,7 +1155,7 @@ final class RealitySceneController: ObservableObject {
         requestedReducedMotion = reducedMotion
         if state == .inactive || state == .appearing { isRewardAppearanceComplete = false }
         if let sceneID = requestedSceneID,
-           [.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(sceneID), state == .appearing {
+           ([.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(sceneID) || sceneID.isExpansion), state == .appearing {
             // Wait for loading and camera travel; otherwise the rise occurs off-screen.
             rewardAppearanceStartTask = Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -1279,6 +1279,10 @@ final class RealitySceneController: ObservableObject {
         sceneAnchor = anchor
         cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
+        if descriptor.sceneID.isExpansion, descriptor.entityNames[.rewardStand] != nil {
+            do { try installExpansionRewards(bundle: bundle) }
+            catch { fail(sceneID: descriptor.sceneID, message: error.localizedDescription); return }
+        }
         if descriptor.sceneID == .floor08AdministratorObservatory {
             // Remove the added flat optical discs, keeping the textured sensor pods.
             for entity in Self.observatoryOpticalDiscs(in: root) {
@@ -1413,6 +1417,32 @@ final class RealitySceneController: ObservableObject {
             )
     }
 
+    private func installExpansionRewards(bundle: Bundle) throws {
+        let directory = "Reality/Interactables/RewardScroll"
+        guard let url = bundle.url(forResource: "reward_scroll", withExtension: "usdc", subdirectory: directory) else {
+            throw NSError(domain: "RewardAsset", code: 1, userInfo: [NSLocalizedDescriptionKey: "공용 두루마리 모델이 없습니다."])
+        }
+        let resource = try Entity.load(contentsOf: url)
+        guard let authored = resource.findEntity(named: "F09_RewardScroll_Center_Idle") else {
+            throw NSError(domain: "RewardAsset", code: 2, userInfo: [NSLocalizedDescriptionKey: "두루마리 모델의 기준점이 없습니다."])
+        }
+        for role in [RealityEntityRole.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight] {
+            guard let anchor = registry.entity(for: role) else { continue }
+            let scroll = authored.clone(recursive: true)
+            scroll.name = "RUNTIME_\(role.rawValue)"
+            scroll.position = .zero
+            anchor.addChild(scroll)
+            let bounds = scroll.visualBounds(relativeTo: anchor)
+            let height = bounds.max.z - bounds.min.z
+            guard height > 0.001 else { continue }
+            scroll.scale *= SIMD3(repeating: 0.75 / height)
+            let fitted = scroll.visualBounds(relativeTo: anchor)
+            scroll.position -= SIMD3((fitted.min.x + fitted.max.x) / 2,
+                                     (fitted.min.y + fitted.max.y) / 2, fitted.min.z)
+            anchor.isEnabled = false
+        }
+    }
+
     private func normalizeActor(
         _ actorRoot: Entity,
         in container: Entity,
@@ -1542,7 +1572,7 @@ final class RealitySceneController: ObservableObject {
             registry: registry,
             reducedMotion: requestedReducedMotion
         )
-        if [.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(descriptor.sceneID), requestedRewardState == .appearing {
+        if ([.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(descriptor.sceneID) || descriptor.sceneID.isExpansion), requestedRewardState == .appearing {
             setRewardPresentation(.appearing, reducedMotion: requestedReducedMotion)
         } else {
             progressionVFXRenderer.presentReward(
@@ -2165,3 +2195,63 @@ private extension RealitySceneController {
         return result
     }
 }
+
+#if DEBUG
+extension RealitySceneController {
+    /// Isolated preview diagnostics never modify gameplay or its save store.
+    func runExpansionDiagnostics() async {
+        guard let id = requestedSceneID, id.isExpansion, let arView else { return }
+        let preset = requestedCameraPreset
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("ExpansionDiagnostics/\(id.rawValue)/\(graphicsQuality.rawValue)-\(preset.rawValue)")
+        do { try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true) }
+        catch { return }
+        await environmentTask?.value
+        func joints(_ entity: Entity?) -> [[Float]] {
+            guard let entity else { return [] }
+            var result: [[Float]] = []
+            if let model = entity as? ModelEntity {
+                result += model.jointTransforms.map {
+                    [$0.rotation.vector.x, $0.rotation.vector.y, $0.rotation.vector.z, $0.rotation.vector.w,
+                     $0.translation.x, $0.translation.y, $0.translation.z]
+                }
+            }
+            return result + entity.children.flatMap { joints($0) }
+        }
+        func capture(_ name: String) async {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                arView.snapshot(saveToHDR: false) { image in
+                    if let data = image?.pngData() { try? data.write(to: directory.appendingPathComponent(name + ".png")) }
+                    continuation.resume()
+                }
+            }
+        }
+        try? await Task.sleep(for: .milliseconds(350))
+        let actor = registry.entity(for: .enemyActor)
+        let before = joints(actor)
+        await capture("ready")
+        var animated: [[Float]] = []
+        if preset == .battle {
+            expansionActorMotion.play("attack")
+            try? await Task.sleep(for: .milliseconds(500))
+            animated = joints(actor)
+            await capture("attack")
+            expansionActorMotion.setReducedMotion(true)
+            try? await Task.sleep(for: .milliseconds(200))
+            await capture("reduced-motion")
+        }
+        let report: [String: Any] = ["scene": id.rawValue, "quality": graphicsQuality.rawValue,
+            "camera": activeCameraName ?? "", "preset": preset.rawValue,
+            "missingRoles": missingEntityRoles.map(\.rawValue),
+            "jointCount": before.count, "jointMotionObserved": before != animated && !animated.isEmpty,
+            "environmentReady": arView.environment.lighting.resource != nil,
+            "actorPresent": actor != nil,
+            "rewardReady": preset != .rewardSelection || isRewardAppearanceComplete]
+        do {
+            try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+                .write(to: directory.appendingPathComponent("report.json"))
+            print("C5_EXPANSION_DIAGNOSTICS \(id.rawValue) \(preset.rawValue) complete")
+        } catch { print("C5_EXPANSION_DIAGNOSTICS error \(error)") }
+    }
+}
+#endif

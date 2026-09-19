@@ -116,10 +116,8 @@ struct ExpansionFlowView: View {
             RewardSelectionView(floorNumber: current.floorNumber, sceneController: sceneController,
                 isLearningInputActive: $learningInputActive)
         case .descent:
-            DescentSealProcedureView(configuration: .expansion(floorNumber: current.floorNumber),
-                initialCompletedStages: current.descentStage,
-                onStageApproved: { gameSession.sendChecked(.approveExpansionStage($0)) },
-                onApproved: { gameSession.send(.advanceExpansion) })
+            DescentDoorSceneView(configuration: .expansion(floorNumber: current.floorNumber),
+                sceneController: sceneController, retryLoadingPresentation: $retryLoadingPresentation)
         case .learnDebuff:
             ScrollSpellLearningView(spell: SpellCatalog.spell(.outputReduction),
                 sourceCode: "제6층 · 출력 저하 기록",
