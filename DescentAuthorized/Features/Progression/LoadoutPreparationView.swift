@@ -148,7 +148,8 @@ struct LoadoutPreparationView: View {
             placement = .top
         }
         return TutorialCoachStep(id: step, title: "\(page) / 4 · \(title)", message: message,
-                                 targetIDs: targets, placement: placement, showsSkip: false)
+                                 targetIDs: targets, placement: placement, showsSkip: false,
+                                 dimmingOpacity: 0.28)
     }
 
     private func synchronizePreparationGuide() {

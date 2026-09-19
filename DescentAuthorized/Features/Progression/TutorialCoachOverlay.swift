@@ -26,6 +26,7 @@ struct TutorialCoachStep: Identifiable, Equatable {
     var placement: Placement = .bottom
     var advancesOnTargetTap = false
     var showsSkip = true
+    var dimmingOpacity = 0.88
 }
 
 private struct TutorialTargetPreferenceKey: PreferenceKey {
@@ -61,6 +62,7 @@ extension View {
                             anchors[id].map { proxy[$0].insetBy(dx: -8, dy: -8) }
                         },
                         nextTitle: nextTitle,
+                        dimmingOpacity: step.dimmingOpacity,
                         onNext: onNext,
                         onSkip: onSkip
                     )
@@ -76,6 +78,7 @@ struct TutorialCoachOverlay: View {
     let step: TutorialCoachStep
     let highlightFrames: [CGRect]
     let nextTitle: String
+    let dimmingOpacity: Double
     let onNext: () -> Void
     let onSkip: () -> Void
 
@@ -155,7 +158,7 @@ struct TutorialCoachOverlay: View {
             }
             context.fill(
                 path,
-                with: .color(Color.black.opacity(0.88)),
+                with: .color(Color.black.opacity(dimmingOpacity)),
                 style: FillStyle(eoFill: true)
             )
 
