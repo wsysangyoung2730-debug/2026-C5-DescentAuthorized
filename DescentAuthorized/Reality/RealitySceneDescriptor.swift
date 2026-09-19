@@ -105,7 +105,58 @@ struct RealitySceneDescriptor: Sendable {
     }
 
     static func descriptor(for sceneID: FloorSceneID) -> RealitySceneDescriptor {
-        descriptors[sceneID]!
+        expansionDescriptor(for: sceneID) ?? descriptors[sceneID]!
+    }
+
+    private static func expansionDescriptor(for id: FloorSceneID) -> RealitySceneDescriptor? {
+        let floor: Int
+        let boss: Bool
+        let actorName: String
+        let actorID: GameAssetID
+        switch id {
+        case .floor07CoordinateResidue:
+            (floor, boss, actorName, actorID) = (7, false, "CoordinateResidue", .coordinateResidue)
+        case .floor07CoordinateAdministrator:
+            (floor, boss, actorName, actorID) = (7, true, "CoordinateAdministrator", .coordinateAdministrator)
+        case .floor06CausalityResidue:
+            (floor, boss, actorName, actorID) = (6, false, "CausalityResidue", .causalityResidue)
+        case .floor06CausalityAdministrator:
+            (floor, boss, actorName, actorID) = (6, true, "CausalityAdministrator", .causalityAdministrator)
+        case .floor05MemoryOmissionResidue:
+            (floor, boss, actorName, actorID) = (5, false, "MemoryOmissionResidue", .memoryOmissionResidue)
+        case .floor05OriginalMemoryAdministrator:
+            (floor, boss, actorName, actorID) = (5, true, "OriginalMemoryAdministrator", .originalMemoryAdministrator)
+        default: return nil
+        }
+        let prefix = "F0\(floor)\(boss ? "B" : "A")"
+        let main = boss ? "F0\(floor)_iPad_MainCamera"
+            : (floor == 5 ? "F05A_iPad_MainCamera" : "\(prefix)_iPadCamera")
+        var cameras: [RealityCameraPreset: String] = [.main: main, .battle: main, .tutorial: main]
+        cameras[.descentInput] = boss ? "CAM_F0\(floor)_DescentDoor"
+            : (floor == 5 ? "CAM_F05A_BossAccess" : "CAM_\(prefix)_BossAccessDoor")
+        var entities: [RealityEntityRole: String] = [
+            .magicInputBoard: "\(prefix)_MagicInputBoard",
+            .enemySpawn: "SPAWN_\(actorName)"
+        ]
+        if boss {
+            cameras[.rewardSelection] = "CAM_F0\(floor)_RewardSelection"
+            entities.merge([
+                .rewardStand: "\(prefix)_RewardSelection",
+                .rewardScrollLeft: "ANCHOR_F0\(floor)_RewardSlot_Left",
+                .rewardScrollCenter: "ANCHOR_F0\(floor)_RewardSlot_Center",
+                .rewardScrollRight: "ANCHOR_F0\(floor)_RewardSlot_Right",
+                .descentStele: "\(prefix)_DescentStele",
+                .descentPedestal: floor == 5 ? "F05B_DescentInputPedestal" : "\(prefix)_DescentPedestal"
+            ]) { _, new in new }
+            // Floor 5's supplied doors are scenery; its approval uses the pedestal.
+            if floor != 5 { entities[.descentDoor] = "\(prefix)_DescentDoor" }
+        }
+        return .init(sceneID: id,
+            resourceSubdirectory: "Reality/Scenes/Floor0\(floor)/\(actorName)",
+            cameraNames: cameras, entityNames: entities,
+            actor: .init(assetID: actorID, expectedEntityName: "ACTOR_\(actorName)",
+                resourceSubdirectory: "Reality/Actors/\(actorName)",
+                targetHeight: boss ? 4.2 : 2.8, intentScale: boss ? 1.0 : 0.7))
     }
 
     private static let descriptors: [FloorSceneID: RealitySceneDescriptor] = [
@@ -239,6 +290,23 @@ struct DemoScenePresentation: Equatable, Sendable {
     let floorSceneID: FloorSceneID?
     let cameraPreset: RealityCameraPreset
     let experience: DemoSceneExperience
+
+    static func presentation(for sceneID: SceneID, expansion: ExpansionProgress?) -> DemoScenePresentation {
+        guard let expansion, let route = ExpansionSceneRoute(expansion) else {
+            return presentation(for: sceneID)
+        }
+        let room: FloorSceneID
+        switch (route.floorNumber, route.isBoss) {
+        case (7, false): room = .floor07CoordinateResidue
+        case (7, true): room = .floor07CoordinateAdministrator
+        case (6, false): room = .floor06CausalityResidue
+        case (6, true): room = .floor06CausalityAdministrator
+        case (5, false): room = .floor05MemoryOmissionResidue
+        default: room = .floor05OriginalMemoryAdministrator
+        }
+        return .init(progressSceneID: sceneID, floorSceneID: room,
+            cameraPreset: RealityCameraPreset(rawValue: route.camera.rawValue)!, experience: .completion)
+    }
 
     static func presentation(for sceneID: SceneID) -> DemoScenePresentation {
         switch sceneID {
@@ -396,14 +464,6 @@ struct DemoScenePresentation: Equatable, Sendable {
 // Asset routing belongs to the rendering layer, not the portable game core.
 extension GraphicsQuality {
     func resourceName(for sceneID: FloorSceneID) -> String {
-        switch sceneID {
-        case .floor09ArchiveRedesign,
-             .floor10ClosedOffice,
-             .floor08ResidueIsolation,
-             .floor08AdministratorObservatory:
-            sceneID.rawValue + (self == .high ? "" : "_" + rawValue)
-        default:
-            sceneID.rawValue
-        }
+        sceneID.rawValue + (self == .high ? "" : "_" + rawValue)
     }
 }

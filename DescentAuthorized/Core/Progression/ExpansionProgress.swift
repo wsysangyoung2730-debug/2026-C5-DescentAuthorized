@@ -211,3 +211,22 @@ extension ExpansionProgress {
 extension GameProgress {
     var displayedFloorNumber: Int { expansion?.floorNumber ?? currentFloor.rawValue }
 }
+
+/// A single route drives room and camera selection, including restored progress.
+struct ExpansionSceneRoute: Equatable, Sendable {
+    enum Camera: String, Sendable { case battle, rewardSelection, descentInput }
+    let floorNumber: Int
+    let isBoss: Bool
+    let camera: Camera
+
+    init?(_ progress: ExpansionProgress) {
+        guard (5...7).contains(progress.floorNumber), progress.stage != .complete else { return nil }
+        floorNumber = progress.floorNumber
+        isBoss = progress.showsBoss
+        switch progress.stage {
+        case .sealedDoor, .descent: camera = .descentInput
+        case .reward: camera = .rewardSelection
+        default: camera = .battle
+        }
+    }
+}

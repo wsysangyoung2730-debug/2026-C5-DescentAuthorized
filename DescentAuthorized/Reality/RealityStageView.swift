@@ -2,6 +2,7 @@ import RealityKit
 import SwiftUI
 
 enum LoadingScreenContext: Equatable {
+    case expansion(Int)
     case startup
     case floor10
     case floor9
@@ -15,12 +16,15 @@ enum LoadingScreenContext: Equatable {
             self = .floor9
         case .floor08ResidueIsolation, .floor08AdministratorObservatory:
             self = .floor8
+        case .floor07CoordinateResidue, .floor07CoordinateAdministrator: self = .expansion(7)
+        case .floor06CausalityResidue, .floor06CausalityAdministrator: self = .expansion(6)
+        case .floor05MemoryOmissionResidue, .floor05OriginalMemoryAdministrator: self = .expansion(5)
         }
     }
 
     var backgroundImageName: String {
         switch self {
-        case .startup: "LoadingMain"
+        case .startup, .expansion: "LoadingMain"
         case .floor10: "LoadingFloor10"
         case .floor9: "LoadingFloor09"
         case .floor8: "LoadingFloor08"
@@ -72,7 +76,7 @@ enum LoadingTipCatalog {
             candidates = general
         case .floor9:
             candidates = general + floor9
-        case .floor8:
+        case .floor8, .expansion:
             candidates = general + floor9 + floor8
         }
         let alternatives = candidates.filter { $0 != currentTip }

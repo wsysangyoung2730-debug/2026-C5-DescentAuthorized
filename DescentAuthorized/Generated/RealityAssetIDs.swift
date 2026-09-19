@@ -2,6 +2,12 @@ import Foundation
 import RealityKit
 
 enum FloorSceneID: String, CaseIterable {
+    case floor07CoordinateResidue = "floor07_coordinate_residue"
+    case floor07CoordinateAdministrator = "floor07_coordinate_administrator"
+    case floor06CausalityResidue = "floor06_causality_residue"
+    case floor06CausalityAdministrator = "floor06_causality_administrator"
+    case floor05MemoryOmissionResidue = "floor05_memory_omission_residue"
+    case floor05OriginalMemoryAdministrator = "floor05_original_memory_administrator"
     case floor10ClosedOffice = "floor10_closed_office"
     case floor09ArchiveRedesign = "floor09_archive_redesign"
     case floor08ResidueIsolation = "floor08_residue_isolation"
@@ -9,6 +15,12 @@ enum FloorSceneID: String, CaseIterable {
 }
 
 enum GameAssetID: String, CaseIterable {
+    case coordinateResidue = "coordinate_residue"
+    case coordinateAdministrator = "coordinate_administrator"
+    case causalityResidue = "causality_residue"
+    case causalityAdministrator = "causality_administrator"
+    case memoryOmissionResidue = "memory_omission_residue"
+    case originalMemoryAdministrator = "original_memory_administrator"
     case recordAdministrator = "record_administrator"
     case observationResidue = "observation_residue"
     case observationAdministrator = "observation_administrator"

@@ -1641,7 +1641,7 @@ final class RealitySceneController: ObservableObject {
                     normalizedPosition: SIMD3(0.5, 0.72, 0.5)
                 )
             ]
-        case .floor08AdministratorObservatory:
+        default:
             definitions = []
         }
 
