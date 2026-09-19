@@ -1,0 +1,146 @@
+[
+  {
+    "actorVisibleOnEntry": true,
+    "anchorIDs": [
+      "floor7.residue.calibration-log",
+      "floor7.residue.fractured-map"
+    ],
+    "enabledOnEntry": true,
+    "lockedCameraRejectsLook": true,
+    "lookLeftChanged": true,
+    "lookRightChanged": true,
+    "missingRoles": [],
+    "mode": "battle",
+    "resetRestoredCamera": true,
+    "scene": "floor07_coordinate_residue",
+    "floor": 7,
+    "case": "residue"
+  },
+  {
+    "actorVisibleOnEntry": true,
+    "anchorIDs": [],
+    "enabledOnEntry": true,
+    "lockedCameraRejectsLook": true,
+    "lookLeftChanged": true,
+    "lookRightChanged": true,
+    "missingRoles": [],
+    "mode": "battle",
+    "resetRestoredCamera": true,
+    "scene": "floor07_coordinate_administrator",
+    "floor": 7,
+    "case": "boss"
+  },
+  {
+    "actorVisibleOnEntry": false,
+    "anchorIDs": [
+      "floor7.residue.calibration-log",
+      "floor7.residue.fractured-map"
+    ],
+    "enabledOnEntry": true,
+    "lockedCameraRejectsLook": true,
+    "lookLeftChanged": true,
+    "lookRightChanged": true,
+    "missingRoles": [],
+    "mode": "investigation",
+    "resetRestoredCamera": true,
+    "scene": "floor07_coordinate_residue",
+    "floor": 7,
+    "case": "investigation"
+  },
+  {
+    "actorVisibleOnEntry": true,
+    "anchorIDs": [
+      "floor6.residue.delayed-evidence",
+      "floor6.residue.result-reel"
+    ],
+    "enabledOnEntry": true,
+    "lockedCameraRejectsLook": true,
+    "lookLeftChanged": true,
+    "lookRightChanged": true,
+    "missingRoles": [],
+    "mode": "battle",
+    "resetRestoredCamera": true,
+    "scene": "floor06_causality_residue",
+    "floor": 6,
+    "case": "residue"
+  },
+  {
+    "actorVisibleOnEntry": true,
+    "anchorIDs": [],
+    "enabledOnEntry": true,
+    "lockedCameraRejectsLook": true,
+    "lookLeftChanged": true,
+    "lookRightChanged": true,
+    "missingRoles": [],
+    "mode": "battle",
+    "resetRestoredCamera": true,
+    "scene": "floor06_causality_administrator",
+    "floor": 6,
+    "case": "boss"
+  },
+  {
+    "actorVisibleOnEntry": false,
+    "anchorIDs": [
+      "floor6.residue.delayed-evidence",
+      "floor6.residue.result-reel"
+    ],
+    "enabledOnEntry": true,
+    "lockedCameraRejectsLook": true,
+    "lookLeftChanged": true,
+    "lookRightChanged": true,
+    "missingRoles": [],
+    "mode": "investigation",
+    "resetRestoredCamera": true,
+    "scene": "floor06_causality_residue",
+    "floor": 6,
+    "case": "investigation"
+  },
+  {
+    "actorVisibleOnEntry": true,
+    "anchorIDs": [
+      "floor5.residue.blank-name-tags",
+      "floor5.residue.missing-voice"
+    ],
+    "enabledOnEntry": true,
+    "lockedCameraRejectsLook": true,
+    "lookLeftChanged": true,
+    "lookRightChanged": true,
+    "missingRoles": [],
+    "mode": "battle",
+    "resetRestoredCamera": true,
+    "scene": "floor05_memory_omission_residue",
+    "floor": 5,
+    "case": "residue"
+  },
+  {
+    "actorVisibleOnEntry": true,
+    "anchorIDs": [],
+    "enabledOnEntry": true,
+    "lockedCameraRejectsLook": true,
+    "lookLeftChanged": true,
+    "lookRightChanged": true,
+    "missingRoles": [],
+    "mode": "battle",
+    "resetRestoredCamera": true,
+    "scene": "floor05_original_memory_administrator",
+    "floor": 5,
+    "case": "boss"
+  },
+  {
+    "actorVisibleOnEntry": false,
+    "anchorIDs": [
+      "floor5.residue.blank-name-tags",
+      "floor5.residue.missing-voice"
+    ],
+    "enabledOnEntry": true,
+    "lockedCameraRejectsLook": true,
+    "lookLeftChanged": true,
+    "lookRightChanged": true,
+    "missingRoles": [],
+    "mode": "investigation",
+    "resetRestoredCamera": true,
+    "scene": "floor05_memory_omission_residue",
+    "floor": 5,
+    "case": "investigation"
+  }
+]

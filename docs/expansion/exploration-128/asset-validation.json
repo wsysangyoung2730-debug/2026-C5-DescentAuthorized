@@ -1,0 +1,128 @@
+[
+  {
+    "record": "floor7.residue.fractured-map",
+    "asset": "floor07_coordinate_residue_medium.usdc",
+    "entity": "F07A_FracturedMap",
+    "yaw": -15.22,
+    "pitch": 2.0
+  },
+  {
+    "record": "floor7.residue.fractured-map",
+    "asset": "floor07_coordinate_residue_low.usdc",
+    "entity": "F07A_FracturedMap",
+    "yaw": -15.22,
+    "pitch": 2.0
+  },
+  {
+    "record": "floor7.residue.fractured-map",
+    "asset": "floor07_coordinate_residue.usdc",
+    "entity": "F07A_FracturedMap",
+    "yaw": -15.22,
+    "pitch": 2.0
+  },
+  {
+    "record": "floor7.residue.calibration-log",
+    "asset": "floor07_coordinate_residue_medium.usdc",
+    "entity": "F07A_Console",
+    "yaw": 30.11,
+    "pitch": -0.36
+  },
+  {
+    "record": "floor7.residue.calibration-log",
+    "asset": "floor07_coordinate_residue_low.usdc",
+    "entity": "F07A_Console",
+    "yaw": 30.11,
+    "pitch": -0.36
+  },
+  {
+    "record": "floor7.residue.calibration-log",
+    "asset": "floor07_coordinate_residue.usdc",
+    "entity": "F07A_Console",
+    "yaw": 30.11,
+    "pitch": -0.36
+  },
+  {
+    "record": "floor6.residue.delayed-evidence",
+    "asset": "floor06_causality_residue_low.usdc",
+    "entity": "F06A_EvidenceBank03",
+    "yaw": -44.84,
+    "pitch": 4.74
+  },
+  {
+    "record": "floor6.residue.delayed-evidence",
+    "asset": "floor06_causality_residue.usdc",
+    "entity": "F06A_EvidenceBank03",
+    "yaw": -44.84,
+    "pitch": 4.74
+  },
+  {
+    "record": "floor6.residue.delayed-evidence",
+    "asset": "floor06_causality_residue_medium.usdc",
+    "entity": "F06A_EvidenceBank03",
+    "yaw": -44.84,
+    "pitch": 4.74
+  },
+  {
+    "record": "floor6.residue.result-reel",
+    "asset": "floor06_causality_residue_low.usdc",
+    "entity": "F06A_ReelBank03",
+    "yaw": 41.82,
+    "pitch": 4.25
+  },
+  {
+    "record": "floor6.residue.result-reel",
+    "asset": "floor06_causality_residue.usdc",
+    "entity": "F06A_ReelBank03",
+    "yaw": 41.82,
+    "pitch": 4.25
+  },
+  {
+    "record": "floor6.residue.result-reel",
+    "asset": "floor06_causality_residue_medium.usdc",
+    "entity": "F06A_ReelBank03",
+    "yaw": 41.82,
+    "pitch": 4.25
+  },
+  {
+    "record": "floor5.residue.missing-voice",
+    "asset": "floor05_memory_omission_residue.usdc",
+    "entity": "F05A_Playback",
+    "yaw": -36.41,
+    "pitch": 0.02
+  },
+  {
+    "record": "floor5.residue.missing-voice",
+    "asset": "floor05_memory_omission_residue_medium.usdc",
+    "entity": "F05A_Playback",
+    "yaw": -36.41,
+    "pitch": 0.02
+  },
+  {
+    "record": "floor5.residue.missing-voice",
+    "asset": "floor05_memory_omission_residue_low.usdc",
+    "entity": "F05A_Playback",
+    "yaw": -36.41,
+    "pitch": 0.02
+  },
+  {
+    "record": "floor5.residue.blank-name-tags",
+    "asset": "floor05_memory_omission_residue.usdc",
+    "entity": "F05A_LostTags",
+    "yaw": 51.83,
+    "pitch": -1.69
+  },
+  {
+    "record": "floor5.residue.blank-name-tags",
+    "asset": "floor05_memory_omission_residue_medium.usdc",
+    "entity": "F05A_LostTags",
+    "yaw": 51.83,
+    "pitch": -1.69
+  },
+  {
+    "record": "floor5.residue.blank-name-tags",
+    "asset": "floor05_memory_omission_residue_low.usdc",
+    "entity": "F05A_LostTags",
+    "yaw": 51.83,
+    "pitch": -1.69
+  }
+]
