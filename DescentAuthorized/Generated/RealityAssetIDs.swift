@@ -8,6 +8,10 @@ enum FloorSceneID: String, CaseIterable {
     case floor06CausalityAdministrator = "floor06_causality_administrator"
     case floor05MemoryOmissionResidue = "floor05_memory_omission_residue"
     case floor05OriginalMemoryAdministrator = "floor05_original_memory_administrator"
+    var isExpansion: Bool {
+        rawValue.hasPrefix("floor05_") || rawValue.hasPrefix("floor06_") || rawValue.hasPrefix("floor07_")
+    }
+
     case floor10ClosedOffice = "floor10_closed_office"
     case floor09ArchiveRedesign = "floor09_archive_redesign"
     case floor08ResidueIsolation = "floor08_residue_isolation"

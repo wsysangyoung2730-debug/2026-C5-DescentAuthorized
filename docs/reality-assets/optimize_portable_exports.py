@@ -93,10 +93,21 @@ for source_usdc in sorted(args.source.glob("*/*.usdc")):
     for prim in source_stage.Traverse():
         if not prim.IsA(UsdGeom.Mesh):
             continue
+        # Blender writes constant mesh data at the first animation frame.
+        # Give importers a default value without changing animated attributes.
+        for attr in prim.GetAttributes():
+            samples = attr.GetTimeSamples()
+            if len(samples) == 1:
+                value = attr.Get(Usd.TimeCode(samples[0]))
+                attr.ClearAtTime(Usd.TimeCode(samples[0]))
+                attr.Set(value)
         for uv in UsdGeom.PrimvarsAPI(prim).GetPrimvars():
             if uv.GetTypeName() in (Sdf.ValueTypeNames.TexCoord2fArray, Sdf.ValueTypeNames.Float2Array) and uv.IsIndexed():
-                values = uv.ComputeFlattened()
-                uv.Set(values)
+                times = sorted(set(uv.GetTimeSamples() + uv.GetIndicesAttr().GetTimeSamples()))
+                samples = [(time, uv.ComputeFlattened(Usd.TimeCode(time))) for time in times]
+                default = uv.ComputeFlattened() if uv.Get() is not None and len(uv.GetIndices()) > 0 else None
+                if default is not None: uv.Set(default)
+                for time, values in samples: uv.Set(values, Usd.TimeCode(time))
                 uv.BlockIndices()
     source_files = {}
     for _, value in asset_attributes(source_stage):

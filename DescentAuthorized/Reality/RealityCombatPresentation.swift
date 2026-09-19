@@ -716,3 +716,121 @@ final class RealityCombatVFXRenderer {
         }
     }
 }
+
+/// Plays Blender-authored skeletal ranges on the original imported root, so
+/// animation binding paths survive actor normalization and scene installation.
+@MainActor
+final class ExpansionActorMotionPlayer {
+    private struct Manifest: Decodable {
+        struct Clip: Decodable { let start: Double; let end: Double; let duration: Double }
+        let clips: [String: Clip]
+    }
+    private weak var root: Entity?
+    private var source: AnimationResource?
+    private var manifest: Manifest?
+    private var playback: AnimationPlaybackController?
+    private var returnTask: Task<Void, Never>?
+    private var generation = 0
+    private var terminal = false
+    private var reduced = false
+    private var suspended = false
+
+    func install(root: Entity, descriptor: RealityActorDescriptor, bundle: Bundle) throws {
+        reset()
+        guard let url = bundle.url(forResource: "motion", withExtension: "json",
+                                   subdirectory: descriptor.resourceSubdirectory) else {
+            throw NSError(domain: "ActorMotion", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "캐릭터 모션 목록이 없습니다."])
+        }
+        manifest = try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: url))
+        func animatedEntity(_ entity: Entity) -> Entity? {
+            if !entity.availableAnimations.isEmpty { return entity }
+            return entity.children.lazy.compactMap { animatedEntity($0) }.first
+        }
+        guard let animated = animatedEntity(root), let animation = animated.availableAnimations.first else {
+            throw NSError(domain: "ActorMotion", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "캐릭터의 관절 애니메이션을 읽지 못했습니다."])
+        }
+        self.root = animated
+        source = animation
+        play("idle")
+    }
+
+    func setReducedMotion(_ value: Bool) {
+        guard reduced != value else { return }
+        reduced = value
+        if value { stop() } else if !terminal { play("idle") }
+    }
+
+    func setSuspended(_ value: Bool) {
+        guard suspended != value else { return }
+        suspended = value
+        if value {
+            returnTask?.cancel(); returnTask = nil
+            playback?.pause()
+        } else if terminal {
+            playback?.resume()
+        } else {
+            play("idle")
+        }
+    }
+
+    func present(_ events: [DemoSessionEvent], state: BattleState?) {
+        if state?.phase == .victory { play("death"); return }
+        var motion: String?
+        for event in events {
+            guard case let .combat(event) = event else { continue }
+            switch event {
+            case .victory: motion = "death"
+            case let .enemyActionStarted(action):
+                switch action {
+                case let .attack(_, _, strong): motion = strong ? "heavyAttack" : "attack"
+                case .telegraph: motion = "telegraph"
+                default: motion = "special"
+                }
+            case let .damageApplied(target, amount, _):
+                if case .enemy = target, amount > 0, motion == nil { motion = "hit" }
+            default: break
+            }
+        }
+        if let motion { play(motion) }
+    }
+
+    func play(_ name: String) {
+        guard !terminal || name == "death" else { return }
+        if name == "death" {
+            guard !terminal else { return }
+            terminal = true
+        }
+        guard !reduced, !suspended, let root, let source, let clip = manifest?.clips[name] else { return }
+        stop()
+        do {
+            let view = AnimationView(source: source.definition, name: name,
+                fillMode: name == "death" ? .forwards : [], trimStart: clip.start, trimEnd: clip.end)
+            let animation = try AnimationResource.generate(with: view)
+            playback = root.playAnimation(name == "idle" ? animation.repeat() : animation,
+                                          transitionDuration: 0.12, startsPaused: false)
+            guard name != "idle", name != "death" else { return }
+            let token = generation
+            returnTask = Task { @MainActor [weak self] in
+                do { try await Task.sleep(for: .seconds(clip.duration)) } catch { return }
+                guard let self, self.generation == token else { return }
+                self.play("idle")
+            }
+        } catch {
+            // A malformed clip does not leave a previous attack looping.
+            playback = nil
+        }
+    }
+
+    private func stop() {
+        generation += 1
+        returnTask?.cancel(); returnTask = nil
+        playback?.stop(); playback = nil
+    }
+
+    func reset() {
+        stop(); root = nil; source = nil; manifest = nil
+        terminal = false; reduced = false; suspended = false
+    }
+}

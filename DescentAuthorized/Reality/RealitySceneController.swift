@@ -107,6 +107,7 @@ final class RealitySceneController: ObservableObject {
     private static let loadLog = Logger(subsystem: "com.wsysangyoung.DescentAuthorized", category: "SceneLoading")
     private var cameraTransitionTask: Task<Void, Never>?
     private var battleCameraImpactTask: Task<Void, Never>?
+    private let expansionActorMotion = ExpansionActorMotionPlayer()
     private var actorIdleMotionTask: Task<Void, Never>?
     private var enemyPreviewRevealTask: Task<Void, Never>?
     private var investigationAnchorEntities: [String: Entity] = [:]
@@ -1076,7 +1077,16 @@ final class RealitySceneController: ObservableObject {
         erasureZoneRenderer.render(zones: zones, on: board)
     }
 
+    func setActorMotionSuspended(_ suspended: Bool) {
+        expansionActorMotion.setSuspended(suspended)
+    }
+
+    func playExpansionActorMotion(_ name: String) {
+        expansionActorMotion.play(name)
+    }
+
     func setEnemyIdleMotion(reducedMotion: Bool) {
+        expansionActorMotion.setReducedMotion(reducedMotion)
         requestedReducedMotion = reducedMotion
         updateEnemyIdleMotion(reducedMotion: reducedMotion)
         observatoryAmbientMotion.setReducedMotion(reducedMotion)
@@ -1089,6 +1099,8 @@ final class RealitySceneController: ObservableObject {
     ) {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
+        expansionActorMotion.setReducedMotion(reducedMotion)
+        expansionActorMotion.present(events, state: battleState)
         updateEnemyIdleMotion(reducedMotion: reducedMotion)
         observatoryAmbientMotion.setReducedMotion(reducedMotion)
         let cues = RealityCombatPresentationMapper.cues(for: events, battleState: battleState)
@@ -1182,6 +1194,7 @@ final class RealitySceneController: ObservableObject {
     }
 
     func unload() {
+        expansionActorMotion.reset()
         observatoryAmbientMotion.reset()
         environmentTask?.cancel()
         environmentTask = nil
@@ -1313,7 +1326,7 @@ final class RealitySceneController: ObservableObject {
             return
         }
         guard let actorURL = bundle.url(
-            forResource: descriptor.sceneID == .floor09ArchiveRedesign && graphicsQuality != .high
+            forResource: (descriptor.sceneID == .floor09ArchiveRedesign || descriptor.sceneID.isExpansion) && graphicsQuality != .high
                 ? actor.resourceName + "_" + graphicsQuality.rawValue : actor.resourceName,
             withExtension: "usdc",
             subdirectory: actor.resourceSubdirectory
@@ -1359,10 +1372,11 @@ final class RealitySceneController: ObservableObject {
 
                     let actorContainer = Entity()
                     actorContainer.name = "DA_RUNTIME_ENEMY_ACTOR"
-                    actorEntity.removeFromParent()
-                    actorContainer.addChild(actorEntity)
+                    let installedActor = descriptor.sceneID.isExpansion ? actorRoot : actorEntity
+                    installedActor.removeFromParent()
+                    actorContainer.addChild(installedActor)
                     self.normalizeActor(
-                        actorEntity,
+                        installedActor,
                         in: actorContainer,
                         targetHeight: actor.targetHeight
                     )
@@ -1372,11 +1386,18 @@ final class RealitySceneController: ObservableObject {
                         self.requestedEnemyPreviewVisibility,
                         for: .enemyActor
                     )
-                    self.prepareEnemyIdleMotion(
-                        spawn,
-                        targetHeight: actor.targetHeight,
-                        reducedMotion: self.requestedReducedMotion
-                    )
+                    if descriptor.sceneID.isExpansion {
+                        do {
+                            try self.expansionActorMotion.install(root: installedActor, descriptor: actor, bundle: bundle)
+                            self.expansionActorMotion.setReducedMotion(self.requestedReducedMotion)
+                        } catch {
+                            self.fail(sceneID: descriptor.sceneID, message: error.localizedDescription)
+                            return
+                        }
+                    } else {
+                        self.prepareEnemyIdleMotion(spawn, targetHeight: actor.targetHeight,
+                                                    reducedMotion: self.requestedReducedMotion)
+                    }
                     Self.loadLog.notice("actor.ready seconds=\(Date().timeIntervalSince(self.actorStartedAt))")
                     if !isBackgroundActor {
                         self.loadingProgress = 0.94

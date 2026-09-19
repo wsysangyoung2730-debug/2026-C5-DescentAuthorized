@@ -1,0 +1,308 @@
+[
+  {
+    "name": "CoordinateResidue",
+    "floor": 7,
+    "boss": false,
+    "source": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/4. 7층 좌표 표류 잔류체/7층 좌표 표류 잔류체.glb",
+    "vertices": 28004,
+    "triangles": 19662,
+    "bones": 5,
+    "clips": {
+      "idle": {
+        "start": 0.0,
+        "end": 2.0,
+        "duration": 2.0
+      },
+      "appear": {
+        "start": 2.1,
+        "end": 3.1,
+        "duration": 1.0
+      },
+      "telegraph": {
+        "start": 3.2,
+        "end": 4.4,
+        "duration": 1.2
+      },
+      "attack": {
+        "start": 4.5,
+        "end": 5.5,
+        "duration": 1.0
+      },
+      "heavyAttack": {
+        "start": 5.6,
+        "end": 7.2,
+        "duration": 1.6
+      },
+      "special": {
+        "start": 7.3,
+        "end": 9.3,
+        "duration": 2.0
+      },
+      "hit": {
+        "start": 9.4,
+        "end": 10.2,
+        "duration": 0.8
+      },
+      "death": {
+        "start": 10.3,
+        "end": 12.1,
+        "duration": 1.8
+      }
+    }
+  },
+  {
+    "name": "CoordinateAdministrator",
+    "floor": 7,
+    "boss": true,
+    "source": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/5. 7층 관리자/7층 관리자.glb",
+    "vertices": 31579,
+    "triangles": 20454,
+    "bones": 5,
+    "clips": {
+      "idle": {
+        "start": 0.0,
+        "end": 2.0,
+        "duration": 2.0
+      },
+      "appear": {
+        "start": 2.1,
+        "end": 3.1,
+        "duration": 1.0
+      },
+      "telegraph": {
+        "start": 3.2,
+        "end": 4.4,
+        "duration": 1.2
+      },
+      "attack": {
+        "start": 4.5,
+        "end": 5.5,
+        "duration": 1.0
+      },
+      "heavyAttack": {
+        "start": 5.6,
+        "end": 7.2,
+        "duration": 1.6
+      },
+      "special": {
+        "start": 7.3,
+        "end": 9.3,
+        "duration": 2.0
+      },
+      "hit": {
+        "start": 9.4,
+        "end": 10.2,
+        "duration": 0.8
+      },
+      "death": {
+        "start": 10.3,
+        "end": 12.1,
+        "duration": 1.8
+      }
+    }
+  },
+  {
+    "name": "CausalityResidue",
+    "floor": 6,
+    "boss": false,
+    "source": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/6. 6층 결과 지연 잔류체/6층 결과 지연 잔류체.glb",
+    "vertices": 27635,
+    "triangles": 19541,
+    "bones": 5,
+    "clips": {
+      "idle": {
+        "start": 0.0,
+        "end": 2.0,
+        "duration": 2.0
+      },
+      "appear": {
+        "start": 2.1,
+        "end": 3.1,
+        "duration": 1.0
+      },
+      "telegraph": {
+        "start": 3.2,
+        "end": 4.4,
+        "duration": 1.2
+      },
+      "attack": {
+        "start": 4.5,
+        "end": 5.5,
+        "duration": 1.0
+      },
+      "heavyAttack": {
+        "start": 5.6,
+        "end": 7.2,
+        "duration": 1.6
+      },
+      "special": {
+        "start": 7.3,
+        "end": 9.3,
+        "duration": 2.0
+      },
+      "hit": {
+        "start": 9.4,
+        "end": 10.2,
+        "duration": 0.8
+      },
+      "death": {
+        "start": 10.3,
+        "end": 12.1,
+        "duration": 1.8
+      }
+    }
+  },
+  {
+    "name": "CausalityAdministrator",
+    "floor": 6,
+    "boss": true,
+    "source": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/7. 6층 관리자/6층 관리자.glb",
+    "vertices": 28240,
+    "triangles": 19646,
+    "bones": 5,
+    "clips": {
+      "idle": {
+        "start": 0.0,
+        "end": 2.0,
+        "duration": 2.0
+      },
+      "appear": {
+        "start": 2.1,
+        "end": 3.1,
+        "duration": 1.0
+      },
+      "telegraph": {
+        "start": 3.2,
+        "end": 4.4,
+        "duration": 1.2
+      },
+      "attack": {
+        "start": 4.5,
+        "end": 5.5,
+        "duration": 1.0
+      },
+      "heavyAttack": {
+        "start": 5.6,
+        "end": 7.2,
+        "duration": 1.6
+      },
+      "special": {
+        "start": 7.3,
+        "end": 9.3,
+        "duration": 2.0
+      },
+      "hit": {
+        "start": 9.4,
+        "end": 10.2,
+        "duration": 0.8
+      },
+      "death": {
+        "start": 10.3,
+        "end": 12.1,
+        "duration": 1.8
+      }
+    }
+  },
+  {
+    "name": "MemoryOmissionResidue",
+    "floor": 5,
+    "boss": false,
+    "source": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/8. 5층 결과 지연 잔류체/5층 기억 누락 잔류체.glb",
+    "vertices": 28091,
+    "triangles": 20091,
+    "bones": 5,
+    "clips": {
+      "idle": {
+        "start": 0.0,
+        "end": 2.0,
+        "duration": 2.0
+      },
+      "appear": {
+        "start": 2.1,
+        "end": 3.1,
+        "duration": 1.0
+      },
+      "telegraph": {
+        "start": 3.2,
+        "end": 4.4,
+        "duration": 1.2
+      },
+      "attack": {
+        "start": 4.5,
+        "end": 5.5,
+        "duration": 1.0
+      },
+      "heavyAttack": {
+        "start": 5.6,
+        "end": 7.2,
+        "duration": 1.6
+      },
+      "special": {
+        "start": 7.3,
+        "end": 9.3,
+        "duration": 2.0
+      },
+      "hit": {
+        "start": 9.4,
+        "end": 10.2,
+        "duration": 0.8
+      },
+      "death": {
+        "start": 10.3,
+        "end": 12.1,
+        "duration": 1.8
+      }
+    }
+  },
+  {
+    "name": "OriginalMemoryAdministrator",
+    "floor": 5,
+    "boss": true,
+    "source": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/9. 5층 관리자/5층 관리자.glb",
+    "vertices": 32139,
+    "triangles": 20602,
+    "bones": 5,
+    "clips": {
+      "idle": {
+        "start": 0.0,
+        "end": 2.0,
+        "duration": 2.0
+      },
+      "appear": {
+        "start": 2.1,
+        "end": 3.1,
+        "duration": 1.0
+      },
+      "telegraph": {
+        "start": 3.2,
+        "end": 4.4,
+        "duration": 1.2
+      },
+      "attack": {
+        "start": 4.5,
+        "end": 5.5,
+        "duration": 1.0
+      },
+      "heavyAttack": {
+        "start": 5.6,
+        "end": 7.2,
+        "duration": 1.6
+      },
+      "special": {
+        "start": 7.3,
+        "end": 9.3,
+        "duration": 2.0
+      },
+      "hit": {
+        "start": 9.4,
+        "end": 10.2,
+        "duration": 0.8
+      },
+      "death": {
+        "start": 10.3,
+        "end": 12.1,
+        "duration": 1.8
+      }
+    }
+  }
+]
