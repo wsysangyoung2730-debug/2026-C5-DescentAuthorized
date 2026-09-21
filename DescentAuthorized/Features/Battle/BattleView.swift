@@ -247,6 +247,10 @@ struct BattleView: View {
                     .overlay(alignment: .top) {
                         ExpansionCombatStatusView(battle: battle)
                     }
+                    .overlay(alignment: .bottomTrailing) {
+                        ExpansionPlayerStatusAuraView(battle: battle)
+                            .padding(.trailing, 32).padding(.bottom, 208)
+                    }
             } else {
                 encounterStandby
             }
@@ -931,6 +935,19 @@ struct BattleView: View {
             .padding(10)
         }
         .frame(width: width, height: 176)
+        .overlay {
+            if let battle = gameSession.battleState, battle.phase != .victory, battle.phase != .defeat {
+                if battle.expansion.lockedSpells[spell.id] != nil {
+                    SpellSealVisualOverlay()
+                } else if spell.category == .attack, battle.expansion.playerAttackWeakening != nil {
+                    RoundedRectangle(cornerRadius: 8).stroke(.purple.opacity(0.65), style: StrokeStyle(lineWidth: 2, dash: [6,4]))
+                        .allowsHitTesting(false)
+                } else if spell.category == .attack, battle.expansion.chainAttackBonus > 0 {
+                    RoundedRectangle(cornerRadius: 8).stroke(.orange.opacity(0.65), lineWidth: 2)
+                        .allowsHitTesting(false)
+                }
+            }
+        }
         .overlay(alignment: .topLeading) {
             if gameSession.battleState?.expansion.lockedSpells[spell.id] != nil {
                 Text("봉인").font(.caption2.bold()).foregroundStyle(.white)

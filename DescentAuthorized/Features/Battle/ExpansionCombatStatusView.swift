@@ -63,3 +63,73 @@ struct ExpansionCombatStatusView: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+/// Player effects stay near the casting hand, separate from the enemy's status markers.
+struct ExpansionPlayerStatusAuraView: View {
+    let battle: BattleState
+
+    private var active: Bool { battle.phase != .victory && battle.phase != .defeat && battle.phase != .preparing }
+    private var weakened: Bool {
+        (battle.expansion.playerAttackWeakening?.expiresAfterTurn ?? -1) >= battle.turnNumber
+    }
+    private var protected: Bool {
+        battle.expansion.nextHitFlatReduction > 0 || battle.expansion.scheduledHitReduction != nil || battle.expansion.nextTurnBarrier > 0
+    }
+    var body: some View {
+        if active && (weakened || protected || battle.expansion.chainAttackBonus > 0) {
+            VStack(spacing: 4) {
+                Canvas { context, size in
+                    let center = CGPoint(x: size.width/2, y: size.height/2)
+                    if weakened {
+                        var crack = Path()
+                        crack.move(to: CGPoint(x: center.x-44,y: center.y+12))
+                        crack.addLines([CGPoint(x: center.x-15,y: center.y-12), CGPoint(x: center.x-5,y: center.y+3), CGPoint(x: center.x+17,y: center.y-22), CGPoint(x: center.x+40,y: center.y-4)])
+                        context.stroke(crack, with: .color(.purple.opacity(0.65)), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    }
+                    if protected {
+                        var arc = Path()
+                        arc.addArc(center: center, radius: 34, startAngle: .degrees(15), endAngle: .degrees(165), clockwise: false)
+                        context.stroke(arc, with: .color(.cyan.opacity(0.55)), lineWidth: 2)
+                    }
+                    if battle.expansion.chainAttackBonus > 0 {
+                        for offset in [-12.0, 0.0, 12.0] {
+                            let rect = CGRect(x: center.x+offset-2,y: center.y-29,width: 4,height: 4)
+                            context.fill(Path(ellipseIn: rect), with: .color(.orange.opacity(0.7)))
+                        }
+                    }
+                }
+                .frame(width: 120, height: 78)
+                HStack(spacing: 6) {
+                    if weakened { Label("약화", systemImage: "bolt.slash").foregroundStyle(.purple) }
+                    if protected { Label("보호", systemImage: "shield").foregroundStyle(.cyan) }
+                    if battle.expansion.chainAttackBonus > 0 { Label("강화", systemImage: "arrow.up").foregroundStyle(.orange) }
+                }
+                .font(.caption2)
+                .padding(5).background(.black.opacity(0.55), in: Capsule())
+            }
+            .accessibilityElement(children: .combine)
+            .allowsHitTesting(false)
+        }
+    }
+}
+
+struct SpellSealVisualOverlay: View {
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                Path { path in
+                    path.move(to: CGPoint(x: 10,y: 30))
+                    path.addLine(to: CGPoint(x: geometry.size.width-10,y: geometry.size.height-30))
+                    path.move(to: CGPoint(x: geometry.size.width-10,y: 30))
+                    path.addLine(to: CGPoint(x: 10,y: geometry.size.height-30))
+                }
+                .stroke(.purple.opacity(0.65), style: StrokeStyle(lineWidth: 3, lineCap: .round, dash: [5,4]))
+                Image(systemName: "lock.fill")
+                    .font(.title3).foregroundStyle(.purple)
+                    .padding(10).background(.black.opacity(0.8), in: Circle())
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
