@@ -46,13 +46,14 @@ struct InvestigationFlow<EntranceContent: View>: View {
         configuration: InvestigationConfiguration,
         hasCompletedInvestigation: Bool,
         hasCompletedPostInvestigation: Bool,
+        restoresEnemyOnDisappear: Bool = true,
         @ViewBuilder postInvestigationContent: @escaping (@escaping () -> Void) -> PostInvestigationContent,
         @ViewBuilder entranceContent: () -> EntranceContent
     ) {
         self.sceneController = sceneController
         self.configuration = configuration
         self.hasCompletedInvestigation = hasCompletedInvestigation
-        restoresEnemyOnDisappear = true
+        self.restoresEnemyOnDisappear = restoresEnemyOnDisappear
         self.hasCompletedPostInvestigation = hasCompletedPostInvestigation
         self.postInvestigationContent = { completion in
             AnyView(postInvestigationContent(completion))

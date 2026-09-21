@@ -8,6 +8,7 @@ struct ExpansionFlowView: View {
     @ObservedObject var sceneController: RealitySceneController
     @Binding var retryLoadingPresentation: SceneRetryLoadingPresentation?
     let onExit: () -> Void
+    let onRestartBattle: () -> Void
     @State private var showsBag = false
     @Binding var learningInputActive: Bool
     @State private var practiceSpell: SpellID?
@@ -85,7 +86,14 @@ struct ExpansionFlowView: View {
                 hasCompletedInvestigation: ExpansionInvestigationCatalog.isComplete(
                     floor: current.floorNumber, readRecordIDs: gameSession.progress.readRecordIDs
                 ),
-                restoresEnemyOnDisappear: false
+                hasCompletedPostInvestigation: current.floorNumber != 6
+                    || gameSession.progress.learnedSpells.contains(.outputReduction),
+                restoresEnemyOnDisappear: false,
+                postInvestigationContent: { _ in
+                    Color.clear.task {
+                        gameSession.send(.advanceExpansion)
+                    }
+                }
             ) {
                 if showsBag {
                     LoadoutPreparationView(onBegin: {
@@ -119,7 +127,7 @@ struct ExpansionFlowView: View {
                 )
             }
         case .residualBattle, .bossBattle:
-            BattleView(realityController: sceneController, restartLoadingPresentation: $retryLoadingPresentation)
+            BattleView(realityController: sceneController, restartLoadingPresentation: $retryLoadingPresentation, onRestartBattle: onRestartBattle)
         case .residualEncounter, .bossEncounter, .residualDefeated, .bossDefeated:
             // The shared narrative presentation owns these stages, just as on 8F.
             EmptyView()

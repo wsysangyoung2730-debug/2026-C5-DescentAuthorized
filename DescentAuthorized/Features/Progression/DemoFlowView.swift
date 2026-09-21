@@ -233,6 +233,35 @@ struct DemoFlowView: View {
         }
     }
 
+    // Owned by the stable flow host: replacing BattleView must not cancel loading.
+    private func beginEncounterRestart() {
+        guard retryLoadingPresentation == nil,
+              let sceneID = gameSession.presentation.floorSceneID else { return }
+        checkpointTravelTask?.cancel()
+        let context = LoadingScreenContext(sceneID: sceneID)
+        retryLoadingPresentation = .init(context: context, progress: 0.08,
+            tip: LoadingTipCatalog.randomTip(for: context))
+        checkpointTravelTask = Task { @MainActor in
+            defer {
+                retryLoadingPresentation = nil
+                checkpointTravelTask = nil
+            }
+            do { try await Task.sleep(for: .milliseconds(180)) } catch { return }
+            guard gameSession.sendChecked(.restartEncounter) else { return }
+            let destination = gameSession.presentation
+            guard let room = destination.floorSceneID else { return }
+            sceneController.unload()
+            sceneController.load(sceneID: room, cameraPreset: destination.cameraPreset)
+            while !sceneController.isReady(sceneID: room, cameraPreset: destination.cameraPreset) {
+                if case .failed = sceneController.loadState { return }
+                retryLoadingPresentation?.progress = max(0.15, sceneController.loadingProgress * 0.95)
+                do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
+            }
+            retryLoadingPresentation?.progress = 1
+            do { try await Task.sleep(for: .milliseconds(180)) } catch { return }
+        }
+    }
+
     private func beginCheckpointTravel(to checkpoint: CheckpointID) {
         checkpointTravelTask?.cancel()
         let context = checkpoint.loadingContext
@@ -806,7 +835,8 @@ struct DemoFlowView: View {
         case .battle:
             BattleView(
                 realityController: sceneController,
-                restartLoadingPresentation: $retryLoadingPresentation
+                restartLoadingPresentation: $retryLoadingPresentation,
+                onRestartBattle: beginEncounterRestart
             )
         case let .reward(floor):
             RewardSelectionView(
@@ -833,8 +863,8 @@ struct DemoFlowView: View {
                 )
             }
         case .completion:
-            ExpansionFlowView(sceneController: sceneController, retryLoadingPresentation: $retryLoadingPresentation, onExit: onExit, learningInputActive: $isRewardLearningInputActive)
-                .id("\(gameSession.progress.expansion?.floorNumber ?? 7)-\(gameSession.progress.expansion?.stage.rawValue ?? "entrance")")
+            ExpansionFlowView(sceneController: sceneController, retryLoadingPresentation: $retryLoadingPresentation, onExit: onExit, onRestartBattle: beginEncounterRestart, learningInputActive: $isRewardLearningInputActive)
+                .id("\(gameSession.progress.expansion?.floorNumber ?? 7)-\(gameSession.progress.expansion?.stage == .entrance ? "preparation" : (gameSession.progress.expansion?.stage.rawValue ?? "preparation"))")
         }
     }
 }

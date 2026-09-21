@@ -194,6 +194,7 @@ struct BattleView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
     @ObservedObject var realityController: RealitySceneController
     @Binding var restartLoadingPresentation: SceneRetryLoadingPresentation?
+    let onRestartBattle: () -> Void
 
     @State private var selectedSpellID: SpellID?
     @State private var selectedEffectTarget: ExpansionEffectTarget?
@@ -220,7 +221,6 @@ struct BattleView: View {
     @State private var cameraLookTranslationOrigin: CGSize?
     @State private var isDefeatPanelVisible = false
     @State private var defeatPresentationTask: Task<Void, Never>?
-    @State private var restartTask: Task<Void, Never>?
 
     private var isRestartLoading: Bool {
         restartLoadingPresentation != nil
@@ -339,13 +339,10 @@ struct BattleView: View {
             detailPressTask?.cancel()
             defeatPresentationTask?.cancel()
             defeatPresentationTask = nil
-            restartTask?.cancel()
-            restartTask = nil
             isCameraLooking = false
             isCameraZooming = false
             cameraLookTranslationOrigin = nil
             isDefeatPanelVisible = false
-            restartLoadingPresentation = nil
             realityController.setBattleCameraInteractionEnabled(false)
         }
         .preferredColorScheme(.dark)
@@ -1700,38 +1697,10 @@ struct BattleView: View {
         }
     }
 
-    private var restartLoadingContext: LoadingScreenContext {
-        guard let realitySceneID else { return .floor9 }
-        return LoadingScreenContext(sceneID: realitySceneID)
-    }
-
     private func restartDefeatedBattle() {
         guard !isRestartLoading else { return }
         gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-        if gameSession.sendChecked(.restartEncounter) {
-            defeatPresentationTask?.cancel()
-            restartTask?.cancel()
-            restartLoadingPresentation = nil
-            isDefeatPanelVisible = false
-            clearTransientBattleEffects()
-        }
-    }
-
-    private func waitForRestartStep(milliseconds: Int) async -> Bool {
-        guard !appSettings.reducedMotion else { return !Task.isCancelled }
-        do {
-            try await Task.sleep(for: .milliseconds(milliseconds))
-            return !Task.isCancelled
-        } catch {
-            return false
-        }
-    }
-
-    private func restoreDefeatPanelAfterRestartFailure() {
-        withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
-            restartLoadingPresentation = nil
-            isDefeatPanelVisible = true
-        }
+        onRestartBattle()
     }
 
     private func clearTransientBattleEffects() {
