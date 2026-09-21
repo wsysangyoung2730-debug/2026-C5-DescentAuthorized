@@ -39,7 +39,7 @@ struct GameProgressValidator: Sendable {
     private func validateExpansion(_ progress: GameProgress) throws {
         guard let expansion = progress.expansion else { return }
         guard progress.currentScene == .demoComplete,
-              progress.checkpoint == .demoComplete,
+              progress.checkpoint.expansionDestination != nil,
               progress.isDemoComplete else {
             throw GameProgressValidationError.invalidExpansionState("8층 완료 지점 필요")
         }
@@ -118,6 +118,12 @@ struct GameProgressValidator: Sendable {
             }
             guard selectedRewards.insert(rewardID).inserted else {
                 throw GameProgressValidationError.duplicateReward(rewardID)
+            }
+        }
+
+        for (floor, choice) in progress.checkpointRewardChoices {
+            guard RewardCatalog.candidates(forFloorNumber: floor).contains(where: { $0.id == choice }) else {
+                throw GameProgressValidationError.unknownReward(choice)
             }
         }
 
@@ -373,7 +379,7 @@ struct GameProgressValidator: Sendable {
         case .floor8AdministratorDefeated, .floor8Reward, .floor8DescentDoor:
             [.observationDefeated]
         case .demoComplete:
-            [.demoComplete]
+            Set(CheckpointID.allCases.filter { $0.expansionDestination != nil })
         }
     }
 

@@ -38,6 +38,8 @@ struct GameProgressionController: Sendable {
     init(progress: GameProgress = .newGame) {
         self.progress = progress
         self.progress.synchronizeLoadout()
+        self.progress.rememberCheckpointRewards()
+        self.progress.migrateExpansionCheckpoint()
         switch self.progress.currentScene {
         case .floor9RecordsBattle: self.progress.currentScene = .floor9RecordsPreparation; self.progress.playerHP = 100
         case .floor8ResidualBattle: self.progress.currentScene = .floor8ResidualPreparation; self.progress.playerHP = 100
@@ -68,6 +70,7 @@ struct GameProgressionController: Sendable {
             progress.playerHP = Self.maximumPlayerHP
         }
         progress.synchronizeLoadout()
+        progress.migrateExpansionCheckpoint()
     }
 
     mutating func advanceExpansion() throws -> [ProgressionEvent] {
@@ -114,6 +117,7 @@ struct GameProgressionController: Sendable {
         }
         let events = try learnExpansionSpell(.outputReduction, grade: grade)
         progress.expansion?.stage = .preparation
+        progress.migrateExpansionCheckpoint()
         return events
     }
 
@@ -123,6 +127,7 @@ struct GameProgressionController: Sendable {
             throw ProgressionError.requirementMissing("봉인 해제 각인 성공")
         }
         progress.expansion?.stage = .bossPreparation
+        progress.migrateExpansionCheckpoint()
         return [updateMastery(spell: .sealRelease, grade: grade)]
     }
 
@@ -146,6 +151,7 @@ struct GameProgressionController: Sendable {
             throw ProgressionError.requirementMissing("유효한 확장 진행 단계")
         }
         progress.expansion = expansion
+        progress.migrateExpansionCheckpoint()
     }
 
     mutating func configureLoadout(
@@ -201,6 +207,7 @@ struct GameProgressionController: Sendable {
         progress.defeatedEnemies.insert(enemy)
         progress.expansion?.stage = expansion.stage == .residualBattle
             ? .residualDefeated : .bossDefeated
+        progress.migrateExpansionCheckpoint()
         return [.enemyDefeated(enemy)]
     }
 
@@ -617,6 +624,7 @@ struct GameProgressionController: Sendable {
             throw ProgressionError.unknownReward(candidateID)
         }
         progress.selectedRewardIDs.append(selected.id)
+        progress.checkpointRewardChoices[try currentRewardFloor()] = selected.id
         return [.rewardSelected(candidateID: selected.id, spell: selected.resolvedSpell)]
     }
 
@@ -636,6 +644,7 @@ struct GameProgressionController: Sendable {
         if progress.expansion != nil {
             progress.expansion?.stage = .descent
             progress.expansion?.descentStage = 0
+            progress.migrateExpansionCheckpoint()
         } else {
             events.append(.sceneChanged(setScene(floor == 9 ? .floor9DescentDoor : .floor8DescentDoor)))
         }
@@ -647,11 +656,11 @@ struct GameProgressionController: Sendable {
             throw ProgressionError.requirementMissing("unlocked checkpoint")
         }
 
-        let previousFloor9Reward = RewardCatalog.candidates(for: .floor9).first {
-            progress.selectedRewardIDs.contains($0.id)
-        }
-        let previousFloor8Reward = RewardCatalog.candidates(for: .floor8).first {
-            progress.selectedRewardIDs.contains($0.id)
+        progress.rememberCheckpointRewards()
+        let oldEquipped = progress.equippedSpells
+        func rememberedReward(_ floor: Int) -> RewardCandidate? {
+            let candidates = RewardCatalog.candidates(forFloorNumber: floor)
+            return candidates.first { $0.id == progress.checkpointRewardChoices[floor] } ?? candidates.first
         }
         let destination = checkpoint.destination
         let targetIndex = checkpoint.progressionIndex
@@ -660,8 +669,8 @@ struct GameProgressionController: Sendable {
         progress.currentScene = destination.scene
         progress.checkpoint = checkpoint
         progress.playerHP = Self.maximumPlayerHP
-        progress.isDemoComplete = checkpoint == .demoComplete
-        progress.expansion = checkpoint == .demoComplete ? ExpansionProgress() : nil
+        progress.isDemoComplete = checkpoint.expansionDestination != nil
+        progress.expansion = checkpoint.expansionDestination
         progress.learnedSpells = []
         progress.completedTrainingSpells = []
         progress.defeatedEnemies = []
@@ -676,7 +685,7 @@ struct GameProgressionController: Sendable {
             progress.defeatedEnemies.insert(.recordsAdministrator)
         }
         if targetIndex >= CheckpointID.floor8Start.progressionIndex {
-            let reward = previousFloor9Reward
+            let reward = rememberedReward(9)
                 ?? RewardCatalog.candidates(for: .floor9)[0]
             progress.selectedRewardIDs.append(reward.id)
             progress.learnedSpells.insert(RewardCatalog.learningSpell(for: reward))
@@ -697,13 +706,67 @@ struct GameProgressionController: Sendable {
             progress.defeatedEnemies.insert(.observationAdministrator)
         }
         if targetIndex >= CheckpointID.demoComplete.progressionIndex {
-            let reward = previousFloor8Reward
+            let reward = rememberedReward(8)
                 ?? RewardCatalog.candidates(for: .floor8)[0]
             progress.selectedRewardIDs.append(reward.id)
             let rewardSpell = RewardCatalog.learningSpell(for: reward)
             progress.learnedSpells.insert(rewardSpell)
             progress.completedTrainingSpells.insert(rewardSpell)
         }
+
+        if let expansion = checkpoint.expansionDestination {
+            for floor in stride(from: 7, through: 5, by: -1) {
+                let current = expansion.floorNumber == floor
+                let completed = floor > expansion.floorNumber
+                if completed || (current && [.sealedDoor, .bossPreparation, .reward, .descent].contains(expansion.stage)) {
+                    if let enemy = ExpansionEnemyCatalog.enemy(floor: floor, isBoss: false) {
+                        progress.defeatedEnemies.insert(enemy.id)
+                    }
+                }
+                if completed || (current && [.reward, .descent].contains(expansion.stage)) {
+                    if let enemy = ExpansionEnemyCatalog.enemy(floor: floor, isBoss: true) {
+                        progress.defeatedEnemies.insert(enemy.id)
+                    }
+                }
+                if completed || (current && expansion.stage == .descent), let reward = rememberedReward(floor) {
+                    progress.selectedRewardIDs.append(reward.id)
+                    let spell = RewardCatalog.learningSpell(for: reward)
+                    progress.learnedSpells.insert(spell)
+                    progress.completedTrainingSpells.insert(spell)
+                }
+            }
+            if expansion.floorNumber < 6 || (expansion.floorNumber == 6 && ![.entrance, .learnDebuff].contains(expansion.stage)) {
+                progress.learnedSpells.insert(.outputReduction)
+                progress.completedTrainingSpells.insert(.outputReduction)
+            }
+        }
+
+        // Keep records from earlier floors, reset the destination investigation and all later floors.
+        let targetFloor = checkpoint.expansionDestination?.floorNumber ?? destination.floor.rawValue
+        progress.readRecordIDs = progress.readRecordIDs.filter { id in
+            let floor = (5...10).first { id.hasPrefix("floor\($0).") || id.hasPrefix("\($0)-") }
+            return floor.map { $0 > targetFloor } ?? false
+        }
+        if targetIndex >= CheckpointID.recordsBattle.progressionIndex {
+            progress.readRecordIDs.formUnion(["9-entrance-01", "floor9.entrance.erased-monitor"])
+        }
+        if targetIndex >= CheckpointID.residualBattle.progressionIndex {
+            progress.readRecordIDs.formUnion(["floor8.entrance.warning-tags", "floor8.entrance.floor-anchor"])
+        }
+        for floor in 5...7 {
+            if floor > targetFloor || (floor == targetFloor && checkpoint.expansionDestination?.stage != .entrance) {
+                progress.readRecordIDs.formUnion(ExpansionInvestigationCatalog.records(for: floor).map(\.id))
+            }
+        }
+        // Preserve card ordering, replacing a superseded reward card with the new choice for that floor.
+        progress.equippedSpells = oldEquipped.compactMap { spell in
+            if progress.learnedSpells.contains(spell) { return spell }
+            for floor in 5...9 where RewardCatalog.candidates(forFloorNumber: floor).contains(where: { $0.resolvedSpell == spell }) {
+                if let replacement = rememberedReward(floor)?.resolvedSpell, progress.learnedSpells.contains(replacement) { return replacement }
+            }
+            return nil
+        }
+        progress.synchronizeLoadout(automaticallyEquipNewSpells: true)
 
         let retainedLearnedSpells = progress.learnedSpells
         progress.spellMastery = progress.spellMastery.filter {
@@ -733,6 +796,7 @@ struct GameProgressionController: Sendable {
 
     mutating func readRecord(id: String) -> ProgressionEvent? {
         let inserted = progress.readRecordIDs.insert(id).inserted
+        progress.migrateExpansionCheckpoint()
         return inserted ? .recordRead(id) : nil
     }
 
@@ -838,7 +902,8 @@ struct GameProgressionController: Sendable {
 
 private extension CheckpointID {
     var destination: (floor: FloorID, scene: SceneID) {
-        switch self {
+        if expansionDestination != nil { return (.floor7, .demoComplete) }
+        return switch self {
         case .floor10Start:
             (.floor10, .floor10MeetingRoom)
         case .floor10Complete:
@@ -857,7 +922,7 @@ private extension CheckpointID {
             (.floor8, .floor8AdministratorPreparation)
         case .observationDefeated:
             (.floor8, .floor8AdministratorDefeated)
-        case .demoComplete:
+        default:
             (.floor7, .demoComplete)
         }
     }

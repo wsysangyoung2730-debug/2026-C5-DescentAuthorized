@@ -429,6 +429,11 @@ enum CheckpointID: String, Codable, CaseIterable, Equatable, Hashable, Sendable 
     case observationBattle
     case observationDefeated
     case demoComplete
+    case floor7Encounter, floor7SealedDoor, floor7BossEncounter, floor7Reward, floor7Descent
+    case floor6Investigation, floor6Learning, floor6Encounter, floor6SealedDoor
+    case floor6BossEncounter, floor6Reward, floor6Descent
+    case floor5Investigation, floor5Encounter, floor5SealedDoor, floor5BossEncounter
+    case floor5Reward, floor5Descent, floor5Complete
 
     var progressionIndex: Int {
         Self.allCases.firstIndex(of: self) ?? 0
@@ -465,7 +470,7 @@ struct SpellMastery: Codable, Equatable, Sendable {
 }
 
 struct GameProgress: Codable, Equatable, Sendable {
-    static let currentSaveVersion = 5
+    static let currentSaveVersion = 6
 
     var saveVersion: Int
     var currentFloor: FloorID
@@ -497,6 +502,8 @@ struct GameProgress: Codable, Equatable, Sendable {
     var spellMastery: [SpellID: SpellMastery]
     var completedTrainingSpells: Set<SpellID>
     var selectedRewardIDs: [String]
+    /// Latest choice per floor, independent of the inventory at a rewound checkpoint.
+    var checkpointRewardChoices: [Int: String] = [:]
     var isDemoComplete: Bool
 
     init(
@@ -587,6 +594,7 @@ struct GameProgress: Codable, Equatable, Sendable {
         case spellMastery
         case completedTrainingSpells
         case selectedRewardIDs
+        case checkpointRewardChoices
         case isDemoComplete
     }
 
@@ -651,6 +659,10 @@ struct GameProgress: Codable, Equatable, Sendable {
         }
         saveVersion = max(decodedVersion, Self.currentSaveVersion)
         migrateLegacyRewards(fromVersion: decodedVersion)
+        checkpointRewardChoices = try container.decodeIfPresent([Int: String].self, forKey: .checkpointRewardChoices) ?? [:]
+        rememberCheckpointRewards()
+        migrateExpansionCheckpoint()
+
     }
 
     func encode(to encoder: Encoder) throws {
@@ -674,6 +686,7 @@ struct GameProgress: Codable, Equatable, Sendable {
         try container.encode(spellMastery, forKey: .spellMastery)
         try container.encode(completedTrainingSpells, forKey: .completedTrainingSpells)
         try container.encode(selectedRewardIDs, forKey: .selectedRewardIDs)
+        try container.encode(checkpointRewardChoices, forKey: .checkpointRewardChoices)
         try container.encode(isDemoComplete, forKey: .isDemoComplete)
     }
 }

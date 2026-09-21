@@ -234,3 +234,78 @@ struct ExpansionSceneRoute: Equatable, Sendable {
         }
     }
 }
+
+// MARK: - Replayable checkpoints
+
+extension CheckpointID {
+    /// Legacy demoComplete is retained as the stable saved ID for the 7F investigation.
+    var expansionDestination: ExpansionProgress? {
+        switch self {
+        case .demoComplete: .init(floorNumber: 7, stage: .entrance)
+        case .floor7Encounter: .init(floorNumber: 7, stage: .preparation)
+        case .floor7SealedDoor: .init(floorNumber: 7, stage: .sealedDoor)
+        case .floor7BossEncounter: .init(floorNumber: 7, stage: .bossPreparation)
+        case .floor7Reward: .init(floorNumber: 7, stage: .reward)
+        case .floor7Descent: .init(floorNumber: 7, stage: .descent)
+        case .floor6Investigation: .init(floorNumber: 6, stage: .entrance)
+        case .floor6Learning: .init(floorNumber: 6, stage: .learnDebuff)
+        case .floor6Encounter: .init(floorNumber: 6, stage: .preparation)
+        case .floor6SealedDoor: .init(floorNumber: 6, stage: .sealedDoor)
+        case .floor6BossEncounter: .init(floorNumber: 6, stage: .bossPreparation)
+        case .floor6Reward: .init(floorNumber: 6, stage: .reward)
+        case .floor6Descent: .init(floorNumber: 6, stage: .descent)
+        case .floor5Investigation: .init(floorNumber: 5, stage: .entrance)
+        case .floor5Encounter: .init(floorNumber: 5, stage: .preparation)
+        case .floor5SealedDoor: .init(floorNumber: 5, stage: .sealedDoor)
+        case .floor5BossEncounter: .init(floorNumber: 5, stage: .bossPreparation)
+        case .floor5Reward: .init(floorNumber: 5, stage: .reward)
+        case .floor5Descent: .init(floorNumber: 5, stage: .descent)
+        case .floor5Complete: .init(floorNumber: 4, stage: .complete)
+        default: nil
+        }
+    }
+}
+
+extension ExpansionProgress {
+    var replayCheckpoint: CheckpointID {
+        if isComplete { return .floor5Complete }
+        let checkpoints: [CheckpointID] = switch floorNumber {
+        case 7: [.demoComplete, .floor7Encounter, .floor7SealedDoor, .floor7BossEncounter, .floor7Reward, .floor7Descent]
+        case 6: [.floor6Investigation, .floor6Encounter, .floor6SealedDoor, .floor6BossEncounter, .floor6Reward, .floor6Descent]
+        default: [.floor5Investigation, .floor5Encounter, .floor5SealedDoor, .floor5BossEncounter, .floor5Reward, .floor5Descent]
+        }
+        switch stage {
+        case .entrance: return checkpoints[0]
+        case .learnDebuff: return .floor6Learning
+        case .preparation, .residualEncounter, .residualBattle: return checkpoints[1]
+        case .residualDefeated, .sealedDoor: return checkpoints[2]
+        case .bossPreparation, .bossEncounter, .bossBattle: return checkpoints[3]
+        case .bossDefeated, .reward: return checkpoints[4]
+        case .descent, .complete: return checkpoints[5]
+        }
+    }
+}
+
+extension GameProgress {
+    mutating func rememberCheckpointRewards() {
+        for floor in 5...9 {
+            if let choice = RewardCatalog.candidates(forFloorNumber: floor).first(where: {
+                selectedRewardIDs.contains($0.id)
+            }) { checkpointRewardChoices[floor] = choice.id }
+        }
+    }
+
+    /// Older saves used the 8F completion ID throughout the extension.
+    mutating func migrateExpansionCheckpoint() {
+        guard currentScene == .demoComplete, isDemoComplete, let expansion else { return }
+        var current = expansion.replayCheckpoint
+        if expansion.stage == .entrance,
+           ExpansionInvestigationCatalog.isComplete(floor: expansion.floorNumber, readRecordIDs: readRecordIDs) {
+            current = ExpansionProgress(floorNumber: expansion.floorNumber,
+                stage: expansion.floorNumber == 6 && !learnedSpells.contains(.outputReduction)
+                    ? .learnDebuff : .preparation).replayCheckpoint
+        }
+        checkpoint = current
+        if current.progressionIndex > furthestCheckpoint.progressionIndex { furthestCheckpoint = current }
+    }
+}

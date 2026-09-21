@@ -193,8 +193,9 @@ struct DemoGameSession: Sendable {
             return try restartActiveEncounterFromCheckpoint()
 
         case let .travelToCheckpoint(checkpoint):
+            let events = try progression.travel(to: checkpoint)
             encounter = nil
-            return wrap(try progression.travel(to: checkpoint))
+            return wrap(events)
 
         case let .beginTutorial(sequence, step):
             guard let event = progression.beginTutorial(sequence, at: step) else { return [] }
