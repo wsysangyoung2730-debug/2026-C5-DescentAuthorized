@@ -929,7 +929,9 @@ private struct BossNarrativeView: View {
                         Image(sequence.backgroundAsset)
                             .resizable()
                             .aspectRatio(contentMode: sequence.preservesFullArtwork ? .fit : .fill)
-                            .frame(width: proxy.size.width, height: proxy.size.height)
+                            // Keep the baked-in title at the top; any letterbox space belongs below the artwork.
+                            .frame(width: proxy.size.width, height: proxy.size.height,
+                                   alignment: sequence.preservesFullArtwork ? .top : .center)
                             .clipped()
                     }
                     .background(.black)
