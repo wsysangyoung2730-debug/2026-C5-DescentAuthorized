@@ -289,6 +289,7 @@ struct BattleView: View {
 
         }
         .task(id: encounterIdentity) {
+            gameFeedback.synchronizesProjectileAudio = realitySceneID != nil
             battleLogEntries = []
             lastLoggedEventSequence = nil
             previewMana = nil
@@ -333,6 +334,7 @@ struct BattleView: View {
             updateDefeatPresentation(for: gameSession.battleState?.phase)
         }
         .onDisappear {
+            gameFeedback.synchronizesProjectileAudio = false
             enemyPulseTask?.cancel()
             playerPulseTask?.cancel()
             feedbackTask?.cancel()
@@ -1312,7 +1314,13 @@ struct BattleView: View {
             realityController.presentCombat(
                 events: events,
                 battleState: gameSession.battleState,
-                reducedMotion: appSettings.reducedMotion
+                reducedMotion: appSettings.reducedMotion,
+                onProjectileLaunch: {
+                    gameFeedback.playProjectileLaunch(settings: appSettings.settings)
+                },
+                onProjectileImpact: {
+                    gameFeedback.playProjectileImpact(settings: appSettings.settings)
+                }
             )
         }
         var enemyWasHit = false

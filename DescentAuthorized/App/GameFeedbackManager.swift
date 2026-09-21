@@ -150,6 +150,7 @@ private enum GlyphCheckpointTone: CaseIterable, Hashable {
 
 @MainActor
 final class GameFeedbackManager: ObservableObject {
+    var synchronizesProjectileAudio = false
     private let mapper = GameFeedbackMapper()
     private var effectPlayers: [GameAudioAsset: [AVAudioPlayer]] = [:]
     private var missingResources: Set<GameAudioAsset> = []
@@ -257,7 +258,17 @@ final class GameFeedbackManager: ObservableObject {
         }
 
         if settings.soundEffectsEnabled {
-            enqueueEventAudio(cues)
+            let hasProjectile = synchronizesProjectileAudio && RealityCombatPresentationMapper.cues(for: events, battleState: nil).contains {
+                if case .hit = $0 { return true }
+                return false
+            }
+            enqueueEventAudio(cues.filter {
+                if hasProjectile {
+                    if case .spellAccepted = $0 { return false }
+                    if case .enemyDamaged = $0 { return false }
+                }
+                return true
+            })
         }
 
         if settings.hapticsEnabled {
@@ -265,6 +276,19 @@ final class GameFeedbackManager: ObservableObject {
                 playHaptic(for: cue)
             }
         }
+    }
+
+    func playProjectileImpact(settings: GameSettings) {
+        currentSettings = settings
+        guard settings.soundEffectsEnabled else { return }
+        playEventAudio(for: .enemyDamaged)
+    }
+
+    // Called at the actual visual launch, after the model is ready.
+    func playProjectileLaunch(settings: GameSettings) {
+        currentSettings = settings
+        guard settings.soundEffectsEnabled else { return }
+        playEventAudio(for: .spellAccepted(perfect: false))
     }
 
     func trigger(

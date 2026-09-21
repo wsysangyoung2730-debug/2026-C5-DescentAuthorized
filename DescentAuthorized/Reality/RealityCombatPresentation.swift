@@ -179,6 +179,8 @@ final class RealityCombatVFXRenderer {
         subsystem: Bundle.main.bundleIdentifier ?? "DescentAuthorized",
         category: "RealityCombatVFX"
     )
+    var onProjectileImpact: (() -> Void)?
+    var onProjectileLaunch: (() -> Void)?
     weak var cameraEntity: Entity?
     private var hitGeneration = 0
     private var hitTasks: [UUID: Task<Void, Never>] = [:]
@@ -299,6 +301,8 @@ final class RealityCombatVFXRenderer {
         hitEntities.values.forEach { $0.removeFromParent() }
         hitEntities.removeAll()
         cameraEntity = nil
+        onProjectileLaunch = nil
+        onProjectileImpact = nil
         intentEffectsSuspended = false
         loadCancellables.forEach { $0.cancel() }
         loadCancellables.removeAll()
@@ -533,6 +537,8 @@ final class RealityCombatVFXRenderer {
         bundle: Bundle
     ) {
         let generation = hitGeneration
+        let launchFeedback = onProjectileLaunch
+        let impactFeedback = onProjectileImpact
         load(
             assetID(for: cue), bundle: bundle,
             completion: { [weak self] entity in
@@ -555,28 +561,31 @@ final class RealityCombatVFXRenderer {
                         self.hitTasks[id] = nil
                     }
                     do {
+                        effect.position = start
+                        launchFeedback?()
                         if !reducedMotion, self.cameraEntity != nil {
                             effect.scale = SIMD3(repeating: 0.18)
-                            // A shallow arc, with acceleration toward the enemy.
-                            let duration = min(0.65, max(0.38, Double(simd_distance(start, target)) * 0.035))
+                            // Fast, straight magical bolt; no gravity or ballistic arc.
+                            let duration = min(0.19, max(0.12, Double(simd_distance(start, target)) / 85))
                             let began = ProcessInfo.processInfo.systemUptime
                             while true {
                                 try Task.checkCancellation()
                                 let t = min(1, Float((ProcessInfo.processInfo.systemUptime - began) / duration))
-                                let progress = t * t * 0.35 + t * 0.65
+                                let progress = t
                                 effect.position = start + (target - start) * progress
-                                    + SIMD3<Float>(0, 0, sin(.pi * progress) * 0.18)
-                                effect.scale = SIMD3(repeating: 0.18 + 0.64 * progress)
+                                effect.scale = SIMD3(repeating: 0.18 + 0.24 * progress)
                                 if t >= 1 { break }
                                 try await Task.sleep(for: .milliseconds(16))
                             }
                         }
                         effect.position = target
-                        effect.scale = SIMD3(repeating: 0.82)
+                        effect.scale = SIMD3(repeating: 0.48)
                         // Short adhesion follows the actor, then debris falls in room Z-up space.
                         if let actor = self.enemyActor {
                             effect.setParent(actor, preservingWorldTransform: true)
                         }
+                        if cue != .shield { impactFeedback?() }
+                        self.addImpactAura(to: effect, reducedMotion: reducedMotion)
                         self.playAuthoredAnimation(on: entity)
                         try await Task.sleep(for: .milliseconds(reducedMotion ? 250 : 220))
                         effect.setParent(root, preservingWorldTransform: true)
@@ -598,7 +607,12 @@ final class RealityCombatVFXRenderer {
                     } catch { return }
                 }
             },
-            failure: { [weak self] message in self?.logger.error("\(message, privacy: .public)") }
+            failure: { [weak self] message in
+                guard let self, generation == self.hitGeneration else { return }
+                launchFeedback?()
+                if cue != .shield { impactFeedback?() }
+                self.logger.error("\(message, privacy: .public)")
+            }
         )
     }
 
@@ -961,31 +975,35 @@ extension RealityCombatVFXRenderer {
     }
 
     private func addIntentSmoke(to container: Entity, cue: RealityEnemyIntentCue) {
-        let color = intentColor(cue)
+        let accent = intentColor(cue)
+        // Charcoal smoke with only a trace of the action color.
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        accent.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        let color = UIColor(red: 0.035 + red * 0.18, green: 0.035 + green * 0.18, blue: 0.035 + blue * 0.18, alpha: 1)
         let smoke = Entity()
         smoke.name = "DA_INTENT_SMOKE"
         // The model faces -Y. Keep smoke behind even the thickest new glyph.
-        smoke.position = SIMD3(0, 0.42, -0.38)
+        smoke.position = SIMD3(0, 0.34, -0.14)
         var emitter = ParticleEmitterComponent()
         emitter.emitterShape = .box
-        emitter.emitterShapeSize = SIMD3(0.75, 0.04, 0.16)
+        emitter.emitterShapeSize = SIMD3(0.38, 0.02, 0.08)
         emitter.birthLocation = .volume
         emitter.birthDirection = .local
         emitter.emissionDirection = SIMD3(0, 0, 1)
-        emitter.speed = 0.48
-        emitter.speedVariation = 0.12
+        emitter.speed = 0.13
+        emitter.speedVariation = 0.035
         emitter.particlesInheritTransform = true
         emitter.fieldSimulationSpace = .local
         emitter.timing = .repeating(warmUp: 1, emit: .init(duration: 8))
-        emitter.mainEmitter.birthRate = 22
-        emitter.mainEmitter.lifeSpan = 1.7
-        emitter.mainEmitter.lifeSpanVariation = 0.25
-        emitter.mainEmitter.size = 0.36
-        emitter.mainEmitter.sizeVariation = 0.12
-        emitter.mainEmitter.sizeMultiplierAtEndOfLifespan = 2.1
+        emitter.mainEmitter.birthRate = 10
+        emitter.mainEmitter.lifeSpan = 1.15
+        emitter.mainEmitter.lifeSpanVariation = 0.15
+        emitter.mainEmitter.size = 0.19
+        emitter.mainEmitter.sizeVariation = 0.045
+        emitter.mainEmitter.sizeMultiplierAtEndOfLifespan = 1.35
         emitter.mainEmitter.spreadingAngle = 0.12
-        emitter.mainEmitter.acceleration = SIMD3(0, 0, 0.06)
-        emitter.mainEmitter.noiseStrength = 0.09
+        emitter.mainEmitter.acceleration = SIMD3(0, 0, 0.015)
+        emitter.mainEmitter.noiseStrength = 0.025
         emitter.mainEmitter.noiseScale = 0.8
         emitter.mainEmitter.noiseAnimationSpeed = 0.4
         emitter.mainEmitter.angularSpeed = 0.22
@@ -994,7 +1012,7 @@ extension RealityCombatVFXRenderer {
         emitter.mainEmitter.billboardMode = .billboard
         emitter.mainEmitter.opacityCurve = .gradualFadeInOut
         emitter.mainEmitter.color = .evolving(
-            start: .single(color.withAlphaComponent(0.65)),
+            start: .single(color.withAlphaComponent(0.28)),
             end: .single(color.withAlphaComponent(0))
         )
         emitter.mainEmitter.blendMode = .alpha
@@ -1004,13 +1022,13 @@ extension RealityCombatVFXRenderer {
         container.addChild(smoke)
 
         // Preserve color separation without continuous motion when Reduce Motion is on.
-        var material = UnlitMaterial(color: color.withAlphaComponent(0.3))
+        var material = UnlitMaterial(color: color.withAlphaComponent(0.14))
         if let texture = Self.intentSmokeTexture {
             material.color.texture = .init(texture)
         }
-        material.blending = .transparent(opacity: .init(floatLiteral: 0.3))
+        material.blending = .transparent(opacity: .init(floatLiteral: 0.14))
         material.faceCulling = .none
-        let halo = ModelEntity(mesh: .generatePlane(width: 1.5, depth: 1.6), materials: [material])
+        let halo = ModelEntity(mesh: .generatePlane(width: 0.72, depth: 0.78), materials: [material])
         halo.name = "DA_INTENT_STATIC_HALO"
         halo.position = SIMD3(0, 0.46, 0.04)
         container.addChild(halo)
@@ -1048,4 +1066,39 @@ extension RealityCombatVFXRenderer {
         guard let cgImage = image.cgImage else { return nil }
         return try? TextureResource.generate(from: cgImage, options: .init(semantic: .color))
     }()
+}
+
+
+extension RealityCombatVFXRenderer {
+    private func addImpactAura(to impact: Entity, reducedMotion: Bool) {
+        guard !reducedMotion else { return }
+        let aura = Entity()
+        aura.name = "DA_IMPACT_CHARCOAL_AURA"
+        aura.position = SIMD3(0, 0.12, 0)
+        var emitter = ParticleEmitterComponent()
+        emitter.emitterShape = .sphere
+        emitter.emitterShapeSize = SIMD3(repeating: 0.18)
+        emitter.birthDirection = .local
+        emitter.emissionDirection = SIMD3(0, 0, 1)
+        emitter.speed = 0.12
+        emitter.speedVariation = 0.04
+        emitter.mainEmitter.birthRate = 0
+        emitter.burstCount = 9
+        emitter.mainEmitter.lifeSpan = 0.6
+        emitter.mainEmitter.size = 0.22
+        emitter.mainEmitter.sizeVariation = 0.05
+        emitter.mainEmitter.sizeMultiplierAtEndOfLifespan = 1.4
+        emitter.mainEmitter.noiseStrength = 0.035
+        emitter.mainEmitter.opacityCurve = .gradualFadeInOut
+        emitter.mainEmitter.color = .evolving(
+            start: .single(UIColor(white: 0.035, alpha: 0.32)),
+            end: .single(UIColor(white: 0.035, alpha: 0))
+        )
+        emitter.mainEmitter.blendMode = .alpha
+        emitter.mainEmitter.isLightingEnabled = false
+        emitter.mainEmitter.image = Self.intentSmokeTexture
+        emitter.burst()
+        aura.components.set(emitter)
+        impact.addChild(aura)
+    }
 }

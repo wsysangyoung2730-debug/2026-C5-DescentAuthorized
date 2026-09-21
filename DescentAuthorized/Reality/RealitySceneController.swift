@@ -1095,8 +1095,17 @@ final class RealitySceneController: ObservableObject {
     func presentCombat(
         events: [DemoSessionEvent],
         battleState: BattleState?,
-        reducedMotion: Bool
+        reducedMotion: Bool,
+        onProjectileLaunch: (() -> Void)? = nil,
+        onProjectileImpact: (() -> Void)? = nil
     ) {
+        combatVFXRenderer.onProjectileImpact = onProjectileImpact
+        var didPlayLaunch = false
+        combatVFXRenderer.onProjectileLaunch = {
+            guard !didPlayLaunch else { return }
+            didPlayLaunch = true
+            onProjectileLaunch?()
+        }
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
         actorMotion.setReducedMotion(reducedMotion)
