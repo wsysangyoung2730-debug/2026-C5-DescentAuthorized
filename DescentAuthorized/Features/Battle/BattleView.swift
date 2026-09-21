@@ -173,6 +173,20 @@ private struct BattleUIPresentation {
     }
 }
 
+private struct BattleCameraHitRegion: Shape {
+    let inputFrame: CGRect
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.addRect(rect)
+        let excluded = inputFrame.intersection(rect)
+        if !excluded.isNull && !excluded.isEmpty {
+            path.addRect(excluded)
+        }
+        return path
+    }
+}
+
 struct BattleView: View {
     @Environment(\.isGlyphInputSuspended) private var isInputSuspended
     @EnvironmentObject private var appSettings: AppSettings
@@ -351,6 +365,11 @@ struct BattleView: View {
                 stageHeight * 0.55,
                 stageHeight - (inputPanelHeight / 2) - 12
             )
+            let inputFrame = CGRect(
+                x: inputPanelX(availableWidth: contentWidth, panelWidth: inputPanelWidth) - inputPanelWidth / 2,
+                y: inputPanelCenterY - inputPanelHeight / 2,
+                width: inputPanelWidth, height: inputPanelHeight
+            )
 
             ZStack(alignment: .bottom) {
                 enemyStage(presentation)
@@ -360,17 +379,6 @@ struct BattleView: View {
                 intentTutorialTarget(in: proxy)
 
                 if !isDefeated {
-                    if isBattleScene, realitySceneID != nil {
-                        battleCameraInteractionSurface(
-                            viewportSize: CGSize(
-                                width: contentWidth,
-                                height: max(stageHeight, 1)
-                            )
-                        )
-                        .frame(width: contentWidth, height: max(stageHeight, 1))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    }
-
                     if isBattleScene,
                        realitySceneID != nil,
                        realityController.isBattleCameraAdjusted {
@@ -413,19 +421,20 @@ struct BattleView: View {
                         .frame(height: 218)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 12)
+
+                    if isBattleScene, realitySceneID != nil {
+                        // A sibling surface with a real hit-testing hole keeps
+                        // camera recognizers out of the UIKit drawing touch stream.
+                        battleCameraInteractionSurface(
+                            viewportSize: CGSize(width: contentWidth, height: max(stageHeight, 1)),
+                            inputFrame: inputFrame
+                        )
+                        .frame(width: contentWidth, height: max(stageHeight, 1))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .allowsHitTesting(!isInputSuspended && detailedSpell == nil && !showsFirstTurnBriefing)
+                    }
                 }
             }
-            .contentShape(Rectangle())
-            // Receive background drags at the container: positioned input views
-            // occupy the stage's layout bounds even outside their visible frame.
-            .simultaneousGesture(battleCameraLookGesture(
-                viewportSize: CGSize(width: contentWidth, height: max(stageHeight, 1)),
-                inputFrame: CGRect(
-                    x: inputPanelX(availableWidth: contentWidth, panelWidth: inputPanelWidth) - inputPanelWidth / 2,
-                    y: inputPanelCenterY - inputPanelHeight / 2,
-                    width: inputPanelWidth, height: inputPanelHeight
-                )
-            ))
             .overlay {
                 Rectangle()
                     .stroke(DAColor.gold.opacity(0.28), lineWidth: 1)
@@ -436,9 +445,10 @@ struct BattleView: View {
         }
     }
 
-    private func battleCameraInteractionSurface(viewportSize: CGSize) -> some View {
+    private func battleCameraInteractionSurface(viewportSize: CGSize, inputFrame: CGRect) -> some View {
         Color.clear
-            .contentShape(Rectangle())
+            .contentShape(BattleCameraHitRegion(inputFrame: inputFrame), eoFill: true)
+            .simultaneousGesture(battleCameraLookGesture(viewportSize: viewportSize, inputFrame: inputFrame))
             .simultaneousGesture(
                 MagnifyGesture(minimumScaleDelta: 0.01)
                     .onChanged { value in
