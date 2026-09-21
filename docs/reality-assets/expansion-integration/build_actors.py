@@ -5,11 +5,12 @@ The supplied source models are never modified.
 import bpy, math, json, argparse, sys, re, unicodedata
 from pathlib import Path
 from mathutils import Vector
-ap=argparse.ArgumentParser();ap.add_argument('--inventory',type=Path,required=True);ap.add_argument('--output',type=Path,required=True)
+ap=argparse.ArgumentParser();ap.add_argument('--inventory',type=Path,required=True);ap.add_argument('--output',type=Path,required=True);ap.add_argument('--legacy',action='store_true')
 a=ap.parse_args(sys.argv[sys.argv.index('--')+1:]);a.output.mkdir(parents=True,exist_ok=True)
 configs=[(7,False,'CoordinateResidue'),(7,True,'CoordinateAdministrator'),(6,False,'CausalityResidue'),(6,True,'CausalityAdministrator'),(5,False,'MemoryOmissionResidue'),(5,True,'OriginalMemoryAdministrator')]
+if a.legacy: configs=[(9,True,'RecordAdministrator'),(8,False,'ObservationResidue'),(8,True,'ObservationAdministrator')]
 paths=[Path(p) for p in a.inventory.read_text().splitlines() if p.endswith('.glb')]
-clips=[('idle',60),('appear',30),('telegraph',36),('attack',30),('heavyAttack',48),('special',60),('hit',24),('death',54)]
+clips=[('idle',120 if a.legacy else 60),('appear',30),('telegraph',36),('attack',30),('heavyAttack',48),('special',60),('hit',24),('death',54)]
 reports=[]
 for floor,boss,name in configs:
  source=next(p for p in paths if unicodedata.normalize('NFC',p.name).startswith(str(floor)+'층') and ('관리자' in unicodedata.normalize('NFC',p.name))==boss)
@@ -64,6 +65,13 @@ for floor,boss,name in configs:
     spine.rotation_euler.y=.018*cycle;head.rotation_euler.z=.025*cycle
     left.rotation_euler.x=.025*cycle;right.rotation_euler.x=-.02*cycle
     if floor==5 and not boss:root.location.y=.025*math.sin(math.pi*t)**2
+    if a.legacy:
+     # Grounded administrators shift weight without lifting their feet.
+     spine.rotation_euler.x=.012*(1-math.cos(2*math.pi*t))
+     head.rotation_euler.z=.035*math.sin(2*math.pi*t)
+     left.rotation_euler.x=.035*math.sin(2*math.pi*t+.5)-.035*math.sin(.5)
+     right.rotation_euler.x=.025*math.sin(2*math.pi*t-.6)+.025*math.sin(.6)
+     if not boss:root.location.y=.035*(1-math.cos(2*math.pi*t))
    elif clip=='appear':
     spine.rotation_euler.x=-.10*(1-t);left.rotation_euler.y=.10*wave;right.rotation_euler.y=-.10*wave
    elif clip=='telegraph':
@@ -77,6 +85,16 @@ for floor,boss,name in configs:
     spine.rotation_euler.x=.065*punch
     if floor==7:spine.rotation_euler.z=-.07*punch
     if floor==5:right.rotation_euler.y=.13*punch
+    if a.legacy:
+     if floor==9:
+      spine.rotation_euler.z=.045*punch
+      right.rotation_euler.y=.12*punch
+     elif boss:
+      left.rotation_euler.x=-.16*punch
+      spine.rotation_euler.x=-.045*punch
+     else:
+      left.rotation_euler.y=.12*punch
+      right.rotation_euler.y=-.12*punch
    elif clip=='special':
     left.rotation_euler.y=.14*wave;right.rotation_euler.y=-.14*wave;head.rotation_euler.z=.06*cycle
    elif clip=='hit':
