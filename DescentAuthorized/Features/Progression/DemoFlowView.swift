@@ -928,10 +928,9 @@ private struct BossNarrativeView: View {
                     GeometryReader { proxy in
                         Image(sequence.backgroundAsset)
                             .resizable()
-                            .aspectRatio(contentMode: sequence.preservesFullArtwork ? .fit : .fill)
-                            // Keep the baked-in title at the top; any letterbox space belongs below the artwork.
-                            .frame(width: proxy.size.width, height: proxy.size.height,
-                                   alignment: sequence.preservesFullArtwork ? .top : .center)
+                            .aspectRatio(contentMode: .fill)
+                            // All narrative artwork shares the original 8F/9F 4:3 composition.
+                            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .center)
                             .clipped()
                     }
                     .background(.black)
@@ -1248,11 +1247,6 @@ private struct AutoAdvanceSpinner: View {
 }
 
 private extension BossNarrativeSequence {
-    var preservesFullArtwork: Bool {
-        if case .expansion = self { return true }
-        return false
-    }
-
     var backgroundAsset: String {
         switch self {
         case let .expansion(narrative): narrative.backgroundAsset
