@@ -65,7 +65,7 @@ struct GameProgressionController: Sendable {
         }
         if progress.expansion == nil {
             progress.expansion = ExpansionProgress()
-            progress.playerHP = min(100, progress.playerHP + 30)
+            progress.playerHP = Self.maximumPlayerHP
         }
         progress.synchronizeLoadout()
     }
@@ -79,6 +79,11 @@ struct GameProgressionController: Sendable {
         case .entrance:
             current.stage = current.floorNumber == 6 && !progress.learnedSpells.contains(.outputReduction) ? .learnDebuff : .preparation
         case .preparation, .bossPreparation:
+            if current.stage == .preparation, current.floorNumber == 6,
+               !progress.learnedSpells.contains(.outputReduction) {
+                current.stage = .learnDebuff
+                break
+            }
             guard progress.loadoutIssues.isEmpty,
                   ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: current.stage == .bossPreparation) != nil else {
                 throw ProgressionError.requirementMissing("유효한 출전 준비")
@@ -96,7 +101,7 @@ struct GameProgressionController: Sendable {
             current.floorNumber -= 1
             current.stage = current.floorNumber == 4 ? .complete : .entrance
             current.descentStage = 0
-            progress.playerHP = min(100, progress.playerHP + 30)
+            progress.playerHP = Self.maximumPlayerHP
         default: throw ProgressionError.requirementMissing("현재 단계의 절차를 먼저 완료하세요.")
         }
         try updateExpansion(current)

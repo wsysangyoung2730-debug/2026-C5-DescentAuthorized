@@ -3,6 +3,42 @@ import XCTest
 @testable import DescentAuthorizedCore
 
 final class ExpansionBattleHPTests: XCTestCase {
+    func testEveryNewExpansionFloorRestoresFullHPOnlyOnEntry() throws {
+        var seed = GameProgress.newGame
+        seed.currentScene = .demoComplete
+        seed.isDemoComplete = true
+        seed.playerHP = 9
+        var controller = GameProgressionController(progress: seed)
+        try controller.beginExpansion()
+        XCTAssertEqual(controller.progress.playerHP, 100)
+        controller.setExpansionPlayerHP(31)
+        try controller.beginExpansion()
+        XCTAssertEqual(controller.progress.playerHP, 31, "Revisiting an existing floor must not heal it")
+        for floor in stride(from: 7, through: 5, by: -1) {
+            try controller.updateExpansion(.init(floorNumber: floor, stage: .descent, descentStage: 2))
+            controller.setExpansionPlayerHP(9)
+            _ = try controller.advanceExpansion()
+            XCTAssertEqual(controller.progress.expansion?.floorNumber, floor - 1)
+            XCTAssertEqual(controller.progress.playerHP, 100)
+        }
+    }
+
+    func testSixthFloorLearnsDiscoveredScrollBeforeEncounter() throws {
+        var seed = GameProgress.newGame
+        seed.currentScene = .demoComplete
+        seed.isDemoComplete = true
+        seed.expansion = .init(floorNumber: 6, stage: .entrance)
+        seed.learnedSpells = [.afterglowErasure, .basicBarrier, .sealRelease]
+        var controller = GameProgressionController(progress: seed)
+        _ = try controller.advanceExpansion()
+        XCTAssertEqual(controller.progress.expansion?.stage, .learnDebuff)
+        _ = try controller.learnExpansionDebuff(grade: .approved)
+        XCTAssertEqual(controller.progress.expansion?.stage, .preparation)
+        XCTAssertTrue(controller.progress.learnedSpells.contains(.outputReduction))
+        _ = try controller.advanceExpansion()
+        XCTAssertEqual(controller.progress.expansion?.stage, .residualEncounter)
+    }
+
     func testAllSixEncountersKeepEntryHPAndRestartAtFullHP() throws {
         for floor in 5...7 {
             for boss in [false, true] {
@@ -11,7 +47,7 @@ final class ExpansionBattleHPTests: XCTestCase {
                 seed.isDemoComplete = true
                 seed.expansion = .init(floorNumber: floor, stage: boss ? .bossPreparation : .preparation)
                 seed.playerHP = 37
-                seed.learnedSpells = [.afterglowErasure, .basicBarrier, .sealRelease]
+                seed.learnedSpells = [.afterglowErasure, .basicBarrier, .sealRelease, .outputReduction]
                 var session = DemoGameSession(progress: seed)
                 _ = try session.handle(.advanceExpansion)
                 XCTAssertEqual(session.progress.expansion?.stage, boss ? .bossEncounter : .residualEncounter)
