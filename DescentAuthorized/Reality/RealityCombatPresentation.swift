@@ -1102,3 +1102,212 @@ extension RealityCombatVFXRenderer {
         impact.addChild(aura)
     }
 }
+
+/// Persistent status visuals are reconstructed from BattleState, including checkpoint restores.
+@MainActor
+final class RealityCombatStatusRenderer {
+    private struct Entry {
+        let entity: Entity
+        let base: SIMD3<Float>
+        let born: Double
+        var retiringAt: Double?
+        var destination: SIMD3<Float>?
+        let urgent: Bool
+    }
+    private var root: Entity?
+    private var entries: [String: Entry] = [:]
+    private var ticker: Task<Void, Never>?
+    private var reduced = false
+    private var suspended = false
+
+    func reset() {
+        ticker?.cancel(); ticker = nil
+        root?.removeFromParent(); root = nil
+        entries.removeAll()
+    }
+
+    func setSuspended(_ value: Bool) {
+        suspended = value
+        updateTicker()
+    }
+
+    func present(_ state: BattleState?, registry: RealityEntityRegistry, reducedMotion: Bool) {
+        reduced = reducedMotion
+        guard registry.descriptor?.sceneID.isExpansion == true,
+              let state, state.phase != .victory, state.phase != .defeat,
+              state.phase != .preparing,
+              let anchor = registry.entity(for: .enemySpawn),
+              let actor = registry.entity(for: .enemyActor) else { reset(); return }
+        if root?.parent !== anchor {
+            reset()
+            let group = Entity(); group.name = "DA_PERSISTENT_COMBAT_STATUS"
+            anchor.addChild(group); root = group
+        }
+        guard let root else { return }
+        let b = actor.visualBounds(relativeTo: anchor)
+        let center = (b.min + b.max) * 0.5
+        let height = max(1, b.max.z - b.min.z)
+        let side = min(1.65, max(0.7, (b.max.x - b.min.x) * 0.55))
+        let back = SIMD3<Float>(center.x, b.max.y + 0.12, center.z + height * 0.08)
+        let front = SIMD3<Float>(center.x, b.min.y - 0.16, center.z)
+        let now = ProcessInfo.processInfo.systemUptime
+        var wanted: Set<String> = []
+        func add(_ key: String, position: SIMD3<Float>, color: UIColor, urgent: Bool = false, make: () -> Entity) {
+            wanted.insert(key)
+            if var existing = entries[key] {
+                existing.retiringAt = nil
+                existing.destination = nil
+                existing.entity.scale = SIMD3(repeating: 1)
+                existing.entity.position = position
+                entries[key] = existing
+                return
+            }
+            let node = make(); node.position = position; node.name = "DA_STATUS_" + key
+            root.addChild(node)
+            node.components.set(OpacityComponent(opacity: reduced ? 0.55 : 0))
+            entries[key] = Entry(entity: node, base: position, born: now, urgent: urgent)
+        }
+        let e = state.expansion
+        if e.enemyAmplification != nil {
+            add("amplify", position: back, color: .orange) {
+                let node = Entity()
+                self.ring(on: node, radius: 0.56, color: .orange)
+                self.ring(on: node, radius: 0.7, color: .orange)
+                for x: Float in [-0.3, 0, 0.3] {
+                    self.line(on: node, from: [x,0,-0.3], to: [x,0,0.3], color: .orange)
+                    self.line(on: node, from: [x-0.08,0,0.18], to: [x,0,0.3], color: .orange)
+                }
+                return node
+            }
+        }
+        if e.retainsCorrectionBarrier && state.enemy.normalBarrier > 0 {
+            add("correction", position: front, color: .cyan) {
+                let node = Entity()
+                for i in 0..<4 {
+                    let a = Float(i) * .pi / 2
+                    let v = SIMD3<Float>(cos(a),0,sin(a))
+                    self.line(on: node, from: v * 0.65, to: v * 0.18, color: .cyan)
+                }
+                return node
+            }
+        }
+        if let value = e.enemyPreservation, value.expiresAfterTurn >= state.turnNumber {
+            add("preservation", position: front, color: .purple) {
+                let node = Entity()
+                for i in 0..<8 {
+                    let a = Float(i) * .pi / 4
+                    let piece = self.segment(from: [0,0,-0.08], to: [0,0,0.08], color: .init(red: 0.8, green: 0.7, blue: 0.95, alpha: 1), thickness: 0.055)
+                    piece.position = [cos(a)*0.52,0,sin(a)*0.7]
+                    piece.orientation = simd_quatf(angle: -a, axis: [0,1,0])
+                    node.addChild(piece)
+                }
+                return node
+            }
+        }
+        if let value = e.outputReduction, value.expiresAfterTurn >= state.turnNumber {
+            add("outputReduction", position: front + [0,0,0.25], color: .cyan) {
+                let node = Entity()
+                self.ring(on: node, radius: 0.3, color: .cyan)
+                self.line(on: node, from: [-0.24,0,0.24], to: [0.24,0,-0.24], color: .cyan)
+                return node
+            }
+        }
+        if let record = e.copyRecord {
+            add("record-\(record.spell.rawValue)-\(record.reused)", position: front + [-side,0,height*0.22], color: .purple, urgent: record.reused) {
+                let node = Entity()
+                self.ring(on: node, radius: 0.33, color: .purple)
+                for stroke in SpellCatalog.spell(record.spell).glyph.strokes {
+                    let points = stroke.referencePath
+                    for i in 1..<points.count {
+                        self.line(on: node, from: [Float(points[i-1].x-0.5)*0.45,0,Float(0.5-points[i-1].y)*0.45], to: [Float(points[i].x-0.5)*0.45,0,Float(0.5-points[i].y)*0.45], color: .purple)
+                    }
+                }
+                return node
+            }
+        }
+        if let through = e.mimicProhibitionThroughEnemyTurn, through >= state.turnNumber {
+            add("mimicProhibition", position: front + [-side,0,height*0.22], color: .systemPurple) {
+                let node = Entity()
+                self.ring(on: node, radius: 0.3, color: .systemPurple)
+                self.line(on: node, from: [-0.23,0,-0.23], to: [0.23,0,0.23], color: .systemPurple)
+                self.line(on: node, from: [-0.23,0,0.23], to: [0.23,0,-0.23], color: .systemPurple)
+                return node
+            }
+        }
+        let reservations = e.scheduledDamage.sorted { ($0.dueEnemyTurn, $0.id) < ($1.dueEnemyTurn, $1.id) }
+        for (index, reservation) in reservations.prefix(3).enumerated() {
+            let urgent = reservation.dueEnemyTurn <= state.turnNumber
+            let color: UIColor = urgent ? .systemRed : (reservation.wasDelayed ? .cyan : .orange)
+            add("reservation-\(reservation.id)-\(reservation.dueEnemyTurn)-\(urgent)", position: front + [side,0,height*0.25-Float(index)*0.48], color: color, urgent: urgent) {
+                let node = Entity()
+                let points: [SIMD3<Float>] = [[-0.17,0,0.2],[0.17,0,0.2],[-0.17,0,-0.2],[0.17,0,-0.2],[-0.17,0,0.2]]
+                for i in 1..<points.count { self.line(on: node, from: points[i-1], to: points[i], color: color) }
+                if reservation.wasDelayed { self.ring(on: node, radius: 0.25, color: color) }
+                return node
+            }
+        }
+        for key in Array(entries.keys) where !wanted.contains(key) {
+            guard var entry = entries[key], entry.retiringAt == nil else { continue }
+            if reduced { entry.entity.removeFromParent(); entries[key] = nil; continue }
+            entry.retiringAt = now
+            if key == "amplify", let target = entries.first(where: { wanted.contains($0.key) && $0.key.hasPrefix("reservation-") })?.value {
+                entry.destination = target.base
+            }
+            entries[key] = entry
+        }
+        updateTicker()
+    }
+
+    private func updateTicker() {
+        ticker?.cancel(); ticker = nil
+        if reduced || suspended {
+            for key in Array(entries.keys) {
+                guard let entry = entries[key] else { continue }
+                if entry.retiringAt != nil { entry.entity.removeFromParent(); entries[key] = nil }
+                else { entry.entity.components.set(OpacityComponent(opacity: entry.urgent ? 0.7 : 0.5)) }
+            }
+            return
+        }
+        guard !entries.isEmpty else { return }
+        ticker = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                let now = ProcessInfo.processInfo.systemUptime
+                for key in Array(self.entries.keys) {
+                    guard let e = self.entries[key] else { continue }
+                    if let retired = e.retiringAt {
+                        let t = min(1, Float((now-retired)/0.3))
+                        e.entity.components.set(OpacityComponent(opacity: (1-t)*0.5))
+                        e.entity.scale = SIMD3(repeating: 1-t*0.4)
+                        e.entity.position = e.base + ((e.destination ?? (e.base + SIMD3(0,0,-0.1)))-e.base)*t
+                        if t == 1 { e.entity.removeFromParent(); self.entries[key] = nil }
+                    } else {
+                        let fade = min(1, Float((now-e.born)/0.25))
+                        let pulse = Float(sin((now-e.born)*(e.urgent ? 3 : 1.5)))
+                        e.entity.components.set(OpacityComponent(opacity: fade * ((e.urgent ? 0.65 : 0.42) + pulse*0.08)))
+                    }
+                }
+                if self.entries.isEmpty { return }
+                do { try await Task.sleep(for: .milliseconds(50)) } catch { return }
+            }
+        }
+    }
+
+    private func ring(on node: Entity, radius: Float, color: UIColor) {
+        for i in 0..<32 {
+            let a = Float(i)*2 * .pi/32, b = Float(i+1)*2 * .pi/32
+            line(on: node, from: [cos(a)*radius,0,sin(a)*radius], to: [cos(b)*radius,0,sin(b)*radius], color: color)
+        }
+    }
+    private func line(on node: Entity, from: SIMD3<Float>, to: SIMD3<Float>, color: UIColor) {
+        node.addChild(segment(from: from, to: to, color: color, thickness: 0.012))
+    }
+    private func segment(from: SIMD3<Float>, to: SIMD3<Float>, color: UIColor, thickness: Float) -> Entity {
+        let delta = to-from
+        let length = max(0.0001, simd_length(delta))
+        let entity = ModelEntity(mesh: .generateBox(size: [length,thickness,thickness]), materials: [UnlitMaterial(color: color)])
+        entity.position = (from+to)*0.5
+        entity.orientation = simd_quatf(from: [1,0,0], to: delta/length)
+        return entity
+    }
+}

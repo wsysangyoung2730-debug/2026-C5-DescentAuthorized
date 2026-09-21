@@ -139,6 +139,7 @@ final class RealitySceneController: ObservableObject {
     private var pendingCombatCues: [RealityCombatCue] = []
     private let erasureZoneRenderer = RealityErasureZoneRenderer()
     private let combatVFXRenderer = RealityCombatVFXRenderer()
+    private let combatStatusRenderer = RealityCombatStatusRenderer()
     private let progressionVFXRenderer = RealityProgressionVFXRenderer()
     private let observatoryAmbientMotion = ObservatoryAmbientMotion()
 
@@ -1080,6 +1081,7 @@ final class RealitySceneController: ObservableObject {
     func setActorMotionSuspended(_ suspended: Bool) {
         actorMotion.setSuspended(suspended)
         combatVFXRenderer.setIntentEffectsSuspended(suspended)
+        combatStatusRenderer.setSuspended(suspended)
     }
 
     func playExpansionActorMotion(_ name: String) {
@@ -1116,6 +1118,7 @@ final class RealitySceneController: ObservableObject {
             pendingCombatCues.append(contentsOf: cues)
             return
         }
+        combatStatusRenderer.present(battleState, registry: registry, reducedMotion: reducedMotion)
         combatVFXRenderer.present(
             cues,
             registry: registry,
@@ -1133,6 +1136,7 @@ final class RealitySceneController: ObservableObject {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
         observatoryAmbientMotion.setReducedMotion(reducedMotion)
+        combatStatusRenderer.present(battleState, registry: registry, reducedMotion: reducedMotion)
         guard let battleState, registry.root != nil else { return }
         combatVFXRenderer.present(
             RealityCombatPresentationMapper.cues(for: [], battleState: battleState),
@@ -1243,6 +1247,7 @@ final class RealitySceneController: ObservableObject {
         investigationAnchorEntities = [:]
         isProjectionRefreshScheduled = false
         combatVFXRenderer.reset()
+        combatStatusRenderer.reset()
         progressionVFXRenderer.reset()
         requestedSceneID = nil
         requestedCameraPreset = .main
@@ -1564,6 +1569,7 @@ final class RealitySceneController: ObservableObject {
     private func completeInstallation(descriptor: RealitySceneDescriptor) {
         setErasureZones(requestedErasureZones)
         combatVFXRenderer.attach(to: registry)
+        combatStatusRenderer.present(requestedBattleState, registry: registry, reducedMotion: requestedReducedMotion)
         let restoredCues = pendingCombatCues + RealityCombatPresentationMapper.cues(
             for: [],
             battleState: requestedBattleState
