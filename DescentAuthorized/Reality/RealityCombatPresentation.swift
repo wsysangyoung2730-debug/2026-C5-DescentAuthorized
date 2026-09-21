@@ -159,6 +159,10 @@ final class RealityCombatVFXRenderer {
         subsystem: Bundle.main.bundleIdentifier ?? "DescentAuthorized",
         category: "RealityCombatVFX"
     )
+    weak var cameraEntity: Entity?
+    private var hitGeneration = 0
+    private var hitTasks: [UUID: Task<Void, Never>] = [:]
+    private var hitEntities: [UUID: Entity] = [:]
     private weak var root: Entity?
     private weak var enemyAnchor: Entity?
     private weak var enemyActor: Entity?
@@ -265,6 +269,12 @@ final class RealityCombatVFXRenderer {
     }
 
     func reset() {
+        hitGeneration += 1
+        hitTasks.values.forEach { $0.cancel() }
+        hitTasks.removeAll()
+        hitEntities.values.forEach { $0.removeFromParent() }
+        hitEntities.removeAll()
+        cameraEntity = nil
         loadCancellables.forEach { $0.cancel() }
         loadCancellables.removeAll()
         currentIntentEntity?.removeFromParent()
@@ -495,34 +505,73 @@ final class RealityCombatVFXRenderer {
         reducedMotion: Bool,
         bundle: Bundle
     ) {
+        let generation = hitGeneration
         load(
-            assetID(for: cue),
-            bundle: bundle,
+            assetID(for: cue), bundle: bundle,
             completion: { [weak self] entity in
-                guard let self, let enemyAnchor = self.enemyAnchor else { return }
-                let container = self.normalizedVFXContainer(
-                    payload: entity,
-                    name: "DA_RUNTIME_ENEMY_HIT"
-                )
-                container.scale = SIMD3(repeating: 0.82)
-                container.position = self.hitPosition(relativeTo: enemyAnchor)
-                enemyAnchor.addChild(container)
-                self.playAuthoredAnimation(on: entity)
-                self.animateAppearance(container, reducedMotion: reducedMotion)
-
-                Task { @MainActor [weak container] in
-                    try? await Task.sleep(for: .milliseconds(reducedMotion ? 1_000 : 1_500))
-                    guard let container else { return }
-                    if reducedMotion {
-                        container.removeFromParent()
-                    } else {
-                        await self.fadeOutAndRemove(container)
+                guard let self, generation == self.hitGeneration,
+                      let root = self.root, let anchor = self.enemyAnchor else { return }
+                let effect = self.normalizedVFXContainer(payload: entity, name: "DA_RUNTIME_PLAYER_PROJECTILE")
+                let id = UUID()
+                root.addChild(effect)
+                self.hitEntities[id] = effect
+                // Camera-local right/down/forward follows the view, including combat look-around.
+                let target = root.convert(position: self.hitPosition(relativeTo: anchor), from: anchor)
+                let start = self.cameraEntity.map {
+                    root.convert(position: SIMD3<Float>(0.22, -0.17, -0.65), from: $0)
+                } ?? target
+                self.hitTasks[id] = Task { @MainActor [weak self, weak effect, weak root] in
+                    guard let self, let effect, let root else { return }
+                    defer {
+                        effect.removeFromParent()
+                        self.hitEntities[id] = nil
+                        self.hitTasks[id] = nil
                     }
+                    do {
+                        if !reducedMotion, self.cameraEntity != nil {
+                            effect.scale = SIMD3(repeating: 0.18)
+                            // A shallow arc, with acceleration toward the enemy.
+                            let duration = min(0.65, max(0.38, Double(simd_distance(start, target)) * 0.035))
+                            let began = ProcessInfo.processInfo.systemUptime
+                            while true {
+                                try Task.checkCancellation()
+                                let t = min(1, Float((ProcessInfo.processInfo.systemUptime - began) / duration))
+                                let progress = t * t * 0.35 + t * 0.65
+                                effect.position = start + (target - start) * progress
+                                    + SIMD3<Float>(0, 0, sin(.pi * progress) * 0.18)
+                                effect.scale = SIMD3(repeating: 0.18 + 0.64 * progress)
+                                if t >= 1 { break }
+                                try await Task.sleep(for: .milliseconds(16))
+                            }
+                        }
+                        effect.position = target
+                        effect.scale = SIMD3(repeating: 0.82)
+                        // Short adhesion follows the actor, then debris falls in room Z-up space.
+                        if let actor = self.enemyActor {
+                            effect.setParent(actor, preservingWorldTransform: true)
+                        }
+                        self.playAuthoredAnimation(on: entity)
+                        try await Task.sleep(for: .milliseconds(reducedMotion ? 250 : 220))
+                        effect.setParent(root, preservingWorldTransform: true)
+                        let impactTransform = effect.transform
+                        let began = ProcessInfo.processInfo.systemUptime
+                        let duration = reducedMotion ? 0.18 : 0.5
+                        while true {
+                            try Task.checkCancellation()
+                            let t = min(1, Float((ProcessInfo.processInfo.systemUptime - began) / duration))
+                            if !reducedMotion {
+                                effect.position = impactTransform.translation + SIMD3<Float>(0.08 * t, -0.10 * t, -0.7 * t * t)
+                                effect.orientation = impactTransform.rotation * simd_quatf(angle: t * 0.35, axis: SIMD3<Float>(1, 0, 0))
+                                effect.scale = impactTransform.scale * (1 - 0.25 * t)
+                            }
+                            effect.components.set(OpacityComponent(opacity: 1 - t))
+                            if t >= 1 { break }
+                            try await Task.sleep(for: .milliseconds(16))
+                        }
+                    } catch { return }
                 }
             },
-            failure: { [weak self] message in
-                self?.logger.error("\(message, privacy: .public)")
-            }
+            failure: { [weak self] message in self?.logger.error("\(message, privacy: .public)") }
         )
     }
 
@@ -564,11 +613,22 @@ final class RealityCombatVFXRenderer {
         guard let bounds = enemyBounds(relativeTo: anchor) else {
             return SIMD3(0, -0.16, 1.3)
         }
-        return SIMD3(
-            (bounds.min.x + bounds.max.x) * 0.5,
-            bounds.min.y - 0.24,
-            bounds.min.z + (bounds.max.z - bounds.min.z) * 0.56
-        )
+        let center = (bounds.min + bounds.max) * 0.5
+        if let cameraEntity {
+            var towardCamera = anchor.convert(position: .zero, from: cameraEntity) - center
+            towardCamera.z = 0
+            if simd_length(towardCamera) > 0.001 {
+                towardCamera = simd_normalize(towardCamera)
+                let extent = (bounds.max - bounds.min) * 0.5
+                let distance = min(extent.x / max(abs(towardCamera.x), 0.001),
+                                   extent.y / max(abs(towardCamera.y), 0.001))
+                var point = center + towardCamera * (distance + 0.12)
+                point.z = bounds.min.z + (bounds.max.z - bounds.min.z) * 0.56
+                return point
+            }
+        }
+        return SIMD3(center.x, bounds.min.y - 0.24,
+                     bounds.min.z + (bounds.max.z - bounds.min.z) * 0.56)
     }
 
     private func enemyBounds(relativeTo anchor: Entity) -> BoundingBox? {
@@ -598,17 +658,6 @@ final class RealityCombatVFXRenderer {
         let finalTransform = entity.transform
         entity.scale *= 0.72
         entity.move(to: finalTransform, relativeTo: entity.parent, duration: 0.18, timingFunction: .easeOut)
-    }
-
-    private func fadeOutAndRemove(_ entity: Entity) async {
-        let steps = 10
-        for step in 1...steps {
-            guard entity.parent != nil else { return }
-            let opacity = Float(steps - step) / Float(steps)
-            entity.components.set(OpacityComponent(opacity: opacity))
-            try? await Task.sleep(for: .milliseconds(50))
-        }
-        entity.removeFromParent()
     }
 
     private func playAuthoredAnimation(on entity: Entity) {
@@ -718,7 +767,7 @@ final class RealityCombatVFXRenderer {
 /// Plays Blender-authored skeletal ranges on the original imported root, so
 /// animation binding paths survive actor normalization and scene installation.
 @MainActor
-final class ExpansionActorMotionPlayer {
+final class RealityActorMotionPlayer {
     private struct Manifest: Decodable {
         struct Clip: Decodable { let start: Double; let end: Double; let duration: Double }
         let clips: [String: Clip]

@@ -107,16 +107,12 @@ final class RealitySceneController: ObservableObject {
     private static let loadLog = Logger(subsystem: "com.wsysangyoung.DescentAuthorized", category: "SceneLoading")
     private var cameraTransitionTask: Task<Void, Never>?
     private var battleCameraImpactTask: Task<Void, Never>?
-    private let expansionActorMotion = ExpansionActorMotionPlayer()
-    private var actorIdleMotionTask: Task<Void, Never>?
+    private let actorMotion = RealityActorMotionPlayer()
     private var enemyPreviewRevealTask: Task<Void, Never>?
     private var investigationAnchorEntities: [String: Entity] = [:]
     private var isProjectionRefreshScheduled = false
-    private weak var animatedEnemyAnchor: Entity?
     private weak var revealingEnemyPreviewActor: Entity?
-    private var enemyAnchorRestingTransform: Transform?
     private var enemyPreviewFinalTransform: Transform?
-    private var enemyIdleMotionAmplitude: Float = 0
     private var sceneLoadGeneration: UInt64 = 0
     private var cameraTransitionGeneration: UInt64 = 0
     private var battleCameraImpactGeneration: UInt64 = 0
@@ -1078,21 +1074,20 @@ final class RealitySceneController: ObservableObject {
     }
 
     func prepareExpansionActor() {
-        expansionActorMotion.prepareEncounter()
+        actorMotion.prepareEncounter()
     }
 
     func setActorMotionSuspended(_ suspended: Bool) {
-        expansionActorMotion.setSuspended(suspended)
+        actorMotion.setSuspended(suspended)
     }
 
     func playExpansionActorMotion(_ name: String) {
-        expansionActorMotion.play(name)
+        actorMotion.play(name)
     }
 
     func setEnemyIdleMotion(reducedMotion: Bool) {
-        expansionActorMotion.setReducedMotion(reducedMotion)
+        actorMotion.setReducedMotion(reducedMotion)
         requestedReducedMotion = reducedMotion
-        updateEnemyIdleMotion(reducedMotion: reducedMotion)
         observatoryAmbientMotion.setReducedMotion(reducedMotion)
     }
 
@@ -1103,9 +1098,8 @@ final class RealitySceneController: ObservableObject {
     ) {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
-        expansionActorMotion.setReducedMotion(reducedMotion)
-        expansionActorMotion.present(events, state: battleState)
-        updateEnemyIdleMotion(reducedMotion: reducedMotion)
+        actorMotion.setReducedMotion(reducedMotion)
+        actorMotion.present(events, state: battleState)
         observatoryAmbientMotion.setReducedMotion(reducedMotion)
         let cues = RealityCombatPresentationMapper.cues(for: events, battleState: battleState)
         guard registry.root != nil else {
@@ -1120,9 +1114,14 @@ final class RealitySceneController: ObservableObject {
     }
 
     func synchronizeCombatState(_ battleState: BattleState?, reducedMotion: Bool) {
+        actorMotion.setReducedMotion(reducedMotion)
+        if battleState?.phase == .victory {
+            actorMotion.play("death")
+        } else {
+            actorMotion.prepareEncounter()
+        }
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
-        updateEnemyIdleMotion(reducedMotion: reducedMotion)
         observatoryAmbientMotion.setReducedMotion(reducedMotion)
         guard let battleState, registry.root != nil else { return }
         combatVFXRenderer.present(
@@ -1198,7 +1197,7 @@ final class RealitySceneController: ObservableObject {
     }
 
     func unload() {
-        expansionActorMotion.reset()
+        actorMotion.reset()
         observatoryAmbientMotion.reset()
         environmentTask?.cancel()
         environmentTask = nil
@@ -1214,7 +1213,6 @@ final class RealitySceneController: ObservableObject {
         actorLoadCancellable?.cancel()
         actorLoadCancellable = nil
         cancelEnemyPreviewReveal(restoreActor: false)
-        stopEnemyIdleMotion(resetTransform: true)
         cancelBattleCameraImpact(restoreCamera: false)
         cancelDescentCameraEffect(restoreCamera: false)
         cancelCameraTransition()
@@ -1278,6 +1276,7 @@ final class RealitySceneController: ObservableObject {
 
         sceneAnchor = anchor
         cameraEntity = camera
+        combatVFXRenderer.cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
         if descriptor.sceneID.isExpansion, descriptor.entityNames[.rewardStand] != nil {
             do { try installExpansionRewards(bundle: bundle) }
@@ -1334,7 +1333,7 @@ final class RealitySceneController: ObservableObject {
             return
         }
         guard let actorURL = bundle.url(
-            forResource: (descriptor.sceneID == .floor09ArchiveRedesign || descriptor.sceneID.isExpansion) && graphicsQuality != .high
+            forResource: graphicsQuality != .high
                 ? actor.resourceName + "_" + graphicsQuality.rawValue : actor.resourceName,
             withExtension: "usdc",
             subdirectory: actor.resourceSubdirectory
@@ -1368,9 +1367,8 @@ final class RealitySceneController: ObservableObject {
                         self.sceneLoadGeneration == actorLoadGeneration,
                         self.requestedSceneID == descriptor.sceneID
                     else { return }
-                    guard let actorEntity = actorRoot.name == actor.expectedEntityName
-                            ? actorRoot
-                            : actorRoot.findEntity(named: actor.expectedEntityName) else {
+                    guard actorRoot.name == actor.expectedEntityName
+                            || actorRoot.findEntity(named: actor.expectedEntityName) != nil else {
                         self.fail(
                             sceneID: descriptor.sceneID,
                             message: "보스 모델의 기준 객체가 없습니다: \(actor.expectedEntityName)"
@@ -1380,13 +1378,10 @@ final class RealitySceneController: ObservableObject {
 
                     let actorContainer = Entity()
                     actorContainer.name = "DA_RUNTIME_ENEMY_ACTOR"
-                    let installedActor = descriptor.sceneID.isExpansion ? actorRoot : actorEntity
+                    let installedActor = actorRoot
                     installedActor.removeFromParent()
-                    if descriptor.sceneID.isExpansion {
-                        // Retain binding paths but discard Entity.load's outer
-                        // unit/up-axis conversion: the room root already owns it.
-                        installedActor.transform = .identity
-                    }
+                    // Retain skeletal binding paths; the room already owns unit/up-axis conversion.
+                    installedActor.transform = .identity
                     actorContainer.addChild(installedActor)
                     self.normalizeActor(
                         installedActor,
@@ -1399,17 +1394,12 @@ final class RealitySceneController: ObservableObject {
                         self.requestedEnemyPreviewVisibility,
                         for: .enemyActor
                     )
-                    if descriptor.sceneID.isExpansion {
-                        do {
-                            try self.expansionActorMotion.install(root: installedActor, descriptor: actor, bundle: bundle)
-                            self.expansionActorMotion.setReducedMotion(self.requestedReducedMotion)
-                        } catch {
-                            self.fail(sceneID: descriptor.sceneID, message: error.localizedDescription)
-                            return
-                        }
-                    } else {
-                        self.prepareEnemyIdleMotion(spawn, targetHeight: actor.targetHeight,
-                                                    reducedMotion: self.requestedReducedMotion)
+                    do {
+                        try self.actorMotion.install(root: installedActor, descriptor: actor, bundle: bundle)
+                        self.actorMotion.setReducedMotion(self.requestedReducedMotion)
+                    } catch {
+                        self.fail(sceneID: descriptor.sceneID, message: error.localizedDescription)
+                        return
                     }
                     Self.loadLog.notice("actor.ready seconds=\(Date().timeIntervalSince(self.actorStartedAt))")
                     if !isBackgroundActor {
@@ -1543,68 +1533,6 @@ final class RealitySceneController: ObservableObject {
         for child in entity.children {
             enableHierarchy(child)
         }
-    }
-
-    private func prepareEnemyIdleMotion(
-        _ anchor: Entity,
-        targetHeight: Float,
-        reducedMotion: Bool
-    ) {
-        stopEnemyIdleMotion(resetTransform: true)
-        animatedEnemyAnchor = anchor
-        enemyAnchorRestingTransform = anchor.transform
-        enemyIdleMotionAmplitude = min(max(targetHeight * 0.014, 0.035), 0.09)
-        updateEnemyIdleMotion(reducedMotion: reducedMotion)
-    }
-
-    private func updateEnemyIdleMotion(reducedMotion: Bool) {
-        guard let anchor = animatedEnemyAnchor,
-              let restingTransform = enemyAnchorRestingTransform else { return }
-
-        if reducedMotion {
-            actorIdleMotionTask?.cancel()
-            actorIdleMotionTask = nil
-            anchor.stopAllAnimations(recursive: false)
-            anchor.transform = restingTransform
-            return
-        }
-        guard actorIdleMotionTask == nil else { return }
-
-        let amplitude = enemyIdleMotionAmplitude
-        actorIdleMotionTask = Task { @MainActor [weak anchor] in
-            guard let anchor else { return }
-            var isRaised = true
-            while !Task.isCancelled, anchor.parent != nil {
-                var target = restingTransform
-                target.translation.z += isRaised ? amplitude : 0
-                anchor.move(
-                    to: target,
-                    relativeTo: anchor.parent,
-                    duration: 1.9,
-                    timingFunction: .easeInOut
-                )
-                do {
-                    try await Task.sleep(for: .milliseconds(1_900))
-                } catch {
-                    return
-                }
-                isRaised.toggle()
-            }
-        }
-    }
-
-    private func stopEnemyIdleMotion(resetTransform: Bool) {
-        actorIdleMotionTask?.cancel()
-        actorIdleMotionTask = nil
-        if resetTransform,
-           let anchor = animatedEnemyAnchor,
-           let restingTransform = enemyAnchorRestingTransform {
-            anchor.stopAllAnimations(recursive: false)
-            anchor.transform = restingTransform
-        }
-        animatedEnemyAnchor = nil
-        enemyAnchorRestingTransform = nil
-        enemyIdleMotionAmplitude = 0
     }
 
     private func cancelEnemyPreviewReveal(restoreActor: Bool) {
@@ -2363,11 +2291,11 @@ extension RealitySceneController {
         await capture("ready")
         var animated: [[Float]] = []
         if preset == .battle {
-            expansionActorMotion.play("attack")
+            actorMotion.play("attack")
             try? await Task.sleep(for: .milliseconds(500))
             animated = joints(actor)
             await capture("attack")
-            expansionActorMotion.setReducedMotion(true)
+            actorMotion.setReducedMotion(true)
             try? await Task.sleep(for: .milliseconds(200))
             await capture("reduced-motion")
         }
