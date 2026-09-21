@@ -14,6 +14,7 @@ struct DemoFlowView: View {
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
     @State private var retryLoadingPresentation: SceneRetryLoadingPresentation?
+    @State private var checkpointPresentationID = UUID()
     @State private var checkpointTravelTask: Task<Void, Never>?
     @State private var battleTutorialStep: TutorialCoachStep?
     @State private var isNarrativeAutoAdvanceEnabled = true
@@ -54,11 +55,12 @@ struct DemoFlowView: View {
                         sceneController: sceneController,
                         isSceneReady: isPresentationReady
                     )
+                    .id(checkpointPresentationID)
                     .transition(.opacity)
                 } else if isNarrativePresentation {
                     ZStack(alignment: .top) {
                         sceneView
-                            .id(gameSession.presentation.progressSceneID)
+                            .id("\(gameSession.presentation.progressSceneID)-\(checkpointPresentationID)")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .padding(.top, showsRewardLearningTopBar ? topBarHeight : 0)
 
@@ -83,7 +85,7 @@ struct DemoFlowView: View {
                         }
 
                         sceneView
-                            .id(gameSession.presentation.progressSceneID)
+                            .id("\(gameSession.presentation.progressSceneID)-\(checkpointPresentationID)")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                     .animation(
@@ -276,26 +278,29 @@ struct DemoFlowView: View {
         }
 
         checkpointTravelTask = Task { @MainActor in
-            defer { checkpointTravelTask = nil }
+            defer {
+                checkpointTravelTask = nil
+                retryLoadingPresentation = nil
+            }
 
             guard await waitForCheckpointTravel(milliseconds: 180) else { return }
             retryLoadingPresentation?.progress = 0.3
 
-            gameSession.send(.travelToCheckpoint(checkpoint))
-            guard gameSession.progress.checkpoint == checkpoint else {
-                retryLoadingPresentation = nil
-                return
-            }
-
-            sceneController.resetProgressionPresentation(
-                reducedMotion: appSettings.reducedMotion
-            )
-            retryLoadingPresentation?.progress = 0.58
-
-            for step in 0..<24 {
-                guard !isCurrentSceneReady else { break }
-                guard await waitForCheckpointTravel(milliseconds: 100) else { return }
-                retryLoadingPresentation?.progress = min(0.92, 0.58 + Double(step + 1) * 0.014)
+            guard gameSession.sendChecked(.travelToCheckpoint(checkpoint)) else { return }
+            preparedBattle = nil
+            battleTutorialStep = nil
+            isRewardLearningInputActive = false
+            checkpointPresentationID = UUID()
+            // Even a same-room rewind must discard investigation, reward and gate animation state.
+            let destination = gameSession.presentation
+            sceneController.unload()
+            if let room = destination.floorSceneID {
+                sceneController.load(sceneID: room, cameraPreset: destination.cameraPreset)
+                while !sceneController.isReady(sceneID: room, cameraPreset: destination.cameraPreset) {
+                    if case .failed = sceneController.loadState { return }
+                    retryLoadingPresentation?.progress = max(0.3, sceneController.loadingProgress * 0.95)
+                    guard await waitForCheckpointTravel(milliseconds: 100) else { return }
+                }
             }
 
             retryLoadingPresentation?.progress = 1
@@ -871,7 +876,8 @@ struct DemoFlowView: View {
 
 private extension CheckpointID {
     var loadingContext: LoadingScreenContext {
-        switch self {
+        if let destination = expansionDestination { return .expansion(max(5, destination.floorNumber)) }
+        return switch self {
         case .floor10Start:
             .floor10
         case .floor10Complete, .recordsBattle, .recordsDefeated:
@@ -879,6 +885,7 @@ private extension CheckpointID {
         case .floor8Start, .residualBattle, .residualDefeated,
              .observationBattle, .observationDefeated, .demoComplete:
             .floor8
+        default: .expansion(7)
         }
     }
 }

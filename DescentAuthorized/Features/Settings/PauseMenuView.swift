@@ -177,7 +177,7 @@ struct PauseMenuView: View {
         VStack(spacing: 15) {
             pauseHeader(
                 title: "체크포인트 이동",
-                subtitle: "완료한 범위 안에서 절차 장면을 복원합니다"
+                subtitle: "조사는 다시 진행되며, 바꾼 보상은 이후 층에도 반영됩니다"
             )
 
             ornamentDivider
@@ -394,22 +394,47 @@ private extension PauseMenuView {
 
 private extension CheckpointID {
     var pauseTitle: String {
-        switch self {
+        if let destination = expansionDestination {
+            if destination.isComplete { return "5층 하강 완료" }
+            let step: String = switch destination.stage {
+            case .entrance: "두루마리 조사"
+            case .learnDebuff: "두루마리 학습"
+            case .preparation: "잔류체 조우"
+            case .sealedDoor: "중간 봉인문"
+            case .bossPreparation: "관리자 조우"
+            case .reward: "보상 선택"
+            case .descent: "하강 승인"
+            default: "진입"
+            }
+            return "\(destination.floorNumber)층 · \(step)"
+        }
+        return switch self {
         case .floor10Start: "10층 기동"
-        case .floor10Complete: "10층 하강 승인"
+        case .floor10Complete: "9층 · 두루마리 조사"
         case .recordsBattle: "9층 기록 구역"
         case .recordsDefeated: "기록 관리자 처치"
-        case .floor8Start: "8층 보호 절차실"
+        case .floor8Start: "8층 · 두루마리 조사"
         case .residualBattle: "관측 잔류체"
         case .residualDefeated: "관측실 봉인문"
         case .observationBattle: "관측 관리자"
         case .observationDefeated: "8층 보상 기록"
-        case .demoComplete: "제7층 도달"
+        default: "체크포인트"
         }
     }
 
     var pauseSubtitle: String {
-        switch self {
+        if let destination = expansionDestination {
+            return switch destination.stage {
+            case .entrance: "기록을 처음부터 다시 조사"
+            case .learnDebuff: "조사 완료 · 출력 저하 배우기"
+            case .preparation, .bossPreparation: "출전 준비와 조우 대사부터"
+            case .sealedDoor: "잔류체 처치 후 봉인 해제"
+            case .reward: "세 두루마리 중 다시 선택"
+            case .descent: "선택한 주문으로 하강 승인"
+            default: "5층까지의 승인 절차 완료"
+            }
+        }
+        return switch self {
         case .floor10Start: "업무 개시"
         case .floor10Complete: "제9층 입구"
         case .recordsBattle: "전투 직전"
@@ -419,12 +444,21 @@ private extension CheckpointID {
         case .residualDefeated: "봉인 해제 전"
         case .observationBattle: "관리자 전투 직전"
         case .observationDefeated: "보상 선택 전"
-        case .demoComplete: "데모 완료"
+        default: "절차 복원"
         }
     }
 
     var iconName: String {
-        switch self {
+        if let destination = expansionDestination {
+            return switch destination.stage {
+            case .entrance: "magnifyingglass"
+            case .learnDebuff, .reward: "scroll"
+            case .preparation, .bossPreparation: "shield.lefthalf.filled"
+            case .sealedDoor, .descent: "door.left.hand.closed"
+            default: "flag.checkered"
+            }
+        }
+        return switch self {
         case .recordsBattle, .residualBattle, .observationBattle: "shield.lefthalf.filled"
         case .recordsDefeated, .residualDefeated, .observationDefeated: "seal.fill"
         case .demoComplete: "flag.checkered"
