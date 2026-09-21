@@ -121,20 +121,24 @@ struct ExpansionFlowView: View {
         case .residualBattle, .bossBattle:
             BattleView(realityController: sceneController, restartLoadingPresentation: $retryLoadingPresentation)
         case .residualDefeated:
-            procedure(title: "잔류체 무력화", detail: "생명력 회복 완료 · 현재 HP \(gameSession.progress.playerHP)\n관리자 구역의 봉인이 남아 있습니다.", button: "봉인문으로") {
+            FloorEntrancePanel(configuration: .expansionSealAccess(
+                floorNumber: current.floorNumber, playerHP: gameSession.progress.playerHP
+            )) {
                 gameSession.send(.advanceExpansion)
             }
         case .sealedDoor:
-            VStack(spacing: 14) {
-                Text("관리자 구역 · 봉인 해제").font(.title2.weight(.semibold)).foregroundStyle(DAColor.gold)
-                Text("배웠던 봉인 해제 문양을 재현하세요.").foregroundStyle(DAColor.body)
-                GlyphCastingPanel(spell: SpellCatalog.sealRelease, inputPreference: appSettings.inputPreference,
-                    availableMana: 100, availableStrokes: 2, erasureZones: [], onCast: { submission in
-                        if submission.evaluation.succeeded { gameSession.send(.releaseExpansionSeal(submission.evaluation.grade)) }
-                    })
-                    .frame(maxWidth: 640)
+            GateSealInteractionView(
+                title: SpellCatalog.sealRelease.name,
+                instruction: "금색 핵심점을 따라 해제 문양을 완성하십시오.",
+                spell: SpellCatalog.sealRelease,
+                inputPreference: appSettings.inputPreference,
+                availableMana: 100,
+                availableStrokes: 2,
+                presentation: GateSealGlyphPresentation()
+            ) { submission in
+                guard submission.evaluation.succeeded else { return }
+                gameSession.send(.releaseExpansionSeal(submission.evaluation.grade))
             }
-            .padding(28).background(.black.opacity(0.66))
         case .bossDefeated:
             procedure(title: "관리자 무력화", detail: "관리 권한을 회수했습니다. 주문 기록 세 가지 중 하나를 선택하세요.", button: "보상 기록 열기") {
                 gameSession.send(.advanceExpansion)

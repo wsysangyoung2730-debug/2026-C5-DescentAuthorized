@@ -535,6 +535,25 @@ struct FloorEntranceConfiguration {
         actionIcon: "door.left.hand.open"
     )
 
+    static func expansionSealAccess(floorNumber: Int, playerHP: Int) -> FloorEntranceConfiguration {
+        FloorEntranceConfiguration(
+            code: "\(floorNumber)-A / 잔류체 구역",
+            title: "잔류체 무력화",
+            summary: "잔류체의 반응이 잦아들었다.\n관리자 구역으로 향하려면 남아 있는 봉인을 해제해야 한다.",
+            accent: DAColor.gold,
+            statuses: [
+                .init(icon: "checkmark.seal.fill", title: "잔류체", value: "무력화", color: DAColor.defense),
+                .init(icon: "heart.fill", title: "생명력 회복", value: "HP \(playerHP)", color: DAColor.attack),
+                .init(icon: "lock.fill", title: "관리자 구역 봉인", value: "유지", color: FloorEntrancePalette.brass)
+            ],
+            signalTitle: "관리자 구역 접근",
+            signalBody: "봉인문 앞에서 익힌 해제 문양을 재현하면 다음 구역으로 진입할 수 있다.",
+            buttonAsset: "Floor8ProtectionButtonPlate",
+            actionTitle: "관리자 구역 봉인문으로 이동",
+            actionIcon: "door.left.hand.closed"
+        )
+    }
+
     static func expansionPreparation(
         floorNumber: Int,
         areaName: String,
