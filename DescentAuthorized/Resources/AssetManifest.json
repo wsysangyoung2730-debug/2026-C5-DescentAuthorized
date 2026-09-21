@@ -6,7 +6,7 @@
   "sourceBlend": "DA_F08_F09_F10_Combined_v013.blend",
   "units": "meters",
   "upAxis": "Y",
-  "assetCount": 19,
+  "assetCount": 26,
   "assets": [
     {
       "id": "floor10_closed_office",
@@ -816,6 +816,90 @@
       },
       "bytes": 58382,
       "sha256": "66cace1dda19000919154f8073e2de38c3511ff133330af1388cf0a6b36b2f0a"
+    },
+    {
+      "id": "intent_amplify",
+      "kind": "vfx",
+      "sourceBlend": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F05_F06_F07_F08_F09_F10_Combined_v051_combat_intents_cleaned.blend",
+      "sourceCollection": "EXPORT_IntentAmplify",
+      "path": "Reality/VFX/Combat/IntentAmplify/intent_amplify.usdc",
+      "animation": {
+        "included": false
+      },
+      "bytes": 638260,
+      "sha256": "f052812d72d4886fd12b384b6927cbc98ff67709994a13591ca0658500f8f2fc"
+    },
+    {
+      "id": "intent_damage_reservation",
+      "kind": "vfx",
+      "sourceBlend": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F05_F06_F07_F08_F09_F10_Combined_v051_combat_intents_cleaned.blend",
+      "sourceCollection": "EXPORT_IntentDamageReservation",
+      "path": "Reality/VFX/Combat/IntentDamageReservation/intent_damage_reservation.usdc",
+      "animation": {
+        "included": false
+      },
+      "bytes": 733189,
+      "sha256": "5e1e4cbfe38233376bc074af7a5453fc2e47b3de2d166c9df556a534eb5e8b3b"
+    },
+    {
+      "id": "intent_memory_record",
+      "kind": "vfx",
+      "sourceBlend": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F05_F06_F07_F08_F09_F10_Combined_v051_combat_intents_cleaned.blend",
+      "sourceCollection": "EXPORT_IntentMemoryRecord",
+      "path": "Reality/VFX/Combat/IntentMemoryRecord/intent_memory_record.usdc",
+      "animation": {
+        "included": false
+      },
+      "bytes": 916027,
+      "sha256": "bb73c0fb49a493e9541666402d73b2370d097321d9357c9109d9c9e8069571c1"
+    },
+    {
+      "id": "intent_mimic_attack",
+      "kind": "vfx",
+      "sourceBlend": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F05_F06_F07_F08_F09_F10_Combined_v051_combat_intents_cleaned.blend",
+      "sourceCollection": "EXPORT_IntentMimicAttack",
+      "path": "Reality/VFX/Combat/IntentMimicAttack/intent_mimic_attack.usdc",
+      "animation": {
+        "included": false
+      },
+      "bytes": 763762,
+      "sha256": "80620de5e887b9db4ae10ae2e61ccd2f54ae2c0d2b905765dd1b32a078236427"
+    },
+    {
+      "id": "intent_opening_wait",
+      "kind": "vfx",
+      "sourceBlend": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F05_F06_F07_F08_F09_F10_Combined_v051_combat_intents_cleaned.blend",
+      "sourceCollection": "EXPORT_IntentOpeningWait",
+      "path": "Reality/VFX/Combat/IntentOpeningWait/intent_opening_wait.usdc",
+      "animation": {
+        "included": false
+      },
+      "bytes": 575536,
+      "sha256": "9a9c2244f02fca6a0362e78f2019220625eb4567dc95e7b1c7f889a31a7def05"
+    },
+    {
+      "id": "intent_scheduled_execution",
+      "kind": "vfx",
+      "sourceBlend": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F05_F06_F07_F08_F09_F10_Combined_v051_combat_intents_cleaned.blend",
+      "sourceCollection": "EXPORT_IntentScheduledExecution",
+      "path": "Reality/VFX/Combat/IntentScheduledExecution/intent_scheduled_execution.usdc",
+      "animation": {
+        "included": false
+      },
+      "bytes": 757330,
+      "sha256": "e5b370750a7ae03c79b5a9b3d49a91a347dd3850a6eeb8157f062d305288bf08"
+    },
+    {
+      "id": "intent_spell_seal",
+      "kind": "vfx",
+      "sourceBlend": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F05_F06_F07_F08_F09_F10_Combined_v051_combat_intents_cleaned.blend",
+      "sourceCollection": "EXPORT_IntentSpellSeal",
+      "path": "Reality/VFX/Combat/IntentSpellSeal/intent_spell_seal.usdc",
+      "animation": {
+        "included": false
+      },
+      "bytes": 865594,
+      "sha256": "caeaaecda433182d575018c964635075f7803d4ab6af3e07efd21006fd240b00"
     }
   ]
 }
