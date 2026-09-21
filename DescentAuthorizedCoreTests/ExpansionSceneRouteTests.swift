@@ -7,7 +7,7 @@ final class ExpansionSceneRouteTests: XCTestCase {
             for stage in ExpansionStage.allCases where stage != .complete {
                 let route = ExpansionSceneRoute(.init(floorNumber: floor, stage: stage))
                 XCTAssertEqual(route?.floorNumber, floor)
-                XCTAssertEqual(route?.isBoss, [.bossPreparation, .bossBattle, .bossDefeated, .reward, .descent].contains(stage))
+                XCTAssertEqual(route?.isBoss, [.bossPreparation, .bossEncounter, .bossBattle, .bossDefeated, .reward, .descent].contains(stage))
                 switch stage {
                 case .sealedDoor, .descent: XCTAssertEqual(route?.camera, .descentInput)
                 case .reward: XCTAssertEqual(route?.camera, .rewardSelection)
@@ -25,7 +25,7 @@ final class ExpansionSceneRouteTests: XCTestCase {
 
     func testRestoredBattlesKeepTheirRoomAndPartialDescentKeepsInputCamera() {
         for floor in 5...7 {
-            for stage in [ExpansionStage.residualBattle, .bossBattle] {
+            for stage in [ExpansionStage.residualEncounter, .bossEncounter, .residualBattle, .bossBattle] {
                 let progress = ExpansionProgress(floorNumber: floor, stage: stage)
                 let resumed = ExpansionProgress(floorNumber: floor, stage: progress.resumableStage)
                 XCTAssertEqual(ExpansionSceneRoute(progress), ExpansionSceneRoute(resumed))
