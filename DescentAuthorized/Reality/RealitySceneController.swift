@@ -1079,6 +1079,7 @@ final class RealitySceneController: ObservableObject {
 
     func setActorMotionSuspended(_ suspended: Bool) {
         actorMotion.setSuspended(suspended)
+        combatVFXRenderer.setIntentEffectsSuspended(suspended)
     }
 
     func playExpansionActorMotion(_ name: String) {

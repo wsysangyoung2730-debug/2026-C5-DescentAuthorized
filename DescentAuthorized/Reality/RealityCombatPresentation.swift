@@ -15,6 +15,13 @@ enum RealityEnemyIntentCue: Equatable, Sendable {
     case heavyAttack
     case generalShield
     case absoluteShield
+    case memoryRecord
+    case mimicAttack
+    case openingWait
+    case scheduledExecution
+    case spellSeal
+    case amplify
+    case damageReservation
 }
 
 enum RealityHitCue: Equatable, Sendable {
@@ -43,7 +50,7 @@ struct RealityCombatPresentationMapper {
             guard case let .combat(battleEvent) = event else { continue }
             switch battleEvent {
             case let .turnStarted(_, intent):
-                if let cue = intentCue(for: intent) {
+                if let cue = intentCue(for: intent, battleState: battleState) {
                     cues.append(.intent(cue))
                 } else {
                     cues.append(.clearIntent)
@@ -91,7 +98,7 @@ struct RealityCombatPresentationMapper {
             if let intent = battleState.currentEnemyIntent,
                battleState.phase != .victory,
                battleState.phase != .defeat {
-                if let cue = intentCue(for: intent) {
+                if let cue = intentCue(for: intent, battleState: battleState) {
                     cues.append(.intent(cue))
                 } else {
                     cues.append(.clearIntent)
@@ -107,7 +114,7 @@ struct RealityCombatPresentationMapper {
         return .none
     }
 
-    static func intentCue(for action: EnemyAction) -> RealityEnemyIntentCue? {
+    static func intentCue(for action: EnemyAction, battleState: BattleState? = nil) -> RealityEnemyIntentCue? {
         switch action {
         case let .attack(_, _, isStrong):
             isStrong ? .heavyAttack : .attack
@@ -118,19 +125,31 @@ struct RealityCombatPresentationMapper {
         case let .telegraph(name, upcomingActionName):
             inferredIntentCue(from: "\(name) \(upcomingActionName)")
         case let .expansion(_, action):
-            expansionIntentCue(for: action)
+            expansionIntentCue(for: action, battleState: battleState)
         }
     }
 
-    private static func expansionIntentCue(for action: ExpansionEnemyAction) -> RealityEnemyIntentCue? {
+    private static func expansionIntentCue(for action: ExpansionEnemyAction, battleState: BattleState?) -> RealityEnemyIntentCue? {
         switch action {
         case .correctionBarrier: .generalShield
         case .correctionStrike: .heavyAttack
-        case .copyReaction: .attack
-        case let .sequence(actions): actions.compactMap { expansionIntentCue(for: $0) }.first
-        case .amplify, .schedule, .recordLastSpell, .lockAndSchedule, .preparedLockAndSchedule, .wait:
-            // These rules are described by the HUD, without inventing a shield or attack cue.
-            nil
+        case .copyReaction: .mimicAttack
+        case let .sequence(actions):
+            actions.compactMap { expansionIntentCue(for: $0, battleState: battleState) }.first
+        case .amplify: .amplify
+        case .schedule: .damageReservation
+        case .recordLastSpell: .memoryRecord
+        case .lockAndSchedule, .preparedLockAndSchedule: .spellSeal
+        case .wait:
+            // Delay/erasure spells can change this during the player's turn.
+            // Use the live queue rather than the action's display name.
+            if let battleState, battleState.expansion.scheduledDamage.contains(where: {
+                $0.dueEnemyTurn <= battleState.turnNumber
+            }) {
+                .scheduledExecution
+            } else {
+                .openingWait
+            }
         }
     }
 
@@ -146,6 +165,7 @@ struct RealityCombatPresentationMapper {
     }
 
     private static func inferredIntentCue(from text: String) -> RealityEnemyIntentCue {
+        if text.contains("피해 없는 빈틈") { return .openingWait }
         if text.contains("절대") { return .absoluteShield }
         if text.contains("방어") || text.contains("방벽") { return .generalShield }
         if text.contains("강") { return .heavyAttack }
@@ -166,6 +186,8 @@ final class RealityCombatVFXRenderer {
     private weak var root: Entity?
     private weak var enemyAnchor: Entity?
     private weak var enemyActor: Entity?
+    private var intentEffectsSuspended = false
+    private var intentReducedMotion = false
     private var currentIntentEntity: Entity?
     private var currentIntentCue: RealityEnemyIntentCue?
     private var pendingIntentCue: RealityEnemyIntentCue?
@@ -246,6 +268,8 @@ final class RealityCombatVFXRenderer {
         bundle: Bundle = .main
     ) {
         attach(to: registry)
+        intentReducedMotion = reducedMotion
+        updateIntentSmokeState()
         var synchronizedShieldState: RealityShieldState?
         for cue in cues {
             switch cue {
@@ -275,6 +299,7 @@ final class RealityCombatVFXRenderer {
         hitEntities.values.forEach { $0.removeFromParent() }
         hitEntities.removeAll()
         cameraEntity = nil
+        intentEffectsSuspended = false
         loadCancellables.forEach { $0.cancel() }
         loadCancellables.removeAll()
         currentIntentEntity?.removeFromParent()
@@ -488,6 +513,8 @@ final class RealityCombatVFXRenderer {
                 self.currentIntentCue = cue
                 self.currentIntentEntity = container
                 enemyAnchor.addChild(container)
+                self.addIntentSmoke(to: container, cue: cue)
+                self.updateIntentSmokeState()
                 self.playAuthoredAnimation(on: entity)
                 self.animateAppearance(container, reducedMotion: reducedMotion)
                 self.onIntentLayoutChanged?()
@@ -722,6 +749,13 @@ final class RealityCombatVFXRenderer {
         case .heavyAttack: .intentHeavyAttack
         case .generalShield: .intentShield
         case .absoluteShield: .intentAbsoluteShield
+        case .memoryRecord: .intentMemoryRecord
+        case .mimicAttack: .intentMimicAttack
+        case .openingWait: .intentOpeningWait
+        case .scheduledExecution: .intentScheduledExecution
+        case .spellSeal: .intentSpellSeal
+        case .amplify: .intentAmplify
+        case .damageReservation: .intentDamageReservation
         }
     }
 
@@ -746,6 +780,20 @@ final class RealityCombatVFXRenderer {
             (assetID.rawValue, "Reality/VFX/Combat/HitCritical", "VFX_HitCritical")
         case .hitShield:
             (assetID.rawValue, "Reality/VFX/Combat/HitShield", "VFX_HitShield")
+        case .intentMemoryRecord:
+            (assetID.rawValue, "Reality/VFX/Combat/IntentMemoryRecord", "VFX_IntentMemoryRecord")
+        case .intentMimicAttack:
+            (assetID.rawValue, "Reality/VFX/Combat/IntentMimicAttack", "VFX_IntentMimicAttack")
+        case .intentOpeningWait:
+            (assetID.rawValue, "Reality/VFX/Combat/IntentOpeningWait", "VFX_IntentOpeningWait")
+        case .intentScheduledExecution:
+            (assetID.rawValue, "Reality/VFX/Combat/IntentScheduledExecution", "VFX_IntentScheduledExecution")
+        case .intentSpellSeal:
+            (assetID.rawValue, "Reality/VFX/Combat/IntentSpellSeal", "VFX_IntentSpellSeal")
+        case .intentAmplify:
+            (assetID.rawValue, "Reality/VFX/Combat/IntentAmplify", "VFX_IntentAmplify")
+        case .intentDamageReservation:
+            (assetID.rawValue, "Reality/VFX/Combat/IntentDamageReservation", "VFX_IntentDamageReservation")
         case .intentAttack:
             (assetID.rawValue, "Reality/VFX/Combat/IntentAttack", "VFX_IntentAttack")
         case .intentHeavyAttack:
@@ -891,4 +939,113 @@ final class RealityActorMotionPlayer {
         stop(); root = nil; source = nil; manifest = nil
         terminal = false; terminalMotionStarted = false; reduced = false; suspended = false
     }
+}
+
+// Shared by all intent types; positions/directions are in the room's Z-up space.
+extension RealityCombatVFXRenderer {
+    func setIntentEffectsSuspended(_ suspended: Bool) {
+        intentEffectsSuspended = suspended
+        updateIntentSmokeState()
+    }
+
+    private func updateIntentSmokeState() {
+        guard let container = currentIntentEntity else { return }
+        if let smoke = container.findEntity(named: "DA_INTENT_SMOKE"),
+           var emitter = smoke.components[ParticleEmitterComponent.self] {
+            emitter.isEmitting = !intentReducedMotion
+            emitter.simulationState = intentEffectsSuspended ? .pause : .play
+            smoke.components.set(emitter)
+            smoke.isEnabled = !intentReducedMotion
+        }
+        container.findEntity(named: "DA_INTENT_STATIC_HALO")?.isEnabled = intentReducedMotion
+    }
+
+    private func addIntentSmoke(to container: Entity, cue: RealityEnemyIntentCue) {
+        let color = intentColor(cue)
+        let smoke = Entity()
+        smoke.name = "DA_INTENT_SMOKE"
+        // The model faces -Y. Keep smoke behind even the thickest new glyph.
+        smoke.position = SIMD3(0, 0.42, -0.38)
+        var emitter = ParticleEmitterComponent()
+        emitter.emitterShape = .box
+        emitter.emitterShapeSize = SIMD3(0.75, 0.04, 0.16)
+        emitter.birthLocation = .volume
+        emitter.birthDirection = .local
+        emitter.emissionDirection = SIMD3(0, 0, 1)
+        emitter.speed = 0.48
+        emitter.speedVariation = 0.12
+        emitter.particlesInheritTransform = true
+        emitter.fieldSimulationSpace = .local
+        emitter.timing = .repeating(warmUp: 1, emit: .init(duration: 8))
+        emitter.mainEmitter.birthRate = 22
+        emitter.mainEmitter.lifeSpan = 1.7
+        emitter.mainEmitter.lifeSpanVariation = 0.25
+        emitter.mainEmitter.size = 0.36
+        emitter.mainEmitter.sizeVariation = 0.12
+        emitter.mainEmitter.sizeMultiplierAtEndOfLifespan = 2.1
+        emitter.mainEmitter.spreadingAngle = 0.12
+        emitter.mainEmitter.acceleration = SIMD3(0, 0, 0.06)
+        emitter.mainEmitter.noiseStrength = 0.09
+        emitter.mainEmitter.noiseScale = 0.8
+        emitter.mainEmitter.noiseAnimationSpeed = 0.4
+        emitter.mainEmitter.angularSpeed = 0.22
+        emitter.mainEmitter.angularSpeedVariation = 0.3
+        emitter.mainEmitter.angleVariation = .pi
+        emitter.mainEmitter.billboardMode = .billboard
+        emitter.mainEmitter.opacityCurve = .gradualFadeInOut
+        emitter.mainEmitter.color = .evolving(
+            start: .single(color.withAlphaComponent(0.65)),
+            end: .single(color.withAlphaComponent(0))
+        )
+        emitter.mainEmitter.blendMode = .alpha
+        emitter.mainEmitter.isLightingEnabled = false
+        emitter.mainEmitter.image = Self.intentSmokeTexture
+        smoke.components.set(emitter)
+        container.addChild(smoke)
+
+        // Preserve color separation without continuous motion when Reduce Motion is on.
+        var material = UnlitMaterial(color: color.withAlphaComponent(0.3))
+        if let texture = Self.intentSmokeTexture {
+            material.color.texture = .init(texture)
+        }
+        material.blending = .transparent(opacity: .init(floatLiteral: 0.3))
+        material.faceCulling = .none
+        let halo = ModelEntity(mesh: .generatePlane(width: 1.5, depth: 1.6), materials: [material])
+        halo.name = "DA_INTENT_STATIC_HALO"
+        halo.position = SIMD3(0, 0.46, 0.04)
+        container.addChild(halo)
+    }
+
+    private func intentColor(_ cue: RealityEnemyIntentCue) -> UIColor {
+        switch cue {
+        case .attack: UIColor(red: 1, green: 0.12, blue: 0.2, alpha: 1)
+        case .heavyAttack: UIColor(red: 1, green: 0.06, blue: 0.3, alpha: 1)
+        case .generalShield: UIColor(red: 0.2, green: 0.65, blue: 1, alpha: 1)
+        case .absoluteShield: UIColor(red: 1, green: 0.8, blue: 0.2, alpha: 1)
+        case .memoryRecord: UIColor(red: 0.64, green: 0.3, blue: 1, alpha: 1)
+        case .mimicAttack: UIColor(red: 1, green: 0.12, blue: 0.55, alpha: 1)
+        case .openingWait: UIColor(red: 0.3, green: 0.85, blue: 1, alpha: 1)
+        case .scheduledExecution: UIColor(red: 1, green: 0.24, blue: 0.06, alpha: 1)
+        case .spellSeal: UIColor(red: 0.85, green: 0.12, blue: 1, alpha: 1)
+        case .amplify: UIColor(red: 1, green: 0.5, blue: 0.08, alpha: 1)
+        case .damageReservation: UIColor(red: 1, green: 0.72, blue: 0.14, alpha: 1)
+        }
+    }
+
+    private static let intentSmokeTexture: TextureResource? = {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = false
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 128, height: 128), format: format).image { context in
+            let colors = [UIColor.white.withAlphaComponent(0.7).cgColor, UIColor.white.withAlphaComponent(0).cgColor] as CFArray
+            guard let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors, locations: [0, 1]) else { return }
+            // Overlapping soft lobes avoid hard-edged discs or square particle cards.
+            for (x, y, radius) in [(64.0, 62.0, 52.0), (43.0, 52.0, 33.0), (81.0, 75.0, 35.0), (72.0, 40.0, 29.0)] {
+                let center = CGPoint(x: x, y: y)
+                context.cgContext.drawRadialGradient(gradient, startCenter: center, startRadius: 0, endCenter: center, endRadius: radius, options: [])
+            }
+        }
+        guard let cgImage = image.cgImage else { return nil }
+        return try? TextureResource.generate(from: cgImage, options: .init(semantic: .color))
+    }()
 }

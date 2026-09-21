@@ -1,7 +1,11 @@
-import bpy, json
+import bpy, json, argparse, sys
 from pathlib import Path
 names=['MemoryRecord','MimicAttack','OpeningWait','ScheduledExecution','SpellSeal','Amplify','DamageReservation']
-out=Path('/tmp/c5-136-intents-source')
+parser=argparse.ArgumentParser()
+parser.add_argument('--output',type=Path,required=True)
+args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
+out=args.output
+out.mkdir(parents=True,exist_ok=True)
 report=[]
 for name in names:
     scene=bpy.data.scenes.new('Export_'+name)
