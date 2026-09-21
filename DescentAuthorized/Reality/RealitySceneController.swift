@@ -1448,6 +1448,7 @@ final class RealitySceneController: ObservableObject {
               let stand = device.findEntity(named: "F08B_RewardStand") else {
             throw NSError(domain: "RewardAsset", code: 3, userInfo: [NSLocalizedDescriptionKey: "공용 보상 장치 구조가 올바르지 않습니다."])
         }
+        try configureExpansionRewardScrolls(in: device, bundle: bundle)
         device.removeFromParent()
         device.transform = Transform(scale: placement.scale / SIMD3(repeating: 3),
                                      rotation: placement.rotation, translation: placement.translation)
@@ -1462,6 +1463,52 @@ final class RealitySceneController: ObservableObject {
             }
             scroll.isEnabled = false
             registry.register(scroll, for: role)
+        }
+    }
+
+    /// Replace only the visible models: authored hole, rise and idle pivots stay intact.
+    private func configureExpansionRewardScrolls(in device: Entity, bundle: Bundle) throws {
+        let floor: Int
+        switch registry.descriptor?.sceneID {
+        case .floor07CoordinateAdministrator: floor = 7
+        case .floor06CausalityAdministrator: floor = 6
+        case .floor05OriginalMemoryAdministrator: floor = 5
+        default: throw CocoaError(.fileReadCorruptFile)
+        }
+        let candidates = RewardCatalog.candidates(forFloorNumber: floor)
+        let slots = ["Left", "Center", "Right"]
+        guard candidates.count == slots.count else { throw CocoaError(.fileReadCorruptFile) }
+
+        let engravedName = graphicsQuality == .high ? "reward_scroll" : "reward_scroll_\(graphicsQuality.rawValue)"
+        guard let url = bundle.url(forResource: engravedName, withExtension: "usdc",
+                                   subdirectory: "Reality/Interactables/RewardScroll") else {
+            throw CocoaError(.fileNoSuchFile)
+        }
+        let engravedResource = try Entity.load(contentsOf: url)
+        guard let engraved = engravedResource.findEntity(named: "F09_RewardScroll_Center"),
+              let worn = device.findEntity(named: "F08B_RewardScroll_Left"),
+              let sealed = device.findEntity(named: "F08B_RewardScroll_Center"),
+              let forbidden = device.findEntity(named: "F08B_RewardScroll_Right") else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        // Snapshot before replacing any slot; later slots may reuse the same grade.
+        let templates: [ScrollTier: Entity] = [
+            .worn: worn.clone(recursive: true), .engraved: engraved.clone(recursive: true),
+            .sealed: sealed.clone(recursive: true), .forbidden: forbidden.clone(recursive: true)
+        ]
+        for (slot, candidate) in zip(slots, candidates) {
+            let name = "F08B_RewardScroll_\(slot)"
+            guard let oldModel = device.findEntity(named: name), let parent = oldModel.parent,
+                  let template = templates[candidate.tier] else {
+                throw CocoaError(.fileReadCorruptFile)
+            }
+            let model = template.clone(recursive: true)
+            model.name = name
+            // All four source meshes use the same Z-up, base-zero, unit-height convention.
+            // Keep the slot's authored size and lean, not the donor slot's placement.
+            model.transform = oldModel.transform
+            oldModel.removeFromParent()
+            parent.addChild(model)
         }
     }
 
