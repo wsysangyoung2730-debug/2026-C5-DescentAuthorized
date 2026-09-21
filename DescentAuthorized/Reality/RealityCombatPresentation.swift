@@ -419,11 +419,9 @@ final class RealityCombatVFXRenderer {
         case .none:
             return nil
         }
-        guard let barrierBase = registry.entity(for: role) else { return nil }
-
-        let barrierBounds = barrierBase.visualBounds(relativeTo: enemyAnchor)
         let actorSize = actorBounds.max - actorBounds.min
-        let barrierSize = barrierBounds.max - barrierBounds.min
+        let barrierBounds = registry.entity(for: role)?.visualBounds(relativeTo: enemyAnchor)
+        let barrierSize = barrierBounds.map { $0.max - $0.min } ?? actorSize
         let horizontalDiameter = max(
             max(barrierSize.x, barrierSize.y),
             max(actorSize.x, actorSize.y) * 1.45,
