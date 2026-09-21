@@ -1423,29 +1423,45 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func installExpansionRewards(bundle: Bundle) throws {
-        let directory = "Reality/Interactables/RewardScroll"
-        let resourceName = graphicsQuality == .high ? "reward_scroll" : "reward_scroll_\(graphicsQuality.rawValue)"
-        guard let url = bundle.url(forResource: resourceName, withExtension: "usdc", subdirectory: directory) else {
-            throw NSError(domain: "RewardAsset", code: 1, userInfo: [NSLocalizedDescriptionKey: "공용 두루마리 모델이 없습니다."])
+        let directory = "Reality/Interactables/RewardDevice"
+        let name = graphicsQuality == .high ? "reward_device" : "reward_device_\(graphicsQuality.rawValue)"
+        guard let url = bundle.url(forResource: name, withExtension: "usdc", subdirectory: directory),
+              let room = registry.root,
+              let oldStand = registry.entity(for: .rewardStand) else {
+            throw NSError(domain: "RewardAsset", code: 1, userInfo: [NSLocalizedDescriptionKey: "공용 보상 장치가 없습니다."])
         }
+        // Room wrappers contain scene offsets. Use the physical pedestal pivot,
+        // not the wrapper origin or the frame-one (submerged) scroll anchors.
+        func pedestal(in entity: Entity) -> Entity? {
+            if entity.name.hasSuffix("RewardStand") { return entity }
+            for child in entity.children {
+                if let found = pedestal(in: child) { return found }
+            }
+            return nil
+        }
+        guard let pivot = pedestal(in: oldStand) else {
+            throw NSError(domain: "RewardAsset", code: 2, userInfo: [NSLocalizedDescriptionKey: "보상 장치 배치 기준점이 없습니다."])
+        }
+        let placement = Transform(matrix: pivot.transformMatrix(relativeTo: room))
         let resource = try Entity.load(contentsOf: url)
-        guard let authored = resource.findEntity(named: "F09_RewardScroll_Center_Idle") else {
-            throw NSError(domain: "RewardAsset", code: 2, userInfo: [NSLocalizedDescriptionKey: "두루마리 모델의 기준점이 없습니다."])
+        guard let device = resource.findEntity(named: "DA_SharedRewardDevice"),
+              let stand = device.findEntity(named: "F08B_RewardStand") else {
+            throw NSError(domain: "RewardAsset", code: 3, userInfo: [NSLocalizedDescriptionKey: "공용 보상 장치 구조가 올바르지 않습니다."])
         }
-        for role in [RealityEntityRole.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight] {
-            guard let anchor = registry.entity(for: role) else { continue }
-            let scroll = authored.clone(recursive: true)
-            scroll.name = "RUNTIME_\(role.rawValue)"
-            scroll.position = .zero
-            anchor.addChild(scroll)
-            let bounds = scroll.visualBounds(relativeTo: anchor)
-            let height = bounds.max.z - bounds.min.z
-            guard height > 0.001 else { continue }
-            scroll.scale *= SIMD3(repeating: 0.75 / height)
-            let fitted = scroll.visualBounds(relativeTo: anchor)
-            scroll.position -= SIMD3((fitted.min.x + fitted.max.x) / 2,
-                                     (fitted.min.y + fitted.max.y) / 2, fitted.min.z)
-            anchor.isEnabled = false
+        device.removeFromParent()
+        device.transform = Transform(scale: placement.scale / SIMD3(repeating: 3),
+                                     rotation: placement.rotation, translation: placement.translation)
+        room.addChild(device)
+        oldStand.isEnabled = false
+        registry.register(stand, for: .rewardStand)
+        let roles: [RealityEntityRole] = [.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight]
+        for (slot, role) in zip(["Left", "Center", "Right"], roles) {
+            registry.entity(for: role)?.isEnabled = false
+            guard let scroll = device.findEntity(named: "F08B_RewardScroll_\(slot)_Idle") else {
+                throw NSError(domain: "RewardAsset", code: 4, userInfo: [NSLocalizedDescriptionKey: "공용 두루마리 기준점이 없습니다."])
+            }
+            scroll.isEnabled = false
+            registry.register(scroll, for: role)
         }
     }
 

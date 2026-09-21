@@ -79,7 +79,7 @@ final class RealityProgressionVFXRenderer {
                 baseTransforms[role] = entity.transform
             }
         }
-        if [FloorSceneID.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(registry.descriptor?.sceneID ?? .floor10ClosedOffice) {
+        if registry.descriptor?.rewardMotionAsset != nil {
             do {
                 authoredRewardPlayer = try AuthoredRewardPlayer(registry: registry, bundle: bundle)
                 authoredRewardPlayer?.close()
@@ -144,7 +144,7 @@ final class RealityProgressionVFXRenderer {
         let generation = transitionGeneration
         let roles = rewardRoles
 
-        if [FloorSceneID.floor09ArchiveRedesign, .floor08AdministratorObservatory].contains(registry.descriptor?.sceneID ?? .floor10ClosedOffice) {
+        if registry.descriptor?.rewardMotionAsset != nil {
             presentAuthoredReward(state, registry: registry, reducedMotion: reducedMotion, generation: generation)
             return
         }
@@ -487,8 +487,8 @@ private final class AuthoredRewardPlayer {
     private var generation = 0
 
     init(registry: RealityEntityRegistry, bundle: Bundle) throws {
-        guard let directory = registry.descriptor?.resourceSubdirectory,
-              let url = bundle.url(forResource: registry.descriptor?.sceneID == .floor08AdministratorObservatory ? "floor08_reward_motion" : "floor09_reward_motion", withExtension: "json", subdirectory: directory) else {
+        guard let asset = registry.descriptor?.rewardMotionAsset,
+              let url = bundle.url(forResource: asset.name, withExtension: "json", subdirectory: asset.directory) else {
             throw CocoaError(.fileNoSuchFile)
         }
         let data = try JSONDecoder().decode(AuthoredRewardMotion.self, from: Data(contentsOf: url))

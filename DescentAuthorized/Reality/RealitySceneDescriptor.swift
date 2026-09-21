@@ -104,6 +104,17 @@ struct RealitySceneDescriptor: Sendable {
         cameraNames[preset] ?? cameraNames[.main] ?? cameraNames[.battle]
     }
 
+    var rewardMotionAsset: (directory: String, name: String)? {
+        if sceneID.isExpansion, entityNames[.rewardStand] != nil {
+            return ("Reality/Interactables/RewardDevice", "reward_device_motion")
+        }
+        switch sceneID {
+        case .floor08AdministratorObservatory: return (resourceSubdirectory, "floor08_reward_motion")
+        case .floor09ArchiveRedesign: return (resourceSubdirectory, "floor09_reward_motion")
+        default: return nil
+        }
+    }
+
     static func descriptor(for sceneID: FloorSceneID) -> RealitySceneDescriptor {
         expansionDescriptor(for: sceneID) ?? descriptors[sceneID]!
     }
