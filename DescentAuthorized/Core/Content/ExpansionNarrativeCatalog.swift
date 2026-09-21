@@ -89,3 +89,19 @@ struct ExpansionNarrative: Equatable, Sendable {
         }
     }
 }
+
+extension ExpansionNarrative {
+    init?(progress: ExpansionProgress) {
+        guard (5...7).contains(progress.floorNumber) else { return nil }
+        switch progress.stage {
+        case .residualEncounter, .residualDefeated, .bossEncounter, .bossDefeated:
+            self.init(
+                floorNumber: progress.floorNumber,
+                isBoss: progress.showsBoss,
+                isDefeated: progress.stage == .residualDefeated || progress.stage == .bossDefeated
+            )
+        default:
+            return nil
+        }
+    }
+}

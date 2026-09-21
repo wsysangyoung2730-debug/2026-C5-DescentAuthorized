@@ -42,8 +42,8 @@ struct DemoFlowView: View {
                     controller: sceneController,
                     onReturnToTitle: onExit
                 )
-                .allowsHitTesting(preparedBattle == nil)
-                .accessibilityHidden(preparedBattle != nil)
+                .allowsHitTesting(preparedBattle == nil && !isDialoguePresentation)
+                .accessibilityHidden(preparedBattle != nil || isDialoguePresentation)
             } else {
                 Color.black.ignoresSafeArea()
             }
@@ -422,6 +422,9 @@ struct DemoFlowView: View {
             return true
         }
 
+        if let stage = gameSession.progress.expansion?.stage {
+            return stage == .residualDefeated || stage == .bossDefeated
+        }
         switch gameSession.progress.currentScene {
         case .floor9RecordsDefeated,
              .floor8ResidualDefeated,
@@ -438,6 +441,11 @@ struct DemoFlowView: View {
             sceneID: floorSceneID,
             cameraPreset: gameSession.presentation.cameraPreset
         )
+    }
+
+    private var isDialoguePresentation: Bool {
+        if case .narrative = gameSession.presentation.experience { return true }
+        return false
     }
 
     private var isNarrativePresentation: Bool {
@@ -773,6 +781,8 @@ struct DemoFlowView: View {
                 isAutoAdvanceEnabled: $isNarrativeAutoAdvanceEnabled
             ) {
                 switch sequence {
+                case .expansion:
+                    gameSession.send(.advanceExpansion)
                 case .floor9Encounter:
                     gameSession.send(.beginRecordsBattle)
                 case .floor9Defeated:
@@ -787,6 +797,12 @@ struct DemoFlowView: View {
                     gameSession.send(.continueAfterAdministratorDefeat)
                 }
             }
+            .id(sequence.backgroundAsset)
+            .onAppear {
+                sceneController.setLimitedCameraInteractionEnabled(false)
+                sceneController.setActorMotionSuspended(true)
+            }
+            .onDisappear { sceneController.setActorMotionSuspended(false) }
         case .battle:
             BattleView(
                 realityController: sceneController,
@@ -858,6 +874,7 @@ private struct DescentTopHUDConfiguration {
 
 private struct BossNarrativeView: View {
     @EnvironmentObject private var appSettings: AppSettings
+    @Environment(\.isGlyphInputSuspended) private var isSuspended
 
     let sequence: BossNarrativeSequence
     @Binding var isAutoAdvanceEnabled: Bool
@@ -865,16 +882,20 @@ private struct BossNarrativeView: View {
 
     @State private var dialogueIndex = 0
     @State private var revealedCharacterCount = 0
+    @State private var hasFinished = false
 
     var body: some View {
         ZStack {
             Button(action: advance) {
                 ZStack {
-                    Image(sequence.backgroundAsset)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .clipped()
+                    GeometryReader { proxy in
+                        Image(sequence.backgroundAsset)
+                            .resizable()
+                            .aspectRatio(contentMode: sequence.preservesFullArtwork ? .fit : .fill)
+                            .frame(width: proxy.size.width, height: proxy.size.height)
+                            .clipped()
+                    }
+                    .background(.black)
 
                     LinearGradient(
                         colors: [.clear, .black.opacity(0.12), .black.opacity(0.55)],
@@ -1047,7 +1068,7 @@ private struct BossNarrativeView: View {
         .padding(.leading, 4)
     }
 
-    private var currentDialogue: BossNarrativeDialogue {
+    private var currentDialogue: NarrativeDialogue {
         sequence.dialogues[dialogueIndex]
     }
 
@@ -1076,7 +1097,7 @@ private struct BossNarrativeView: View {
     }
 
     private var autoAdvanceTaskID: String {
-        "\(dialogueIndex)-\(isAutoAdvanceEnabled)-\(isDialogueFullyRevealed)"
+        "\(dialogueIndex)-\(isAutoAdvanceEnabled)-\(isDialogueFullyRevealed)-\(isSuspended)-\(hasFinished)"
     }
 
     private var autoAdvanceDelay: Duration {
@@ -1120,7 +1141,7 @@ private struct BossNarrativeView: View {
 
     @MainActor
     private func scheduleAutoAdvanceIfNeeded() async {
-        guard isAutoAdvanceEnabled, isDialogueFullyRevealed else { return }
+        guard isAutoAdvanceEnabled, isDialogueFullyRevealed, !isSuspended, !hasFinished else { return }
         let scheduledIndex = dialogueIndex
 
         do {
@@ -1130,13 +1151,15 @@ private struct BossNarrativeView: View {
         }
 
         guard !Task.isCancelled,
-              isAutoAdvanceEnabled,
+              isAutoAdvanceEnabled, !isSuspended, !hasFinished,
               scheduledIndex == dialogueIndex else { return }
         advance()
     }
 
     private func advance() {
+        guard !hasFinished, !isSuspended else { return }
         guard dialogueIndex < sequence.dialogues.count - 1 else {
+            hasFinished = true
             onFinished()
             return
         }
@@ -1185,14 +1208,15 @@ private struct AutoAdvanceSpinner: View {
     }
 }
 
-private struct BossNarrativeDialogue {
-    let speaker: String
-    let text: String
-}
-
 private extension BossNarrativeSequence {
+    var preservesFullArtwork: Bool {
+        if case .expansion = self { return true }
+        return false
+    }
+
     var backgroundAsset: String {
         switch self {
+        case let .expansion(narrative): narrative.backgroundAsset
         case .floor9Encounter: "Floor9AdministratorEncounter"
         case .floor9Defeated: "Floor9AdministratorDefeated"
         case .floor8ResidualEncounter: "Floor8ResidualEncounter"
@@ -1204,6 +1228,7 @@ private extension BossNarrativeSequence {
 
     var recordTitle: String {
         switch self {
+        case let .expansion(narrative): narrative.recordTitle
         case .floor9Encounter, .floor8ResidualEncounter, .floor8AdministratorEncounter: "조우 기록"
         case .floor9Defeated, .floor8ResidualDefeated, .floor8AdministratorDefeated: "처치 기록"
         }
@@ -1211,6 +1236,7 @@ private extension BossNarrativeSequence {
 
     var finalAccessibilityHint: String {
         switch self {
+        case let .expansion(narrative): narrative.finalAccessibilityHint
         case .floor9Encounter, .floor8ResidualEncounter, .floor8AdministratorEncounter: "전투 시작"
         case .floor9Defeated: "두루마리 선택으로 이동"
         case .floor8ResidualDefeated: "관측 본실 봉인문으로 이동"
@@ -1218,8 +1244,9 @@ private extension BossNarrativeSequence {
         }
     }
 
-    var dialogues: [BossNarrativeDialogue] {
+    var dialogues: [NarrativeDialogue] {
         switch self {
+        case let .expansion(narrative): narrative.dialogues
         case .floor9Encounter:
             [
                 .init(speaker: "기록 관리자", text: "“하강 승인서에 서명이 없군. 절차를 다시 밟도록.”"),

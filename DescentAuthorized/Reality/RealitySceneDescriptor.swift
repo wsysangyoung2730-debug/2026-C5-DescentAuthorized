@@ -277,6 +277,7 @@ enum DemoSceneExperience: Equatable, Sendable {
 }
 
 enum BossNarrativeSequence: Equatable, Sendable {
+    case expansion(ExpansionNarrative)
     case floor9Encounter
     case floor9Defeated
     case floor8ResidualEncounter
@@ -304,8 +305,10 @@ struct DemoScenePresentation: Equatable, Sendable {
         case (5, false): room = .floor05MemoryOmissionResidue
         default: room = .floor05OriginalMemoryAdministrator
         }
+        let experience: DemoSceneExperience = ExpansionNarrative(progress: expansion)
+            .map { .narrative(.expansion($0)) } ?? .completion
         return .init(progressSceneID: sceneID, floorSceneID: room,
-            cameraPreset: RealityCameraPreset(rawValue: route.camera.rawValue)!, experience: .completion)
+            cameraPreset: RealityCameraPreset(rawValue: route.camera.rawValue)!, experience: experience)
     }
 
     static func presentation(for sceneID: SceneID) -> DemoScenePresentation {

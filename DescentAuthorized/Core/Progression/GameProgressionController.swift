@@ -47,9 +47,11 @@ struct GameProgressionController: Sendable {
         case .floor8AdministratorEncounter: self.progress.currentScene = .floor8AdministratorPreparation
         default: break
         }
-        if let expansion = self.progress.expansion, expansion.stage.isBattle {
+        if let expansion = self.progress.expansion {
             self.progress.expansion?.stage = expansion.resumableStage
-            self.progress.playerHP = Self.maximumPlayerHP
+            if expansion.stage.isBattle {
+                self.progress.playerHP = Self.maximumPlayerHP
+            }
         }
     }
 
@@ -81,7 +83,12 @@ struct GameProgressionController: Sendable {
                   ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: current.stage == .bossPreparation) != nil else {
                 throw ProgressionError.requirementMissing("유효한 출전 준비")
             }
-            current.stage = current.stage == .preparation ? .residualBattle : .bossBattle
+            current.stage = current.stage == .preparation ? .residualEncounter : .bossEncounter
+        case .residualEncounter, .bossEncounter:
+            guard progress.loadoutIssues.isEmpty else {
+                throw ProgressionError.requirementMissing("유효한 출전 준비")
+            }
+            current.stage = current.stage == .residualEncounter ? .residualBattle : .bossBattle
         case .residualDefeated: current.stage = .sealedDoor
         case .bossDefeated: current.stage = .reward
         case .descent:
@@ -143,6 +150,7 @@ struct GameProgressionController: Sendable {
             .floor9RecordsBattle, .floor8ResidualBattle, .floor8AdministratorBattle
         ]
         guard progress.expansion?.stage.isBattle != true,
+              progress.expansion?.stage.isEncounter != true,
               !legacyBattleScenes.contains(progress.currentScene) else {
             throw ProgressionError.requirementMissing("전투 시작 전에만 주문 변경 가능")
         }

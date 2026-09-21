@@ -4,16 +4,20 @@ import Foundation
 enum ExpansionStage: String, Codable, CaseIterable, Sendable {
     case entrance
     case preparation
+    case residualEncounter
     case residualBattle
     case residualDefeated
     case sealedDoor
     case bossPreparation
+    case bossEncounter
     case bossBattle
     case bossDefeated
     case reward
     case descent
     case complete
     case learnDebuff
+
+    var isEncounter: Bool { self == .residualEncounter || self == .bossEncounter }
 
     var isBattle: Bool { self == .residualBattle || self == .bossBattle }
 }
@@ -35,8 +39,8 @@ struct ExpansionProgress: Codable, Equatable, Sendable {
     /// Battles resume at preparation; completed approval stage one survives relaunch.
     var resumableStage: ExpansionStage {
         switch stage {
-        case .residualBattle: .preparation
-        case .bossBattle: .bossPreparation
+        case .residualEncounter, .residualBattle: .preparation
+        case .bossEncounter, .bossBattle: .bossPreparation
         default: stage
         }
     }
@@ -204,7 +208,7 @@ extension ExpansionProgress {
         }
     }
     var showsBoss: Bool {
-        [.bossPreparation, .bossBattle, .bossDefeated, .reward, .descent].contains(stage)
+        [.bossPreparation, .bossEncounter, .bossBattle, .bossDefeated, .reward, .descent].contains(stage)
     }
 }
 

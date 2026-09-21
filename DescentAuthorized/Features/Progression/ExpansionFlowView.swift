@@ -120,12 +120,9 @@ struct ExpansionFlowView: View {
             }
         case .residualBattle, .bossBattle:
             BattleView(realityController: sceneController, restartLoadingPresentation: $retryLoadingPresentation)
-        case .residualDefeated:
-            FloorEntrancePanel(configuration: .expansionSealAccess(
-                floorNumber: current.floorNumber, playerHP: gameSession.progress.playerHP
-            )) {
-                gameSession.send(.advanceExpansion)
-            }
+        case .residualEncounter, .bossEncounter, .residualDefeated, .bossDefeated:
+            // The shared narrative presentation owns these stages, just as on 8F.
+            EmptyView()
         case .sealedDoor:
             GateSealInteractionView(
                 title: SpellCatalog.sealRelease.name,
@@ -138,10 +135,6 @@ struct ExpansionFlowView: View {
             ) { submission in
                 guard submission.evaluation.succeeded else { return }
                 gameSession.send(.releaseExpansionSeal(submission.evaluation.grade))
-            }
-        case .bossDefeated:
-            procedure(title: "관리자 무력화", detail: "관리 권한을 회수했습니다. 주문 기록 세 가지 중 하나를 선택하세요.", button: "보상 기록 열기") {
-                gameSession.send(.advanceExpansion)
             }
         case .reward:
             RewardSelectionView(floorNumber: current.floorNumber, sceneController: sceneController,
@@ -177,20 +170,4 @@ struct ExpansionFlowView: View {
         }
     }
 
-    private func procedure(title: String, detail: String, button: String, enabled: Bool = true,
-        action: @escaping () -> Void) -> some View {
-        VStack(spacing: 20) {
-            Spacer()
-            VStack(spacing: 16) {
-                Text(title).font(.system(size: 30, weight: .semibold, design: .serif)).foregroundStyle(DAColor.gold)
-                Text(detail).font(.callout).foregroundStyle(DAColor.body).multilineTextAlignment(.center)
-                Button(button, action: action).buttonStyle(.borderedProminent).tint(DAColor.magic)
-                    .controlSize(.large).disabled(!enabled)
-            }
-            .padding(28).frame(maxWidth: 650)
-            .background(.black.opacity(0.88), in: RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(DAColor.gold.opacity(0.35)))
-            Spacer().frame(height: 44)
-        }.padding(24)
-    }
 }
