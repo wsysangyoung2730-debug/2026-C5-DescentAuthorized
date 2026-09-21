@@ -87,17 +87,21 @@ struct ExpansionFlowView: View {
                 ),
                 restoresEnemyOnDisappear: false
             ) {
-                if current.stage == .entrance {
-                    procedure(title: "제\(current.floorNumber)층 · \(current.areaName)",
-                        detail: "잔류체의 반응이 드러났습니다. 출전할 주문을 준비하세요.",
-                        button: "입장하기") { gameSession.send(.advanceExpansion) }
-                } else if showsBag {
-                    LoadoutPreparationView(onBegin: { gameSession.send(.advanceExpansion) }, onCancel: { showsBag = false })
+                if showsBag {
+                    LoadoutPreparationView(onBegin: {
+                        showsBag = false
+                        gameSession.send(.advanceExpansion)
+                    }, onCancel: { showsBag = false })
                 } else {
                     FloorEntrancePanel(
                         configuration: .expansionPreparation(floorNumber: current.floorNumber,
                             areaName: current.areaName, isBoss: false),
-                        action: { showsBag = true }
+                        action: {
+                            if current.stage == .entrance {
+                                gameSession.send(.advanceExpansion)
+                            }
+                            showsBag = true
+                        }
                     )
                 }
             }
