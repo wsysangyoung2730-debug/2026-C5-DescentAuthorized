@@ -24,6 +24,9 @@ enum LoadingScreenContext: Equatable {
 
     var backgroundImageName: String {
         switch self {
+        case .expansion(7): "LoadingFloor07"
+        case .expansion(6): "LoadingFloor06"
+        case .expansion(5): "LoadingFloor05"
         case .startup, .expansion: "LoadingMain"
         case .floor10: "LoadingFloor10"
         case .floor9: "LoadingFloor09"
