@@ -1,0 +1,209 @@
+[
+  {
+    "actor": "CoordinateResidue",
+    "clips": {
+      "attack": {
+        "samples": 31,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": null
+      },
+      "heavyAttack": {
+        "samples": 40,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": null
+      },
+      "death": {
+        "samples": 55,
+        "minimumZ": -1.4901161193847656e-08,
+        "maximumRootTranslation": 0.14215195337252254,
+        "maximumAnchoredVertexDisplacement": null
+      }
+    }
+  },
+  {
+    "actor": "CoordinateAdministrator",
+    "clips": {
+      "attack": {
+        "samples": 31,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 0
+      },
+      "heavyAttack": {
+        "samples": 40,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 0
+      },
+      "death": {
+        "samples": 55,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 0
+      }
+    }
+  },
+  {
+    "actor": "CausalityResidue",
+    "clips": {
+      "attack": {
+        "samples": 31,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": null
+      },
+      "heavyAttack": {
+        "samples": 40,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": null
+      },
+      "death": {
+        "samples": 55,
+        "minimumZ": -1.4901161193847656e-08,
+        "maximumRootTranslation": 0.16022056358252923,
+        "maximumAnchoredVertexDisplacement": null
+      }
+    }
+  },
+  {
+    "actor": "CausalityAdministrator",
+    "clips": {
+      "attack": {
+        "samples": 31,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 0
+      },
+      "heavyAttack": {
+        "samples": 40,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 0
+      },
+      "death": {
+        "samples": 55,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 0
+      }
+    }
+  },
+  {
+    "actor": "MemoryOmissionResidue",
+    "clips": {
+      "attack": {
+        "samples": 31,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": null
+      },
+      "heavyAttack": {
+        "samples": 40,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": null
+      },
+      "death": {
+        "samples": 55,
+        "minimumZ": -1.4901161193847656e-08,
+        "maximumRootTranslation": 0.08805456765933052,
+        "maximumAnchoredVertexDisplacement": null
+      }
+    }
+  },
+  {
+    "actor": "OriginalMemoryAdministrator",
+    "clips": {
+      "attack": {
+        "samples": 31,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 0
+      },
+      "heavyAttack": {
+        "samples": 40,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 0
+      },
+      "death": {
+        "samples": 55,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 0
+      }
+    }
+  },
+  {
+    "actor": "RecordAdministrator",
+    "clips": {
+      "attack": {
+        "samples": 31,
+        "minimumZ": 7.607174978829789e-08,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 1.438686904726406e-06
+      },
+      "heavyAttack": {
+        "samples": 40,
+        "minimumZ": 7.607174978829789e-08,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 1.438686904726406e-06
+      },
+      "death": {
+        "samples": 55,
+        "minimumZ": 7.607174978829789e-08,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 1.438686904726406e-06
+      }
+    }
+  },
+  {
+    "actor": "ObservationResidue",
+    "clips": {
+      "attack": {
+        "samples": 31,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": null
+      },
+      "heavyAttack": {
+        "samples": 40,
+        "minimumZ": 0.0,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": null
+      },
+      "death": {
+        "samples": 55,
+        "minimumZ": -1.4901161193847656e-08,
+        "maximumRootTranslation": 0.15344488343695034,
+        "maximumAnchoredVertexDisplacement": null
+      }
+    }
+  },
+  {
+    "actor": "ObservationAdministrator",
+    "clips": {
+      "attack": {
+        "samples": 31,
+        "minimumZ": 3.259986272041715e-07,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 1.3175999474021562e-06
+      },
+      "heavyAttack": {
+        "samples": 40,
+        "minimumZ": 3.259986272041715e-07,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 1.3175999474021562e-06
+      },
+      "death": {
+        "samples": 55,
+        "minimumZ": 3.259986272041715e-07,
+        "maximumRootTranslation": 0,
+        "maximumAnchoredVertexDisplacement": 1.3175999474021562e-06
+      }
+    }
+  }
+]

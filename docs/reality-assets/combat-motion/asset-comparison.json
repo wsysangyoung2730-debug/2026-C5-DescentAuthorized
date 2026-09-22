@@ -1,0 +1,56 @@
+[
+  {
+    "actor": "CausalityAdministrator",
+    "geometryMatches": true,
+    "idleMatches": true,
+    "sizeBytes": 1932349
+  },
+  {
+    "actor": "CausalityResidue",
+    "geometryMatches": true,
+    "idleMatches": true,
+    "sizeBytes": 1913227
+  },
+  {
+    "actor": "CoordinateAdministrator",
+    "geometryMatches": true,
+    "idleMatches": true,
+    "sizeBytes": 2060932
+  },
+  {
+    "actor": "CoordinateResidue",
+    "geometryMatches": true,
+    "idleMatches": true,
+    "sizeBytes": 1926304
+  },
+  {
+    "actor": "MemoryOmissionResidue",
+    "geometryMatches": true,
+    "idleMatches": true,
+    "sizeBytes": 1966999
+  },
+  {
+    "actor": "ObservationAdministrator",
+    "geometryMatches": true,
+    "idleMatches": true,
+    "sizeBytes": 2311517
+  },
+  {
+    "actor": "ObservationResidue",
+    "geometryMatches": true,
+    "idleMatches": true,
+    "sizeBytes": 1925031
+  },
+  {
+    "actor": "OriginalMemoryAdministrator",
+    "geometryMatches": true,
+    "idleMatches": true,
+    "sizeBytes": 2082899
+  },
+  {
+    "actor": "RecordAdministrator",
+    "geometryMatches": true,
+    "idleMatches": true,
+    "sizeBytes": 1890149
+  }
+]
