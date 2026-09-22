@@ -71,6 +71,8 @@ final class DemoGameSessionTests: XCTestCase {
             }
         }
 
+        XCTAssertEqual(session.lastCompletedBattleState?.phase, .victory)
+        XCTAssertEqual(session.lastCompletedBattleState?.enemy.hp, 0)
         XCTAssertEqual(session.progress.currentScene, .floor9RecordsDefeated)
         XCTAssertTrue(session.progress.defeatedEnemies.contains(.recordsAdministrator))
         XCTAssertGreaterThan(

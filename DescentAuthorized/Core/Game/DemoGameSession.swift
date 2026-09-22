@@ -67,6 +67,8 @@ enum DemoSessionError: Error, Equatable {
 struct DemoGameSession: Sendable {
     private(set) var progression: GameProgressionController
     private(set) var encounter: EncounterController?
+    /// The final combat snapshot remains available after canonical progression advances.
+    private(set) var lastCompletedBattleState: BattleState?
 
     init(progress: GameProgress = .newGame) {
         progression = GameProgressionController(progress: progress)
@@ -79,6 +81,7 @@ struct DemoGameSession: Sendable {
     var battleState: BattleState? { encounter?.state }
 
     mutating func handle(_ command: DemoCommand) throws -> [DemoSessionEvent] {
+        lastCompletedBattleState = nil
         switch command {
         case .advanceExpansion:
             guard encounter == nil else { throw DemoSessionError.encounterAlreadyActive }
@@ -341,6 +344,7 @@ struct DemoGameSession: Sendable {
         } else {
             progressionEvents = try progression.completeEncounter(enemy: enemyID, remainingPlayerHP: remainingHP)
         }
+        lastCompletedBattleState = activeEncounter.state
         encounter = nil
         return [.encounterWon(enemyID)] + wrap(progressionEvents)
     }
