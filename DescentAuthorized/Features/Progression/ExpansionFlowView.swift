@@ -73,7 +73,7 @@ struct ExpansionFlowView: View {
     }
 
     private var combatGuide: ExpansionCombatGuide? {
-        ExpansionCombatGuide.current(progress: gameSession.progress, battle: gameSession.battleState, events: gameSession.latestEvents)
+        ExpansionCombatGuide.current(progress: gameSession.progress, battle: gameSession.battleState, events: gameSession.latestCommandEvents)
     }
 
     @ViewBuilder

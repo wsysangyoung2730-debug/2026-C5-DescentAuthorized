@@ -96,8 +96,7 @@ struct RealityCombatPresentationMapper {
         if let battleState {
             cues.append(.shield(shieldState(for: battleState)))
             if let intent = battleState.currentEnemyIntent,
-               battleState.phase != .victory,
-               battleState.phase != .defeat {
+               battleState.phase == .playerTurn {
                 if let cue = intentCue(for: intent, battleState: battleState) {
                     cues.append(.intent(cue))
                 } else {
@@ -185,6 +184,8 @@ final class RealityCombatVFXRenderer {
     private var hitGeneration = 0
     private var hitTasks: [UUID: Task<Void, Never>] = [:]
     private var hitEntities: [UUID: Entity] = [:]
+    private var enemyAttackTask: Task<Void, Never>?
+    private var enemyAttackEntity: Entity?
     private weak var root: Entity?
     private weak var enemyAnchor: Entity?
     private weak var enemyActor: Entity?
@@ -295,6 +296,10 @@ final class RealityCombatVFXRenderer {
     }
 
     func reset() {
+        enemyAttackTask?.cancel()
+        enemyAttackTask = nil
+        enemyAttackEntity?.removeFromParent()
+        enemyAttackEntity = nil
         hitGeneration += 1
         hitTasks.values.forEach { $0.cancel() }
         hitTasks.removeAll()
@@ -844,6 +849,7 @@ final class RealityActorMotionPlayer {
     private var terminalMotionStarted = false
     private var reduced = false
     private var suspended = false
+    private var currentMotion = "idle"
 
     func install(root: Entity, descriptor: RealityActorDescriptor, bundle: Bundle) throws {
         reset()
@@ -875,7 +881,10 @@ final class RealityActorMotionPlayer {
     func setReducedMotion(_ value: Bool) {
         guard reduced != value else { return }
         reduced = value
-        if value { stop() }
+        if value {
+            stop()
+            if terminal { terminalMotionStarted = false; play("death") }
+        }
         else if terminal && !terminalMotionStarted { play("death") }
         else if !terminal { play("idle") }
     }
@@ -884,11 +893,11 @@ final class RealityActorMotionPlayer {
         guard suspended != value else { return }
         suspended = value
         if value {
-            returnTask?.cancel(); returnTask = nil
             playback?.pause()
-        } else if terminal && !reduced {
-            if terminalMotionStarted { playback?.resume() }
-            else { play("death") }
+        } else if playback != nil {
+            playback?.resume()
+        } else if terminal {
+            play("death")
         } else {
             play("idle")
         }
@@ -902,17 +911,25 @@ final class RealityActorMotionPlayer {
             switch event {
             case .victory: motion = "death"
             case let .enemyActionStarted(action):
-                switch action {
-                case let .attack(_, _, strong): motion = strong ? "heavyAttack" : "attack"
-                case .telegraph: motion = "telegraph"
-                default: motion = "special"
+                let cues = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
+                if let attack = cues.first(where: { if case .enemyAttack = $0 { return true }; return false }),
+                   case let .enemyAttack(strong) = attack {
+                    motion = strong ? "heavyAttack" : "attack"
+                } else if case .telegraph = action {
+                    motion = "telegraph"
+                } else {
+                    motion = "special"
                 }
-            case let .damageApplied(target, amount, _):
-                if case .enemy = target, amount > 0, motion == nil { motion = "hit" }
             default: break
             }
         }
         if let motion { play(motion) }
+    }
+
+    func reactToProjectileImpact() {
+        // A slow asset load must never interrupt a later enemy attack or death.
+        guard currentMotion == "idle" || currentMotion == "hit" else { return }
+        play("hit")
     }
 
     func play(_ name: String) {
@@ -921,19 +938,28 @@ final class RealityActorMotionPlayer {
             guard !terminalMotionStarted else { return }
             terminal = true
         }
-        guard !reduced, !suspended, let root, let source, let clip = manifest?.clips[name] else { return }
+        guard !suspended, (!reduced || name == "death"),
+              let root, let source, let clip = manifest?.clips[name] else { return }
         stop()
+        currentMotion = name
         if name == "death" { terminalMotionStarted = true }
         do {
             let view = AnimationView(source: source.definition, name: name,
-                fillMode: name == "death" ? .forwards : [], trimStart: clip.start, trimEnd: clip.end)
+                fillMode: name == "death" ? .forwards : [],
+                trimStart: reduced ? max(clip.start, clip.end - 1.0 / 30) : clip.start,
+                trimEnd: clip.end)
             let animation = try AnimationResource.generate(with: view)
             playback = root.playAnimation(name == "idle" ? animation.repeat() : animation,
                                           transitionDuration: 0.12, startsPaused: false)
             guard name != "idle", name != "death" else { return }
             let token = generation
             returnTask = Task { @MainActor [weak self] in
-                do { try await Task.sleep(for: .seconds(clip.duration)) } catch { return }
+                var remaining = clip.duration
+                while remaining > 0 {
+                    do { try await Task.sleep(for: .milliseconds(20)) } catch { return }
+                    guard let self, self.generation == token else { return }
+                    if !self.suspended { remaining -= 0.02 }
+                }
                 guard let self, self.generation == token else { return }
                 self.play("idle")
             }
@@ -952,6 +978,101 @@ final class RealityActorMotionPlayer {
     func reset() {
         stop(); root = nil; source = nil; manifest = nil
         terminal = false; terminalMotionStarted = false; reduced = false; suspended = false
+        currentMotion = "idle"
+    }
+}
+
+// Enemy strikes travel from the attacking hand/core toward the player, in room space.
+extension RealityCombatVFXRenderer {
+    func presentEnemyAction(_ events: [DemoSessionEvent], state: BattleState?, reducedMotion: Bool) {
+        guard let action = events.compactMap({ event -> EnemyAction? in
+            if case let .combat(.enemyActionStarted(action)) = event { return action }
+            return nil
+        }).first else { return }
+        let attack = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
+            .compactMap { cue -> Bool? in
+                if case let .enemyAttack(strong) = cue { return strong }
+                return nil
+            }.first
+        let scheduled = state?.expansion.scheduledDamage.contains {
+            $0.dueEnemyTurn <= (state?.turnNumber ?? 0)
+        } ?? false
+        guard attack != nil || scheduled else { return }
+        enemyAttackTask?.cancel()
+        enemyAttackEntity?.removeFromParent()
+        guard !reducedMotion, let root, let cameraEntity,
+              let bounds = enemyBounds(relativeTo: root) else { return }
+
+        let strong = attack ?? false
+        let color: UIColor
+        if scheduled { color = UIColor(red: 1, green: 0.52, blue: 0.12, alpha: 1) }
+        else if strong { color = UIColor(red: 1, green: 0.24, blue: 0.18, alpha: 1) }
+        else { color = UIColor(red: 0.70, green: 0.42, blue: 1, alpha: 1) }
+        var material = UnlitMaterial(color: color)
+        material.blending = .transparent(opacity: .init(scale: 0.85))
+        let strike = Entity()
+        strike.name = "DA_ENEMY_STRIKE"
+        let core = ModelEntity(mesh: .generateSphere(radius: 1), materials: [material])
+        core.scale = SIMD3(0.055, 0.055, strong ? 0.24 : 0.17)
+        strike.addChild(core)
+        var trail: [ModelEntity] = []
+        for index in 0..<4 {
+            let spark = ModelEntity(mesh: .generateSphere(radius: 1), materials: [material])
+            let radius: Float = 0.045 - Float(index) * 0.007
+            spark.scale = SIMD3(radius, radius, 0.10)
+            spark.components.set(OpacityComponent(opacity: 0.40 - Float(index) * 0.07))
+            strike.addChild(spark)
+            trail.append(spark)
+        }
+        let start = SIMD3<Float>(
+            bounds.center.x + bounds.extents.x * 0.20,
+            bounds.min.y - 0.12,
+            bounds.min.z + bounds.extents.z * 0.62
+        )
+        let end = root.convert(position: SIMD3<Float>(0.08, -0.08, -0.48), from: cameraEntity)
+        let direction = simd_normalize(end - start)
+        strike.orientation = simd_quatf(from: SIMD3<Float>(0, 0, 1), to: direction)
+        strike.position = start
+        root.addChild(strike)
+        enemyAttackEntity = strike
+        let impact = strong ? 0.62 : 0.46
+        let flight = 0.16
+        let launch = impact - flight
+        let generation = hitGeneration
+        enemyAttackTask = Task { @MainActor [weak self, weak strike] in
+            guard let self, let strike else { return }
+            defer {
+                strike.removeFromParent()
+                if self.enemyAttackEntity === strike { self.enemyAttackEntity = nil }
+            }
+            var elapsed = 0.0
+            let clock = ContinuousClock()
+            var previous = clock.now
+            while elapsed < impact {
+                do { try await Task.sleep(for: .milliseconds(16)) } catch { return }
+                guard generation == self.hitGeneration else { return }
+                let now = clock.now
+                let delta = previous.duration(to: now).components
+                previous = now
+                guard !self.intentEffectsSuspended else { continue }
+                elapsed += Double(delta.seconds) + Double(delta.attoseconds) / 1e18
+                if elapsed < launch {
+                    let charge = Float(elapsed / launch)
+                    core.scale = SIMD3(repeating: 0.035 + charge * 0.065)
+                    trail.forEach { $0.isEnabled = false }
+                } else {
+                    let t = Float(min(1, (elapsed - launch) / flight))
+                    strike.position = start + (end - start) * t
+                    core.scale = SIMD3(0.055, 0.055, strong ? 0.24 : 0.17)
+                    for (index, spark) in trail.enumerated() {
+                        spark.isEnabled = true
+                        spark.position.z = -Float(index + 1) * 0.15
+                    }
+                    // Disappear just in front of the camera instead of clipping through it.
+                    strike.components.set(OpacityComponent(opacity: min(1, (1 - t) * 7)))
+                }
+            }
+        }
     }
 }
 

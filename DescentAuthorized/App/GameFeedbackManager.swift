@@ -152,6 +152,7 @@ private enum GlyphCheckpointTone: CaseIterable, Hashable {
 final class GameFeedbackManager: ObservableObject {
     var synchronizesProjectileAudio = false
     private let mapper = GameFeedbackMapper()
+    private var presentingEnemyAction: EnemyAction?
     private var effectPlayers: [GameAudioAsset: [AVAudioPlayer]] = [:]
     private var missingResources: Set<GameAudioAsset> = []
     private var musicPlayer: AVAudioPlayer?
@@ -250,18 +251,35 @@ final class GameFeedbackManager: ObservableObject {
 
     func consume(_ events: [DemoSessionEvent], settings: GameSettings) {
         currentSettings = settings
-        let cues = mapper.cues(for: events)
+        let beginsAction = events.contains { if case .combat(.enemyActionStarted) = $0 { true } else { false } }
+        let beginsSpell = events.contains { if case .combat(.spellResolved) = $0 { true } else { false } }
+        // Windup and impact are delivered separately; retain only the mapper context.
+        let context = (!beginsAction && !beginsSpell) ? presentingEnemyAction : nil
+        let mappedEvents = context.map { [.combat(.enemyActionStarted($0))] + events } ?? events
+        let cues = mapper.cues(for: mappedEvents).filter {
+            if context != nil, case .enemyAttack = $0 { return false }
+            return true
+        }
+        for event in events {
+            switch event {
+            case let .combat(.enemyActionStarted(action)): presentingEnemyAction = action
+            case .combat(.turnStarted), .combat(.victory), .combat(.defeat), .encounterStarted:
+                presentingEnemyAction = nil
+            default: break
+            }
+        }
+        if beginsSpell { presentingEnemyAction = nil }
         guard !cues.isEmpty else { return }
 
         if events.contains(where: isBattleRestartEvent) {
             stopOutcomeMusic(restoreFloorMusic: false)
         }
 
+        let hasProjectile = synchronizesProjectileAudio && RealityCombatPresentationMapper.cues(for: events, battleState: nil).contains {
+            if case .hit = $0 { return true }
+            return false
+        }
         if settings.soundEffectsEnabled {
-            let hasProjectile = synchronizesProjectileAudio && RealityCombatPresentationMapper.cues(for: events, battleState: nil).contains {
-                if case .hit = $0 { return true }
-                return false
-            }
             enqueueEventAudio(cues.filter {
                 if hasProjectile {
                     if case .spellAccepted = $0 { return false }
@@ -273,6 +291,7 @@ final class GameFeedbackManager: ObservableObject {
 
         if settings.hapticsEnabled {
             for cue in cues {
+                if hasProjectile, cue == .enemyDamaged { continue }
                 playHaptic(for: cue)
             }
         }
@@ -280,8 +299,8 @@ final class GameFeedbackManager: ObservableObject {
 
     func playProjectileImpact(settings: GameSettings) {
         currentSettings = settings
-        guard settings.soundEffectsEnabled else { return }
-        playEventAudio(for: .enemyDamaged)
+        if settings.soundEffectsEnabled { playEventAudio(for: .enemyDamaged) }
+        if settings.hapticsEnabled { playHaptic(for: .enemyDamaged) }
     }
 
     // Called at the actual visual launch, after the model is ready.

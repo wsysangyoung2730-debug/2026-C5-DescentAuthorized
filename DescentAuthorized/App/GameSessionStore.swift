@@ -5,6 +5,8 @@ import SwiftUI
 final class GameSessionStore: ObservableObject {
     @Published private(set) var session: DemoGameSession
     @Published private(set) var latestEvents: [DemoSessionEvent] = []
+    /// Full command context for guides, independent of one-shot audiovisual stages.
+    @Published private(set) var latestCommandEvents: [DemoSessionEvent] = []
     @Published private(set) var eventSequence: UInt64 = 0
     @Published private(set) var isCombatPresentationActive = false
     @Published var presentedError: PresentedGameError?
@@ -76,6 +78,7 @@ final class GameSessionStore: ObservableObject {
         let previousBattle = battleState
         do {
             let events = try coordinator.execute(command)
+            latestCommandEvents = events
             session = coordinator.session
             presentedError = nil
             reportAchievementSnapshot(events: events)
@@ -124,6 +127,7 @@ final class GameSessionStore: ObservableObject {
             }
             session = coordinator.session
             latestEvents = []
+            latestCommandEvents = []
             eventSequence &+= 1
             presentedError = nil
             reportAchievementSnapshot()
@@ -140,6 +144,7 @@ final class GameSessionStore: ObservableObject {
     func clearEvents() {
         cancelCombatPresentation()
         latestEvents = []
+        latestCommandEvents = []
         eventSequence &+= 1
     }
 

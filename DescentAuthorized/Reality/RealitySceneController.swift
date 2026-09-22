@@ -532,7 +532,8 @@ final class RealitySceneController: ObservableObject {
 
     func playStrongAttackCameraImpact(
         guarded: Bool,
-        reducedMotion: Bool
+        reducedMotion: Bool,
+        strong: Bool = true
     ) {
         guard !reducedMotion,
               canAdjustBattleCamera,
@@ -544,7 +545,7 @@ final class RealitySceneController: ObservableObject {
         battleCameraImpactGeneration &+= 1
         let generation = battleCameraImpactGeneration
         let baseMatrix = adjustedBattleCameraMatrix(from: snapshot)
-        let strength: Float = guarded ? 0.65 : 1
+        let strength: Float = (guarded ? 0.25 : 1) * (strong ? 0.55 : 0.24)
         let keyframes: [(yawDegrees: Float, milliseconds: Int64)] = [
             (-6.5, 42),
             (7.5, 68),
@@ -1101,7 +1102,10 @@ final class RealitySceneController: ObservableObject {
         onProjectileLaunch: (() -> Void)? = nil,
         onProjectileImpact: (() -> Void)? = nil
     ) {
-        combatVFXRenderer.onProjectileImpact = onProjectileImpact
+        combatVFXRenderer.onProjectileImpact = { [weak self] in
+            self?.actorMotion.reactToProjectileImpact()
+            onProjectileImpact?()
+        }
         var didPlayLaunch = false
         combatVFXRenderer.onProjectileLaunch = {
             guard !didPlayLaunch else { return }
@@ -1124,6 +1128,7 @@ final class RealitySceneController: ObservableObject {
             registry: registry,
             reducedMotion: reducedMotion
         )
+        combatVFXRenderer.presentEnemyAction(events, state: battleState, reducedMotion: reducedMotion)
     }
 
     func synchronizeCombatState(_ battleState: BattleState?, reducedMotion: Bool) {
