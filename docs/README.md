@@ -21,6 +21,7 @@
 
 ### 운영 및 참고 문서
 
+- [FLOORS_4_1_GAMEPLAY_DESIGN.md](FLOORS_4_1_GAMEPLAY_DESIGN.md): 4~1층 확장 상세 기획. 매 턴 3획·하강 문양 3개·금서 출전 최대 2종, 신규 주문 8종과 적 패턴 시험값. 출시 목표 작성 중이며 구현 완료 아님.
 - `AUDIO_ASSET_MANIFEST.md`: 음향 리소스 연결 기준
 - `GAME_CENTER_SETUP.md`: Game Center 설정
 - `IMPLEMENTATION_PLAN.md`: 과거 비UI 구현 계획
