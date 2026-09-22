@@ -7,12 +7,15 @@ enum ExpansionStage: String, Codable, CaseIterable, Sendable {
     case residualEncounter
     case residualBattle
     case residualDefeated
+    case residualInvestigation
+    case recordReward
     case sealedDoor
     case bossPreparation
     case bossEncounter
     case bossBattle
     case bossDefeated
     case reward
+    case finalRecord
     case descent
     case complete
     case learnDebuff
@@ -25,16 +28,34 @@ enum ExpansionStage: String, Codable, CaseIterable, Sendable {
 struct ExpansionProgress: Codable, Equatable, Sendable {
     var floorNumber: Int
     var stage: ExpansionStage
-    /// Completed approvals at this floor's descent door: 0, 1, or 2.
+    /// Completed independent approvals: 0...2 on 7–5F, 0...3 on 4–1F.
     var descentStage: Int
+    /// Zero-based residual encounter. A and B resume independently.
+    var residualIndex: Int
 
-    init(floorNumber: Int = 7, stage: ExpansionStage = .entrance, descentStage: Int = 0) {
+    init(floorNumber: Int = 7, stage: ExpansionStage = .entrance, descentStage: Int = 0, residualIndex: Int = 0) {
         self.floorNumber = floorNumber
         self.stage = stage
         self.descentStage = descentStage
+        self.residualIndex = residualIndex
     }
 
-    var isComplete: Bool { floorNumber == 4 && stage == .complete }
+    private enum CodingKeys: String, CodingKey { case floorNumber, stage, descentStage, residualIndex }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        floorNumber = try values.decode(Int.self, forKey: .floorNumber)
+        stage = try values.decode(ExpansionStage.self, forKey: .stage)
+        descentStage = try values.decodeIfPresent(Int.self, forKey: .descentStage) ?? 0
+        residualIndex = try values.decodeIfPresent(Int.self, forKey: .residualIndex) ?? 0
+        // Version 6 ended at the 4F entrance; this was not the game's ending.
+        if floorNumber == 4 && stage == .complete {
+            stage = .entrance
+            descentStage = 0
+        }
+    }
+
+    var isComplete: Bool { floorNumber == 1 && stage == .complete }
 
     /// Battles resume at preparation; completed approval stage one survives relaunch.
     var resumableStage: ExpansionStage {

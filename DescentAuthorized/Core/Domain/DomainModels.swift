@@ -184,6 +184,14 @@ enum SpellID: String, Codable, CaseIterable, Sendable {
     case memorySeverance
     case memorySuture
     case mimicProhibition
+    case bloodSealPiercing
+    case limitBarrier
+    case executionNullification
+    case directHitProhibition
+    case responsibilitySeverance
+    case isolationBarrier
+    case pressureRelease
+    case handoffBarrier
 }
 
 enum SpellCategory: String, Codable, Sendable {
@@ -235,6 +243,10 @@ enum DescentDoorGlyphID: String, Codable, CaseIterable, Sendable {
     case floor10
     case floor9
     case floor8
+    case floor4Approval1, floor4Approval2, floor4Approval3
+    case floor3Approval1, floor3Approval2, floor3Approval3
+    case floor2Approval1, floor2Approval2, floor2Approval3
+    case floor1Approval1, floor1Approval2, floor1Approval3
 }
 
 struct DescentDoorGlyphDefinition: Codable, Equatable, Sendable {
@@ -320,6 +332,18 @@ enum EnemyID: String, Codable, CaseIterable, Sendable {
     case causalityVerificationAdministrator
     case memoryOmissionResidual
     case memoryOriginalAdministrator
+    case signatureMimicResidual
+    case rejectionExecutionResidual
+    case responsibilityAuditAdministrator
+    case consentCustodianResidual
+    case quarantineEnforcerResidual
+    case voluntaryQuarantineAdministrator
+    case overloadResidual
+    case backflowBlockerResidual
+    case sealMaintenanceAdministrator
+    case identityComparisonResidual
+    case exitReviewResidual
+    case finalAuthorizationAdministrator
 }
 
 enum EnemyAction: Codable, Equatable, Sendable {
