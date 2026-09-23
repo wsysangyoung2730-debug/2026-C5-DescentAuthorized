@@ -2,12 +2,12 @@ import Foundation
 
 /// Prototype combat values remain independent of the replaceable character stage.
 enum ExpansionEnemyCatalog {
-    static func enemy(floor: Int, isBoss: Bool) -> EnemyDefinition? {
+    static func enemy(floor: Int, isBoss: Bool, residualIndex: Int = 0) -> EnemyDefinition? {
         switch floor {
         case 7: isBoss ? coordinateCorrectionAdministrator : coordinateDriftResidual
         case 6: isBoss ? causalityVerificationAdministrator : delayedConsequenceResidual
         case 5: isBoss ? memoryOriginalAdministrator : memoryOmissionResidual
-        default: nil
+        default: LowerFloorEnemyCatalog.enemy(floor: floor, isBoss: isBoss, residualIndex: residualIndex)
         }
     }
 
@@ -19,7 +19,7 @@ enum ExpansionEnemyCatalog {
         case .causalityVerificationAdministrator: causalityVerificationAdministrator
         case .memoryOmissionResidual: memoryOmissionResidual
         case .memoryOriginalAdministrator: memoryOriginalAdministrator
-        default: nil
+        default: LowerFloorEnemyCatalog.all[id]
         }
     }
 

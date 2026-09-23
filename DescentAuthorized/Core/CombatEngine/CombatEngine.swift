@@ -54,7 +54,8 @@ struct CombatEngine: Sendable {
                 maxHP: enemy.maxHP,
                 absoluteBarrierCharges: enemy.startingAbsoluteBarrierCharges
             ),
-            resources: .demoDefault,
+            resources: enemy.id.lowerFloorNumber == nil ? .demoDefault : TurnResources(
+                maximumMana: 150, maximumStrokes: 3, remainingMana: 150, remainingStrokes: 3),
             learnedSpells: learnedSpells,
             currentEnemyIntent: nil,
             activeErasureZones: [],
@@ -98,6 +99,8 @@ struct CombatEngine: Sendable {
         state.resources.reset()
         state.castsThisTurn = []
         state.expansion.lastSuccessfulSpellThisTurn = nil
+        state.expansion.pendingSealChoices = []
+        state.expansion.selectedSealChoice = nil
         let preparedIntent = preparedIntent(intent)
         state.currentEnemyIntent = preparedIntent
         var events: [BattleEvent] = []
@@ -168,6 +171,10 @@ struct CombatEngine: Sendable {
         var events: [BattleEvent]
         if evaluation.succeeded {
             events = [.spellResolved(spell: spell.id, grade: evaluation.grade)]
+            if spell.hpCost > 0 {
+                state.player.hp -= spell.hpCost
+                events.append(.damageApplied(target: .player, amount: spell.hpCost, remainingHP: state.player.hp))
+            }
             events.append(contentsOf: apply(
                 spell.effect,
                 effectStrength: evaluation.effectStrength,
@@ -209,6 +216,7 @@ struct CombatEngine: Sendable {
 
     mutating func endPlayerTurn() throws -> [BattleEvent] {
         try ensureBattleCanContinue()
+        guard !state.expansion.needsSealChoice else { throw CombatCommandError.spellUnavailable("봉인할 주문을 먼저 선택하세요.") }
         guard state.phase == .playerTurn else {
             throw CombatCommandError.invalidPhase(expected: .playerTurn, actual: state.phase)
         }
@@ -262,7 +270,12 @@ struct CombatEngine: Sendable {
         }
 
         events.append(contentsOf: resolveDueReservations())
-        expireEnemyWindowEffects()
+        let reactions = state.expansion.queuedReactions
+        state.expansion.queuedReactions = []
+        for reaction in reactions where !state.player.isDefeated {
+            events.append(contentsOf: damagePlayer(reaction.amount, origin: reaction.origin))
+        }
+        events.append(contentsOf: expireEnemyWindowEffects())
         if previousStatus != state.expansion.statusSummary {
             events.append(.expansionChanged(message: state.expansion.statusSummary))
         }
@@ -325,7 +338,8 @@ struct CombatEngine: Sendable {
                 maximum: maximum,
                 strength: effectStrength
             )
-            state.player.normalBarrier = min(state.player.normalBarrier + amount, maxStack)
+            state.player.normalBarrier = min(state.player.normalBarrier + amount,
+                state.expansion.limitBarrierThroughTurn != nil ? 60 : maxStack)
             return [
                 .normalBarrierChanged(
                     target: state.player.id,
@@ -419,6 +433,9 @@ extension CombatEngine {
     }
 
     private mutating func recordSuccessfulSpell(_ spell: SpellDefinition) {
+        if spell.category == .attack, state.expansion.counterDamage > 0 {
+            state.expansion.counterTriggered = true
+        }
         if state.expansion.copyRecord?.spell == spell.id {
             state.expansion.copyRecord?.reused = true
         }
@@ -437,14 +454,40 @@ extension CombatEngine {
             state.expansion.enemyPreservation = nil
         }
         // Correction barriers must survive until the telegraphed strike reads them.
-        if state.enemy.normalBarrier > 0, !state.expansion.retainsCorrectionBarrier {
+        if state.enemy.normalBarrier > 0, !state.expansion.retainsCorrectionBarrier,
+           state.expansion.enemyBarrierExpires == nil {
             state.enemy.normalBarrier = 0
             return [.normalBarrierChanged(target: state.enemy.id, amount: 0)]
         }
         return []
     }
 
-    private mutating func expireEnemyWindowEffects() {
+    private mutating func expireEnemyWindowEffects() -> [BattleEvent] {
+        var events: [BattleEvent] = []
+        state.expansion.reactiveDamageProtection = false
+        state.expansion.handoffBarrierAmount = 0
+        if let turn = state.expansion.limitBarrierThroughTurn, turn <= state.turnNumber {
+            state.expansion.limitBarrierThroughTurn = nil
+            state.player.normalBarrier = min(40, state.player.normalBarrier)
+            events.append(.normalBarrierChanged(target: .player, amount: state.player.normalBarrier))
+        }
+        if let turn = state.expansion.enemyBarrierExpires, turn <= state.turnNumber {
+            state.enemy.normalBarrier = 0
+            state.expansion.enemyBarrierExpires = nil
+            events.append(.normalBarrierChanged(target: state.enemy.id, amount: 0))
+        }
+        if let turn = state.expansion.counterExpires, turn <= state.turnNumber {
+            state.expansion.counterDamage = 0
+            state.expansion.counterTriggered = false
+            state.expansion.counterExpires = nil
+        }
+        if let turn = state.expansion.directHitProhibitionThroughTurn, turn <= state.turnNumber {
+            state.expansion.directHitProhibitionThroughTurn = nil
+        }
+        if let turn = state.expansion.isolationThroughTurn, turn <= state.turnNumber {
+            state.expansion.isolationThroughTurn = nil
+            state.expansion.isolationReservationID = nil
+        }
         state.expansion.nextHitFlatReduction = 0
         state.expansion.scheduledHitReduction = nil
         if let modifier = state.expansion.outputReduction, modifier.expiresAfterTurn <= state.turnNumber {
@@ -454,14 +497,16 @@ extension CombatEngine {
             state.expansion.mimicProhibitionThroughEnemyTurn = nil
         }
         state.expansion.lockedSpells = state.expansion.lockedSpells.filter { $0.value > state.turnNumber }
+        return events
     }
 
     private mutating func grantPlayerBarrier(_ amount: Int) -> [BattleEvent] {
-        state.player.normalBarrier = min(40, state.player.normalBarrier + max(0, amount))
+        let cap = state.expansion.limitBarrierThroughTurn != nil ? 60 : 40
+        state.player.normalBarrier = min(cap, state.player.normalBarrier + max(0, amount))
         return [.normalBarrierChanged(target: state.player.id, amount: state.player.normalBarrier)]
     }
 
-    private mutating func damageEnemy(_ base: Int, piercesNormalBarrier: Bool = false) -> [BattleEvent] {
+    private mutating func damageEnemy(_ base: Int, piercesNormalBarrier: Bool = false, preservesBarrier: Bool = false) -> [BattleEvent] {
         guard state.enemy.absoluteBarrierCharges == 0 else {
             return [.attackNegatedByAbsoluteBarrier(target: state.enemy.id)]
         }
@@ -475,23 +520,55 @@ extension CombatEngine {
             damage *= weakening.multiplier
             state.expansion.playerAttackWeakening = nil
         }
+        if preservesBarrier {
+            let amount = max(0, Int(damage.rounded()))
+            state.enemy.hp = max(0, state.enemy.hp - amount)
+            return [.damageApplied(target: state.enemy.id, amount: amount, remainingHP: state.enemy.hp)]
+        }
         return applyDamage(max(0, Int(damage.rounded())), to: &state.enemy, piercesNormalBarrier: piercesNormalBarrier)
     }
 
     private mutating func damagePlayer(_ amount: Int, scheduled: Bool) -> [BattleEvent] {
+        damagePlayer(amount, origin: scheduled ? .reservation("") : .direct)
+    }
+
+    private mutating func damagePlayer(_ amount: Int, origin: EnemyDamageOrigin) -> [BattleEvent] {
         guard amount > 0, !state.player.isDefeated else { return [] }
+        if origin == .direct, state.expansion.directHitProhibitionThroughTurn != nil {
+            state.expansion.directHitProhibitionThroughTurn = nil
+            return [.expansionChanged(message: "직격 금지 · 일반 공격 1건 무효")]
+        }
         var damage = Double(amount)
         if let reduction = state.expansion.outputReduction {
             damage *= reduction.multiplier
             state.expansion.outputReduction = nil
         }
-        if scheduled, let reduction = state.expansion.scheduledHitReduction {
-            damage *= reduction
-            state.expansion.scheduledHitReduction = nil
+        if case let .reservation(id) = origin {
+            if let reduction = state.expansion.scheduledHitReduction {
+                damage *= reduction
+                state.expansion.scheduledHitReduction = nil
+            }
+            if state.expansion.isolationReservationID == id {
+                damage *= 0.5
+                state.expansion.isolationReservationID = nil
+                state.expansion.isolationThroughTurn = nil
+            }
+        }
+        if (origin == .copy || origin == .counter), state.expansion.reactiveDamageProtection {
+            damage *= 0.5
+            state.expansion.reactiveDamageProtection = false
         }
         damage -= Double(state.expansion.nextHitFlatReduction)
         state.expansion.nextHitFlatReduction = 0
-        return applyDamage(max(0, Int(damage.rounded())), to: &state.player, piercesNormalBarrier: false)
+        let resolved = max(0, Int(damage.rounded()))
+        var events = applyDamage(resolved, to: &state.player, piercesNormalBarrier: false)
+        if resolved > 0, !state.player.isDefeated, state.expansion.handoffBarrierAmount > 0 {
+            let extra = state.expansion.handoffBarrierAmount
+            state.expansion.handoffBarrierAmount = 0
+            events.append(.expansionChanged(message: "인계 방벽 · 피해 처리 후 방벽 \(extra) 생성"))
+            events.append(contentsOf: grantPlayerBarrier(extra))
+        }
+        return events
     }
 
     private mutating func applyExpansionSpell(
@@ -512,7 +589,9 @@ extension CombatEngine {
             switch target {
             case .playerAttackWeakening: state.expansion.playerAttackWeakening = nil
             case let .cardSeal(id): state.expansion.lockedSpells[id] = nil
-            case .enemyAmplification: state.expansion.enemyAmplification = nil
+            case .enemyAmplification:
+                state.expansion.enemyAmplification = nil
+                state.expansion.flatAmplification = 0
             case .enemyPreservation: state.expansion.enemyPreservation = nil
             case .enemyCopyRecord: state.expansion.copyRecord = nil
             default: break
@@ -529,7 +608,9 @@ extension CombatEngine {
             return grantPlayerBarrier(amount)
         case .consequenceErasure:
             switch target {
-            case let .scheduledDamage(id): state.expansion.scheduledDamage.removeAll { $0.id == id }
+            case let .scheduledDamage(id):
+                state.expansion.scheduledDamage.removeAll { $0.id == id }
+                clearInvalidReservationProtection()
             case .enemyNormalBarrier:
                 state.enemy.normalBarrier = 0
                 return [.normalBarrierChanged(target: state.enemy.id, amount: 0)]
@@ -562,20 +643,83 @@ extension CombatEngine {
             state.player.hp = min(state.player.maxHP, state.player.hp + 8)
             return [.healingApplied(amount: state.player.hp - oldHP, remainingHP: state.player.hp)] + grantPlayerBarrier(amount)
         case .mimicProhibition:
-            state.player.hp -= 6
             state.expansion.copyRecord = nil
+            state.expansion.counterDamage = 0
+            state.expansion.counterTriggered = false
+            state.expansion.counterExpires = nil
             state.expansion.mimicProhibitionThroughEnemyTurn = state.turnNumber + 1
-            return [.damageApplied(target: .player, amount: 6, remainingHP: state.player.hp)]
+            return []
+        case .bloodSealPiercing:
+            return damageEnemy(amount, preservesBarrier: true)
+        case .limitBarrier:
+            state.expansion.limitBarrierThroughTurn = state.turnNumber
+            return grantPlayerBarrier(amount)
+        case .executionNullification:
+            guard case let .scheduledDamageGroup(turn) = target else { return [] }
+            let ids = Set(state.expansion.scheduledDamage.filter { $0.dueEnemyTurn == turn }.prefix(2).map(\.id))
+            state.expansion.scheduledDamage.removeAll { ids.contains($0.id) }
+            state.expansion.executionNullificationUses += 1
+            clearInvalidReservationProtection()
+            return [.expansionChanged(message: "집행 무효 · \(turn)턴 예약 \(ids.count)건 취소")]
+        case .directHitProhibition:
+            state.expansion.directHitProhibitionUses += 1
+            state.expansion.directHitProhibitionThroughTurn = state.turnNumber + 1
+            return []
+        case .responsibilitySeverance:
+            guard state.enemy.absoluteBarrierCharges == 0 else { return [.attackNegatedByAbsoluteBarrier(target: state.enemy.id)] }
+            state.expansion.reactiveDamageProtection = true
+            return damageEnemy(amount)
+        case .isolationBarrier:
+            state.expansion.isolationReservationID = nil
+            state.expansion.isolationThroughTurn = nil
+            if case let .scheduledDamage(id) = target {
+                state.expansion.isolationReservationID = id
+                state.expansion.isolationThroughTurn = state.turnNumber + 1
+            }
+            return grantPlayerBarrier(amount)
+        case .pressureRelease:
+            guard state.enemy.absoluteBarrierCharges == 0 else { return [.attackNegatedByAbsoluteBarrier(target: state.enemy.id)] }
+            let consumed = min(16, state.player.normalBarrier)
+            state.player.normalBarrier -= consumed
+            return [.normalBarrierChanged(target: .player, amount: state.player.normalBarrier)] + damageEnemy(amount + consumed * 2)
+        case .handoffBarrier:
+            state.expansion.handoffBarrierAmount = scaledEffect(minimum: 18, maximum: 24, strength: strength)
+            return grantPlayerBarrier(amount)
         }
     }
 
-    private func preparedIntent(_ intent: EnemyAction) -> EnemyAction {
+    private mutating func clearInvalidReservationProtection() {
+        if let id = state.expansion.isolationReservationID, !state.expansion.scheduledDamage.contains(where: { $0.id == id }) {
+            state.expansion.isolationReservationID = nil
+            state.expansion.isolationThroughTurn = nil
+        }
+    }
+
+    mutating func chooseCardSeal(_ spell: SpellID) throws {
+        guard state.phase == .playerTurn, state.expansion.pendingSealChoices.contains(spell) else { throw CombatCommandError.invalidEffectTarget }
+        state.expansion.selectedSealChoice = spell
+    }
+
+    private mutating func preparedIntent(_ intent: EnemyAction) -> EnemyAction {
         guard case let .expansion(name, action) = intent else { return intent }
         return .expansion(name: name, action: preparedAction(action))
     }
 
-    private func preparedAction(_ action: ExpansionEnemyAction) -> ExpansionEnemyAction {
+    private mutating func preparedAction(_ action: ExpansionEnemyAction) -> ExpansionEnemyAction {
         switch action {
+        case let .lockCards(count, duration, choose):
+            let equipped = state.expansion.equippedSpells ?? SpellID.allCases.filter(state.learnedSpells.contains)
+            var protected = state.expansion.protectedSpells.union([.sealRelease])
+            for category in [SpellCategory.attack, .defense] {
+                if !protected.contains(where: { SpellCatalog.spell($0).category == category }),
+                   let first = equipped.first(where: { SpellCatalog.spell($0).category == category }) { protected.insert(first) }
+            }
+            let candidates = Array(equipped.filter { !protected.contains($0) }.prefix(count))
+            if choose {
+                state.expansion.pendingSealChoices = candidates
+                state.expansion.selectedSealChoice = candidates.count == 1 ? candidates.first : nil
+            }
+            return .preparedCardSeal(spells: candidates, duration: duration, chooseOne: choose)
         case let .lockAndSchedule(count, damage):
             let equipped = state.expansion.equippedSpells ?? SpellID.allCases.filter { state.learnedSpells.contains($0) }
             let protected = state.expansion.protectedSpells.union([.sealRelease])
@@ -583,13 +727,47 @@ extension CombatEngine {
             let recent = state.expansion.successfulSpellHistory.reversed().filter { candidates.contains($0) }
             let ordered = Array(recent) + candidates.filter { !recent.contains($0) }
             return .preparedLockAndSchedule(spells: Array(ordered.prefix(max(0, count))), damage: damage)
-        case let .sequence(actions): return .sequence(actions.map(preparedAction))
+        case let .sequence(actions):
+            var prepared: [ExpansionEnemyAction] = []
+            for action in actions { prepared.append(preparedAction(action)) }
+            return .sequence(prepared)
         default: return action
         }
     }
 
     private mutating func resolveExpansionAction(_ action: ExpansionEnemyAction) -> [BattleEvent] {
         switch action {
+        case let .directHits(hits):
+            var events: [BattleEvent] = []
+            for hit in hits where !state.player.isDefeated { events.append(contentsOf: damagePlayer(hit, origin: .direct)) }
+            return events
+        case let .flatAmplify(amount): state.expansion.flatAmplification = max(0, amount); return []
+        case let .timedBarrier(amount, turns):
+            state.enemy.normalBarrier = max(state.enemy.normalBarrier, amount)
+            state.expansion.enemyBarrierExpires = state.turnNumber + turns
+            return [.normalBarrierChanged(target: state.enemy.id, amount: state.enemy.normalBarrier)]
+        case let .barrierStrike(base, bonus): return damagePlayer(base + (state.enemy.normalBarrier > 0 ? bonus : 0), origin: .direct)
+        case let .counterPrepare(damage):
+            guard !reactionIsProhibited else { return [] }
+            state.expansion.counterDamage = damage
+            state.expansion.counterTriggered = false
+            state.expansion.counterExpires = state.turnNumber + 1
+            return []
+        case .counterExecute:
+            if state.expansion.counterTriggered && !reactionIsProhibited {
+                state.expansion.queuedReactions.append(.init(amount: state.expansion.counterDamage, origin: .counter))
+            }
+            state.expansion.counterDamage = 0
+            state.expansion.counterTriggered = false
+            return []
+        case .lockCards: return resolveExpansionAction(preparedAction(action))
+        case let .preparedCardSeal(spells, duration, choose):
+            let selected = choose ? spells.filter { $0 == state.expansion.selectedSealChoice } : spells
+            for spell in selected { state.expansion.lockedSpells[spell] = state.turnNumber + duration }
+            state.expansion.pendingSealChoices = []
+            state.expansion.selectedSealChoice = nil
+            return []
+        case let .absoluteSeal(charges): return grantEnemyAbsoluteBarrier(charges: charges)
         case let .correctionBarrier(amount):
             state.enemy.normalBarrier = max(state.enemy.normalBarrier, amount)
             state.expansion.retainsCorrectionBarrier = true
@@ -604,16 +782,18 @@ extension CombatEngine {
             return []
         case let .schedule(specs):
             let amplification = state.expansion.enemyAmplification ?? 1
-            for spec in specs {
+            for (index, spec) in specs.enumerated() {
+                let extra = state.expansion.flatAmplification / max(1, specs.count)
+                    + (index < state.expansion.flatAmplification % max(1, specs.count) ? 1 : 0)
                 state.expansion.nextReservationID += 1
                 state.expansion.scheduledDamage.append(.init(
                     id: "\(enemyDefinition.id.rawValue)-\(state.expansion.nextReservationID)",
                     name: spec.name,
-                    damage: max(0, Int((Double(spec.damage) * amplification).rounded())),
+                    damage: max(0, Int((Double(spec.damage) * amplification).rounded()) + extra),
                     dueEnemyTurn: state.turnNumber + max(0, spec.turnsFromNow)
                 ))
             }
-            if !specs.isEmpty { state.expansion.enemyAmplification = nil }
+            if !specs.isEmpty { state.expansion.enemyAmplification = nil; state.expansion.flatAmplification = 0 }
             return []
         case .recordLastSpell:
             guard !reactionIsProhibited, let spell = state.expansion.lastSuccessfulSpellThisTurn else {
@@ -628,7 +808,9 @@ extension CombatEngine {
             state.expansion.copyRecord = nil
             guard !state.player.isDefeated, !reactionIsProhibited, let record, record.reused else { return events }
             if !categoryEffects || record.category == .attack {
-                events.append(contentsOf: damagePlayer(extraDamage, scheduled: false))
+                if enemyDefinition.id.lowerFloorNumber != nil {
+                    state.expansion.queuedReactions.append(.init(amount: extraDamage, origin: .copy))
+                } else { events.append(contentsOf: damagePlayer(extraDamage, origin: .copy)) }
             } else if record.category == .defense {
                 state.expansion.enemyPreservation = .init(multiplier: 0.70, expiresAfterTurn: state.turnNumber + 1)
             } else if record.category == .dispel {
@@ -666,8 +848,9 @@ extension CombatEngine {
         var events: [BattleEvent] = []
         for reservation in due where !state.player.isDefeated {
             events.append(.expansionChanged(message: "\(reservation.name) · 예약 피해 \(reservation.damage) 집행"))
-            events.append(contentsOf: damagePlayer(reservation.damage, scheduled: true))
+            events.append(contentsOf: damagePlayer(reservation.damage, origin: .reservation(reservation.id)))
         }
+        clearInvalidReservationProtection()
         return events
     }
 }
