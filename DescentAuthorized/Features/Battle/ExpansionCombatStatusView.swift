@@ -3,12 +3,43 @@ import SwiftUI
 /// Uses the same dark/gold treatment as the existing battle panels.
 struct ExpansionCombatStatusView: View {
     let battle: BattleState
+    @State private var showsThreats = false
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
+                if case let .enemy(id) = battle.enemy.id, id.lowerFloorNumber != nil {
+                    Button { showsThreats = true } label: {
+                        chip("위협 순서 확인", detail: "직접 → 예약 → 모사·반격", color: DAColor.gold)
+                    }.buttonStyle(.plain)
+                }
                 if battle.expansion.encounterPhase > 1 {
-                    chip("2단계", detail: "다음 주기부터 강화된 패턴", color: .orange)
+                    chip("\(battle.expansion.encounterPhase)단계", detail: "현재 적용 중인 강화 패턴", color: .orange)
+                }
+                if battle.expansion.flatAmplification > 0 {
+                    chip("예약 증폭 +\(battle.expansion.flatAmplification)", detail: "등록 전 정화 가능", color: .orange)
+                }
+                if battle.expansion.counterDamage > 0 {
+                    chip("반격 \(battle.expansion.counterDamage)", detail: battle.expansion.counterTriggered ? "공격 감지 · 추가타 예정" : "공격 성공 시 최대 1회", color: .red)
+                }
+                if let turn = battle.expansion.enemyBarrierExpires {
+                    chip("적 방벽", detail: "\(turn)턴 적 행동 종료 시 만료", color: .cyan)
+                }
+                if battle.expansion.limitBarrierThroughTurn != nil {
+                    chip("한계 방벽", detail: "상한 60 · 이번 적 턴 후 40으로 복귀", color: .cyan)
+                }
+                if battle.expansion.directHitProhibitionThroughTurn != nil {
+                    chip("직격 금지", detail: "이번 턴 직접 피해 1회 무효 · 예약 제외", color: .purple)
+                }
+                if let id = battle.expansion.isolationReservationID,
+                   let reservation = battle.expansion.scheduledDamage.first(where: { $0.id == id }) {
+                    chip("격리 방벽", detail: "\(reservation.name) −50%", color: .cyan)
+                }
+                if battle.expansion.handoffBarrierAmount > 0 {
+                    chip("인계 방벽", detail: "다음 타격 처리 후 +\(battle.expansion.handoffBarrierAmount)", color: .cyan)
+                }
+                if battle.expansion.reactiveDamageProtection {
+                    chip("책임 단절", detail: "모사·반격 피해 −50%", color: .purple)
                 }
                 if let amplification = battle.expansion.enemyAmplification {
                     chip("인과 증폭", detail: "다음 예약 \(Int(amplification * 100))% · 등록 전 정화", color: .orange)
@@ -44,12 +75,37 @@ struct ExpansionCombatStatusView: View {
                     chip(pending.name, detail: "\(pending.dueEnemyTurn == battle.turnNumber ? "이번" : "\(pending.dueEnemyTurn)번") 적 턴 · \(pending.damage) 피해\(pending.wasDelayed ? " · 지연됨" : "")", color: .orange)
                 }
                 ForEach(battle.expansion.lockedSpells.keys.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { id in
-                    chip("\(SpellCatalog.spell(id).name) 봉인", detail: "기억 압착 종료 또는 정화 시 해제", color: .red)
+                    chip("\(SpellCatalog.spell(id).name) 봉인", detail: "\(battle.expansion.lockedSpells[id] ?? 0)턴까지 · 정화 가능", color: .red)
                 }
             }
             .padding(.horizontal, 16)
         }
         .frame(height: 58)
+        .sheet(isPresented: $showsThreats) {
+            NavigationStack {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 22) {
+                        Text("예고: \(battle.currentEnemyIntent?.name ?? "대기")").font(.title2)
+                        if case let .expansion(_, action) = battle.currentEnemyIntent {
+                            Text(action.detail).foregroundStyle(DAColor.gold)
+                        }
+                        Text("1 · 직접 공격\n예고된 분할 타격은 왼쪽부터 한 번씩 처리됩니다. 직격 금지는 첫 직접 피해만 무효화합니다.")
+                        Text("2 · 도래한 예약").font(.headline)
+                        let due = battle.expansion.scheduledDamage.filter { $0.dueEnemyTurn <= battle.turnNumber }
+                        if due.isEmpty { Text("이번 적 턴에 도착할 예약 없음").foregroundStyle(DAColor.secondary) }
+                        ForEach(due) { pending in
+                            Text("\(pending.name) · \(pending.damage) 피해\(pending.wasDelayed ? " · 지연됨" : "")")
+                        }
+                        Text("3 · 모사와 반격\n재사용 감지 또는 공격 성공 조건을 충족한 추가타만 처리합니다. 모사 금지로 반응을 막을 수 있습니다.")
+                        Text("예약 등록은 현재 직접 피해가 아닙니다. HP 대가는 보호·방벽과 별개이며 생존할 수 없는 금서는 시전할 수 없습니다.")
+                            .foregroundStyle(DAColor.secondary)
+                    }.padding(28)
+                }
+                .background(DAColor.background).foregroundStyle(DAColor.body)
+                .navigationTitle("피해 처리 순서")
+                .toolbar { Button("닫기") { showsThreats = false } }
+            }.preferredColorScheme(.dark)
+        }
     }
 
     private func chip(_ title: String, detail: String, color: Color) -> some View {

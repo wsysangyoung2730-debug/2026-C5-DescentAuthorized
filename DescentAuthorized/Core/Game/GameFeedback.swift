@@ -132,9 +132,13 @@ struct GameFeedbackMapper: Sendable {
         switch action {
         case .correctionStrike: true
         case .copyReaction: false
+        case let .directHits(hits): hits.contains { $0 >= 30 }
+        case .barrierStrike: true
+        case .counterExecute: false
         case let .sequence(actions): actions.compactMap(expansionAttackStrength).first
         case .correctionBarrier, .amplify, .schedule, .recordLastSpell,
-             .lockAndSchedule, .preparedLockAndSchedule, .wait:
+             .lockAndSchedule, .preparedLockAndSchedule, .wait, .flatAmplify,
+             .timedBarrier, .counterPrepare, .lockCards, .preparedCardSeal, .absoluteSeal:
             nil
         }
     }

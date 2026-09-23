@@ -395,11 +395,13 @@ private extension PauseMenuView {
 private extension CheckpointID {
     var pauseTitle: String {
         if let destination = expansionDestination {
-            if destination.isComplete { return "5층 하강 완료" }
+            if destination.isComplete { return "최종 인계 완료" }
             let step: String = switch destination.stage {
             case .entrance: "두루마리 조사"
             case .learnDebuff: "두루마리 학습"
-            case .preparation: "잔류체 조우"
+            case .preparation: destination.isLowerFloor ? "잔류체 \(destination.residualIndex == 0 ? "A" : "B") 조우" : "잔류체 조우"
+            case .recordReward: "기록 두루마리 선택"
+            case .finalRecord: "최종 기록"
             case .sealedDoor: "중간 봉인문"
             case .bossPreparation: "관리자 조우"
             case .reward: "보상 선택"
@@ -429,9 +431,10 @@ private extension CheckpointID {
             case .learnDebuff: "조사 완료 · 출력 저하 배우기"
             case .preparation, .bossPreparation: "출전 준비와 조우 대사부터"
             case .sealedDoor: "잔류체 처치 후 봉인 해제"
-            case .reward: "세 두루마리 중 다시 선택"
-            case .descent: "선택한 주문으로 하강 승인"
-            default: "5층까지의 승인 절차 완료"
+            case .recordReward, .reward: "저장된 후보 중 선택·해독"
+            case .finalRecord: "최초 승인자의 기록 열람"
+            case .descent: destination.isLowerFloor ? "층별 세 문양으로 하강 승인" : "선택한 주문으로 하강 승인"
+            default: "완료된 절차 복원"
             }
         }
         return switch self {
@@ -452,7 +455,7 @@ private extension CheckpointID {
         if let destination = expansionDestination {
             return switch destination.stage {
             case .entrance: "magnifyingglass"
-            case .learnDebuff, .reward: "scroll"
+            case .learnDebuff, .reward, .recordReward, .finalRecord: "scroll"
             case .preparation, .bossPreparation: "shield.lefthalf.filled"
             case .sealedDoor, .descent: "door.left.hand.closed"
             default: "flag.checkered"

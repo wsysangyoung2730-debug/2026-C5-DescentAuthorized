@@ -237,6 +237,10 @@ struct DemoFlowView: View {
 
     // Owned by the stable flow host: replacing BattleView must not cancel loading.
     private func beginEncounterRestart() {
+        if gameSession.progress.expansion?.isLowerFloor == true {
+            gameSession.send(.restartEncounter)
+            return
+        }
         guard retryLoadingPresentation == nil,
               let sceneID = gameSession.presentation.floorSceneID else { return }
         checkpointTravelTask?.cancel()
@@ -483,7 +487,7 @@ struct DemoFlowView: View {
     }
 
     private var isNarrativePresentation: Bool {
-        if gameSession.progress.expansion?.stage == .reward { return true }
+        if let stage = gameSession.progress.expansion?.stage, [.reward, .recordReward].contains(stage) { return true }
         switch gameSession.presentation.experience {
         case .narrative, .reward:
             return true
@@ -493,7 +497,7 @@ struct DemoFlowView: View {
     }
 
     private var showsRewardLearningTopBar: Bool {
-        if gameSession.progress.expansion?.stage == .reward { return isRewardLearningInputActive }
+        if let stage = gameSession.progress.expansion?.stage, [.reward, .recordReward].contains(stage) { return isRewardLearningInputActive }
         guard case .reward = gameSession.presentation.experience else { return false }
         return isRewardLearningInputActive
     }
@@ -505,7 +509,7 @@ struct DemoFlowView: View {
 
     private var descentTopHUDConfiguration: DescentTopHUDConfiguration? {
         if let current = gameSession.progress.expansion, current.stage == .descent {
-            return DescentTopHUDConfiguration(areaTitle: "제\(current.floorNumber)층 · \(current.areaName)", inspectionTitle: "이중 문양 검수")
+            return DescentTopHUDConfiguration(areaTitle: "제\(current.floorNumber)층 · \(current.areaName)", inspectionTitle: current.isLowerFloor ? "삼중 문양 검수" : "이중 문양 검수")
         }
         if gameSession.progress.currentScene == .floor10DescentDoor {
             return DescentTopHUDConfiguration(

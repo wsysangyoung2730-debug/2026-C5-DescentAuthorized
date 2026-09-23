@@ -233,7 +233,8 @@ struct BattleView: View {
             if realitySceneID == nil, isExpansionBattle, let expansion = gameSession.progress.expansion {
                 ExpansionBackdropView(
                     floorNumber: expansion.floorNumber,
-                    isBoss: expansion.stage == .bossBattle
+                    isBoss: expansion.stage == .bossBattle,
+                    residualIndex: expansion.residualIndex
                 )
                 .brightness(enemyHitFlash && !appSettings.reducedFlashes ? 0.07 : 0)
             } else if realitySceneID != nil {
@@ -287,6 +288,12 @@ struct BattleView: View {
             if showsFirstTurnBriefing {
                 battleBriefing
                     .transition(.opacity)
+            }
+
+            if let battle = gameSession.battleState,
+               battle.phase == .playerTurn, battle.expansion.needsSealChoice {
+                sealChoiceOverlay(battle)
+                    .zIndex(25)
             }
 
             if gameSession.battleState?.phase == .defeat,
@@ -820,7 +827,7 @@ struct BattleView: View {
                     .frame(width: 176, height: 60)
             }
             .buttonStyle(BattleTurnEndButtonStyle())
-            .disabled(presentation.phase != .playerTurn)
+            .disabled(presentation.phase != .playerTurn || gameSession.battleState?.expansion.needsSealChoice == true)
             .accessibilityHint("현재 봉인관 차례를 종료합니다")
         }
     }
@@ -1315,6 +1322,33 @@ struct BattleView: View {
         gameSession.send(.startEncounter)
     }
 
+    private func sealChoiceOverlay(_ battle: BattleState) -> some View {
+        ZStack {
+            Color.black.opacity(0.88).ignoresSafeArea()
+            VStack(spacing: 22) {
+                Text("봉인할 주문을 선택하십시오").font(.title2.weight(.semibold)).foregroundStyle(DAColor.gold)
+                Text("표시된 후보 중 1개가 적 행동 시 봉인됩니다.\n보호한 공격·방어 주문과 봉인 해제는 후보에서 제외됩니다.")
+                    .multilineTextAlignment(.center).foregroundStyle(DAColor.body)
+                HStack(spacing: 20) {
+                    ForEach(battle.expansion.pendingSealChoices, id: \.self) { id in
+                        Button {
+                            gameSession.send(.chooseCardSeal(id))
+                            selectAvailableSpell()
+                        } label: {
+                            VStack(spacing: 14) {
+                                SpellGlyphPreview(spell: SpellCatalog.spell(id)).frame(width: 90, height: 90)
+                                Text(SpellCatalog.spell(id).name).font(.headline)
+                                Text("이 주문 봉인").font(.caption)
+                            }.foregroundStyle(DAColor.gold).padding(24)
+                                .background(DAColor.panel).overlay(Rectangle().stroke(DAColor.gold))
+                        }.buttonStyle(.plain)
+                    }
+                }
+            }.padding(30)
+        }
+        .accessibilityAddTraits(.isModal)
+    }
+
     private func selectAvailableSpell() {
         guard let battle = gameSession.battleState else {
             selectedSpellID = nil
@@ -1336,6 +1370,7 @@ struct BattleView: View {
         guard !gameSession.isCombatPresentationActive else { return }
         guard let battle = gameSession.battleState else { return }
         guard battle.phase == .playerTurn else { return }
+        guard !battle.expansion.needsSealChoice else { return }
         guard availableSpells(in: battle).contains(where: {
             $0.requiredStrokes <= battle.resources.remainingStrokes
                 && isSpellPermitted($0, battle: battle)
@@ -1533,7 +1568,7 @@ struct BattleView: View {
 
     private var encounterIdentity: String {
         if let expansion = gameSession.progress.expansion, expansion.stage.isBattle {
-            return "expansion-\(expansion.floorNumber)-\(expansion.stage.rawValue)"
+            return "expansion-\(expansion.floorNumber)-\(expansion.residualIndex)-\(expansion.stage.rawValue)"
         }
         return gameSession.progress.currentScene.rawValue
     }

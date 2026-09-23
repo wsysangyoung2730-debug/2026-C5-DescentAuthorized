@@ -130,15 +130,17 @@ struct RealityCombatPresentationMapper {
 
     private static func expansionIntentCue(for action: ExpansionEnemyAction, battleState: BattleState?) -> RealityEnemyIntentCue? {
         switch action {
-        case .correctionBarrier: .generalShield
-        case .correctionStrike: .heavyAttack
+        case .correctionBarrier, .timedBarrier: .generalShield
+        case .absoluteSeal: .generalShield
+        case .correctionStrike, .barrierStrike, .directHits, .counterExecute: .heavyAttack
+        case .counterPrepare: .openingWait
         case .copyReaction: .mimicAttack
         case let .sequence(actions):
             actions.compactMap { expansionIntentCue(for: $0, battleState: battleState) }.first
-        case .amplify: .amplify
+        case .amplify, .flatAmplify: .amplify
         case .schedule: .damageReservation
         case .recordLastSpell: .memoryRecord
-        case .lockAndSchedule, .preparedLockAndSchedule: .spellSeal
+        case .lockAndSchedule, .preparedLockAndSchedule, .lockCards, .preparedCardSeal: .spellSeal
         case .wait:
             // Delay/erasure spells can change this during the player's turn.
             // Use the live queue rather than the action's display name.

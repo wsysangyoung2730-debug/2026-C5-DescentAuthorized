@@ -16,6 +16,12 @@ struct ExpansionFlowView: View {
 
     var body: some View {
         if let current = gameSession.progress.expansion {
+            if current.isLowerFloor {
+                LowerFloorFlowView(current: current, sceneController: sceneController,
+                    retryLoadingPresentation: $retryLoadingPresentation,
+                    learningInputActive: $learningInputActive, onExit: onExit,
+                    onRestartBattle: onRestartBattle)
+            } else {
             ZStack {
                 if gameSession.presentation.floorSceneID == nil && !current.stage.isBattle {
                     ExpansionBackdropView(floorNumber: current.floorNumber, isBoss: current.showsBoss)
@@ -42,6 +48,7 @@ struct ExpansionFlowView: View {
             .onDisappear { sceneController.setActorMotionSuspended(false) }
             .sheet(isPresented: $showsPractice) {
                 if let practiceSpell { SpellPracticeSheet(spell: SpellCatalog.spell(practiceSpell)) }
+            }
             }
         }
     }
@@ -79,6 +86,8 @@ struct ExpansionFlowView: View {
     @ViewBuilder
     private func content(_ current: ExpansionProgress) -> some View {
         switch current.stage {
+        case .residualInvestigation, .recordReward, .finalRecord:
+            EmptyView() // LowerFloorFlowView owns these durable stages.
         case .entrance, .preparation:
             InvestigationFlow(
                 sceneController: sceneController,

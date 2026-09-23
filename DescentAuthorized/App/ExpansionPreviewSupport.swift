@@ -6,7 +6,7 @@ enum ExpansionPreviewSupport {
     static var floor: Int? {
         let args = ProcessInfo.processInfo.arguments
         guard let index = args.firstIndex(of: "--preview-floor"), args.indices.contains(index + 1),
-              let floor = Int(args[index + 1]), (5...7).contains(floor) else { return nil }
+              let floor = Int(args[index + 1]), (1...7).contains(floor) else { return nil }
         return floor
     }
     static var loadoutFloor: Int? {
@@ -29,6 +29,7 @@ enum ExpansionPreviewSupport {
             } catch { return nil }
         }
         guard let floor else { return nil }
+        if floor <= 4 { return makeLowerFloorStore(floor: floor) }
         var seed = GameProgress.newGame
         seed.furthestCheckpoint = .demoComplete
         var controller = GameProgressionController(progress: seed)
@@ -50,6 +51,35 @@ enum ExpansionPreviewSupport {
             }
             try controller.updateExpansion(.init(floorNumber: floor, stage: stage, descentStage: approvals))
             return InMemoryGameSaveStore(progress: controller.progress)
+        } catch { return nil }
+    }
+
+    private static func makeLowerFloorStore(floor: Int) -> (any GameSaveStore)? {
+        let args = ProcessInfo.processInfo.arguments
+        func value(_ flag: String) -> String? {
+            guard let index = args.firstIndex(of: flag), args.indices.contains(index + 1) else { return nil }
+            return args[index + 1]
+        }
+        let requested = value("--preview-stage").flatMap(ExpansionStage.init(rawValue:))
+        let stage = requested ?? (isBoss ? .bossPreparation : .preparation)
+        let residualIndex = min(1, max(0, Int(value("--preview-residual") ?? "0") ?? 0))
+        let approvals = min(3, max(0, Int(value("--preview-approvals") ?? "0") ?? 0))
+        let current = ExpansionProgress(floorNumber: floor, stage: stage,
+            descentStage: stage == .complete ? 3 : approvals,
+            residualIndex: [.recordReward, .sealedDoor].contains(stage) ? 1 : residualIndex)
+        guard current.isValid else { return nil }
+        var seed = GameProgress.newGame
+        seed.furthestCheckpoint = .towerHandoffComplete
+        var controller = GameProgressionController(progress: seed)
+        do {
+            _ = try controller.travel(to: current.lowerFloorCheckpoint)
+            try controller.updateExpansion(current)
+            var progress = controller.progress
+            if args.contains("--preview-all-spells") {
+                progress.learnedSpells = Set(SpellID.allCases)
+                progress.completedTrainingSpells = Set(SpellID.allCases)
+            }
+            return InMemoryGameSaveStore(progress: progress)
         } catch { return nil }
     }
 }

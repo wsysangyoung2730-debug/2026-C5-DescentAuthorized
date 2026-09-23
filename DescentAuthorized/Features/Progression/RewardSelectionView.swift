@@ -57,8 +57,10 @@ struct RewardSelectionView: View {
     @State private var isSelectionInterfaceVisible = false
 
     private var candidates: [RewardCandidate] {
-        RewardCatalog.candidates(forFloorNumber: floorNumber)
+        isLowerFloor ? gameSession.progress.currentRewardCandidates : RewardCatalog.candidates(forFloorNumber: floorNumber)
     }
+
+    private var isLowerFloor: Bool { (1...4).contains(floorNumber) }
 
     var body: some View {
         GeometryReader { proxy in
@@ -100,6 +102,11 @@ struct RewardSelectionView: View {
             }
 
             isLearningInputActive = false
+            if isLowerFloor {
+                rewardState = .choosing
+                isSelectionInterfaceVisible = true
+                return
+            }
             isSelectionInterfaceVisible = false
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             setRewardState(.appearing)
@@ -117,12 +124,12 @@ struct RewardSelectionView: View {
         }
         .onDisappear {
             transitionTask?.cancel()
-            sceneController.setRewardPresentation(.inactive, reducedMotion: appSettings.reducedMotion)
+            if !isLowerFloor { sceneController.setRewardPresentation(.inactive, reducedMotion: appSettings.reducedMotion) }
             cancelDetailPress(playsCloseSound: false)
             isLearningInputActive = false
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
-            sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion)
+            if !isLowerFloor { sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion) }
         }
     }
 
@@ -447,7 +454,7 @@ struct RewardSelectionView: View {
 
         return ScrollSpellLearningView(
             spell: spell,
-            sourceCode: "제\(floorNumber)층 · 관리자 보상 기록",
+            sourceCode: gameSession.progress.expansion?.rewardSite?.title ?? "제\(floorNumber)층 · 관리자 보상 기록",
             discoveryText: "선택한 두루마리의 문양이 입력판과 공명합니다. 획의 순서를 재현해 주문 기록을 완전히 정착시키십시오.",
             presentation: .standard,
             tutorialSequence: nil,
@@ -572,7 +579,7 @@ struct RewardSelectionView: View {
 
     private func setRewardState(_ state: RealityRewardPresentationState) {
         rewardState = state
-        sceneController.setRewardPresentation(state, reducedMotion: appSettings.reducedMotion)
+        if !isLowerFloor { sceneController.setRewardPresentation(state, reducedMotion: appSettings.reducedMotion) }
     }
 }
 

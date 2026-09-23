@@ -126,6 +126,14 @@ extension SpellDefinition {
             case .causalCushion: return "예약 피해 -30%"
             case .memorySuture: return "회복 8 · 방벽"
             case .mimicProhibition: return "모사 차단 2턴"
+            case .bloodSealPiercing: return "HP −6 · 관통 \(amount)"
+            case .limitBarrier: return "HP −8 · 방벽 \(amount)"
+            case .executionNullification: return "HP −10 · 예약 최대 2건"
+            case .directHitProhibition: return "HP −6 · 직접 피해 1회 무효"
+            case .responsibilitySeverance: return "공격 \(amount) · 모사·반격 차단"
+            case .isolationBarrier: return "방벽 \(amount) · 지정 예약 −50%"
+            case .pressureRelease: return "공격 \(amount) + 방벽 소모×2"
+            case .handoffBarrier: return "방벽 \(amount) · 피격 후 재생"
             }
         }
     }

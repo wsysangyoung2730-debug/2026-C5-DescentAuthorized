@@ -304,6 +304,10 @@ struct DemoScenePresentation: Equatable, Sendable {
     let experience: DemoSceneExperience
 
     static func presentation(for sceneID: SceneID, expansion: ExpansionProgress?) -> DemoScenePresentation {
+        if expansion?.isLowerFloor == true {
+            return .init(progressSceneID: sceneID, floorSceneID: nil,
+                         cameraPreset: .battle, experience: .completion)
+        }
         guard let expansion, let route = ExpansionSceneRoute(expansion) else {
             return presentation(for: sceneID)
         }
