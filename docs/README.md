@@ -21,7 +21,9 @@
 
 ### 운영 및 참고 문서
 
-- [FLOORS_4_1_GAMEPLAY_DESIGN.md](FLOORS_4_1_GAMEPLAY_DESIGN.md): 4~1층 확장 상세 기획. 매 턴 3획·하강 문양 3개·금서 출전 최대 2종, 신규 주문 8종과 적 패턴 시험값. 출시 목표 작성 중이며 구현 완료 아님.
+- [FLOORS_4_1_GAMEPLAY_DESIGN.md](FLOORS_4_1_GAMEPLAY_DESIGN.md): 4~1층 확장 상세 기획. 매 턴 3획·하강 문양 3개·금서 출전 최대 2종, 신규 주문 8종과 적 패턴 시험값.
+- [FLOORS_4_1_IMPLEMENTATION_PLAN.md](FLOORS_4_1_IMPLEMENTATION_PLAN.md): 영역별 브랜치·커밋 계획과 진행 기록.
+- [FLOORS_4_1_IMPLEMENTATION_STATUS.md](FLOORS_4_1_IMPLEMENTATION_STATUS.md): 2026-09-23 실제 구현·제한된 검사 결과·UI 재현 경로. Blender 및 실기기 검수와 출시 승인은 별개.
 - `AUDIO_ASSET_MANIFEST.md`: 음향 리소스 연결 기준
 - `GAME_CENTER_SETUP.md`: Game Center 설정
 - `IMPLEMENTATION_PLAN.md`: 과거 비UI 구현 계획
