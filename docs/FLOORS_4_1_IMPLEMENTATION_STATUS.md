@@ -3,10 +3,11 @@
 상태: 로컬 코드 구현 및 제한된 검사 완료. 전체 앱 실행·실기기 화면 검수·밸런스·출시 승인은 미완료.
 
 - 실제 저장소: `/Users/sangyoung/Desktop/2026-C5-DescentAuthorized`
-- 통합 브랜치: `feat/floors-4-1-integration`
+- 통합 브랜치: `feat/#147-floors-4-1-integration`
 - 설계 원문: [FLOORS_4_1_GAMEPLAY_DESIGN.md](FLOORS_4_1_GAMEPLAY_DESIGN.md)
 - 작업 계획: [FLOORS_4_1_IMPLEMENTATION_PLAN.md](FLOORS_4_1_IMPLEMENTATION_PLAN.md)
 - Blender/GLB/USDZ 제작·수정 제외. 원격 푸시하지 않음.
+- 번호 정리: 기존 로컬 #139·#140 다음으로 기획·구현 7개 브랜치에 #141~#147을 지정했다. GitHub 이슈는 생성하지 않았으며 이슈 등록 시 실제 번호와 동기화해야 한다. 이미 원격에 있는 과거 무번호 통합 브랜치는 변경하지 않았다.
 
 ## 1. 구현 범위
 
@@ -63,13 +64,14 @@
 
 | 브랜치 | 커밋 | 내용 |
 |---|---|---|
-| `feat/floors-4-1-foundation` | `36d828f`, `47da203` | 계획, 공통 ID·저장 계약 |
-| `feat/floors-4-1-spells` | `ffbaab3`, `39d2411` | 8주문, 결정적 보상 후보, 하강 12문양 |
-| `feat/floors-4-1-combat` | `5fafd8d` | 12적·관리자 단계·피해 종류·신규 효과 |
-| `feat/floors-4-1-progression` | `664a0b5` | A/B·보상·저장·3승인·인계·편성 제한 |
-| `feat/floors-4-1-ui` | `26b1a59` | 원본 이미지, 후반 2D 화면·전투 선택·미리보기 |
-| `feat/floors-4-1-integration` | `58b8b66` | Xcode 파일 등록, 구간 재생 정리, 시험 각인·표시 수정 |
-| `feat/floors-4-1-integration` | `8617ed2` | 후반 규칙·저장·구간 이동 검사 |
+| `docs/#141-floors-4-1-combat-plan` | `ab33c2e` | 구현 이전 상세 기획 |
+| `feat/#142-floors-4-1-foundation` | `36d828f`, `47da203` | 계획, 공통 ID·저장 계약 |
+| `feat/#143-floors-4-1-spells` | `ffbaab3`, `39d2411` | 8주문, 결정적 보상 후보, 하강 12문양 |
+| `feat/#144-floors-4-1-combat` | `5fafd8d` | 12적·관리자 단계·피해 종류·신규 효과 |
+| `feat/#145-floors-4-1-progression` | `664a0b5` | A/B·보상·저장·3승인·인계·편성 제한 |
+| `feat/#146-floors-4-1-ui` | `26b1a59` | 원본 이미지, 후반 2D 화면·전투 선택·미리보기 |
+| `feat/#147-floors-4-1-integration` | `58b8b66` | Xcode 파일 등록, 구간 재생 정리, 시험 각인·표시 수정 |
+| `feat/#147-floors-4-1-integration` | `8617ed2` | 후반 규칙·저장·구간 이동 검사 |
 
 이 문서를 포함한 별도 문서 커밋으로 최종 인계 상태를 기록한다.
 
