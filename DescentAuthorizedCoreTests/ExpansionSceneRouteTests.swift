@@ -5,7 +5,9 @@ final class ExpansionSceneRouteTests: XCTestCase {
     func testEveryPlayableStageRoutesToExpectedRoomAndCamera() {
         for floor in 5...7 {
             for stage in ExpansionStage.allCases where stage != .complete {
-                let route = ExpansionSceneRoute(.init(floorNumber: floor, stage: stage))
+                let progress = ExpansionProgress(floorNumber: floor, stage: stage)
+                guard progress.isValid else { continue }
+                let route = ExpansionSceneRoute(progress)
                 XCTAssertEqual(route?.floorNumber, floor)
                 XCTAssertEqual(route?.isBoss, [.bossPreparation, .bossEncounter, .bossBattle, .bossDefeated, .reward, .descent].contains(stage))
                 switch stage {
@@ -21,6 +23,14 @@ final class ExpansionSceneRouteTests: XCTestCase {
         XCTAssertNil(ExpansionSceneRoute(.init(floorNumber: 4, stage: .complete)))
         XCTAssertNil(ExpansionSceneRoute(.init(floorNumber: 8, stage: .entrance)))
         XCTAssertNil(ExpansionSceneRoute(.init(floorNumber: 5, stage: .complete)))
+    }
+
+    func testLowerFloorsNeverRequestAnUpperFloorRealityRoom() {
+        for floor in 1...4 {
+            for stage in ExpansionStage.allCases {
+                XCTAssertNil(ExpansionSceneRoute(.init(floorNumber: floor, stage: stage)))
+            }
+        }
     }
 
     func testRestoredBattlesKeepTheirRoomAndPartialDescentKeepsInputCamera() {

@@ -4,8 +4,8 @@ import XCTest
 
 final class ExpansionIntegrationTests: XCTestCase {
     func testCatalogPathsAndLegacyRewardMigration() throws {
-        XCTAssertEqual(SpellID.allCases.count, 20)
-        XCTAssertEqual(EnemyCatalog.all.count, 9)
+        XCTAssertEqual(SpellID.allCases.count, 28)
+        XCTAssertEqual(EnemyCatalog.all.count, 21)
         for spell in SpellCatalog.all.values {
             let result = GlyphEvaluator(maximumMana: 100).evaluate(spell: spell,
                 strokes: strokes(spell), inputMethod: .pencil, erasureZones: [])
@@ -124,7 +124,8 @@ final class ExpansionIntegrationTests: XCTestCase {
             XCTAssertEqual(progress.progress.expansion?.descentStage, 0)
             try GameProgressValidator().validate(progress.progress)
         }
-        XCTAssertTrue(progress.progress.expansion?.isComplete == true)
+        XCTAssertFalse(progress.progress.expansion?.isComplete == true)
+        XCTAssertEqual(progress.progress.expansion?.stage, .entrance)
         XCTAssertEqual(progress.progress.learnedSpells.count, 10)
         XCTAssertEqual(progress.progress.equippedSpells.count, 6)
     }

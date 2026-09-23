@@ -5,7 +5,7 @@ import XCTest
 final class CheckpointReplayTests: XCTestCase {
     private func unlockedController() -> GameProgressionController {
         var seed = GameProgress.newGame
-        seed.furthestCheckpoint = .floor5Complete
+        seed.furthestCheckpoint = .towerHandoffComplete
         return GameProgressionController(progress: seed)
     }
 
