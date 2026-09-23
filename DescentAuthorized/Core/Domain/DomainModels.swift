@@ -458,6 +458,11 @@ enum CheckpointID: String, Codable, CaseIterable, Equatable, Hashable, Sendable 
     case floor6BossEncounter, floor6Reward, floor6Descent
     case floor5Investigation, floor5Encounter, floor5SealedDoor, floor5BossEncounter
     case floor5Reward, floor5Descent, floor5Complete
+    case floor4Encounter, floor4SecondEncounter, floor4RecordReward, floor4SealedDoor, floor4BossEncounter, floor4Reward, floor4Descent
+    case floor3Investigation, floor3Encounter, floor3SecondEncounter, floor3RecordReward, floor3SealedDoor, floor3BossEncounter, floor3Reward, floor3Descent
+    case floor2Investigation, floor2Encounter, floor2SecondEncounter, floor2SealedDoor, floor2BossEncounter, floor2Reward, floor2Descent
+    case floor1Investigation, floor1Encounter, floor1SecondEncounter, floor1SealedDoor, floor1BossEncounter, floor1FinalRecord, floor1Descent
+    case towerHandoffComplete
 
     var progressionIndex: Int {
         Self.allCases.firstIndex(of: self) ?? 0
@@ -494,7 +499,7 @@ struct SpellMastery: Codable, Equatable, Sendable {
 }
 
 struct GameProgress: Codable, Equatable, Sendable {
-    static let currentSaveVersion = 6
+    static let currentSaveVersion = 7
 
     var saveVersion: Int
     var currentFloor: FloorID
@@ -507,7 +512,7 @@ struct GameProgress: Codable, Equatable, Sendable {
             synchronizeLoadout()
             let additions = learnedSpells.subtracting(oldValue)
             for id in SpellID.allCases where additions.contains(id) && !equippedSpells.contains(id) {
-                if equippedSpells.count < LoadoutRules.maximumEquipped { equippedSpells.append(id) }
+                if LoadoutRules.canAutomaticallyEquip(id, alongside: equippedSpells) { equippedSpells.append(id) }
             }
             synchronizeLoadout()
         }
@@ -528,6 +533,9 @@ struct GameProgress: Codable, Equatable, Sendable {
     var selectedRewardIDs: [String]
     /// Latest choice per floor, independent of the inventory at a rewound checkpoint.
     var checkpointRewardChoices: [Int: String] = [:]
+    var lowerRewardOffers: [String: [RewardCandidate]] = [:]
+    var lowerRewardChoices: [String: String] = [:]
+    var completedLowerRewardSites: Set<String> = []
     var isDemoComplete: Bool
 
     init(
@@ -619,6 +627,7 @@ struct GameProgress: Codable, Equatable, Sendable {
         case completedTrainingSpells
         case selectedRewardIDs
         case checkpointRewardChoices
+        case lowerRewardOffers, lowerRewardChoices, completedLowerRewardSites
         case isDemoComplete
     }
 
@@ -684,6 +693,9 @@ struct GameProgress: Codable, Equatable, Sendable {
         saveVersion = max(decodedVersion, Self.currentSaveVersion)
         migrateLegacyRewards(fromVersion: decodedVersion)
         checkpointRewardChoices = try container.decodeIfPresent([Int: String].self, forKey: .checkpointRewardChoices) ?? [:]
+        lowerRewardOffers = try container.decodeIfPresent([String: [RewardCandidate]].self, forKey: .lowerRewardOffers) ?? [:]
+        lowerRewardChoices = try container.decodeIfPresent([String: String].self, forKey: .lowerRewardChoices) ?? [:]
+        completedLowerRewardSites = try container.decodeIfPresent(Set<String>.self, forKey: .completedLowerRewardSites) ?? []
         rememberCheckpointRewards()
         migrateExpansionCheckpoint()
 
@@ -711,6 +723,9 @@ struct GameProgress: Codable, Equatable, Sendable {
         try container.encode(completedTrainingSpells, forKey: .completedTrainingSpells)
         try container.encode(selectedRewardIDs, forKey: .selectedRewardIDs)
         try container.encode(checkpointRewardChoices, forKey: .checkpointRewardChoices)
+        try container.encode(lowerRewardOffers, forKey: .lowerRewardOffers)
+        try container.encode(lowerRewardChoices, forKey: .lowerRewardChoices)
+        try container.encode(completedLowerRewardSites, forKey: .completedLowerRewardSites)
         try container.encode(isDemoComplete, forKey: .isDemoComplete)
     }
 }

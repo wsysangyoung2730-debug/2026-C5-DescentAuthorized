@@ -6,6 +6,7 @@ enum DemoCommand: Sendable {
     case learnExpansionDebuff(CastingGrade)
     case releaseExpansionSeal(CastingGrade)
     case approveExpansionStage(Int)
+    case chooseCardSeal(SpellID)
     case configureLoadout([SpellID], protectedAttack: SpellID?, protectedDefense: SpellID?)
     case markLoadoutTutorial(LoadoutTutorialFlag)
     case leaveMeetingRoom
@@ -83,6 +84,10 @@ struct DemoGameSession: Sendable {
     mutating func handle(_ command: DemoCommand) throws -> [DemoSessionEvent] {
         lastCompletedBattleState = nil
         switch command {
+        case let .chooseCardSeal(spell):
+            guard encounter != nil else { throw DemoSessionError.noActiveEncounter }
+            try encounter?.chooseCardSeal(spell)
+            return []
         case .advanceExpansion:
             guard encounter == nil else { throw DemoSessionError.encounterAlreadyActive }
             return wrap(try progression.advanceExpansion())
@@ -351,7 +356,7 @@ struct DemoGameSession: Sendable {
 
     private func enemyForCurrentScene() throws -> EnemyDefinition {
         if let current = progress.expansion, current.stage.isBattle,
-           let enemy = ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: current.stage == .bossBattle) {
+           let enemy = ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: current.stage == .bossBattle, residualIndex: current.residualIndex) {
             return enemy
         }
         return switch progress.currentScene {

@@ -43,7 +43,7 @@ enum ExpansionInvestigationCatalog {
                   body: "이름표의 봉인은 멀쩡하지만 이름만 비어 있다.\n보관 번호를 대조해도 원본은 나오지 않는다.\n\n빈칸 아래에는 다른 필체의 메모가 있다.\n‘기록을 정화하거나 다른 문양으로 연결할 것.\n잃어버린 기억은 남의 행동으로 빈자리를 채운다.’",
                   tag: "정화 또는 다른 주문으로 대응")
         ]
-        default: []
+        default: lowerRecords(for: floor)
         }
     }
 
