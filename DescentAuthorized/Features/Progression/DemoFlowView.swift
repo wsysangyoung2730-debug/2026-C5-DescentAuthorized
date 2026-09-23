@@ -880,7 +880,7 @@ struct DemoFlowView: View {
 
 private extension CheckpointID {
     var loadingContext: LoadingScreenContext {
-        if let destination = expansionDestination { return .expansion(max(5, destination.floorNumber)) }
+        if let destination = expansionDestination { return .expansion(destination.floorNumber) }
         return switch self {
         case .floor10Start:
             .floor10

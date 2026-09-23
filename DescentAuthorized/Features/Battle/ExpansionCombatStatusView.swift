@@ -28,8 +28,8 @@ struct ExpansionCombatStatusView: View {
                 if battle.expansion.limitBarrierThroughTurn != nil {
                     chip("한계 방벽", detail: "상한 60 · 이번 적 턴 후 40으로 복귀", color: .cyan)
                 }
-                if battle.expansion.directHitProhibitionThroughTurn != nil {
-                    chip("직격 금지", detail: "이번 턴 직접 피해 1회 무효 · 예약 제외", color: .purple)
+                if let through = battle.expansion.directHitProhibitionThroughTurn {
+                    chip("직격 금지", detail: "\(through)턴까지 직접 피해 1회 무효 · 예약 제외", color: .purple)
                 }
                 if let id = battle.expansion.isolationReservationID,
                    let reservation = battle.expansion.scheduledDamage.first(where: { $0.id == id }) {

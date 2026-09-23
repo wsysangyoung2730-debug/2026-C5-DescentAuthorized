@@ -55,6 +55,7 @@ struct RewardSelectionView: View {
     @State private var inspectedCandidateID: String?
     @State private var detailPressTask: Task<Void, Never>?
     @State private var isSelectionInterfaceVisible = false
+    @State private var showsPractice = false
 
     private var candidates: [RewardCandidate] {
         isLowerFloor ? gameSession.progress.currentRewardCandidates : RewardCatalog.candidates(forFloorNumber: floorNumber)
@@ -89,6 +90,11 @@ struct RewardSelectionView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showsPractice) {
+            if let candidate = candidates.first(where: { $0.id == selectedCandidateID }) {
+                SpellPracticeSheet(spell: displayedSpell(for: candidate))
+            }
+        }
         .onAppear {
             if let pendingLearningCandidate,
                let selectedIndex = candidates.firstIndex(where: {
@@ -188,6 +194,13 @@ struct RewardSelectionView: View {
                     x: metrics.size.width - metrics.headerLeading - 52,
                     y: metrics.headerTop + metrics.bodySize / 2
                 )
+            if isLowerFloor {
+                Button("선택 문양 시험 각인") { showsPractice = true }
+                    .buttonStyle(.bordered).tint(DAColor.gold)
+                    .disabled(selectedCandidateID == nil || isResolving)
+                    .position(x: metrics.size.width - metrics.headerLeading - 90,
+                              y: metrics.headerTop + 60)
+            }
         }
         .frame(width: metrics.size.width, height: metrics.size.height)
     }

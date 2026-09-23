@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C54100000000000000000001 /* LowerFloorContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000001 /* LowerFloorContracts.swift */; };
+		C54100000000000000000002 /* LowerFloorSpellCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000002 /* LowerFloorSpellCatalog.swift */; };
+		C54100000000000000000003 /* LowerFloorDescentGlyphs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000003 /* LowerFloorDescentGlyphs.swift */; };
+		C54100000000000000000004 /* LowerFloorEnemyCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000004 /* LowerFloorEnemyCatalog.swift */; };
+		C54100000000000000000005 /* LowerFloorNarrativeCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000005 /* LowerFloorNarrativeCatalog.swift */; };
+		C54100000000000000000006 /* LowerFloorProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000006 /* LowerFloorProgress.swift */; };
+		C54100000000000000000007 /* LowerFloorFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000007 /* LowerFloorFlowView.swift */; };
 		100000000000000000000076 /* GlyphCheckpointTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000076 /* GlyphCheckpointTracker.swift */; };
 		100000000000000000000077 /* GlyphPracticeDemonstration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000077 /* GlyphPracticeDemonstration.swift */; };
 		100000000000000000000078 /* GlyphInputFeedbackOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000078 /* GlyphInputFeedbackOverlay.swift */; };
@@ -101,6 +108,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C54200000000000000000001 /* LowerFloorContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorContracts.swift"; sourceTree = SOURCE_ROOT; };
+		C54200000000000000000002 /* LowerFloorSpellCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorSpellCatalog.swift"; sourceTree = SOURCE_ROOT; };
+		C54200000000000000000003 /* LowerFloorDescentGlyphs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorDescentGlyphs.swift"; sourceTree = SOURCE_ROOT; };
+		C54200000000000000000004 /* LowerFloorEnemyCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorEnemyCatalog.swift"; sourceTree = SOURCE_ROOT; };
+		C54200000000000000000005 /* LowerFloorNarrativeCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorNarrativeCatalog.swift"; sourceTree = SOURCE_ROOT; };
+		C54200000000000000000006 /* LowerFloorProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Progression/LowerFloorProgress.swift"; sourceTree = SOURCE_ROOT; };
+		C54200000000000000000007 /* LowerFloorFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/LowerFloorFlowView.swift"; sourceTree = SOURCE_ROOT; };
 		200000000000000000000076 /* GlyphCheckpointTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphCheckpointTracker.swift; sourceTree = "<group>"; };
 		200000000000000000000077 /* GlyphPracticeDemonstration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphPracticeDemonstration.swift; sourceTree = "<group>"; };
 		200000000000000000000078 /* GlyphInputFeedbackOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphInputFeedbackOverlay.swift; sourceTree = "<group>"; };
@@ -221,6 +235,13 @@
 		400000000000000000000002 /* DescentAuthorized */ = {
 			isa = PBXGroup;
 			children = (
+				C54200000000000000000001 /* LowerFloorContracts.swift */,
+				C54200000000000000000002 /* LowerFloorSpellCatalog.swift */,
+				C54200000000000000000003 /* LowerFloorDescentGlyphs.swift */,
+				C54200000000000000000004 /* LowerFloorEnemyCatalog.swift */,
+				C54200000000000000000005 /* LowerFloorNarrativeCatalog.swift */,
+				C54200000000000000000006 /* LowerFloorProgress.swift */,
+				C54200000000000000000007 /* LowerFloorFlowView.swift */,
 				40995EAF59B8A2F114F385D6 /* ExpansionPreviewSupport.swift */,
 				1CC104F7F1D8E1F17AA010EC /* ExpansionCombatGuideView.swift */,
 				5884690AA8046D1C96B64881 /* ExpansionFlowView.swift */,
@@ -554,6 +575,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C54100000000000000000001 /* LowerFloorContracts.swift in Sources */,
+				C54100000000000000000002 /* LowerFloorSpellCatalog.swift in Sources */,
+				C54100000000000000000003 /* LowerFloorDescentGlyphs.swift in Sources */,
+				C54100000000000000000004 /* LowerFloorEnemyCatalog.swift in Sources */,
+				C54100000000000000000005 /* LowerFloorNarrativeCatalog.swift in Sources */,
+				C54100000000000000000006 /* LowerFloorProgress.swift in Sources */,
+				C54100000000000000000007 /* LowerFloorFlowView.swift in Sources */,
 				EEE88AD52DDCC2CC7918BE6D /* ExpansionPreviewSupport.swift in Sources */,
 				F0ED0993C01A519FB92D34CE /* ExpansionCombatGuideView.swift in Sources */,
 				4D4DB959837B19118F6E0A4B /* ExpansionFlowView.swift in Sources */,

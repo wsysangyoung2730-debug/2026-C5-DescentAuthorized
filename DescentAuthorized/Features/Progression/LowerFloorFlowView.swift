@@ -21,6 +21,14 @@ struct LowerFloorFlowView: View {
             content
         }
         .onDisappear { learningInputActive = false }
+        .onChange(of: current.stage) { _, _ in
+            selectedRecord = nil
+            showsBag = false
+        }
+        .onChange(of: current.floorNumber) { _, _ in
+            selectedRecord = nil
+            showsBag = false
+        }
     }
 
     @ViewBuilder private var content: some View {

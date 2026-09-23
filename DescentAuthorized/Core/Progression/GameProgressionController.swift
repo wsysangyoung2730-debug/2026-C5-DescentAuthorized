@@ -702,6 +702,7 @@ struct GameProgressionController: Sendable {
         progress.completedTrainingSpells = []
         progress.defeatedEnemies = []
         progress.selectedRewardIDs = []
+        progress.completedLowerRewardSites = []
 
         if targetIndex >= CheckpointID.floor10Complete.progressionIndex {
             let floor10Spells: Set<SpellID> = [.afterglowErasure, .riftSeverance]
@@ -795,6 +796,7 @@ struct GameProgressionController: Sendable {
             return nil
         }
         progress.synchronizeLoadout(automaticallyEquipNewSpells: true)
+        progress.ensureLowerRewardOffer()
 
         let retainedLearnedSpells = progress.learnedSpells
         progress.spellMastery = progress.spellMastery.filter {
