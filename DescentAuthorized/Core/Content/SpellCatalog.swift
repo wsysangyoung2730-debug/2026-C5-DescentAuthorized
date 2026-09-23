@@ -22,7 +22,7 @@ enum SpellCatalog {
         .memorySeverance: memorySeverance,
         .memorySuture: memorySuture,
         .mimicProhibition: mimicProhibition
-    ]
+    ].merging(lowerFloorSpells) { _, new in new }
 
     static func spell(_ id: SpellID) -> SpellDefinition {
         guard let spell = all[id] else {
@@ -460,6 +460,7 @@ enum SpellAcquisitionKind: String, Codable, Sendable {
     case automatic
     case choice
     case fixedLesson
+    case recordChoice
 }
 
 struct SpellMetadata: Equatable, Sendable {
@@ -473,6 +474,7 @@ struct SpellMetadata: Equatable, Sendable {
         case .automatic: "\(acquisitionFloor)층 학습 완료 시 자동 획득"
         case .choice: "\(acquisitionFloor)층 관리자 보상 · 두루마리 3종 중 1종 선택"
         case .fixedLesson: "\(acquisitionFloor)층 학습용 두루마리 · 시험 각인 후 자동 획득"
+        case .recordChoice: "\(acquisitionFloor)층 잔류체 기록 해독 · 3종 중 1종 선택"
         }
     }
 }
@@ -600,6 +602,9 @@ extension SpellCatalog {
                 effectSummary: "현재 모사·반격 준비를 제거하고 적 행동 단계 2회 동안 모사·반격을 차단합니다.",
                 usageNote: "성공 시 HP 6을 소모하며 HP 6 이하에서는 사용할 수 없습니다. 일반 공격·예약 피해·카드 봉인은 막지 않습니다."
             )
+        case .bloodSealPiercing, .limitBarrier, .executionNullification, .directHitProhibition,
+             .responsibilitySeverance, .isolationBarrier, .pressureRelease, .handoffBarrier:
+            lowerFloorMetadata[id]!
         }
     }
 }

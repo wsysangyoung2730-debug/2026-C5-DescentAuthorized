@@ -5,6 +5,8 @@ enum ExpansionSpellEffect: String, Codable, CaseIterable, Sendable {
     case chainInscription, purificationGlyph, lingeringBarrier, axisSeverance
     case anchorGuard, consequenceErasure, outputReduction, executionDelay
     case advanceVerdict, causalCushion, memorySeverance, memorySuture, mimicProhibition
+    case bloodSealPiercing, limitBarrier, executionNullification, directHitProhibition
+    case responsibilitySeverance, isolationBarrier, pressureRelease, handoffBarrier
 
     var range: ClosedRange<Int> {
         switch self {
@@ -19,6 +21,14 @@ enum ExpansionSpellEffect: String, Codable, CaseIterable, Sendable {
         case .memorySeverance: 28...38
         case .memorySuture: 12...18
         case .mimicProhibition: 2...2
+        case .bloodSealPiercing: 34...46
+        case .limitBarrier: 40...50
+        case .executionNullification: 1...2
+        case .directHitProhibition: 1...1
+        case .responsibilitySeverance: 48...62
+        case .isolationBarrier: 20...28
+        case .pressureRelease: 42...56
+        case .handoffBarrier: 22...30
         }
     }
 }
