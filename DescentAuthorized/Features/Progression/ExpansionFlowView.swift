@@ -42,6 +42,9 @@ struct ExpansionFlowView: View {
             .onChange(of: inheritedInputSuspension) { _, suspended in
                 sceneController.setActorMotionSuspended(suspended || combatGuide != nil)
             }
+            .onChange(of: appSettings.graphicsQuality) { _, _ in
+                prefetchNextScene(current)
+            }
             .onChange(of: combatGuide != nil) { _, showing in
                 sceneController.setActorMotionSuspended(showing || inheritedInputSuspension)
             }
@@ -54,6 +57,7 @@ struct ExpansionFlowView: View {
     }
 
     private func synchronizeScene(_ current: ExpansionProgress) {
+        prefetchNextScene(current)
         let hidden: [ExpansionStage] = [.sealedDoor, .reward, .descent, .learnDebuff, .complete]
         // Initialize entry before the first frame; InvestigationFlow then owns
         // the transition from exploration to the locked enemy reveal.
@@ -77,6 +81,20 @@ struct ExpansionFlowView: View {
             sceneController.playExpansionActorMotion("death")
         default: break
         }
+    }
+
+    // Prepare during reading/selection, never begin speculative work during combat.
+    private func prefetchNextScene(_ current: ExpansionProgress) {
+        let next: FloorSceneID?
+        switch (current.floorNumber, current.stage) {
+        case (7, .sealedDoor): next = .floor07CoordinateAdministrator
+        case (6, .sealedDoor): next = .floor06CausalityAdministrator
+        case (5, .sealedDoor): next = .floor05OriginalMemoryAdministrator
+        case (7, .reward), (7, .descent): next = .floor06CausalityResidue
+        case (6, .reward), (6, .descent): next = .floor05MemoryOmissionResidue
+        default: next = nil
+        }
+        if let next { sceneController.prefetchRoom(sceneID: next, quality: appSettings.graphicsQuality) }
     }
 
     private var combatGuide: ExpansionCombatGuide? {
