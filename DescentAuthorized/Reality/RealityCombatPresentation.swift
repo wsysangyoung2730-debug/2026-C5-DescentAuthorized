@@ -1229,6 +1229,8 @@ extension RealityCombatVFXRenderer {
 /// Persistent status visuals are reconstructed from BattleState, including checkpoint restores.
 @MainActor
 final class RealityCombatStatusRenderer {
+    private static let segmentMesh = MeshResource.generateBox(size: 1)
+    private static var ringMeshes: [Float: MeshResource] = [:]
     private struct Entry {
         let entity: Entity
         let base: SIMD3<Float>
@@ -1240,16 +1242,19 @@ final class RealityCombatStatusRenderer {
     private var root: Entity?
     private var entries: [String: Entry] = [:]
     private var ticker: Task<Void, Never>?
+    private var tickerGeneration: UInt64 = 0
     private var reduced = false
     private var suspended = false
 
     func reset() {
+        tickerGeneration &+= 1
         ticker?.cancel(); ticker = nil
         root?.removeFromParent(); root = nil
         entries.removeAll()
     }
 
     func setSuspended(_ value: Bool) {
+        guard suspended != value else { return }
         suspended = value
         updateTicker()
     }
@@ -1382,8 +1387,9 @@ final class RealityCombatStatusRenderer {
     }
 
     private func updateTicker() {
-        ticker?.cancel(); ticker = nil
-        if reduced || suspended {
+        if reduced || suspended || entries.isEmpty {
+            tickerGeneration &+= 1
+            ticker?.cancel(); ticker = nil
             for key in Array(entries.keys) {
                 guard let entry = entries[key] else { continue }
                 if entry.retiringAt != nil { entry.entity.removeFromParent(); entries[key] = nil }
@@ -1391,8 +1397,12 @@ final class RealityCombatStatusRenderer {
             }
             return
         }
-        guard !entries.isEmpty else { return }
+        guard ticker == nil else { return }
+        let generation = tickerGeneration
         ticker = Task { @MainActor [weak self] in
+            defer {
+                if self?.tickerGeneration == generation { self?.ticker = nil }
+            }
             while !Task.isCancelled {
                 guard let self else { return }
                 let now = ProcessInfo.processInfo.systemUptime
@@ -1417,10 +1427,45 @@ final class RealityCombatStatusRenderer {
     }
 
     private func ring(on node: Entity, radius: Float, color: UIColor) {
+        if let mesh = Self.ringMesh(radius: radius) {
+            node.addChild(ModelEntity(mesh: mesh, materials: [UnlitMaterial(color: color)]))
+            return
+        }
         for i in 0..<32 {
             let a = Float(i)*2 * .pi/32, b = Float(i+1)*2 * .pi/32
             line(on: node, from: [cos(a)*radius,0,sin(a)*radius], to: [cos(b)*radius,0,sin(b)*radius], color: color)
         }
+    }
+    /// One closed tube replaces 32 independently rendered box entities per ring.
+    /// Only geometry is shared; opacity and transforms remain local to each status.
+    private static func ringMesh(radius: Float) -> MeshResource? {
+        if let mesh = ringMeshes[radius] { return mesh }
+        let sides = 32, tubeSides = 4
+        var positions: [SIMD3<Float>] = []
+        var normals: [SIMD3<Float>] = []
+        var indices: [UInt32] = []
+        for i in 0..<sides {
+            let angle = Float(i) * 2 * .pi / Float(sides)
+            let radial = SIMD3<Float>(cos(angle), 0, sin(angle))
+            for j in 0..<tubeSides {
+                let tubeAngle = Float(j) * 2 * .pi / Float(tubeSides)
+                let normal = radial * cos(tubeAngle) + SIMD3<Float>(0, sin(tubeAngle), 0)
+                positions.append(radial * radius + normal * 0.006)
+                normals.append(normal)
+                let a = UInt32(i * tubeSides + j)
+                let b = UInt32(((i + 1) % sides) * tubeSides + j)
+                let c = UInt32(i * tubeSides + (j + 1) % tubeSides)
+                let d = UInt32(((i + 1) % sides) * tubeSides + (j + 1) % tubeSides)
+                indices.append(contentsOf: [a, c, b, b, c, d])
+            }
+        }
+        var descriptor = MeshDescriptor(name: "CombatStatusRing")
+        descriptor.positions = MeshBuffers.Positions(positions)
+        descriptor.normals = MeshBuffers.Normals(normals)
+        descriptor.primitives = .triangles(indices)
+        guard let mesh = try? MeshResource.generate(from: [descriptor]) else { return nil }
+        ringMeshes[radius] = mesh
+        return mesh
     }
     private func line(on node: Entity, from: SIMD3<Float>, to: SIMD3<Float>, color: UIColor) {
         node.addChild(segment(from: from, to: to, color: color, thickness: 0.012))
@@ -1428,7 +1473,8 @@ final class RealityCombatStatusRenderer {
     private func segment(from: SIMD3<Float>, to: SIMD3<Float>, color: UIColor, thickness: Float) -> Entity {
         let delta = to-from
         let length = max(0.0001, simd_length(delta))
-        let entity = ModelEntity(mesh: .generateBox(size: [length,thickness,thickness]), materials: [UnlitMaterial(color: color)])
+        let entity = ModelEntity(mesh: Self.segmentMesh, materials: [UnlitMaterial(color: color)])
+        entity.scale = [length, thickness, thickness]
         entity.position = (from+to)*0.5
         entity.orientation = simd_quatf(from: [1,0,0], to: delta/length)
         return entity
