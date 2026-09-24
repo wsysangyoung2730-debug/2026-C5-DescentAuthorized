@@ -194,7 +194,19 @@ final class RealitySceneController: ObservableObject {
         loadingProgress = 0.2
         loadStartedAt = Date()
         Self.loadLog.notice("room.begin \(sceneID.rawValue, privacy: .public) quality=\(self.graphicsQuality.rawValue, privacy: .public)")
-        loadCancellable = PreparedRealityAssets.shared.takeRoom(url: url)
+        let prepared = PreparedRealityAssets.shared
+        let auxiliaryURLs = auxiliaryAssetURLs(descriptor: descriptor, quality: graphicsQuality, bundle: bundle)
+        prepared.prepareAuxiliary(urls: auxiliaryURLs)
+        let rewards = rewardAssetURLs(descriptor: descriptor, quality: graphicsQuality, bundle: bundle)
+        let rewardResources = Publishers.MergeMany(rewards.map { resourceURL in
+            prepared.cloneAuxiliary(url: resourceURL).map { (resourceURL, $0) }.eraseToAnyPublisher()
+        }).collect().map { Dictionary(uniqueKeysWithValues: $0) }
+        loadCancellable = prepared.takeRoom(url: url)
+            .handleEvents(receiveOutput: { [weak self] _ in
+                guard let self else { return }
+                Self.loadLog.notice("room.decoded seconds=\(Date().timeIntervalSince(self.loadStartedAt))")
+            })
+            .zip(rewardResources)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { [weak self] completion in
@@ -206,16 +218,18 @@ final class RealitySceneController: ObservableObject {
                     else { return }
                     self.fail(sceneID: sceneID, message: error.localizedDescription)
                 },
-                receiveValue: { [weak self] root in
+                receiveValue: { [weak self] root, rewards in
                     guard
                         let self,
                         let arView = self.arView,
                         self.sceneLoadGeneration == loadGeneration,
                         self.requestedSceneID == sceneID
                     else { return }
-                    Self.loadLog.notice("room.decoded seconds=\(Date().timeIntervalSince(self.loadStartedAt))")
+                    Self.loadLog.notice("room.dependenciesReady seconds=\(Date().timeIntervalSince(self.loadStartedAt))")
                     self.loadingProgress = 0.72
-                    self.install(root: root, descriptor: descriptor, in: arView, bundle: bundle)
+                    let installationStarted = Date()
+                    self.install(root: root, descriptor: descriptor, in: arView, bundle: bundle, rewards: rewards)
+                    Self.loadLog.notice("room.installCPU seconds=\(Date().timeIntervalSince(installationStarted))")
                 }
             )
     }
@@ -1270,7 +1284,8 @@ final class RealitySceneController: ObservableObject {
         root: Entity,
         descriptor: RealitySceneDescriptor,
         in arView: ARView,
-        bundle: Bundle
+        bundle: Bundle,
+        rewards: [URL: Entity]
     ) {
         let anchor = AnchorEntity(world: .zero)
         anchor.name = "DA_RUNTIME_SCENE_ANCHOR"
@@ -1299,7 +1314,7 @@ final class RealitySceneController: ObservableObject {
         combatVFXRenderer.cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
         if descriptor.sceneID.isExpansion, descriptor.entityNames[.rewardStand] != nil {
-            do { try installExpansionRewards(bundle: bundle) }
+            do { try installExpansionRewards(bundle: bundle, resources: rewards) }
             catch { fail(sceneID: descriptor.sceneID, message: error.localizedDescription); return }
         }
         if descriptor.sceneID == .floor08AdministratorObservatory {
@@ -1366,7 +1381,7 @@ final class RealitySceneController: ObservableObject {
         actorStartedAt = Date()
         Self.loadLog.notice("actor.begin background=\(isBackgroundActor)")
         let actorLoadGeneration = sceneLoadGeneration
-        actorLoadCancellable = Entity.loadAsync(contentsOf: actorURL)
+        actorLoadCancellable = PreparedRealityAssets.shared.cloneAuxiliary(url: actorURL, consume: true)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { [weak self] completion in
@@ -1432,7 +1447,7 @@ final class RealitySceneController: ObservableObject {
             )
     }
 
-    private func installExpansionRewards(bundle: Bundle) throws {
+    private func installExpansionRewards(bundle: Bundle, resources: [URL: Entity]) throws {
         let directory = "Reality/Interactables/RewardDevice"
         let name = graphicsQuality == .high ? "reward_device" : "reward_device_\(graphicsQuality.rawValue)"
         guard let url = bundle.url(forResource: name, withExtension: "usdc", subdirectory: directory),
@@ -1453,12 +1468,12 @@ final class RealitySceneController: ObservableObject {
             throw NSError(domain: "RewardAsset", code: 2, userInfo: [NSLocalizedDescriptionKey: "보상 장치 배치 기준점이 없습니다."])
         }
         let placement = Transform(matrix: pivot.transformMatrix(relativeTo: room))
-        let resource = try Entity.load(contentsOf: url)
+        guard let resource = resources[url] else { throw CocoaError(.fileReadCorruptFile) }
         guard let device = resource.findEntity(named: "DA_SharedRewardDevice"),
               let stand = device.findEntity(named: "F08B_RewardStand") else {
             throw NSError(domain: "RewardAsset", code: 3, userInfo: [NSLocalizedDescriptionKey: "공용 보상 장치 구조가 올바르지 않습니다."])
         }
-        try configureExpansionRewardScrolls(in: device, bundle: bundle)
+        try configureExpansionRewardScrolls(in: device, bundle: bundle, resources: resources)
         device.removeFromParent()
         device.transform = Transform(scale: placement.scale / SIMD3(repeating: 3),
                                      rotation: placement.rotation, translation: placement.translation)
@@ -1477,7 +1492,7 @@ final class RealitySceneController: ObservableObject {
     }
 
     /// Replace only the visible models: authored hole, rise and idle pivots stay intact.
-    private func configureExpansionRewardScrolls(in device: Entity, bundle: Bundle) throws {
+    private func configureExpansionRewardScrolls(in device: Entity, bundle: Bundle, resources: [URL: Entity]) throws {
         let floor: Int
         switch registry.descriptor?.sceneID {
         case .floor07CoordinateAdministrator: floor = 7
@@ -1494,7 +1509,7 @@ final class RealitySceneController: ObservableObject {
                                    subdirectory: "Reality/Interactables/RewardScroll") else {
             throw CocoaError(.fileNoSuchFile)
         }
-        let engravedResource = try Entity.load(contentsOf: url)
+        guard let engravedResource = resources[url] else { throw CocoaError(.fileReadCorruptFile) }
         guard let engraved = engravedResource.findEntity(named: "F09_RewardScroll_Center"),
               let worn = device.findEntity(named: "F08B_RewardScroll_Left"),
               let sealed = device.findEntity(named: "F08B_RewardScroll_Center"),
@@ -1973,6 +1988,24 @@ extension RealitySceneController {
 
 
 extension RealitySceneController {
+    private func rewardAssetURLs(descriptor: RealitySceneDescriptor, quality: GraphicsQuality, bundle: Bundle) -> [URL] {
+        guard descriptor.sceneID.isExpansion, descriptor.entityNames[.rewardStand] != nil else { return [] }
+        let suffix = quality == .high ? "" : "_\(quality.rawValue)"
+        return [("reward_device", "RewardDevice"), ("reward_scroll", "RewardScroll")].compactMap { name, directory in
+            bundle.url(forResource: name + suffix, withExtension: "usdc", subdirectory: "Reality/Interactables/\(directory)")
+        }
+    }
+
+    private func auxiliaryAssetURLs(descriptor: RealitySceneDescriptor, quality: GraphicsQuality, bundle: Bundle) -> [URL] {
+        var urls = rewardAssetURLs(descriptor: descriptor, quality: quality, bundle: bundle)
+        if let actor = descriptor.actor,
+           let url = bundle.url(forResource: actor.resourceName + (quality == .high ? "" : "_\(quality.rawValue)"),
+                                withExtension: "usdc", subdirectory: actor.resourceSubdirectory) {
+            urls.append(url)
+        }
+        return urls
+    }
+
     func prefetchRoom(
         sceneID: FloorSceneID,
         quality: GraphicsQuality,
@@ -1985,6 +2018,7 @@ extension RealitySceneController {
             subdirectory: descriptor.resourceSubdirectory
         ) else { return }
         PreparedRealityAssets.shared.preloadRoom(url: url)
+        PreparedRealityAssets.shared.prepareAuxiliary(urls: auxiliaryAssetURLs(descriptor: descriptor, quality: quality, bundle: bundle))
     }
 
     func prefetchFloor9(quality: GraphicsQuality, bundle: Bundle = .main) {
@@ -2026,23 +2060,50 @@ private final class PreparedRealityAssets {
         let url: URL
         let result = CurrentValueSubject<Entity?, Error>(nil)
         var request: AnyCancellable?
+        var failed = false
         init(url: URL) {
             self.url = url
             request = Entity.loadAsync(contentsOf: url).receive(on: DispatchQueue.main).sink(
                 receiveCompletion: { [weak self] completion in
-                    if case let .failure(error) = completion { self?.result.send(completion: .failure(error)) }
+                    if case let .failure(error) = completion {
+                        self?.failed = true
+                        self?.result.send(completion: .failure(error))
+                    }
                 }, receiveValue: { [weak self] root in self?.result.send(root) })
         }
     }
     private var room: Entry?
+    // Only the selected scene's actor and two shared reward templates are retained.
+    // In-flight subscribers own their entry even when another scene replaces the cache.
+    private var auxiliary: [URL: Entry] = [:]
     private var memoryWarning: AnyCancellable?
     private var environmentTasks: [FloorSceneID: Task<EnvironmentResource?, Never>] = [:]
     private init() {
         memoryWarning = NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)
-            .receive(on: DispatchQueue.main).sink { [weak self] _ in self?.room = nil }
+            .receive(on: DispatchQueue.main).sink { [weak self] _ in
+                self?.room = nil
+                self?.auxiliary.removeAll()
+                self?.environmentTasks.removeAll()
+            }
+    }
+    func prepareAuxiliary(urls: [URL]) {
+        let wanted = Set(urls)
+        auxiliary = auxiliary.filter { wanted.contains($0.key) }
+        for url in urls where auxiliary[url] == nil || auxiliary[url]?.failed == true {
+            auxiliary[url] = Entry(url: url)
+        }
+    }
+
+    func cloneAuxiliary(url: URL, consume: Bool = false) -> AnyPublisher<Entity, Error> {
+        let entry = auxiliary[url] ?? Entry(url: url)
+        if consume { auxiliary[url] = nil }
+        return entry.result.compactMap { $0 }.prefix(1)
+            .map { $0.clone(recursive: true) }
+            .handleEvents(receiveCompletion: { _ in _ = entry }, receiveCancel: { _ = entry })
+            .eraseToAnyPublisher()
     }
     func preloadRoom(url: URL) {
-        guard room?.url != url else { return }
+        guard room?.url != url || room?.failed == true else { return }
         room = Entry(url: url)
     }
     func takeRoom(url: URL) -> AnyPublisher<Entity, Error> {
