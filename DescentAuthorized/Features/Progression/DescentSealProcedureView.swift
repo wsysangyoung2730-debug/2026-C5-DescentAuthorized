@@ -274,11 +274,7 @@ struct DescentDoorSceneView: View {
         }
         transitionTask?.cancel()
         transitionTask = Task { @MainActor in
-            try? await Task.sleep(
-                for: RealityDescentTransitionTiming.doorOpeningDelay(
-                    reducedMotion: appSettings.reducedMotion
-                )
-            )
+            guard await sceneController.waitForDescentDoorOpening() else { return }
             guard !Task.isCancelled else { return }
             setDescentState(.open)
             try? await Task.sleep(for: RealityDescentTransitionTiming.openStateHold)

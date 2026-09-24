@@ -59,6 +59,7 @@ struct RealityDescentDoorAnimationDescriptor: Sendable {
     let rightPanelName: String
     let lockCoreName: String
     let logoLightName: String
+    let portalSurfaceName: String
     let panelTravelDistance: Float
 
     init(prefix: String, panelTravelDistance: Float = 0.12) {
@@ -66,11 +67,12 @@ struct RealityDescentDoorAnimationDescriptor: Sendable {
         rightPanelName = "\(prefix)_Door_RightPanel"
         lockCoreName = "\(prefix)_Door_LockCore"
         logoLightName = "\(prefix)_Door_LogoLight"
+        portalSurfaceName = "\(prefix)_Door_PortalSurface"
         self.panelTravelDistance = panelTravelDistance
     }
 
     var controllerNames: [String] {
-        [leftPanelName, rightPanelName, lockCoreName, logoLightName]
+        [leftPanelName, rightPanelName, lockCoreName, logoLightName, portalSurfaceName]
     }
 }
 

@@ -1177,6 +1177,10 @@ final class RealitySceneController: ObservableObject {
         )
     }
 
+    func waitForDescentDoorOpening() async -> Bool {
+        await progressionVFXRenderer.waitForDoorOpening()
+    }
+
     func setRewardPresentation(
         _ state: RealityRewardPresentationState,
         reducedMotion: Bool

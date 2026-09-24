@@ -11,19 +11,8 @@ enum RealityDescentPresentationState: Equatable, Sendable {
 }
 
 enum RealityDescentTransitionTiming {
-    // The authored scenes describe a 30 fps, 68 frame opening sequence and
-    // switch to the fully open model at frame 56.
-    static let authoredFrameRate: Double = 30
-    static let openStateFrame: Double = 56
     static let interfaceFadeDuration: TimeInterval = 0.28
-
-    static var doorOpeningAnimationDuration: TimeInterval {
-        openStateFrame / authoredFrameRate
-    }
-
-    static func doorOpeningDelay(reducedMotion: Bool) -> Duration {
-        .milliseconds(reducedMotion ? 280 : 1_867)
-    }
+    static let doorOpeningAnimationDuration: TimeInterval = 2.2
 
     static let openStateHold: Duration = .milliseconds(2_400)
 }
@@ -61,6 +50,13 @@ enum RealityRewardTransitionTiming {
 final class RealityProgressionVFXRenderer {
     private var baseTransforms: [RealityEntityRole: Transform] = [:]
     private var doorControllerBaseTransforms: [String: Transform] = [:]
+    private var doorOpeningTask: Task<Void, Never>?
+    private var doorGeneration = 0
+    private var doorState: RealityDescentPresentationState = .inactive
+    private var doorPanels: [(entity: Entity, closed: Transform, travel: Float)] = []
+    private var doorPortal: Entity?
+    private var doorPortalClosed: Transform?
+    private var doorReducedMotion = false
     private var transitionGeneration = 0
     private var rewardAppearanceTask: Task<Void, Never>?
     private var rewardIdleTask: Task<Void, Never>?
@@ -69,6 +65,13 @@ final class RealityProgressionVFXRenderer {
     var onRewardAppearanceCompleted: (() -> Void)?
 
     func attach(to registry: RealityEntityRegistry, bundle: Bundle = .main) {
+        doorGeneration += 1
+        doorOpeningTask?.cancel()
+        doorOpeningTask = nil
+        doorState = .inactive
+        doorPanels.removeAll()
+        doorPortal = nil
+        doorPortalClosed = nil
         authoredRewardPlayer?.cancel()
         authoredRewardPlayer = nil
         rewardMotionError = nil
@@ -92,6 +95,15 @@ final class RealityProgressionVFXRenderer {
                     doorControllerBaseTransforms[name] = entity.transform
                 }
             }
+            doorPortal = registry.entity(named: doorAnimation.portalSurfaceName)
+            doorPortalClosed = doorPortal?.transform
+            let openingWidth = doorPortal?.visualBounds(relativeTo: doorPortal?.parent).extents.x ?? 0
+            let travel = max(doorAnimation.panelTravelDistance, openingWidth * 0.52)
+            for (name, direction): (String, Float) in [(doorAnimation.leftPanelName, -1), (doorAnimation.rightPanelName, 1)] {
+                if let entity = registry.entity(named: name) {
+                    doorPanels.append((entity, entity.transform, direction * travel))
+                }
+            }
         }
     }
 
@@ -101,6 +113,7 @@ final class RealityProgressionVFXRenderer {
         reducedMotion: Bool
     ) {
         guard registry.root != nil else { return }
+        doorReducedMotion = reducedMotion
         transitionGeneration += 1
         let generation = transitionGeneration
 
@@ -109,8 +122,20 @@ final class RealityProgressionVFXRenderer {
         registry.setDoorOpen(state == .open)
 
         if state != .approved, state != .open {
+            doorGeneration += 1
+            doorOpeningTask?.cancel()
+            doorOpeningTask = nil
             restoreDoorControllers(in: registry)
         }
+
+        if state == .open || (state == .approved && reducedMotion) {
+            doorOpeningTask?.cancel()
+            doorOpeningTask = nil
+            applyDoorOpening(progress: 1, in: registry)
+        } else if state == .approved && doorState != .approved && doorState != .open {
+            animateDoorOpening(in: registry)
+        }
+        doorState = state
 
         restore(.descentStele, in: registry)
         restore(.descentPedestal, in: registry)
@@ -124,7 +149,6 @@ final class RealityProgressionVFXRenderer {
         case .approved:
             pulse(.descentPedestal, scale: 1.07, duration: 0.28, registry: registry)
             pulse(.descentStele, scale: 1.025, duration: 0.28, registry: registry)
-            animateDoorOpening(in: registry)
         case .inactive, .ready, .open:
             break
         }
@@ -218,6 +242,13 @@ final class RealityProgressionVFXRenderer {
     }
 
     func reset() {
+        doorGeneration += 1
+        doorOpeningTask?.cancel()
+        doorOpeningTask = nil
+        doorState = .inactive
+        doorPanels.removeAll()
+        doorPortal = nil
+        doorPortalClosed = nil
         authoredRewardPlayer?.cancel()
         authoredRewardPlayer = nil
         rewardMotionError = nil
@@ -305,62 +336,57 @@ final class RealityProgressionVFXRenderer {
             entity.stopAllAnimations(recursive: false)
             entity.transform = transform
         }
+        if let name = registry.descriptor?.descentDoorAnimation?.portalSurfaceName {
+            registry.entity(named: name)?.components.set(OpacityComponent(opacity: 0))
+        }
+    }
+
+    func waitForDoorOpening() async -> Bool {
+        let generation = doorGeneration
+        if doorPanels.isEmpty {
+            // Preserve timing for scenes still awaiting an articulated door asset.
+            do { try await Task.sleep(for: .milliseconds(doorReducedMotion ? 280 : 1_867)) }
+            catch { return false }
+        } else {
+            await doorOpeningTask?.value
+        }
+        return !Task.isCancelled && generation == doorGeneration
+            && (doorState == .approved || doorState == .open)
     }
 
     private func animateDoorOpening(in registry: RealityEntityRegistry) {
-        guard let descriptor = registry.descriptor?.descentDoorAnimation else { return }
+        guard registry.descriptor?.descentDoorAnimation != nil else { return }
         restoreDoorControllers(in: registry)
-
-        moveDoorController(
-            named: descriptor.leftPanelName,
-            translationX: -descriptor.panelTravelDistance,
-            registry: registry
-        )
-        moveDoorController(
-            named: descriptor.rightPanelName,
-            translationX: descriptor.panelTravelDistance,
-            registry: registry
-        )
-
-        if let entity = registry.entity(named: descriptor.lockCoreName),
-           var target = doorControllerBaseTransforms[descriptor.lockCoreName] {
-            target.scale *= 0.12
-            target.translation.z += 0.08
-            target.rotation *= simd_quatf(angle: .pi * 0.75, axis: SIMD3(0, 0, 1))
-            entity.move(
-                to: target,
-                relativeTo: entity.parent,
-                duration: RealityDescentTransitionTiming.doorOpeningAnimationDuration,
-                timingFunction: .easeInOut
-            )
-        }
-
-        if let entity = registry.entity(named: descriptor.logoLightName),
-           var target = doorControllerBaseTransforms[descriptor.logoLightName] {
-            target.scale *= 1.16
-            entity.move(
-                to: target,
-                relativeTo: entity.parent,
-                duration: RealityDescentTransitionTiming.doorOpeningAnimationDuration,
-                timingFunction: .easeInOut
-            )
+        let started = ProcessInfo.processInfo.systemUptime
+        doorOpeningTask = Task { @MainActor [weak self, weak registry] in
+            while !Task.isCancelled {
+                guard let self, let registry else { return }
+                let progress = min(1, (ProcessInfo.processInfo.systemUptime - started)
+                    / RealityDescentTransitionTiming.doorOpeningAnimationDuration)
+                self.applyDoorOpening(progress: Float(progress), in: registry)
+                if progress >= 1 { return }
+                do { try await Task.sleep(for: .milliseconds(16)) } catch { return }
+            }
         }
     }
 
-    private func moveDoorController(
-        named name: String,
-        translationX: Float,
-        registry: RealityEntityRegistry
-    ) {
-        guard let entity = registry.entity(named: name),
-              var target = doorControllerBaseTransforms[name] else { return }
-        target.translation.x += translationX
-        entity.move(
-            to: target,
-            relativeTo: entity.parent,
-            duration: RealityDescentTransitionTiming.doorOpeningAnimationDuration,
-            timingFunction: .easeInOut
-        )
+    private func applyDoorOpening(progress: Float, in registry: RealityEntityRegistry) {
+        guard registry.descriptor?.descentDoorAnimation != nil else { return }
+        // A short release beat, then smooth acceleration and deceleration. No model swap.
+        let t = max(0, min(1, (progress - 0.12) / 0.88))
+        let eased = t * t * (3 - 2 * t)
+        // Entities and bounds are resolved once at attachment, not every frame.
+        for panel in doorPanels {
+            var target = panel.closed
+            target.translation.x += panel.travel * eased
+            panel.entity.transform = target
+        }
+        if let portal = doorPortal, var target = doorPortalClosed {
+            // Authored closed state compresses the portal vertically; reveal it in place.
+            target.scale.z = 1
+            portal.transform = target
+            portal.components.set(OpacityComponent(opacity: eased))
+        }
     }
 
     private func animateRewardStandAppearance(
