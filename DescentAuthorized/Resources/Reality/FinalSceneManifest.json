@@ -355,5 +355,75 @@
       "magicInputBoard": "FINAL_F02B_MagicInputBoard"
     },
     "targetHeight": 2.8
+  },
+  {
+    "floor": 1,
+    "role": "administrator",
+    "name": "FinalAuthorizationAdministrator",
+    "asset": "final_authorization_administrator",
+    "scene": "DA_F01_FinalApproval",
+    "prefix": "F01C",
+    "resource": "floor01_final_authorization_administrator",
+    "directory": "Reality/Scenes/Floor01/FinalAuthorizationAdministrator",
+    "cameras": {
+      "battle": "F01C_MainCamera",
+      "main": "F01C_MainCamera",
+      "tutorial": "F01C_MainCamera",
+      "descentInput": "CAM_F01_DescentDoor",
+      "rewardSelection": "CAM_F01_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F01C_EnemySpawn",
+      "magicInputBoard": "FINAL_F01C_MagicInputBoard",
+      "rewardStand": "FINAL_F01C_RewardStand",
+      "rewardScrollLeft": "FINAL_F01C_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F01C_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F01C_RewardSlot_Right",
+      "descentStele": "FINAL_F01C_DescentStele",
+      "descentPedestal": "FINAL_F01C_DescentPedestal"
+    },
+    "targetHeight": 4.2
+  },
+  {
+    "floor": 1,
+    "role": "residualA",
+    "name": "IdentityComparisonResidual",
+    "asset": "identity_comparison_residual",
+    "scene": "DA_F01A_IdentityComparison",
+    "prefix": "F01A",
+    "resource": "floor01_identity_comparison_residual",
+    "directory": "Reality/Scenes/Floor01/IdentityComparisonResidual",
+    "cameras": {
+      "battle": "F01A_MainCamera",
+      "main": "F01A_MainCamera",
+      "tutorial": "F01A_MainCamera",
+      "descentInput": "CAM_F01A_IntermediateDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F01A_EnemySpawn",
+      "magicInputBoard": "FINAL_F01A_MagicInputBoard"
+    },
+    "targetHeight": 2.8
+  },
+  {
+    "floor": 1,
+    "role": "residualB",
+    "name": "ExitReviewResidual",
+    "asset": "exit_review_residual",
+    "scene": "DA_F01B_ExitHandover",
+    "prefix": "F01B",
+    "resource": "floor01_exit_review_residual",
+    "directory": "Reality/Scenes/Floor01/ExitReviewResidual",
+    "cameras": {
+      "battle": "F01B_MainCamera",
+      "main": "F01B_MainCamera",
+      "tutorial": "F01B_MainCamera",
+      "descentInput": "CAM_F01B_IntermediateDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F01B_EnemySpawn",
+      "magicInputBoard": "FINAL_F01B_MagicInputBoard"
+    },
+    "targetHeight": 2.8
   }
 ]
