@@ -1,50 +1,84 @@
 {
+  "actor": "CausalityAdministrator",
   "fps": 30,
   "clips": {
     "idle": {
       "start": 0.0,
-      "end": 2.0,
-      "duration": 2.0
+      "end": 4.4,
+      "duration": 4.4
+    },
+    "idleVariant": {
+      "start": 4.5,
+      "end": 6.9,
+      "duration": 2.4
     },
     "appear": {
-      "start": 2.1,
-      "end": 3.1,
+      "start": 7.0,
+      "end": 8.0,
       "duration": 1.0
     },
     "telegraph": {
-      "start": 3.2,
-      "end": 4.4,
+      "start": 8.1,
+      "end": 9.3,
       "duration": 1.2
     },
     "attack": {
-      "start": 4.5,
-      "end": 5.5,
+      "start": 9.4,
+      "end": 10.4,
       "duration": 1.0,
       "impact": 0.46,
       "settledAt": 0.96
     },
     "heavyAttack": {
-      "start": 5.6,
-      "end": 6.9,
+      "start": 10.5,
+      "end": 11.8,
       "duration": 1.3,
       "impact": 0.62,
       "settledAt": 1.28
     },
     "special": {
-      "start": 7.0,
-      "end": 9.0,
+      "start": 11.9,
+      "end": 13.9,
       "duration": 2.0
     },
     "hit": {
-      "start": 9.1,
-      "end": 9.9,
+      "start": 14.0,
+      "end": 14.8,
       "duration": 0.8
     },
     "death": {
-      "start": 10.0,
-      "end": 11.8,
+      "start": 14.9,
+      "end": 16.7,
       "duration": 1.8
     }
   },
-  "actor": "CausalityAdministrator"
+  "rigVersion": 2,
+  "profile": {
+    "style": "delayed-record-verdict",
+    "side": "R",
+    "cycle": 4.4,
+    "arm": [
+      -0.25,
+      0,
+      -0.07
+    ],
+    "forearm": [
+      -0.18,
+      0.06,
+      0.1
+    ],
+    "chest": [
+      0.05,
+      0,
+      0.06
+    ],
+    "look": 0.035,
+    "hold": 0.09
+  },
+  "initialIdleOffset": 2.3333333333333335,
+  "dissolveDuration": 0.65,
+  "sourceRigPreserved": false,
+  "rigidEquipment": [
+    "equipment_back"
+  ]
 }
