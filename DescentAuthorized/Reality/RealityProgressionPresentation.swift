@@ -140,7 +140,10 @@ final class RealityProgressionVFXRenderer {
         restore(.descentStele, in: registry)
         restore(.descentPedestal, in: registry)
 
-        guard !reducedMotion else { return }
+        // The 5F stele and input plate are fixed architecture. Only the door
+        // leaves open; input/approval feedback must not resize or shake the props.
+        guard registry.descriptor?.sceneID != .floor05OriginalMemoryAdministrator,
+              !reducedMotion else { return }
         switch state {
         case .drawing:
             pulse(.descentPedestal, scale: 1.025, duration: 0.18, registry: registry)
