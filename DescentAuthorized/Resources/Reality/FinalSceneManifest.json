@@ -215,5 +215,75 @@
       "magicInputBoard": "FINAL_F04B_MagicInputBoard"
     },
     "targetHeight": 2.8
+  },
+  {
+    "floor": 3,
+    "role": "administrator",
+    "name": "VoluntaryQuarantineAdministrator",
+    "asset": "voluntary_quarantine_administrator",
+    "scene": "DA_F03_VoluntaryIsolationAdministrator",
+    "prefix": "F03C",
+    "resource": "floor03_voluntary_quarantine_administrator",
+    "directory": "Reality/Scenes/Floor03/VoluntaryQuarantineAdministrator",
+    "cameras": {
+      "battle": "F03C_MainCamera",
+      "main": "F03C_MainCamera",
+      "tutorial": "F03C_MainCamera",
+      "descentInput": "CAM_F03_DescentDoor",
+      "rewardSelection": "CAM_F03_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F03C_EnemySpawn",
+      "magicInputBoard": "FINAL_F03C_MagicInputBoard",
+      "rewardStand": "FINAL_F03C_RewardStand",
+      "rewardScrollLeft": "FINAL_F03C_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F03C_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F03C_RewardSlot_Right",
+      "descentStele": "FINAL_F03C_DescentStele",
+      "descentPedestal": "FINAL_F03C_DescentPedestal"
+    },
+    "targetHeight": 4.2
+  },
+  {
+    "floor": 3,
+    "role": "residualA",
+    "name": "ConsentCustodianResidual",
+    "asset": "consent_custodian_residual",
+    "scene": "DA_F03A_ConsentArchive",
+    "prefix": "F03A",
+    "resource": "floor03_consent_custodian_residual",
+    "directory": "Reality/Scenes/Floor03/ConsentCustodianResidual",
+    "cameras": {
+      "battle": "F03A_MainCamera",
+      "main": "F03A_MainCamera",
+      "tutorial": "F03A_MainCamera",
+      "descentInput": "CAM_F03A_MiddleDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F03A_EnemySpawn",
+      "magicInputBoard": "FINAL_F03A_MagicInputBoard"
+    },
+    "targetHeight": 2.8
+  },
+  {
+    "floor": 3,
+    "role": "residualB",
+    "name": "QuarantineEnforcerResidual",
+    "asset": "quarantine_enforcer_residual",
+    "scene": "DA_F03B_IsolationExecution",
+    "prefix": "F03B",
+    "resource": "floor03_quarantine_enforcer_residual",
+    "directory": "Reality/Scenes/Floor03/QuarantineEnforcerResidual",
+    "cameras": {
+      "battle": "F03B_MainCamera",
+      "main": "F03B_MainCamera",
+      "tutorial": "F03B_MainCamera",
+      "descentInput": "CAM_F03B_MiddleDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F03B_EnemySpawn",
+      "magicInputBoard": "FINAL_F03B_MagicInputBoard"
+    },
+    "targetHeight": 2.8
   }
 ]
