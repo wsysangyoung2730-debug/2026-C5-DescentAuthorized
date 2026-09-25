@@ -2,6 +2,18 @@ import Foundation
 import RealityKit
 
 enum FloorSceneID: String, CaseIterable {
+    case floor04SignatureMimicResidual = "floor04_signature_mimic_residual"
+    case floor04RejectionExecutionResidual = "floor04_rejection_execution_residual"
+    case floor04ResponsibilityAuditAdministrator = "floor04_responsibility_audit_administrator"
+    case floor03ConsentCustodianResidual = "floor03_consent_custodian_residual"
+    case floor03QuarantineEnforcerResidual = "floor03_quarantine_enforcer_residual"
+    case floor03VoluntaryQuarantineAdministrator = "floor03_voluntary_quarantine_administrator"
+    case floor02OverloadResidual = "floor02_overload_residual"
+    case floor02BackflowBlockerResidual = "floor02_backflow_blocker_residual"
+    case floor02SealMaintenanceAdministrator = "floor02_seal_maintenance_administrator"
+    case floor01IdentityComparisonResidual = "floor01_identity_comparison_residual"
+    case floor01ExitReviewResidual = "floor01_exit_review_residual"
+    case floor01FinalAuthorizationAdministrator = "floor01_final_authorization_administrator"
     case floor07CoordinateResidue = "floor07_coordinate_residue"
     case floor07CoordinateAdministrator = "floor07_coordinate_administrator"
     case floor06CausalityResidue = "floor06_causality_residue"
@@ -9,7 +21,7 @@ enum FloorSceneID: String, CaseIterable {
     case floor05MemoryOmissionResidue = "floor05_memory_omission_residue"
     case floor05OriginalMemoryAdministrator = "floor05_original_memory_administrator"
     var isExpansion: Bool {
-        rawValue.hasPrefix("floor05_") || rawValue.hasPrefix("floor06_") || rawValue.hasPrefix("floor07_")
+        (1...7).contains { rawValue.hasPrefix("floor0\($0)_") }
     }
 
     case floor10ClosedOffice = "floor10_closed_office"
@@ -19,6 +31,18 @@ enum FloorSceneID: String, CaseIterable {
 }
 
 enum GameAssetID: String, CaseIterable {
+    case signatureMimicResidual = "signature_mimic_residual"
+    case rejectionExecutionResidual = "rejection_execution_residual"
+    case responsibilityAuditAdministrator = "responsibility_audit_administrator"
+    case consentCustodianResidual = "consent_custodian_residual"
+    case quarantineEnforcerResidual = "quarantine_enforcer_residual"
+    case voluntaryQuarantineAdministrator = "voluntary_quarantine_administrator"
+    case overloadResidual = "overload_residual"
+    case backflowBlockerResidual = "backflow_blocker_residual"
+    case sealMaintenanceAdministrator = "seal_maintenance_administrator"
+    case identityComparisonResidual = "identity_comparison_residual"
+    case exitReviewResidual = "exit_review_residual"
+    case finalAuthorizationAdministrator = "final_authorization_administrator"
     case coordinateResidue = "coordinate_residue"
     case coordinateAdministrator = "coordinate_administrator"
     case causalityResidue = "causality_residue"

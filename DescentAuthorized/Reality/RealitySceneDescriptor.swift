@@ -118,7 +118,7 @@ struct RealitySceneDescriptor: Sendable {
     }
 
     static func descriptor(for sceneID: FloorSceneID) -> RealitySceneDescriptor {
-        expansionDescriptor(for: sceneID) ?? descriptors[sceneID]!
+        FinalSceneContract.descriptor(for: sceneID) ?? expansionDescriptor(for: sceneID) ?? descriptors[sceneID]!
     }
 
     private static func expansionDescriptor(for id: FloorSceneID) -> RealitySceneDescriptor? {
@@ -306,6 +306,12 @@ struct DemoScenePresentation: Equatable, Sendable {
     let experience: DemoSceneExperience
 
     static func presentation(for sceneID: SceneID, expansion: ExpansionProgress?) -> DemoScenePresentation {
+        if let expansion, let route = ExpansionSceneRoute(expansion),
+           let finalRoom = FinalSceneContract.room(for: route) {
+            return .init(progressSceneID: sceneID, floorSceneID: finalRoom,
+                cameraPreset: RealityCameraPreset(rawValue: route.camera.rawValue) ?? .battle,
+                experience: .completion)
+        }
         if expansion?.isLowerFloor == true {
             return .init(progressSceneID: sceneID, floorSceneID: nil,
                          cameraPreset: .battle, experience: .completion)
@@ -485,5 +491,50 @@ struct DemoScenePresentation: Equatable, Sendable {
 extension GraphicsQuality {
     func resourceName(for sceneID: FloorSceneID) -> String {
         sceneID.rawValue + (self == .high ? "" : "_" + rawValue)
+    }
+}
+
+
+/// Only published room contracts are enabled; unfinished rooms keep their existing route.
+struct FinalSceneContract: Decodable {
+    let floor: Int
+    let role: String
+    let name: String
+    let asset: String
+    let resource: String
+    let directory: String
+    let cameras: [String: String]
+    let anchors: [String: String]
+    let targetHeight: Float
+
+    static let installed: [FinalSceneContract] = {
+        guard let url = Bundle.main.url(forResource: "FinalSceneManifest", withExtension: "json", subdirectory: "Reality"),
+              let data = try? Data(contentsOf: url),
+              let rows = try? JSONDecoder().decode([FinalSceneContract].self, from: data) else { return [] }
+        return rows.filter { Bundle.main.url(forResource: $0.resource, withExtension: "usdc", subdirectory: $0.directory) != nil }
+    }()
+
+    static func room(for route: ExpansionSceneRoute) -> FloorSceneID? {
+        installed.first { $0.floor == route.floorNumber && $0.role == route.room.rawValue }
+            .flatMap { FloorSceneID(rawValue: $0.resource) }
+    }
+
+    static func contract(for id: FloorSceneID) -> FinalSceneContract? {
+        installed.first { $0.resource == id.rawValue }
+    }
+
+    static func descriptor(for id: FloorSceneID) -> RealitySceneDescriptor? {
+        guard let row = contract(for: id), let actor = GameAssetID(rawValue: row.asset) else { return nil }
+        let cameras = Dictionary(uniqueKeysWithValues: row.cameras.compactMap { key, value in
+            RealityCameraPreset(rawValue: key).map { ($0, value) }
+        })
+        let entities = Dictionary(uniqueKeysWithValues: row.anchors.compactMap { key, value in
+            RealityEntityRole(rawValue: key).map { ($0, value) }
+        })
+        return .init(sceneID: id, resourceSubdirectory: row.directory,
+            cameraNames: cameras, entityNames: entities,
+            actor: .init(assetID: actor, expectedEntityName: "ACTOR_" + row.name,
+                resourceSubdirectory: "Reality/Actors/" + row.name,
+                targetHeight: row.targetHeight, intentScale: row.role == "administrator" ? 1 : 0.7))
     }
 }
