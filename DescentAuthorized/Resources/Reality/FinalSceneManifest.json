@@ -1,6 +1,34 @@
 [
   {
     "floor": 7,
+    "role": "administrator",
+    "name": "CoordinateAdministrator",
+    "asset": "coordinate_administrator",
+    "scene": "DA_F07_CoordinateAdministrator",
+    "prefix": "F07B",
+    "resource": "floor07_coordinate_administrator",
+    "directory": "Reality/Scenes/Floor07/CoordinateAdministrator",
+    "cameras": {
+      "battle": "F07_iPad_MainCamera",
+      "main": "F07_iPad_MainCamera",
+      "tutorial": "F07_iPad_MainCamera",
+      "descentInput": "CAM_F07_DescentDoor",
+      "rewardSelection": "CAM_F07_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F07B_EnemySpawn",
+      "magicInputBoard": "FINAL_F07B_MagicInputBoard",
+      "rewardStand": "FINAL_F07B_RewardStand",
+      "rewardScrollLeft": "FINAL_F07B_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F07B_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F07B_RewardSlot_Right",
+      "descentStele": "FINAL_F07B_DescentStele",
+      "descentPedestal": "FINAL_F07B_DescentPedestal"
+    },
+    "targetHeight": 4.2
+  },
+  {
+    "floor": 7,
     "role": "residualA",
     "name": "CoordinateResidue",
     "asset": "coordinate_residue",
