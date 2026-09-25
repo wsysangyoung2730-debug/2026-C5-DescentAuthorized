@@ -2,6 +2,50 @@ import XCTest
 @testable import DescentAuthorizedCore
 
 final class DemoFlowIntegrationTests: XCTestCase {
+    func testRecordsPreparationWaitsForExplicitStartAndSurvivesRestore() throws {
+        var seed = GameProgress.newGame
+        seed.furthestCheckpoint = .recordsBattle
+        var session = DemoGameSession(progress: seed)
+        _ = try session.handle(.travelToCheckpoint(.recordsBattle))
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsPreparation)
+        XCTAssertThrowsError(try session.handle(.beginRecordsBattle))
+        XCTAssertNil(session.encounter)
+        XCTAssertNoThrow(try GameProgressValidator().validate(session.progress))
+
+        let store = InMemoryGameSaveStore()
+        try session.save(to: store)
+        session = try DemoGameSession.restore(from: store)
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsPreparation)
+        _ = try session.handle(.configureLoadout([.riftSeverance], protectedAttack: nil, protectedDefense: nil))
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsPreparation)
+        _ = try session.handle(.enterRecordsEncounter)
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsEncounter)
+        XCTAssertThrowsError(try session.handle(.enterRecordsEncounter))
+        XCTAssertNil(session.encounter)
+        _ = try session.handle(.beginRecordsBattle)
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsBattle)
+    }
+
+    func testLegacyEncounterSaveReturnsToPreparationWithoutLosingHP() throws {
+        for (checkpoint, encounter, preparation) in [
+            (CheckpointID.recordsBattle, SceneID.floor9RecordsEncounter, SceneID.floor9RecordsPreparation),
+            (.residualBattle, .floor8ResidualEncounter, .floor8ResidualPreparation),
+            (.observationBattle, .floor8AdministratorEncounter, .floor8AdministratorPreparation)
+        ] {
+            var seed = GameProgress.newGame
+            seed.furthestCheckpoint = .observationBattle
+            var controller = GameProgressionController(progress: seed)
+            _ = try controller.travel(to: checkpoint)
+            var progress = controller.progress
+            progress.currentScene = encounter
+            progress.playerHP = 73
+            let session = DemoGameSession(progress: progress)
+            XCTAssertEqual(session.progress.currentScene, preparation)
+            XCTAssertEqual(session.progress.playerHP, 73)
+            XCTAssertNoThrow(try GameProgressValidator().validate(session.progress))
+        }
+    }
+
     func testReferencePlaythroughReachesDemoEndingThroughAllBattles() throws {
         var session = DemoGameSession()
 
@@ -19,12 +63,13 @@ final class DemoFlowIntegrationTests: XCTestCase {
         _ = try session.handle(.approveDescentDoor)
 
         _ = try session.handle(.enterRecordsBattle)
+        _ = try session.handle(.enterRecordsEncounter)
         _ = try session.handle(.beginRecordsBattle)
         try winCurrentEncounter(in: &session)
         _ = try session.handle(.continueAfterRecordsDefeat)
-        _ = try session.handle(.selectReward("floor9-worn-a"))
+        _ = try session.handle(.selectReward("floor9-barrier"))
         _ = try session.handle(.completeRewardLearning(
-            candidateID: "floor9-worn-a",
+            candidateID: "floor9-barrier",
             grade: .perfect
         ))
         _ = try session.handle(.approveDescentDoor)
@@ -32,6 +77,7 @@ final class DemoFlowIntegrationTests: XCTestCase {
         _ = try session.handle(.enterProtectionRoom)
         _ = try session.handle(.learnSpell(.basicBarrier))
         _ = try session.handle(.completeProtectionTraining(grade: .perfect))
+        _ = try session.handle(.enterResidualEncounter)
         _ = try session.handle(.beginResidualBattle)
         try winCurrentEncounter(in: &session)
 
@@ -42,23 +88,37 @@ final class DemoFlowIntegrationTests: XCTestCase {
         ))
 
         _ = try session.handle(.releaseObservationDoor)
+        XCTAssertEqual(session.progress.currentScene, .floor8AdministratorPreparation)
+        _ = try session.handle(.enterAdministratorEncounter)
         _ = try session.handle(.beginAdministratorBattle)
         try winCurrentEncounter(in: &session)
         _ = try session.handle(.continueAfterAdministratorDefeat)
-        _ = try session.handle(.selectReward("floor8-forbidden"))
+        _ = try session.handle(.selectReward("floor8-rupture"))
         _ = try session.handle(.completeRewardLearning(
-            candidateID: "floor8-forbidden",
+            candidateID: "floor8-rupture",
             grade: .perfect
         ))
         let endingEvents = try session.handle(.approveDescentDoor)
 
         XCTAssertEqual(session.progress.currentFloor, .floor7)
         XCTAssertEqual(session.progress.currentScene, .demoComplete)
-        XCTAssertEqual(session.progress.defeatedEnemies, Set(EnemyID.allCases))
-        XCTAssertEqual(session.progress.learnedSpells, Set(SpellID.allCases))
+        XCTAssertEqual(session.progress.defeatedEnemies, Set([EnemyID.recordsAdministrator, .observationResidual, .observationAdministrator]))
+        XCTAssertEqual(session.progress.learnedSpells, Set([SpellID.afterglowErasure, .riftSeverance, .barrierPiercing, .basicBarrier, .sealRelease, .focusedRupture]))
         XCTAssertTrue(session.progress.isDemoComplete)
         XCTAssertTrue(endingEvents.contains(.progression(.demoCompleted)))
         XCTAssertNoThrow(try GameProgressValidator().validate(session.progress))
+        XCTAssertEqual(session.progress.expansion?.floorNumber, 7)
+        XCTAssertEqual(session.progress.expansion?.stage, .entrance)
+        _ = try session.handle(.advanceExpansion)
+        XCTAssertEqual(session.progress.expansion?.stage, .preparation)
+        _ = try session.handle(.advanceExpansion)
+        XCTAssertEqual(session.progress.expansion?.stage, .residualEncounter)
+        _ = try session.handle(.advanceExpansion)
+        XCTAssertEqual(session.progress.expansion?.stage, .residualBattle)
+        _ = try session.handle(.startEncounter)
+        XCTAssertNotNil(session.battleState)
+        XCTAssertEqual(session.battleState?.enemy.id,
+            .enemy(try XCTUnwrap(ExpansionEnemyCatalog.enemy(floor: 7, isBoss: false)).id))
     }
 
     private func winCurrentEncounter(

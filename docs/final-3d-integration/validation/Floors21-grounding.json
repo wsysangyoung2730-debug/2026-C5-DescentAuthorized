@@ -1,0 +1,38 @@
+[
+  {
+    "actor": "DA_ACTOR_BackflowBlockerResidual",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 33
+  },
+  {
+    "actor": "DA_ACTOR_ExitReviewResidual",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 34
+  },
+  {
+    "actor": "DA_ACTOR_FinalAuthorizationAdministrator",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 36
+  },
+  {
+    "actor": "DA_ACTOR_IdentityComparisonResidual",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 34
+  },
+  {
+    "actor": "DA_ACTOR_OverloadResidual",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 32
+  },
+  {
+    "actor": "DA_ACTOR_SealMaintenanceAdministrator",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 34
+  }
+]

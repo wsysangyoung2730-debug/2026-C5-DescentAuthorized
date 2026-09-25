@@ -34,7 +34,17 @@ struct RewardSelectionView: View {
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
 
-    let floor: FloorID
+    let floorNumber: Int
+
+    init(floor: FloorID, sceneController: RealitySceneController, isLearningInputActive: Binding<Bool>) {
+        self.init(floorNumber: floor.rawValue, sceneController: sceneController, isLearningInputActive: isLearningInputActive)
+    }
+
+    init(floorNumber: Int, sceneController: RealitySceneController, isLearningInputActive: Binding<Bool>) {
+        self.floorNumber = floorNumber
+        self.sceneController = sceneController
+        self._isLearningInputActive = isLearningInputActive
+    }
     let sceneController: RealitySceneController
     @Binding var isLearningInputActive: Bool
 
@@ -45,10 +55,18 @@ struct RewardSelectionView: View {
     @State private var inspectedCandidateID: String?
     @State private var detailPressTask: Task<Void, Never>?
     @State private var isSelectionInterfaceVisible = false
+    @State private var showsPractice = false
 
     private var candidates: [RewardCandidate] {
-        RewardCatalog.candidates(for: floor)
+        isLowerFloor ? gameSession.progress.currentRewardCandidates : RewardCatalog.candidates(forFloorNumber: floorNumber)
     }
+
+    private var isLowerFloor: Bool { (1...4).contains(floorNumber) }
+    private var usesSceneRewards: Bool {
+        guard let id = gameSession.presentation.floorSceneID else { return false }
+        return RealitySceneDescriptor.descriptor(for: id).entityNames[.rewardStand] != nil
+    }
+
 
     var body: some View {
         GeometryReader { proxy in
@@ -77,7 +95,13 @@ struct RewardSelectionView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showsPractice) {
+            if let candidate = candidates.first(where: { $0.id == selectedCandidateID }) {
+                SpellPracticeSheet(spell: displayedSpell(for: candidate))
+            }
+        }
         .onAppear {
+            if usesSceneRewards { sceneController.configureFinalRewardCandidates(candidates) }
             if let pendingLearningCandidate,
                let selectedIndex = candidates.firstIndex(where: {
                    $0.id == pendingLearningCandidate.id
@@ -90,16 +114,17 @@ struct RewardSelectionView: View {
             }
 
             isLearningInputActive = false
+            if !usesSceneRewards {
+                rewardState = .choosing
+                isSelectionInterfaceVisible = true
+                return
+            }
             isSelectionInterfaceVisible = false
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             setRewardState(.appearing)
             transitionTask?.cancel()
             transitionTask = Task { @MainActor in
-                try? await Task.sleep(
-                    for: RealityRewardTransitionTiming.appearanceDelay(
-                        reducedMotion: appSettings.reducedMotion
-                    )
-                )
+                guard await sceneController.waitForRewardAppearance() else { return }
                 guard !Task.isCancelled else { return }
                 setRewardState(.choosing)
                 withAnimation(
@@ -111,11 +136,12 @@ struct RewardSelectionView: View {
         }
         .onDisappear {
             transitionTask?.cancel()
+            if usesSceneRewards { sceneController.setRewardPresentation(.inactive, reducedMotion: appSettings.reducedMotion) }
             cancelDetailPress(playsCloseSound: false)
             isLearningInputActive = false
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
-            sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion)
+            if usesSceneRewards { sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion) }
         }
     }
 
@@ -140,7 +166,7 @@ struct RewardSelectionView: View {
     private func header(metrics: RewardLayoutMetrics) -> some View {
         ZStack {
             VStack(alignment: .leading, spacing: metrics.headerSpacing) {
-                Text("제\(floor.rawValue)층 · 기록 보관고")
+                Text("제\(floorNumber)층 · 기록 보관고")
                     .font(.system(size: metrics.eyebrowSize, weight: .medium, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.gold)
                     .padding(.leading, metrics.titleContentLeadingInset)
@@ -174,6 +200,13 @@ struct RewardSelectionView: View {
                     x: metrics.size.width - metrics.headerLeading - 52,
                     y: metrics.headerTop + metrics.bodySize / 2
                 )
+            if isLowerFloor {
+                Button("선택 문양 시험 각인") { showsPractice = true }
+                    .buttonStyle(.bordered).tint(DAColor.gold)
+                    .disabled(selectedCandidateID == nil || isResolving)
+                    .position(x: metrics.size.width - metrics.headerLeading - 90,
+                              y: metrics.headerTop + 60)
+            }
         }
         .frame(width: metrics.size.width, height: metrics.size.height)
     }
@@ -217,9 +250,7 @@ struct RewardSelectionView: View {
                         .resizable()
                         .scaledToFit()
                         .opacity(0.2)
-                    Image(spell.rewardGlyphAssetName)
-                        .resizable()
-                        .scaledToFit()
+                    SpellGlyphPreview(spell: spell)
                         .blendMode(.screen)
                         .padding(metrics.cardWidth * 0.08)
                 }
@@ -362,9 +393,7 @@ struct RewardSelectionView: View {
                             .resizable()
                             .scaledToFit()
                             .opacity(0.22)
-                        Image(spell.rewardGlyphAssetName)
-                            .resizable()
-                            .scaledToFit()
+                        SpellGlyphPreview(spell: spell)
                             .blendMode(.screen)
                             .padding(12)
                     }
@@ -373,7 +402,7 @@ struct RewardSelectionView: View {
                         .fill(RewardSelectionPalette.gold.opacity(0.28))
                         .frame(width: 1, height: metrics.detailGlyphSize * 0.8)
                     VStack(alignment: .leading, spacing: 5) {
-                        detailRow("효과 범위", spell.rewardEffectRangeTitle)
+                        detailRow("효과 범위", spell.compactEffectDescription)
                         detailRow("소모 마나", "\(Int(spell.recommendedMana))%")
                         detailRow("필요 획", "\(spell.requiredStrokes)")
                         Text(effectDescription(for: spell))
@@ -444,7 +473,7 @@ struct RewardSelectionView: View {
 
         return ScrollSpellLearningView(
             spell: spell,
-            sourceCode: "제\(floor.rawValue)층 · 관리자 보상 기록",
+            sourceCode: gameSession.progress.expansion?.rewardSite?.title ?? "제\(floorNumber)층 · 관리자 보상 기록",
             discoveryText: "선택한 두루마리의 문양이 입력판과 공명합니다. 획의 순서를 재현해 주문 기록을 완전히 정착시키십시오.",
             presentation: .standard,
             tutorialSequence: nil,
@@ -494,28 +523,15 @@ struct RewardSelectionView: View {
     }
 
     private func summaryLine(for spell: SpellDefinition) -> String {
-        "\(spell.rewardEffectRangeTitle) · 마나 \(Int(spell.recommendedMana))% · \(spell.requiredStrokes)획"
+        "\(spell.compactEffectDescription) · 마나 \(Int(spell.recommendedMana))% · \(spell.requiredStrokes)획"
     }
 
     private func effectDescription(for spell: SpellDefinition) -> String {
-        switch spell.effect {
-        case let .damage(_, _, piercesNormalBarrier):
-            return piercesNormalBarrier
-                ? "일반 방벽을 관통하고 피해를 줍니다."
-                : "대상에게 직접 피해를 줍니다."
-        case .fixedBarrier:
-            return "다음 공격을 흡수할 일반 방벽을 생성합니다."
-        case .dispelAbsoluteBarrier:
-            return "대상의 절대 방벽을 해제합니다."
-        }
+        SpellCatalog.metadata(for: spell.id).effectSummary
     }
 
     private func effectTags(for spell: SpellDefinition) -> [String] {
-        switch spell.effect {
-        case let .damage(_, _, pierces): return pierces ? ["희귀", "방벽 파괴"] : ["직접 피해"]
-        case .fixedBarrier: return ["생존"]
-        case .dispelAbsoluteBarrier: return ["해제"]
-        }
+        [categoryTitle(spell.category), "\(spell.requiredStrokes)획"]
     }
 
     private func cardFrameAsset(isSelected: Bool, isDisabled: Bool) -> String {
@@ -528,6 +544,7 @@ struct RewardSelectionView: View {
         case .attack: "공격"
         case .defense: "방어"
         case .dispel: "해제"
+        case .debuff: "디버프"
         }
     }
 
@@ -545,6 +562,7 @@ struct RewardSelectionView: View {
         case .attack: RewardSelectionPalette.violet
         case .defense: RewardSelectionPalette.cyan
         case .dispel: Color(red: 0.94, green: 0.72, blue: 0.22)
+        case .debuff: Color(red: 0.76, green: 0.43, blue: 0.84)
         }
     }
 
@@ -580,7 +598,7 @@ struct RewardSelectionView: View {
 
     private func setRewardState(_ state: RealityRewardPresentationState) {
         rewardState = state
-        sceneController.setRewardPresentation(state, reducedMotion: appSettings.reducedMotion)
+        if usesSceneRewards { sceneController.setRewardPresentation(state, reducedMotion: appSettings.reducedMotion) }
     }
 }
 
@@ -649,6 +667,7 @@ private extension SpellDefinition {
         case .barrierPiercing: "BattleGlyphBarrierPiercing"
         case .basicBarrier: "BattleGlyphBasicBarrier"
         case .sealRelease: "BattleGlyphSealRelease"
+        default: ""
         }
     }
 
@@ -658,6 +677,7 @@ private extension SpellDefinition {
         case .attack: return "피해 \(range.lowerBound)~\(range.upperBound)"
         case .defense: return "방어막 \(range.lowerBound)~\(range.upperBound)"
         case .dispel: return "해제 \(range.lowerBound)~\(range.upperBound)"
+        case .debuff: return "디버프"
         }
     }
 }

@@ -1,0 +1,308 @@
+[
+  {
+    "name": "RecordAdministrator",
+    "floor": 9,
+    "boss": true,
+    "source": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/0. 에셋 모음/2. 관리자 및 잔류체 (에셋)/9층 관리자.glb",
+    "vertices": 17067,
+    "triangles": 18546,
+    "bones": 5,
+    "clips": {
+      "idle": {
+        "start": 0.0,
+        "end": 4.0,
+        "duration": 4.0
+      },
+      "appear": {
+        "start": 4.1,
+        "end": 5.1,
+        "duration": 1.0
+      },
+      "telegraph": {
+        "start": 5.2,
+        "end": 6.4,
+        "duration": 1.2
+      },
+      "attack": {
+        "start": 6.5,
+        "end": 7.5,
+        "duration": 1.0,
+        "impact": 0.46,
+        "settledAt": 0.96
+      },
+      "heavyAttack": {
+        "start": 7.6,
+        "end": 8.9,
+        "duration": 1.3,
+        "impact": 0.62,
+        "settledAt": 1.28
+      },
+      "special": {
+        "start": 9.0,
+        "end": 11.0,
+        "duration": 2.0
+      },
+      "hit": {
+        "start": 11.1,
+        "end": 11.9,
+        "duration": 0.8
+      },
+      "death": {
+        "start": 12.0,
+        "end": 13.8,
+        "duration": 1.8
+      }
+    },
+    "motionChecks": {
+      "attack": {
+        "frame": 209.8,
+        "minZ": 7.607174978829789e-08,
+        "maxZ": 3.2130632400512695,
+        "spineRadians": [
+          0.25999999046325684,
+          0.0,
+          0.18000000715255737
+        ],
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "heavyAttack": {
+        "frame": 247.6,
+        "minZ": 7.607174978829789e-08,
+        "maxZ": 3.2202963829040527,
+        "spineRadians": [
+          0.3224000036716461,
+          0.0,
+          0.18000000715255737
+        ],
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "death": {
+        "frame": 415,
+        "minZ": 7.607174978829789e-08,
+        "maxZ": 2.9288275241851807,
+        "spineRadians": [
+          1.0499999523162842,
+          0.0,
+          0.10000000149011612
+        ],
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  },
+  {
+    "name": "ObservationResidue",
+    "floor": 8,
+    "boss": false,
+    "source": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/0. 에셋 모음/2. 관리자 및 잔류체 (에셋)/8층 관측 잔류체.glb",
+    "vertices": 24864,
+    "triangles": 19277,
+    "bones": 5,
+    "clips": {
+      "idle": {
+        "start": 0.0,
+        "end": 4.0,
+        "duration": 4.0
+      },
+      "appear": {
+        "start": 4.1,
+        "end": 5.1,
+        "duration": 1.0
+      },
+      "telegraph": {
+        "start": 5.2,
+        "end": 6.4,
+        "duration": 1.2
+      },
+      "attack": {
+        "start": 6.5,
+        "end": 7.5,
+        "duration": 1.0,
+        "impact": 0.46,
+        "settledAt": 0.96
+      },
+      "heavyAttack": {
+        "start": 7.6,
+        "end": 8.9,
+        "duration": 1.3,
+        "impact": 0.62,
+        "settledAt": 1.28
+      },
+      "special": {
+        "start": 9.0,
+        "end": 11.0,
+        "duration": 2.0
+      },
+      "hit": {
+        "start": 11.1,
+        "end": 11.9,
+        "duration": 0.8
+      },
+      "death": {
+        "start": 12.0,
+        "end": 13.8,
+        "duration": 1.8
+      }
+    },
+    "motionChecks": {
+      "attack": {
+        "frame": 209.8,
+        "minZ": 0.0,
+        "maxZ": 2.8316991329193115,
+        "spineRadians": [
+          0.25999999046325684,
+          0.0,
+          -0.3400000035762787
+        ],
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "heavyAttack": {
+        "frame": 247.6,
+        "minZ": 0.0,
+        "maxZ": 2.7999343872070312,
+        "spineRadians": [
+          0.3224000036716461,
+          0.0,
+          -0.3400000035762787
+        ],
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "death": {
+        "frame": 415,
+        "minZ": -1.4901161193847656e-08,
+        "maxZ": 2.1563265323638916,
+        "spineRadians": [
+          1.159999966621399,
+          0.0,
+          -0.20000000298023224
+        ],
+        "rootTranslation": [
+          0.0,
+          0.15344488620758057,
+          0.0
+        ]
+      }
+    }
+  },
+  {
+    "name": "ObservationAdministrator",
+    "floor": 8,
+    "boss": true,
+    "source": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/0. 에셋 모음/2. 관리자 및 잔류체 (에셋)/8층 관리자.glb",
+    "vertices": 27947,
+    "triangles": 19195,
+    "bones": 5,
+    "clips": {
+      "idle": {
+        "start": 0.0,
+        "end": 4.0,
+        "duration": 4.0
+      },
+      "appear": {
+        "start": 4.1,
+        "end": 5.1,
+        "duration": 1.0
+      },
+      "telegraph": {
+        "start": 5.2,
+        "end": 6.4,
+        "duration": 1.2
+      },
+      "attack": {
+        "start": 6.5,
+        "end": 7.5,
+        "duration": 1.0,
+        "impact": 0.46,
+        "settledAt": 0.96
+      },
+      "heavyAttack": {
+        "start": 7.6,
+        "end": 8.9,
+        "duration": 1.3,
+        "impact": 0.62,
+        "settledAt": 1.28
+      },
+      "special": {
+        "start": 9.0,
+        "end": 11.0,
+        "duration": 2.0
+      },
+      "hit": {
+        "start": 11.1,
+        "end": 11.9,
+        "duration": 0.8
+      },
+      "death": {
+        "start": 12.0,
+        "end": 13.8,
+        "duration": 1.8
+      }
+    },
+    "motionChecks": {
+      "attack": {
+        "frame": 209.8,
+        "minZ": 3.259986272041715e-07,
+        "maxZ": 3.0317797660827637,
+        "spineRadians": [
+          0.05999999865889549,
+          0.0,
+          0.0
+        ],
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "heavyAttack": {
+        "frame": 247.6,
+        "minZ": 3.259986272041715e-07,
+        "maxZ": 3.0317797660827637,
+        "spineRadians": [
+          0.05999999865889549,
+          0.0,
+          0.0
+        ],
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "death": {
+        "frame": 415,
+        "minZ": 3.259986272041715e-07,
+        "maxZ": 2.6237475872039795,
+        "spineRadians": [
+          1.0499999523162842,
+          0.0,
+          0.10000000149011612
+        ],
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  }
+]

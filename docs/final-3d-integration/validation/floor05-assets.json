@@ -1,0 +1,50 @@
+[
+  {
+    "floor": 5,
+    "room": "floor05_original_memory_administrator",
+    "quality": "high",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 3
+  },
+  {
+    "floor": 5,
+    "room": "floor05_original_memory_administrator",
+    "quality": "medium",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 3
+  },
+  {
+    "floor": 5,
+    "room": "floor05_original_memory_administrator",
+    "quality": "low",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 3
+  },
+  {
+    "floor": 5,
+    "room": "floor05_memory_omission_residue",
+    "quality": "high",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 5,
+    "room": "floor05_memory_omission_residue",
+    "quality": "medium",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 5,
+    "room": "floor05_memory_omission_residue",
+    "quality": "low",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  }
+]

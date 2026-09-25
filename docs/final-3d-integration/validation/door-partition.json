@@ -1,0 +1,86 @@
+[
+  {
+    "floor": 7,
+    "gate": "F07B_DescentDoor",
+    "facesBefore": 1378,
+    "movingFaces": [
+      130,
+      140
+    ],
+    "opening": "rectangular split slide",
+    "closedSurfacePreserved": true,
+    "boundaryMethod": "exact polygon clipping with interpolated UVs"
+  },
+  {
+    "floor": 6,
+    "gate": "F06B_DescentDoor",
+    "facesBefore": 34999,
+    "movingFaces": [
+      8103,
+      8018
+    ],
+    "opening": "rectangular split slide",
+    "closedSurfacePreserved": true,
+    "boundaryMethod": "exact polygon clipping with interpolated UVs"
+  },
+  {
+    "floor": 5,
+    "gate": "F05B_DecorativeClosedDoor",
+    "facesBefore": 34999,
+    "movingFaces": [
+      8103,
+      8018
+    ],
+    "opening": "rectangular split slide",
+    "closedSurfacePreserved": true,
+    "boundaryMethod": "exact polygon clipping with interpolated UVs"
+  },
+  {
+    "floor": 4,
+    "gate": "F04C_P16_01",
+    "facesBefore": 2188,
+    "movingFaces": [
+      195,
+      209
+    ],
+    "opening": "rectangular split slide",
+    "closedSurfacePreserved": true,
+    "boundaryMethod": "exact polygon clipping with interpolated UVs"
+  },
+  {
+    "floor": 3,
+    "gate": "F03C_DescentGate_To_F02",
+    "facesBefore": 2729,
+    "movingFaces": [
+      378,
+      386
+    ],
+    "opening": "rectangular split slide",
+    "closedSurfacePreserved": true,
+    "boundaryMethod": "exact polygon clipping with interpolated UVs"
+  },
+  {
+    "floor": 2,
+    "gate": "F02C_DescentGate_To_F01",
+    "facesBefore": 2715,
+    "movingFaces": [
+      237,
+      272
+    ],
+    "opening": "circular split slide",
+    "closedSurfacePreserved": true,
+    "boundaryMethod": "exact polygon clipping with interpolated UVs"
+  },
+  {
+    "floor": 1,
+    "gate": "F01C_FinalDescentGate",
+    "facesBefore": 2728,
+    "movingFaces": [
+      344,
+      428
+    ],
+    "opening": "rectangular split slide",
+    "closedSurfacePreserved": true,
+    "boundaryMethod": "exact polygon clipping with interpolated UVs"
+  }
+]

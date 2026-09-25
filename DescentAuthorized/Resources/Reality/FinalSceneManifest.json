@@ -1,0 +1,500 @@
+[
+  {
+    "floor": 7,
+    "role": "administrator",
+    "name": "CoordinateAdministrator",
+    "asset": "coordinate_administrator",
+    "scene": "DA_F07_CoordinateAdministrator",
+    "prefix": "F07B",
+    "resource": "floor07_coordinate_administrator",
+    "directory": "Reality/Scenes/Floor07/CoordinateAdministrator",
+    "cameras": {
+      "battle": "F07_iPad_MainCamera",
+      "main": "F07_iPad_MainCamera",
+      "tutorial": "F07_iPad_MainCamera",
+      "descentInput": "CAM_F07_DescentDoor",
+      "rewardSelection": "CAM_F07_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F07B_EnemySpawn",
+      "magicInputBoard": "FINAL_F07B_MagicInputBoard",
+      "rewardStand": "FINAL_F07B_RewardStand",
+      "rewardScrollLeft": "FINAL_F07B_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F07B_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F07B_RewardSlot_Right",
+      "descentStele": "FINAL_F07B_DescentStele",
+      "descentPedestal": "FINAL_F07B_DescentPedestal",
+      "descentDoor": "F07B_DescentDoor"
+    },
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F07C",
+    "doorTravel": 0.23650000000000002,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 7,
+    "role": "residualA",
+    "name": "CoordinateResidue",
+    "asset": "coordinate_residue",
+    "scene": "DA_F07A_CoordinateResidue",
+    "prefix": "F07A",
+    "resource": "floor07_coordinate_residue",
+    "directory": "Reality/Scenes/Floor07/CoordinateResidue",
+    "cameras": {
+      "battle": "F07A_iPadCamera",
+      "main": "F07A_iPadCamera",
+      "tutorial": "F07A_iPadCamera",
+      "descentInput": "CAM_F07A_BossAccessDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F07A_EnemySpawn",
+      "magicInputBoard": "FINAL_F07A_MagicInputBoard"
+    },
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 6,
+    "role": "administrator",
+    "name": "CausalityAdministrator",
+    "asset": "causality_administrator",
+    "scene": "DA_F06B_CausalityAdministrator",
+    "prefix": "F06B",
+    "resource": "floor06_causality_administrator",
+    "directory": "Reality/Scenes/Floor06/CausalityAdministrator",
+    "cameras": {
+      "battle": "F06_iPad_MainCamera",
+      "main": "F06_iPad_MainCamera",
+      "tutorial": "F06_iPad_MainCamera",
+      "descentInput": "CAM_F06_DescentDoor",
+      "rewardSelection": "CAM_F06_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F06B_EnemySpawn",
+      "magicInputBoard": "FINAL_F06B_MagicInputBoard",
+      "rewardStand": "FINAL_F06B_RewardStand",
+      "rewardScrollLeft": "FINAL_F06B_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F06B_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F06B_RewardSlot_Right",
+      "descentStele": "FINAL_F06B_DescentStele",
+      "descentPedestal": "FINAL_F06B_DescentPedestal",
+      "descentDoor": "F06B_DescentDoor"
+    },
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F06C",
+    "doorTravel": 0.24750000000000003,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 6,
+    "role": "residualA",
+    "name": "CausalityResidue",
+    "asset": "causality_residue",
+    "scene": "DA_F06A_ResultDelayResidue",
+    "prefix": "F06A",
+    "resource": "floor06_causality_residue",
+    "directory": "Reality/Scenes/Floor06/CausalityResidue",
+    "cameras": {
+      "battle": "F06A_iPadCamera",
+      "main": "F06A_iPadCamera",
+      "tutorial": "F06A_iPadCamera",
+      "descentInput": "CAM_F06A_BossAccessDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F06A_EnemySpawn",
+      "magicInputBoard": "FINAL_F06A_MagicInputBoard"
+    },
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 5,
+    "role": "administrator",
+    "name": "OriginalMemoryAdministrator",
+    "asset": "original_memory_administrator",
+    "scene": "DA_F05B_OriginalMemoryAdministrator",
+    "prefix": "F05B",
+    "resource": "floor05_original_memory_administrator",
+    "directory": "Reality/Scenes/Floor05/OriginalMemoryAdministrator",
+    "cameras": {
+      "battle": "F05_iPad_MainCamera",
+      "main": "F05_iPad_MainCamera",
+      "tutorial": "F05_iPad_MainCamera",
+      "descentInput": "CAM_F05_DescentDoor",
+      "rewardSelection": "CAM_F05_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F05B_EnemySpawn",
+      "magicInputBoard": "FINAL_F05B_MagicInputBoard",
+      "rewardStand": "FINAL_F05B_RewardStand",
+      "rewardScrollLeft": "FINAL_F05B_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F05B_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F05B_RewardSlot_Right",
+      "descentStele": "FINAL_F05B_DescentStele",
+      "descentPedestal": "FINAL_F05B_DescentPedestal",
+      "descentDoor": "F05B_DecorativeClosedDoor"
+    },
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F05C",
+    "doorTravel": 0.24750000000000003,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 5,
+    "role": "residualA",
+    "name": "MemoryOmissionResidue",
+    "asset": "memory_omission_residue",
+    "scene": "DA_F05A_MemoryOmissionResidue",
+    "prefix": "F05A",
+    "resource": "floor05_memory_omission_residue",
+    "directory": "Reality/Scenes/Floor05/MemoryOmissionResidue",
+    "cameras": {
+      "battle": "F05A_iPad_MainCamera",
+      "main": "F05A_iPad_MainCamera",
+      "tutorial": "F05A_iPad_MainCamera",
+      "descentInput": "CAM_F05A_BossAccess"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F05A_EnemySpawn",
+      "magicInputBoard": "FINAL_F05A_MagicInputBoard"
+    },
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 4,
+    "role": "administrator",
+    "name": "ResponsibilityAuditAdministrator",
+    "asset": "responsibility_audit_administrator",
+    "scene": "DA_F04_ResponsibilityAdministrator",
+    "prefix": "F04C",
+    "resource": "floor04_responsibility_audit_administrator",
+    "directory": "Reality/Scenes/Floor04/ResponsibilityAuditAdministrator",
+    "cameras": {
+      "battle": "F04_iPad_MainCamera",
+      "main": "F04_iPad_MainCamera",
+      "tutorial": "F04_iPad_MainCamera",
+      "descentInput": "CAM_F04_DescentDoor",
+      "rewardSelection": "CAM_F04_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F04C_EnemySpawn",
+      "magicInputBoard": "FINAL_F04C_MagicInputBoard",
+      "rewardStand": "FINAL_F04C_RewardStand",
+      "rewardScrollLeft": "FINAL_F04C_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F04C_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F04C_RewardSlot_Right",
+      "descentStele": "FINAL_F04C_DescentStele",
+      "descentPedestal": "FINAL_F04C_DescentPedestal",
+      "descentDoor": "F04C_P16_01"
+    },
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F04C",
+    "doorTravel": 0.275,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 4,
+    "role": "residualA",
+    "name": "SignatureMimicResidual",
+    "asset": "signature_mimic_residual",
+    "scene": "DA_F04A_SignatureMimicWorkshop",
+    "prefix": "F04A",
+    "resource": "floor04_signature_mimic_residual",
+    "directory": "Reality/Scenes/Floor04/SignatureMimicResidual",
+    "cameras": {
+      "battle": "F04A_iPad_MainCamera",
+      "main": "F04A_iPad_MainCamera",
+      "tutorial": "F04A_iPad_MainCamera",
+      "descentInput": "CAM_F04A_MiddleDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F04A_EnemySpawn",
+      "magicInputBoard": "FINAL_F04A_MagicInputBoard"
+    },
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 4,
+    "role": "residualB",
+    "name": "RejectionExecutionResidual",
+    "asset": "rejection_execution_residual",
+    "scene": "DA_F04B_RejectionExecutionWorkshop",
+    "prefix": "F04B",
+    "resource": "floor04_rejection_execution_residual",
+    "directory": "Reality/Scenes/Floor04/RejectionExecutionResidual",
+    "cameras": {
+      "battle": "F04B_iPad_MainCamera",
+      "main": "F04B_iPad_MainCamera",
+      "tutorial": "F04B_iPad_MainCamera",
+      "descentInput": "CAM_F04B_MiddleDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F04B_EnemySpawn",
+      "magicInputBoard": "FINAL_F04B_MagicInputBoard"
+    },
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 3,
+    "role": "administrator",
+    "name": "VoluntaryQuarantineAdministrator",
+    "asset": "voluntary_quarantine_administrator",
+    "scene": "DA_F03_VoluntaryIsolationAdministrator",
+    "prefix": "F03C",
+    "resource": "floor03_voluntary_quarantine_administrator",
+    "directory": "Reality/Scenes/Floor03/VoluntaryQuarantineAdministrator",
+    "cameras": {
+      "battle": "F03C_MainCamera",
+      "main": "F03C_MainCamera",
+      "tutorial": "F03C_MainCamera",
+      "descentInput": "CAM_F03_DescentDoor",
+      "rewardSelection": "CAM_F03_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F03C_EnemySpawn",
+      "magicInputBoard": "FINAL_F03C_MagicInputBoard",
+      "rewardStand": "FINAL_F03C_RewardStand",
+      "rewardScrollLeft": "FINAL_F03C_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F03C_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F03C_RewardSlot_Right",
+      "descentStele": "FINAL_F03C_DescentStele",
+      "descentPedestal": "FINAL_F03C_DescentPedestal",
+      "descentDoor": "F03C_DescentGate_To_F02"
+    },
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F03C",
+    "doorTravel": 0.28600000000000003,
+    "cameraPitchDegrees": {
+      "F03C_MainCamera": -3
+    },
+    "cameraFOVScale": {
+      "F03C_MainCamera": 0.95
+    }
+  },
+  {
+    "floor": 3,
+    "role": "residualA",
+    "name": "ConsentCustodianResidual",
+    "asset": "consent_custodian_residual",
+    "scene": "DA_F03A_ConsentArchive",
+    "prefix": "F03A",
+    "resource": "floor03_consent_custodian_residual",
+    "directory": "Reality/Scenes/Floor03/ConsentCustodianResidual",
+    "cameras": {
+      "battle": "F03A_MainCamera",
+      "main": "F03A_MainCamera",
+      "tutorial": "F03A_MainCamera",
+      "descentInput": "CAM_F03A_MiddleDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F03A_EnemySpawn",
+      "magicInputBoard": "FINAL_F03A_MagicInputBoard"
+    },
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 3,
+    "role": "residualB",
+    "name": "QuarantineEnforcerResidual",
+    "asset": "quarantine_enforcer_residual",
+    "scene": "DA_F03B_IsolationExecution",
+    "prefix": "F03B",
+    "resource": "floor03_quarantine_enforcer_residual",
+    "directory": "Reality/Scenes/Floor03/QuarantineEnforcerResidual",
+    "cameras": {
+      "battle": "F03B_MainCamera",
+      "main": "F03B_MainCamera",
+      "tutorial": "F03B_MainCamera",
+      "descentInput": "CAM_F03B_MiddleDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F03B_EnemySpawn",
+      "magicInputBoard": "FINAL_F03B_MagicInputBoard"
+    },
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 2,
+    "role": "administrator",
+    "name": "SealMaintenanceAdministrator",
+    "asset": "seal_maintenance_administrator",
+    "scene": "DA_F02_SealHeartAdministrator",
+    "prefix": "F02C",
+    "resource": "floor02_seal_maintenance_administrator",
+    "directory": "Reality/Scenes/Floor02/SealMaintenanceAdministrator",
+    "cameras": {
+      "battle": "F02C_MainCamera",
+      "main": "F02C_MainCamera",
+      "tutorial": "F02C_MainCamera",
+      "descentInput": "CAM_F02_DescentDoor",
+      "rewardSelection": "CAM_F02_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F02C_EnemySpawn",
+      "magicInputBoard": "FINAL_F02C_MagicInputBoard",
+      "rewardStand": "FINAL_F02C_RewardStand",
+      "rewardScrollLeft": "FINAL_F02C_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F02C_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F02C_RewardSlot_Right",
+      "descentStele": "FINAL_F02C_DescentStele",
+      "descentPedestal": "FINAL_F02C_DescentPedestal",
+      "descentDoor": "F02C_DescentGate_To_F01"
+    },
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F02C",
+    "doorTravel": 0.36850000000000005,
+    "cameraPitchDegrees": {
+      "F02C_MainCamera": -8.223943939900778
+    },
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 2,
+    "role": "residualA",
+    "name": "OverloadResidual",
+    "asset": "overload_residual",
+    "scene": "DA_F02A_PressureDistribution",
+    "prefix": "F02A",
+    "resource": "floor02_overload_residual",
+    "directory": "Reality/Scenes/Floor02/OverloadResidual",
+    "cameras": {
+      "battle": "F02A_MainCamera",
+      "main": "F02A_MainCamera",
+      "tutorial": "F02A_MainCamera",
+      "descentInput": "CAM_F02A_MiddleDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F02A_EnemySpawn",
+      "magicInputBoard": "FINAL_F02A_MagicInputBoard"
+    },
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {
+      "F02A_MainCamera": -6.008731688424321
+    },
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 2,
+    "role": "residualB",
+    "name": "BackflowBlockerResidual",
+    "asset": "backflow_blocker_residual",
+    "scene": "DA_F02B_CoolingBackflow",
+    "prefix": "F02B",
+    "resource": "floor02_backflow_blocker_residual",
+    "directory": "Reality/Scenes/Floor02/BackflowBlockerResidual",
+    "cameras": {
+      "battle": "F02B_MainCamera",
+      "main": "F02B_MainCamera",
+      "tutorial": "F02B_MainCamera",
+      "descentInput": "CAM_F02B_MiddleDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F02B_EnemySpawn",
+      "magicInputBoard": "FINAL_F02B_MagicInputBoard"
+    },
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {
+      "F02B_MainCamera": -7.647118752848988
+    },
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 1,
+    "role": "administrator",
+    "name": "FinalAuthorizationAdministrator",
+    "asset": "final_authorization_administrator",
+    "scene": "DA_F01_FinalApproval",
+    "prefix": "F01C",
+    "resource": "floor01_final_authorization_administrator",
+    "directory": "Reality/Scenes/Floor01/FinalAuthorizationAdministrator",
+    "cameras": {
+      "battle": "F01C_MainCamera",
+      "main": "F01C_MainCamera",
+      "tutorial": "F01C_MainCamera",
+      "descentInput": "CAM_F01_DescentDoor",
+      "rewardSelection": "CAM_F01_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F01C_EnemySpawn",
+      "magicInputBoard": "FINAL_F01C_MagicInputBoard",
+      "rewardStand": "FINAL_F01C_RewardStand",
+      "rewardScrollLeft": "FINAL_F01C_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F01C_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F01C_RewardSlot_Right",
+      "descentStele": "FINAL_F01C_DescentStele",
+      "descentPedestal": "FINAL_F01C_DescentPedestal",
+      "descentDoor": "F01C_FinalDescentGate"
+    },
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F01C",
+    "doorTravel": 0.28380000000000005,
+    "cameraPitchDegrees": {
+      "F01C_MainCamera": -11
+    },
+    "cameraFOVScale": {
+      "F01C_MainCamera": 0.65
+    }
+  },
+  {
+    "floor": 1,
+    "role": "residualA",
+    "name": "IdentityComparisonResidual",
+    "asset": "identity_comparison_residual",
+    "scene": "DA_F01A_IdentityComparison",
+    "prefix": "F01A",
+    "resource": "floor01_identity_comparison_residual",
+    "directory": "Reality/Scenes/Floor01/IdentityComparisonResidual",
+    "cameras": {
+      "battle": "F01A_MainCamera",
+      "main": "F01A_MainCamera",
+      "tutorial": "F01A_MainCamera",
+      "descentInput": "CAM_F01A_IntermediateDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F01A_EnemySpawn",
+      "magicInputBoard": "FINAL_F01A_MagicInputBoard"
+    },
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  },
+  {
+    "floor": 1,
+    "role": "residualB",
+    "name": "ExitReviewResidual",
+    "asset": "exit_review_residual",
+    "scene": "DA_F01B_ExitHandover",
+    "prefix": "F01B",
+    "resource": "floor01_exit_review_residual",
+    "directory": "Reality/Scenes/Floor01/ExitReviewResidual",
+    "cameras": {
+      "battle": "F01B_MainCamera",
+      "main": "F01B_MainCamera",
+      "tutorial": "F01B_MainCamera",
+      "descentInput": "CAM_F01B_IntermediateDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F01B_EnemySpawn",
+      "magicInputBoard": "FINAL_F01B_MagicInputBoard"
+    },
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
+  }
+]

@@ -1,0 +1,137 @@
+[
+  {
+    "actor": "SignatureMimicResidual",
+    "bones": 19,
+    "preservedSourceRig": false,
+    "repairedSourceWeights": false,
+    "rigidEquipment": [
+      "equipment_book"
+    ],
+    "source": "/Users/sangyoung/Desktop/C5_\u1112\u1161\u1100\u1161\u11bc\u1109\u1173\u11bc\u110b\u1175\u11ab/\ud83d\udd25C5 \u1107\u1173\u11af\u1105\u1162\u11ab\u1103\u1165 \u1106\u1169\u1103\u1166\u11af\u1105\u1175\u11bc \u1111\u1161\u110b\u1175\u11af \u1106\u1169\u110b\u1173\u11b7/2. \u1100\u116a\u11ab\u1105\u1175\u110c\u1161 \u1106\u1175\u11be \u110c\u1161\u11ab\u1105\u1172\u110e\u1166/10. 4\u110e\u1173\u11bc/4\u110e\u1173\u11bc-1 \u1109\u1165\u1106\u1167\u11bc \u1106\u1169\u1109\u1161 \u110c\u1161\u11ab\u1105\u1172\u110e\u1166.glb",
+    "finalMotion": false
+  },
+  {
+    "actor": "RejectionExecutionResidual",
+    "bones": 19,
+    "preservedSourceRig": false,
+    "repairedSourceWeights": false,
+    "rigidEquipment": [
+      "equipment_shield"
+    ],
+    "source": "/Users/sangyoung/Desktop/C5_\u1112\u1161\u1100\u1161\u11bc\u1109\u1173\u11bc\u110b\u1175\u11ab/\ud83d\udd25C5 \u1107\u1173\u11af\u1105\u1162\u11ab\u1103\u1165 \u1106\u1169\u1103\u1166\u11af\u1105\u1175\u11bc \u1111\u1161\u110b\u1175\u11af \u1106\u1169\u110b\u1173\u11b7/2. \u1100\u116a\u11ab\u1105\u1175\u110c\u1161 \u1106\u1175\u11be \u110c\u1161\u11ab\u1105\u1172\u110e\u1166/10. 4\u110e\u1173\u11bc/4\u110e\u1173\u11bc-2 \u1107\u1161\u11ab\u1105\u1167 \u110c\u1175\u11b8\u1112\u1162\u11bc \u110c\u1161\u11ab\u1105\u1172\u110e\u1166.glb",
+    "finalMotion": false
+  },
+  {
+    "actor": "ResponsibilityAuditAdministrator",
+    "bones": 20,
+    "preservedSourceRig": false,
+    "repairedSourceWeights": false,
+    "rigidEquipment": [
+      "equipment_staff",
+      "equipment_back"
+    ],
+    "source": "/Users/sangyoung/Desktop/C5_\u1112\u1161\u1100\u1161\u11bc\u1109\u1173\u11bc\u110b\u1175\u11ab/\ud83d\udd25C5 \u1107\u1173\u11af\u1105\u1162\u11ab\u1103\u1165 \u1106\u1169\u1103\u1166\u11af\u1105\u1175\u11bc \u1111\u1161\u110b\u1175\u11af \u1106\u1169\u110b\u1173\u11b7/2. \u1100\u116a\u11ab\u1105\u1175\u110c\u1161 \u1106\u1175\u11be \u110c\u1161\u11ab\u1105\u1172\u110e\u1166/10. 4\u110e\u1173\u11bc/4\u110e\u1173\u11bc \u1100\u116a\u11ab\u1105\u1175\u110c\u1161.glb",
+    "finalMotion": false
+  },
+  {
+    "actor": "ConsentCustodianResidual",
+    "bones": 19,
+    "preservedSourceRig": false,
+    "repairedSourceWeights": false,
+    "rigidEquipment": [
+      "equipment_book"
+    ],
+    "source": "/Users/sangyoung/Desktop/C5_\u1112\u1161\u1100\u1161\u11bc\u1109\u1173\u11bc\u110b\u1175\u11ab/\ud83d\udd25C5 \u1107\u1173\u11af\u1105\u1162\u11ab\u1103\u1165 \u1106\u1169\u1103\u1166\u11af\u1105\u1175\u11bc \u1111\u1161\u110b\u1175\u11af \u1106\u1169\u110b\u1173\u11b7/2. \u1100\u116a\u11ab\u1105\u1175\u110c\u1161 \u1106\u1175\u11be \u110c\u1161\u11ab\u1105\u1172\u110e\u1166/11. 3\u110e\u1173\u11bc/3\u110e\u1173\u11bc-2 \u1103\u1169\u11bc\u110b\u1174 \u1107\u1169\u1100\u116a\u11ab \u110c\u1161\u11ab\u1105\u1172\u110e\u1166.glb",
+    "finalMotion": false
+  },
+  {
+    "actor": "QuarantineEnforcerResidual",
+    "bones": 19,
+    "preservedSourceRig": false,
+    "repairedSourceWeights": false,
+    "rigidEquipment": [
+      "equipment_back"
+    ],
+    "source": "/Users/sangyoung/Desktop/C5_\u1112\u1161\u1100\u1161\u11bc\u1109\u1173\u11bc\u110b\u1175\u11ab/\ud83d\udd25C5 \u1107\u1173\u11af\u1105\u1162\u11ab\u1103\u1165 \u1106\u1169\u1103\u1166\u11af\u1105\u1175\u11bc \u1111\u1161\u110b\u1175\u11af \u1106\u1169\u110b\u1173\u11b7/2. \u1100\u116a\u11ab\u1105\u1175\u110c\u1161 \u1106\u1175\u11be \u110c\u1161\u11ab\u1105\u1172\u110e\u1166/11. 3\u110e\u1173\u11bc/3\u110e\u1173\u11bc-1 \u1100\u1167\u11a8\u1105\u1175 \u110c\u1175\u11b8\u1112\u1162\u11bc \u110c\u1161\u11ab\u1105\u1172\u110e\u1166.glb",
+    "finalMotion": false
+  },
+  {
+    "actor": "VoluntaryQuarantineAdministrator",
+    "bones": 56,
+    "preservedSourceRig": true,
+    "repairedSourceWeights": true,
+    "rigidEquipment": [
+      "equipment_back"
+    ],
+    "source": "/Users/sangyoung/Desktop/C5_\u1112\u1161\u1100\u1161\u11bc\u1109\u1173\u11bc\u110b\u1175\u11ab/\ud83d\udd25C5 \u1107\u1173\u11af\u1105\u1162\u11ab\u1103\u1165 \u1106\u1169\u1103\u1166\u11af\u1105\u1175\u11bc \u1111\u1161\u110b\u1175\u11af \u1106\u1169\u110b\u1173\u11b7/2. \u1100\u116a\u11ab\u1105\u1175\u110c\u1161 \u1106\u1175\u11be \u110c\u1161\u11ab\u1105\u1172\u110e\u1166/11. 3\u110e\u1173\u11bc/3\u110e\u1173\u11bc \u1100\u116a\u11ab\u1105\u1175\u110c\u1161.glb",
+    "finalMotion": false
+  },
+  {
+    "actor": "OverloadResidual",
+    "bones": 19,
+    "preservedSourceRig": false,
+    "repairedSourceWeights": false,
+    "rigidEquipment": [
+      "equipment_back"
+    ],
+    "source": "/Users/sangyoung/Desktop/C5_\u1112\u1161\u1100\u1161\u11bc\u1109\u1173\u11bc\u110b\u1175\u11ab/\ud83d\udd25C5 \u1107\u1173\u11af\u1105\u1162\u11ab\u1103\u1165 \u1106\u1169\u1103\u1166\u11af\u1105\u1175\u11bc \u1111\u1161\u110b\u1175\u11af \u1106\u1169\u110b\u1173\u11b7/2. \u1100\u116a\u11ab\u1105\u1175\u110c\u1161 \u1106\u1175\u11be \u110c\u1161\u11ab\u1105\u1172\u110e\u1166/12. 2\u110e\u1173\u11bc/2\u110e\u1173\u11bc-1 \u1100\u116a\u1107\u116e\u1112\u1161 \u110c\u1161\u11ab\u1105\u1172\u110e\u1166.glb",
+    "finalMotion": false
+  },
+  {
+    "actor": "BackflowBlockerResidual",
+    "bones": 20,
+    "preservedSourceRig": false,
+    "repairedSourceWeights": false,
+    "rigidEquipment": [
+      "equipment_shield",
+      "equipment_back"
+    ],
+    "source": "/Users/sangyoung/Desktop/C5_\u1112\u1161\u1100\u1161\u11bc\u1109\u1173\u11bc\u110b\u1175\u11ab/\ud83d\udd25C5 \u1107\u1173\u11af\u1105\u1162\u11ab\u1103\u1165 \u1106\u1169\u1103\u1166\u11af\u1105\u1175\u11bc \u1111\u1161\u110b\u1175\u11af \u1106\u1169\u110b\u1173\u11b7/2. \u1100\u116a\u11ab\u1105\u1175\u110c\u1161 \u1106\u1175\u11be \u110c\u1161\u11ab\u1105\u1172\u110e\u1166/12. 2\u110e\u1173\u11bc/2\u110e\u1173\u11bc-2 \u110b\u1167\u11a8\u1105\u1172 \u110e\u1161\u1103\u1161\u11ab \u110c\u1161\u11ab\u1105\u1172\u110e\u1166.glb",
+    "finalMotion": false
+  },
+  {
+    "actor": "SealMaintenanceAdministrator",
+    "bones": 20,
+    "preservedSourceRig": false,
+    "repairedSourceWeights": false,
+    "rigidEquipment": [
+      "equipment_staff",
+      "equipment_back"
+    ],
+    "source": "/Users/sangyoung/Desktop/C5_\u1112\u1161\u1100\u1161\u11bc\u1109\u1173\u11bc\u110b\u1175\u11ab/\ud83d\udd25C5 \u1107\u1173\u11af\u1105\u1162\u11ab\u1103\u1165 \u1106\u1169\u1103\u1166\u11af\u1105\u1175\u11bc \u1111\u1161\u110b\u1175\u11af \u1106\u1169\u110b\u1173\u11b7/2. \u1100\u116a\u11ab\u1105\u1175\u110c\u1161 \u1106\u1175\u11be \u110c\u1161\u11ab\u1105\u1172\u110e\u1166/12. 2\u110e\u1173\u11bc/2\u110e\u1173\u11bc \u1100\u116a\u11ab\u1105\u1175\u110c\u1161.glb",
+    "finalMotion": false
+  },
+  {
+    "actor": "IdentityComparisonResidual",
+    "bones": 19,
+    "preservedSourceRig": false,
+    "repairedSourceWeights": false,
+    "rigidEquipment": [
+      "equipment_book"
+    ],
+    "source": "/Users/sangyoung/Desktop/C5_\u1112\u1161\u1100\u1161\u11bc\u1109\u1173\u11bc\u110b\u1175\u11ab/\ud83d\udd25C5 \u1107\u1173\u11af\u1105\u1162\u11ab\u1103\u1165 \u1106\u1169\u1103\u1166\u11af\u1105\u1175\u11bc \u1111\u1161\u110b\u1175\u11af \u1106\u1169\u110b\u1173\u11b7/2. \u1100\u116a\u11ab\u1105\u1175\u110c\u1161 \u1106\u1175\u11be \u110c\u1161\u11ab\u1105\u1172\u110e\u1166/13. 1\u110e\u1173\u11bc/1\u110e\u1173\u11bc-1 \u1109\u1175\u11ab\u110b\u116f\u11ab \u1103\u1162\u110c\u1169 \u110c\u1161\u11ab\u1105\u1172\u110e\u1166.glb",
+    "finalMotion": false
+  },
+  {
+    "actor": "ExitReviewResidual",
+    "bones": 19,
+    "preservedSourceRig": false,
+    "repairedSourceWeights": false,
+    "rigidEquipment": [
+      "equipment_shield"
+    ],
+    "source": "/Users/sangyoung/Desktop/C5_\u1112\u1161\u1100\u1161\u11bc\u1109\u1173\u11bc\u110b\u1175\u11ab/\ud83d\udd25C5 \u1107\u1173\u11af\u1105\u1162\u11ab\u1103\u1165 \u1106\u1169\u1103\u1166\u11af\u1105\u1175\u11bc \u1111\u1161\u110b\u1175\u11af \u1106\u1169\u110b\u1173\u11b7/2. \u1100\u116a\u11ab\u1105\u1175\u110c\u1161 \u1106\u1175\u11be \u110c\u1161\u11ab\u1105\u1172\u110e\u1166/13. 1\u110e\u1173\u11bc/1\u110e\u1173\u11bc-2 \u1110\u116c\u1100\u1165 \u1109\u1175\u11b7\u1109\u1161 \u110c\u1161\u11ab\u1105\u1172\u110e\u1166.glb",
+    "finalMotion": false
+  },
+  {
+    "actor": "FinalAuthorizationAdministrator",
+    "bones": 19,
+    "preservedSourceRig": false,
+    "repairedSourceWeights": false,
+    "rigidEquipment": [
+      "equipment_staff"
+    ],
+    "source": "/Users/sangyoung/Desktop/C5_\u1112\u1161\u1100\u1161\u11bc\u1109\u1173\u11bc\u110b\u1175\u11ab/\ud83d\udd25C5 \u1107\u1173\u11af\u1105\u1162\u11ab\u1103\u1165 \u1106\u1169\u1103\u1166\u11af\u1105\u1175\u11bc \u1111\u1161\u110b\u1175\u11af \u1106\u1169\u110b\u1173\u11b7/2. \u1100\u116a\u11ab\u1105\u1175\u110c\u1161 \u1106\u1175\u11be \u110c\u1161\u11ab\u1105\u1172\u110e\u1166/13. 1\u110e\u1173\u11bc/1\uce35 \uad00\ub9ac\uc790.glb",
+    "finalMotion": false
+  }
+]

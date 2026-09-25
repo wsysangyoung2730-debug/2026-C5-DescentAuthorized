@@ -5,7 +5,7 @@ enum DescentDoorGlyphCatalog {
         .floor10: floor10,
         .floor9: floor9,
         .floor8: floor8
-    ]
+    ].merging(Dictionary(uniqueKeysWithValues: (1...4).flatMap { lowerFloorApprovals(floor: $0) }.map { ($0.id, $0) })) { _, new in new }
 
     static func glyph(_ id: DescentDoorGlyphID) -> DescentDoorGlyphDefinition {
         guard let definition = all[id] else {

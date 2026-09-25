@@ -1,0 +1,61 @@
+{
+  "source": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F05_F06_F07_F08_F09_F10_Combined_v051_combat_intents_cleaned.blend",
+  "assets": [
+    {
+      "asset": "intent_memory_record",
+      "collection": "EXPORT_IntentMemoryRecord",
+      "objects": [
+        "IntentMemoryRecord_Mesh",
+        "VFX_IntentMemoryRecord"
+      ]
+    },
+    {
+      "asset": "intent_mimic_attack",
+      "collection": "EXPORT_IntentMimicAttack",
+      "objects": [
+        "IntentMimicAttack_Mesh",
+        "VFX_IntentMimicAttack"
+      ]
+    },
+    {
+      "asset": "intent_opening_wait",
+      "collection": "EXPORT_IntentOpeningWait",
+      "objects": [
+        "IntentOpeningWait_Mesh",
+        "VFX_IntentOpeningWait"
+      ]
+    },
+    {
+      "asset": "intent_scheduled_execution",
+      "collection": "EXPORT_IntentScheduledExecution",
+      "objects": [
+        "IntentScheduledExecution_Mesh",
+        "VFX_IntentScheduledExecution"
+      ]
+    },
+    {
+      "asset": "intent_spell_seal",
+      "collection": "EXPORT_IntentSpellSeal",
+      "objects": [
+        "IntentSpellSeal_Mesh",
+        "VFX_IntentSpellSeal"
+      ]
+    },
+    {
+      "asset": "intent_amplify",
+      "collection": "EXPORT_IntentAmplify",
+      "objects": [
+        "IntentAmplify_Mesh",
+        "VFX_IntentAmplify"
+      ]
+    },
+    {
+      "asset": "intent_damage_reservation",
+      "collection": "EXPORT_IntentDamageReservation",
+      "objects": [
+        "IntentDamageReservation_Mesh",
+        "VFX_IntentDamageReservation"
+      ]
+    }
+  ]
+}

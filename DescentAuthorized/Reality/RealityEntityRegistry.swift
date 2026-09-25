@@ -29,6 +29,12 @@ final class RealityEntityRegistry {
     }
 
     func setDoorOpen(_ isOpen: Bool) {
+        if descriptor?.descentDoorAnimation != nil {
+            // The same frame and leaves remain visible throughout the opening.
+            setEnabled(true, for: .descentDoor)
+            setEnabled(false, for: .openDescentDoor)
+            return
+        }
         setEnabled(!isOpen, for: .descentDoor)
         setEnabled(isOpen, for: .openDescentDoor)
     }

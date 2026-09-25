@@ -26,16 +26,17 @@ final class GameProgressValidatorTests: XCTestCase {
         try assertValid(controller.progress)
         _ = try controller.enterRecordsBattle()
         try assertValid(controller.progress)
+        _ = try controller.enterRecordsEncounter()
         _ = try controller.beginRecordsBattle()
         try assertValid(controller.progress)
         _ = try controller.completeEncounter(enemy: .recordsAdministrator, remainingPlayerHP: 55)
         try assertValid(controller.progress)
         _ = try controller.continueAfterRecordsDefeat()
         try assertValid(controller.progress)
-        _ = try controller.selectReward(candidateID: "floor9-worn-a")
+        _ = try controller.selectReward(candidateID: "floor9-barrier")
         try assertValid(controller.progress)
         _ = try controller.completeRewardLearning(
-            candidateID: "floor9-worn-a",
+            candidateID: "floor9-barrier",
             grade: .approved
         )
         try assertValid(controller.progress)
@@ -47,6 +48,7 @@ final class GameProgressValidatorTests: XCTestCase {
         try assertValid(controller.progress)
         _ = try controller.completeProtectionTraining(grade: .approved)
         try assertValid(controller.progress)
+        _ = try controller.enterResidualEncounter()
         _ = try controller.beginResidualBattle()
         try assertValid(controller.progress)
         _ = try controller.completeEncounter(enemy: .observationResidual, remainingPlayerHP: 45)
@@ -57,16 +59,18 @@ final class GameProgressValidatorTests: XCTestCase {
         try assertValid(controller.progress)
         _ = try controller.releaseObservationDoor()
         try assertValid(controller.progress)
+        _ = try controller.enterAdministratorEncounter()
+        try assertValid(controller.progress)
         _ = try controller.beginAdministratorBattle()
         try assertValid(controller.progress)
         _ = try controller.completeEncounter(enemy: .observationAdministrator, remainingPlayerHP: 35)
         try assertValid(controller.progress)
         _ = try controller.continueAfterAdministratorDefeat()
         try assertValid(controller.progress)
-        _ = try controller.selectReward(candidateID: "floor8-forbidden")
+        _ = try controller.selectReward(candidateID: "floor8-rupture")
         try assertValid(controller.progress)
         _ = try controller.completeRewardLearning(
-            candidateID: "floor8-forbidden",
+            candidateID: "floor8-rupture",
             grade: .approved
         )
         try assertValid(controller.progress)

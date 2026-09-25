@@ -6,12 +6,13 @@ struct Floor9EntranceView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let sceneController: RealitySceneController
+    var onPrepareEntry: () -> Void = {}
 
     var body: some View {
         InvestigationFlow(
             sceneController: sceneController,
             configuration: .floor9,
-            hasCompletedInvestigation: isInvestigationComplete
+            hasCompletedInvestigation: isInvestigationComplete || gameSession.progress.currentScene == .floor9RecordsPreparation
         ) {
             GeometryReader { proxy in
                 let panelWidth = min(max(proxy.size.width * 0.43, 520), 650)
@@ -283,7 +284,11 @@ struct Floor9EntranceView: View {
     private var enterButton: some View {
         Button {
             gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-            gameSession.send(.enterRecordsBattle)
+            if gameSession.progress.currentScene == .floor9RecordsPreparation {
+                onPrepareEntry()
+            } else {
+                gameSession.send(.enterRecordsBattle)
+            }
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "door.left.hand.open")

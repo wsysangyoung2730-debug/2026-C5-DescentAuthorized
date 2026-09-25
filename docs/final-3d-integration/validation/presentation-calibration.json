@@ -1,0 +1,106 @@
+[
+  {
+    "room": "floor07_coordinate_administrator",
+    "pitchDegrees": {},
+    "fovScale": {}
+  },
+  {
+    "room": "floor07_coordinate_residue",
+    "pitchDegrees": {},
+    "fovScale": {}
+  },
+  {
+    "room": "floor06_causality_administrator",
+    "pitchDegrees": {},
+    "fovScale": {}
+  },
+  {
+    "room": "floor06_causality_residue",
+    "pitchDegrees": {},
+    "fovScale": {}
+  },
+  {
+    "room": "floor05_original_memory_administrator",
+    "pitchDegrees": {},
+    "fovScale": {}
+  },
+  {
+    "room": "floor05_memory_omission_residue",
+    "pitchDegrees": {},
+    "fovScale": {}
+  },
+  {
+    "room": "floor04_responsibility_audit_administrator",
+    "pitchDegrees": {},
+    "fovScale": {}
+  },
+  {
+    "room": "floor04_signature_mimic_residual",
+    "pitchDegrees": {},
+    "fovScale": {}
+  },
+  {
+    "room": "floor04_rejection_execution_residual",
+    "pitchDegrees": {},
+    "fovScale": {}
+  },
+  {
+    "room": "floor03_voluntary_quarantine_administrator",
+    "pitchDegrees": {
+      "F03C_MainCamera": -3
+    },
+    "fovScale": {
+      "F03C_MainCamera": 0.95
+    }
+  },
+  {
+    "room": "floor03_consent_custodian_residual",
+    "pitchDegrees": {},
+    "fovScale": {}
+  },
+  {
+    "room": "floor03_quarantine_enforcer_residual",
+    "pitchDegrees": {},
+    "fovScale": {}
+  },
+  {
+    "room": "floor02_seal_maintenance_administrator",
+    "pitchDegrees": {
+      "F02C_MainCamera": -8.223943939900778
+    },
+    "fovScale": {}
+  },
+  {
+    "room": "floor02_overload_residual",
+    "pitchDegrees": {
+      "F02A_MainCamera": -6.008731688424321
+    },
+    "fovScale": {}
+  },
+  {
+    "room": "floor02_backflow_blocker_residual",
+    "pitchDegrees": {
+      "F02B_MainCamera": -7.647118752848988
+    },
+    "fovScale": {}
+  },
+  {
+    "room": "floor01_final_authorization_administrator",
+    "pitchDegrees": {
+      "F01C_MainCamera": -11
+    },
+    "fovScale": {
+      "F01C_MainCamera": 0.65
+    }
+  },
+  {
+    "room": "floor01_identity_comparison_residual",
+    "pitchDegrees": {},
+    "fovScale": {}
+  },
+  {
+    "room": "floor01_exit_review_residual",
+    "pitchDegrees": {},
+    "fovScale": {}
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "floor": 3,
+    "room": "floor03_voluntary_quarantine_administrator",
+    "quality": "high",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 3
+  },
+  {
+    "floor": 3,
+    "room": "floor03_voluntary_quarantine_administrator",
+    "quality": "medium",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 3
+  },
+  {
+    "floor": 3,
+    "room": "floor03_voluntary_quarantine_administrator",
+    "quality": "low",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 3
+  },
+  {
+    "floor": 3,
+    "room": "floor03_consent_custodian_residual",
+    "quality": "high",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 3,
+    "room": "floor03_consent_custodian_residual",
+    "quality": "medium",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 3,
+    "room": "floor03_consent_custodian_residual",
+    "quality": "low",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 3,
+    "room": "floor03_quarantine_enforcer_residual",
+    "quality": "high",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 3,
+    "room": "floor03_quarantine_enforcer_residual",
+    "quality": "medium",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 3,
+    "room": "floor03_quarantine_enforcer_residual",
+    "quality": "low",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  }
+]

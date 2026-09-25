@@ -58,7 +58,10 @@ struct HomeView: View {
             "LoadingMain",
             "LoadingFloor10",
             "LoadingFloor09",
-            "LoadingFloor08"
+            "LoadingFloor08",
+            "LoadingFloor07",
+            "LoadingFloor06",
+            "LoadingFloor05"
         ]
         for (index, imageName) in imageNames.enumerated() {
             autoreleasepool {
@@ -76,6 +79,12 @@ struct HomeView: View {
             startupProgress = 1
         }
         try? await Task.sleep(for: .milliseconds(160))
+        #if DEBUG
+        if ExpansionPreviewSupport.floor != nil || ExpansionPreviewSupport.loadoutFloor != nil {
+            isPlaying = true
+            if ExpansionPreviewSupport.floor != nil && ExpansionPreviewSupport.isBattle { gameSession.send(.advanceExpansion) }
+        }
+        #endif
         withAnimation(.easeOut(duration: 0.2)) {
             isStartupReady = true
         }
@@ -117,8 +126,9 @@ struct HomeView: View {
                             width: menuButtonWidth
                         ) {
                             gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-                            gameSession.startNewGame()
-                            isPlaying = true
+                            if gameSession.startNewGame() {
+                                isPlaying = true
+                            }
                         }
                     } else {
                         homeButton(
@@ -127,8 +137,9 @@ struct HomeView: View {
                             width: menuButtonWidth
                         ) {
                             gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-                            gameSession.startNewGame()
-                            isPlaying = true
+                            if gameSession.startNewGame() {
+                                isPlaying = true
+                            }
                         }
                     }
 

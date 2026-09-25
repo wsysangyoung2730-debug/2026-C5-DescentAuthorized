@@ -1,0 +1,73 @@
+{
+  "previous_full_review": {
+    "total": 33,
+    "done": [
+      "F08B_DomeReview",
+      "F06_iPad_MainCamera",
+      "F08_iPad_MainCamera",
+      "CAM_F06_RewardSelection",
+      "CAM_F06_DescentDoor",
+      "CAM_F07_RewardSelection",
+      "CAM_F07_DescentDoor",
+      "CAM_F08_RewardSelection",
+      "CAM_F08_DescentDoor",
+      "CAM_F09_RewardSelection",
+      "CAM_F09_DescentDoor",
+      "CAM_F10_RewardSelection",
+      "CAM_F10_DescentDoor",
+      "F06A_SideCheck_Left",
+      "F06A_SideCheck_Right",
+      "F06B_SideCheck_Left",
+      "F06B_SideCheck_Right",
+      "F07A_SideCheck_Left",
+      "F07A_SideCheck_Right",
+      "F07B_SideCheck_Left",
+      "F07B_SideCheck_Right",
+      "F08A_SideCheck_Left",
+      "F08A_SideCheck_Right",
+      "F08B_SideCheck_Left",
+      "F08B_SideCheck_Right",
+      "F09_SideCheck_Left",
+      "F09_SideCheck_Right",
+      "F10_SideCheck_Left",
+      "F10_SideCheck_Right",
+      "F06A_RedesignOverview",
+      "F06B_RedesignOverview",
+      "F07A_RedesignOverview",
+      "F07B_RedesignOverview"
+    ],
+    "errors": []
+  },
+  "dome_and_final_corrections": {
+    "total": 17,
+    "done": [
+      "F06B_DomeReview",
+      "F06_iPad_MainCamera",
+      "F08_iPad_MainCamera",
+      "CAM_F06_RewardSelection",
+      "CAM_F06_DescentDoor",
+      "CAM_F07_RewardSelection",
+      "CAM_F07_DescentDoor",
+      "CAM_F08_RewardSelection",
+      "CAM_F08_DescentDoor",
+      "CAM_F10_DescentDoor",
+      "F06B_SideCheck_Left",
+      "F06B_SideCheck_Right",
+      "F08B_SideCheck_Left",
+      "F08B_SideCheck_Right",
+      "F10_SideCheck_Right",
+      "F06B_RedesignOverview",
+      "F07B_RedesignOverview"
+    ],
+    "errors": []
+  },
+  "review_images": 33,
+  "final_console_clearance": {
+    "total": 2,
+    "done": [
+      "CAM_F08_DescentDoor",
+      "F08B_SideCheck_Left"
+    ],
+    "errors": []
+  }
+}

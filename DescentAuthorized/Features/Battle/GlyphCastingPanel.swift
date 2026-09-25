@@ -1,5 +1,11 @@
 import SwiftUI
 
+private struct PracticePlaybackKey: Equatable {
+    let run: Int
+    let suspended: Bool
+    let reducedMotion: Bool
+}
+
 struct GlyphCastSubmission {
     let strokes: [DrawnStroke]
     let inputMethod: DrawingInputMethod
@@ -94,6 +100,10 @@ struct GateSealInteractionView: View {
 struct GlyphCastingPanel: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    @Environment(\.isGlyphInputSuspended) private var isInputSuspended
+    @Environment(\.isEnabled) private var isEnabled
 
     let spell: SpellDefinition
     let inputPreference: DrawingInputPreference
@@ -103,6 +113,7 @@ struct GlyphCastingPanel: View {
     let showsResourceHeader: Bool
     let surfaceOpacity: Double
     let usesBattleArtwork: Bool
+    let inputFeedbackMode: GlyphInputFeedbackMode
     let gateSealPresentation: GateSealGlyphPresentation?
     let onResourcePreviewChanged: ((Double, Int) -> Void)?
     let onCast: (GlyphCastSubmission) -> Void
@@ -114,6 +125,12 @@ struct GlyphCastingPanel: View {
     @State private var rejectionMessage: String?
     @State private var canvasController = RuneDrawingCanvasController()
     @State private var resetAfterCastTask: Task<Void, Never>?
+    @State private var demonstrationCompleted: Bool
+    @State private var demonstrationElapsed: TimeInterval = 0
+    @State private var demonstrationRun = 0
+    @State private var demonstratedCheckpoints: Set<String> = []
+    @State private var checkpointHighlight: GlyphCheckpointHit?
+    @State private var checkpointRevision = 0
 
     private let manaEstimator = GlyphManaEstimator()
 
@@ -126,6 +143,7 @@ struct GlyphCastingPanel: View {
         showsResourceHeader: Bool = true,
         surfaceOpacity: Double = 1,
         usesBattleArtwork: Bool = false,
+        inputFeedbackMode: GlyphInputFeedbackMode = .disabled,
         gateSealPresentation: GateSealGlyphPresentation? = nil,
         onResourcePreviewChanged: ((Double, Int) -> Void)? = nil,
         onCast: @escaping (GlyphCastSubmission) -> Void
@@ -138,13 +156,18 @@ struct GlyphCastingPanel: View {
         self.showsResourceHeader = showsResourceHeader
         self.surfaceOpacity = surfaceOpacity
         self.usesBattleArtwork = usesBattleArtwork
+        self.inputFeedbackMode = inputFeedbackMode
+        _demonstrationCompleted = State(initialValue: !inputFeedbackMode.showsPracticeGuidance)
         self.gateSealPresentation = gateSealPresentation
         self.onResourcePreviewChanged = onResourcePreviewChanged
         self.onCast = onCast
     }
 
     var body: some View {
-        Group {
+        VStack(spacing: showsPracticeGuidance ? 6 : 0) {
+            if showsPracticeGuidance {
+                practiceControlBar
+            }
             if let gateSealPresentation {
                 gateSealArtworkPanel(gateSealPresentation)
             } else if usesBattleArtwork {
@@ -162,11 +185,177 @@ struct GlyphCastingPanel: View {
         .onAppear { publishResourcePreview(for: drawingState) }
         .onDisappear {
             resetAfterCastTask?.cancel()
+            canvasController.cancelActiveStroke()
+            checkpointHighlight = nil
             onResourcePreviewChanged?(availableMana, availableStrokes)
         }
-        .onChange(of: spell.id) { _, _ in resetDrawing() }
+        .onChange(of: spell.id) { _, _ in restartDemonstration() }
         .onChange(of: availableMana) { _, _ in resetDrawing() }
         .onChange(of: availableStrokes) { _, _ in resetDrawing() }
+        .onChange(of: inputIsSuspended) { _, suspended in
+            if suspended {
+                canvasController.cancelActiveStroke()
+                checkpointHighlight = nil
+            }
+        }
+        .task(id: PracticePlaybackKey(
+            run: demonstrationRun,
+            suspended: inputIsSuspended,
+            reducedMotion: practiceReducedMotion
+        )) {
+            await playDemonstration()
+        }
+        .task(id: checkpointRevision) {
+            guard checkpointHighlight != nil else { return }
+            do { try await Task.sleep(for: .milliseconds(220)) } catch { return }
+            checkpointHighlight = nil
+        }
+    }
+
+    private var showsPracticeGuidance: Bool {
+        inputFeedbackMode.showsPracticeGuidance
+    }
+
+    private var inputIsSuspended: Bool {
+        inputFeedbackMode.showsCheckpointFeedback
+            && (isInputSuspended || scenePhase != .active || !isEnabled)
+    }
+
+    private var practiceReducedMotion: Bool {
+        systemReduceMotion || appSettings.reducedMotion
+    }
+
+    private var isDemonstrating: Bool {
+        showsPracticeGuidance && !demonstrationCompleted
+    }
+
+    private var demonstration: GlyphPracticeDemonstration {
+        GlyphPracticeDemonstration(glyph: spell.glyph, reducedMotion: practiceReducedMotion)
+    }
+
+    private var demonstrationFrame: GlyphDemonstrationFrame {
+        demonstration.frame(at: demonstrationElapsed)
+    }
+
+    private var practiceStatus: String {
+        if inputIsSuspended { return "연습 일시정지" }
+        if isDemonstrating {
+            let frame = demonstrationFrame
+            if frame.isLifting, frame.strokeIndex + 1 < spell.requiredStrokes {
+                return "펜을 떼고 → \(frame.strokeIndex + 2)번 시작점"
+            }
+            return "획순 시범 · \(frame.strokeIndex + 1) / \(spell.requiredStrokes)획"
+        }
+        if completedStrokes.count >= spell.requiredStrokes {
+            return "입력 완료 · 시전을 눌러 확인하세요"
+        }
+        return "\(completedStrokes.count + 1)번 시작점부터 그려 보세요"
+    }
+
+    private var practiceControlBar: some View {
+        HStack(spacing: 8) {
+            Label(practiceStatus, systemImage: isDemonstrating ? "play.circle" : "pencil.tip")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(categoryColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .accessibilityIdentifier("practice.stroke-status")
+
+            Spacer(minLength: 0)
+
+            Button {
+                if isDemonstrating {
+                    demonstrationCompleted = true
+                } else {
+                    restartDemonstration()
+                }
+            } label: {
+                Label(
+                    isDemonstrating ? "직접 그리기" : "획순 다시 보기",
+                    systemImage: isDemonstrating ? "forward.end" : "arrow.counterclockwise"
+                )
+                .font(.system(size: 13, weight: .medium))
+                .lineLimit(1)
+                .padding(.horizontal, 10)
+                .frame(minHeight: 44)
+                .background(.black.opacity(0.4), in: RoundedRectangle(cornerRadius: 6))
+                .overlay { RoundedRectangle(cornerRadius: 6).stroke(DAColor.gold.opacity(0.35)) }
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(DAColor.body)
+            .disabled(inputIsSuspended || drawingState.activeStroke != nil || feedback != nil)
+            .accessibilityIdentifier("practice.replay")
+        }
+        .frame(height: 44)
+        .padding(.horizontal, 6)
+    }
+
+    @MainActor
+    private func playDemonstration() async {
+        guard isDemonstrating, !inputIsSuspended else { return }
+        let playback = demonstration
+        let clock = ContinuousClock()
+        var previous = clock.now
+        playDemonstrationCheckpoints(demonstrationFrame)
+        while demonstrationElapsed < playback.duration {
+            do { try await Task.sleep(for: .milliseconds(33)) } catch { return }
+            guard !Task.isCancelled, isDemonstrating, !inputIsSuspended else { return }
+            let now = clock.now
+            let delta = previous.duration(to: now).components
+            previous = now
+            demonstrationElapsed += min(0.1, Double(delta.seconds) + Double(delta.attoseconds) / 1e18)
+            playDemonstrationCheckpoints(playback.frame(at: demonstrationElapsed))
+        }
+        guard !Task.isCancelled else { return }
+        demonstrationCompleted = true
+    }
+
+    private func playDemonstrationCheckpoints(_ frame: GlyphDemonstrationFrame) {
+        var newlyReached: [GlyphCheckpointHit] = []
+        for (index, points) in frame.visibleStrokes.enumerated() {
+            guard let start = points.first else { continue }
+            var tracker = GlyphCheckpointTracker()
+            let hits = tracker.begin(stroke: spell.glyph.strokes[index], strokeIndex: index, at: start, inputMethod: .pencil)
+                + tracker.append(Array(points.dropFirst()))
+            for hit in hits {
+                if demonstratedCheckpoints.insert("\(hit.strokeIndex):\(hit.checkpointIndex)").inserted {
+                    newlyReached.append(hit)
+                }
+            }
+        }
+        // One chime per displayed frame; reduced motion reveals a whole stroke at once.
+        if let hit = newlyReached.last {
+            gameFeedback.playGlyphCheckpoint(
+                index: checkpointSoundIndex(hit), completesStroke: hit.isStrokeEnd,
+                isDemonstration: true, settings: appSettings.settings
+            )
+        }
+    }
+
+    private func handleCheckpoint(_ hit: GlyphCheckpointHit) {
+        guard inputFeedbackMode.showsCheckpointFeedback,
+              !isDemonstrating, !inputIsSuspended, feedback == nil else { return }
+        checkpointHighlight = hit
+        checkpointRevision += 1
+        gameFeedback.playGlyphCheckpoint(
+            index: checkpointSoundIndex(hit), completesStroke: hit.isStrokeEnd,
+            volume: inputFeedbackMode.checkpointVolume,
+            settings: appSettings.settings
+        )
+    }
+
+    private func checkpointSoundIndex(_ hit: GlyphCheckpointHit) -> Int {
+        spell.glyph.strokes.prefix(hit.strokeIndex).reduce(0) {
+            $0 + GlyphCheckpointTracker.orderedPoints(for: $1).count
+        } + hit.checkpointIndex
+    }
+
+    private func restartDemonstration() {
+        resetDrawing()
+        demonstrationElapsed = 0
+        demonstratedCheckpoints = []
+        demonstrationCompleted = !showsPracticeGuidance
+        demonstrationRun += 1
     }
 
     private var resourceHeader: some View {
@@ -474,9 +663,23 @@ struct GlyphCastingPanel: View {
                 strokes: $completedStrokes,
                 lastInputMethod: $lastInputMethod,
                 onDrawingChanged: updateDrawing,
-                onInputRejected: handleInputRejection
+                onInputRejected: handleInputRejection,
+                checkpointStrokeSpecs: inputFeedbackMode.showsCheckpointFeedback ? spell.glyph.strokes : [],
+                onCheckpointReached: handleCheckpoint
             )
-            .allowsHitTesting(feedback == nil)
+            .allowsHitTesting(feedback == nil && !isDemonstrating && !inputIsSuspended)
+
+            if inputFeedbackMode.showsCheckpointFeedback {
+                GlyphInputFeedbackOverlay(
+                    glyph: spell.glyph,
+                    frame: isDemonstrating ? demonstrationFrame : nil,
+                    nextStrokeIndex: completedStrokes.count,
+                    checkpoint: checkpointHighlight,
+                    color: categoryColor,
+                    showsStartNumbers: showsPracticeGuidance,
+                    reducesFlashes: appSettings.reducedFlashes
+                )
+            }
 
             if let result = feedback {
                 resultOverlay(result)
@@ -509,10 +712,10 @@ struct GlyphCastingPanel: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .opacity(completedStrokes.isEmpty || feedback != nil ? 0.42 : 1)
+            .opacity(canUndo ? 1 : 0.42)
             .help("마지막 획 취소")
             .accessibilityLabel("마지막 획 취소")
-            .disabled(completedStrokes.isEmpty || feedback != nil)
+            .disabled(!canUndo)
             .position(x: size.width * 0.22, y: size.height * 0.5)
 
             Rectangle()
@@ -566,7 +769,7 @@ struct GlyphCastingPanel: View {
             .buttonStyle(.bordered)
             .help("마지막 획 취소")
             .accessibilityLabel("마지막 획 취소")
-            .disabled(completedStrokes.isEmpty || feedback != nil)
+            .disabled(!canUndo)
 
             Button("시전") {
                 cast()
@@ -629,9 +832,17 @@ struct GlyphCastingPanel: View {
     }
 
     private var canCast: Bool {
-        completedStrokes.count == spell.requiredStrokes
+        !isDemonstrating && !inputIsSuspended
+            && drawingState.activeStroke == nil
+            && completedStrokes.count == spell.requiredStrokes
             && completedStrokes.count <= availableStrokes
             && lastInputMethod != nil
+    }
+
+    private var canUndo: Bool {
+        !completedStrokes.isEmpty && feedback == nil
+            && drawingState.activeStroke == nil
+            && !isDemonstrating && !inputIsSuspended
     }
 
     private var guideNodes: [NormalizedPoint] {
@@ -645,6 +856,7 @@ struct GlyphCastingPanel: View {
         case .attack: Color(red: 0.86, green: 0.2, blue: 0.38)
         case .defense: Color(red: 0.2, green: 0.72, blue: 0.92)
         case .dispel: Color(red: 0.94, green: 0.68, blue: 0.18)
+        case .debuff: DAColor.debuff
         }
     }
 
@@ -653,15 +865,18 @@ struct GlyphCastingPanel: View {
         case .attack: "공격"
         case .defense: "방어"
         case .dispel: "해제"
+        case .debuff: "디버프"
         }
     }
 
     private var effectRangeTitle: String {
-        let range = spell.effect.range
-        return "\(categoryTitle) \(range.lowerBound)~\(range.upperBound)"
+        spell.compactEffectDescription
     }
 
     private func updateDrawing(_ state: RuneDrawingState) {
+        if state.completedStrokes.count < drawingState.completedStrokes.count {
+            checkpointHighlight = nil
+        }
         drawingState = state
         feedback = nil
         rejectionMessage = nil
@@ -683,7 +898,7 @@ struct GlyphCastingPanel: View {
     }
 
     private func cast() {
-        guard let method = lastInputMethod else { return }
+        guard canCast, let method = lastInputMethod else { return }
         gameFeedback.playInterface(.confirm, settings: appSettings.settings)
         let evaluation = GlyphEvaluator(maximumMana: availableMana).evaluate(
             spell: spell,
@@ -723,6 +938,7 @@ struct GlyphCastingPanel: View {
         lastInputMethod = nil
         feedback = nil
         rejectionMessage = nil
+        checkpointHighlight = nil
         onResourcePreviewChanged?(availableMana, availableStrokes)
     }
 

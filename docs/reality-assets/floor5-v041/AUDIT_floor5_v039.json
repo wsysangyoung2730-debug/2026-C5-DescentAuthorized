@@ -1,0 +1,424 @@
+{
+  "version": "v039",
+  "rooms": {
+    "F05A": {
+      "scene": "DA_F05A_MemoryOmissionResidue",
+      "objects": 425,
+      "mesh_objects": 377,
+      "triangles": 48839,
+      "source_asset_placements": 17,
+      "texture_count": 15,
+      "missing_textures": [],
+      "cameras": [
+        "F05A_Overview",
+        "F05A_iPad_MainCamera",
+        "F05A_SideCheck_Left",
+        "F05A_SideCheck_Right",
+        "F05A_CeilingReview",
+        "CAM_F05A_BossAccess"
+      ],
+      "decorative_doors": [
+        "F05A_DecorativeArchiveGate",
+        "F05A_DecorativeMiddleDoor"
+      ]
+    },
+    "F05B": {
+      "scene": "DA_F05B_OriginalMemoryAdministrator",
+      "objects": 592,
+      "mesh_objects": 517,
+      "triangles": 97373,
+      "source_asset_placements": 23,
+      "texture_count": 91,
+      "missing_textures": [],
+      "cameras": [
+        "F05B_Overview",
+        "F05_iPad_MainCamera",
+        "F05B_SideCheck_Left",
+        "F05B_SideCheck_Right",
+        "F05B_CeilingReview",
+        "CAM_F05_DescentDoor",
+        "CAM_F05_RewardSelection"
+      ],
+      "decorative_doors": [
+        "F05B_DecorativeSealedGate",
+        "F05B_DecorativeClosedDoor"
+      ]
+    }
+  },
+  "asset_usage": {
+    "floor5-memory-tape-reel-server": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_ReelBank01"
+      ],
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_ReelBank02"
+      ],
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_RearMasterReel"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_ReelRight"
+      ]
+    ],
+    "floor5-memory-reliquary-cabinet": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_Reliquary"
+      ],
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_NearRightReliquary"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_ReliquaryLeft"
+      ]
+    ],
+    "floor5-redacted-portrait-cabinet": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_Portraits"
+      ],
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_SidePortraits"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_PortraitsLeft"
+      ]
+    ],
+    "floor5-echo-playback-terminal": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_Playback"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_PlaybackEvidence"
+      ]
+    ],
+    "floor5-cracked-echo-mirror": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_EchoMirror"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_EchoArchive"
+      ]
+    ],
+    "floor5-archive-data-spine-panel": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_DataSpine"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_SpineLeft"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_SpineRight"
+      ]
+    ],
+    "floor5-original-signature-light-table": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_SignatureTable"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_SignatureEvidence"
+      ]
+    ],
+    "floor5-memory-scroll-cylinder-crate": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_CylinderCrate"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_CylinderCase"
+      ]
+    ],
+    "floor5-missing-name-tag-set": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_LostTags"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_BlankTags"
+      ]
+    ],
+    "floor5-sealed-memory-casket": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_SealedCasket"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_MemoryCasket"
+      ]
+    ],
+    "floor5-porcelain-mask-shard-set": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_MaskShards"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_IdentityFragments"
+      ]
+    ],
+    "floor5-memory-archive-gate": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_DecorativeArchiveGate"
+      ]
+    ],
+    "중간문": [
+      [
+        "DA_F05A_MemoryOmissionResidue",
+        "F05A_DecorativeMiddleDoor"
+      ]
+    ],
+    "floor5-memory-donor-chair": [
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_DonorChair"
+      ]
+    ],
+    "floor5-blank-mask-display-rack": [
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_MaskRackLeft"
+      ],
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_MaskRackRight"
+      ]
+    ],
+    "floor5-mnemonic-extraction-helmet": [
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_ExtractionHelmet"
+      ]
+    ],
+    "floor5-identity-collation-console": [
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_IdentityConsole"
+      ]
+    ],
+    "floor5-handwriting-comparison-desk": [
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_ComparisonDesk"
+      ]
+    ],
+    "floor5-mnemonic-vial-carousel": [
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_VialCarousel"
+      ]
+    ],
+    "floor5-wax-imprint-seal-press": [
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_WaxPress"
+      ]
+    ],
+    "floor5-two-stage-descent-gate": [
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_DecorativeSealedGate"
+      ]
+    ],
+    "닫힌 문": [
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_DecorativeClosedDoor"
+      ]
+    ],
+    "발판_비활성": [
+      [
+        "DA_F05B_OriginalMemoryAdministrator",
+        "F05B_DescentPlatform"
+      ]
+    ]
+  },
+  "checks": {
+    "prior_scene_transforms_preserved": true,
+    "reward_scroll_models_removed": true,
+    "three_empty_future_reward_anchors": true,
+    "all_20_floor5_assets_used": true,
+    "interaction_targets_in_frame": true,
+    "no_decorative_prop_blocks_interaction_rays": true
+  },
+  "camera_checks": {
+    "F05A_Overview": {
+      "F05A_CombatStage": {
+        "min": [
+          0.34951579570770264,
+          0.3334919512271881,
+          11.82294750213623
+        ],
+        "max": [
+          0.6504842042922974,
+          0.4904060363769531,
+          18.626628875732422
+        ],
+        "in_frame": true
+      },
+      "F05A_MagicInputBoard": {
+        "min": [
+          0.3050673007965088,
+          0.10967114567756653,
+          6.258569240570068
+        ],
+        "max": [
+          0.6949326992034912,
+          0.3006596863269806,
+          9.386815071105957
+        ],
+        "in_frame": true
+      }
+    },
+    "F05B_Overview": {
+      "F05B_CombatStage": {
+        "min": [
+          0.32829374074935913,
+          0.3121499717235565,
+          12.286002159118652
+        ],
+        "max": [
+          0.6717062592506409,
+          0.49807435274124146,
+          20.375629425048828
+        ],
+        "in_frame": true
+      },
+      "F05B_MagicInputBoard": {
+        "min": [
+          0.3101797103881836,
+          0.04107366502285004,
+          6.427131175994873
+        ],
+        "max": [
+          0.6898202896118164,
+          0.25645357370376587,
+          9.556448936462402
+        ],
+        "in_frame": true
+      },
+      "F05B_RewardSelection": {
+        "min": [
+          0.08002635836601257,
+          0.25393590331077576,
+          10.23379898071289
+        ],
+        "max": [
+          0.28651735186576843,
+          0.41432151198387146,
+          13.334418296813965
+        ],
+        "in_frame": true
+      },
+      "F05B_DescentStele": {
+        "min": [
+          0.6279314756393433,
+          0.4574865400791168,
+          24.3555850982666
+        ],
+        "max": [
+          0.6658592820167542,
+          0.549370288848877,
+          26.039199829101562
+        ],
+        "in_frame": true
+      },
+      "F05B_DescentPlatform": {
+        "min": [
+          0.6565473079681396,
+          0.4558276832103729,
+          24.220685958862305
+        ],
+        "max": [
+          0.7539495825767517,
+          0.48854178190231323,
+          28.250242233276367
+        ],
+        "in_frame": true
+      }
+    },
+    "CAM_F05_RewardSelection": {
+      "F05B_RewardSelection": {
+        "min": [
+          0.3042280972003937,
+          0.0941670835018158,
+          6.41673469543457
+        ],
+        "max": [
+          0.6646284461021423,
+          0.4951566755771637,
+          9.491351127624512
+        ],
+        "in_frame": true
+      }
+    },
+    "CAM_F05_DescentDoor": {
+      "F05B_DescentStele": {
+        "min": [
+          0.3114183843135834,
+          0.2713148295879364,
+          8.555419921875
+        ],
+        "max": [
+          0.430573970079422,
+          0.6189430952072144,
+          10.557205200195312
+        ],
+        "in_frame": true
+      },
+      "F05B_DescentInputPedestal": {
+        "min": [
+          0.2317175567150116,
+          0.0964287593960762,
+          6.603196144104004
+        ],
+        "max": [
+          0.4736328423023224,
+          0.2783885598182678,
+          8.750407218933105
+        ],
+        "in_frame": true
+      },
+      "F05B_DescentPlatform": {
+        "min": [
+          0.4724047780036926,
+          0.2623958885669708,
+          8.801411628723145
+        ],
+        "max": [
+          0.7473002672195435,
+          0.4490932524204254,
+          13.088046073913574
+        ],
+        "in_frame": true
+      }
+    }
+  },
+  "reward_scroll_objects": [],
+  "sightline_obstructions": {
+    "CAM_F05_RewardSelection/F05B_RewardSelection": [],
+    "CAM_F05_DescentDoor/F05B_DescentStele": [],
+    "CAM_F05_DescentDoor/F05B_DescentPlatform": [],
+    "CAM_F05_DescentDoor/F05B_DescentInputPedestal": []
+  }
+}

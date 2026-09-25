@@ -12,21 +12,27 @@ struct InvestigationFlow<EntranceContent: View>: View {
     let hasCompletedPostInvestigation: Bool
     let postInvestigationContent: ((@escaping () -> Void) -> AnyView)?
     let entranceContent: EntranceContent
+    let restoresEnemyOnDisappear: Bool
 
     @State private var isEntrancePresented = false
     @State private var isInvestigationPresented = true
     @State private var isPostInvestigationPresented = false
     @State private var isBossRevealTransition = false
+    @State private var isActive = false
+    @State private var revealGeneration = 0
+    @State private var entranceRevealTask: Task<Void, Never>?
 
     init(
         sceneController: RealitySceneController,
         configuration: InvestigationConfiguration,
         hasCompletedInvestigation: Bool,
+        restoresEnemyOnDisappear: Bool = true,
         @ViewBuilder entranceContent: () -> EntranceContent
     ) {
         self.sceneController = sceneController
         self.configuration = configuration
         self.hasCompletedInvestigation = hasCompletedInvestigation
+        self.restoresEnemyOnDisappear = restoresEnemyOnDisappear
         hasCompletedPostInvestigation = true
         postInvestigationContent = nil
         self.entranceContent = entranceContent()
@@ -40,12 +46,14 @@ struct InvestigationFlow<EntranceContent: View>: View {
         configuration: InvestigationConfiguration,
         hasCompletedInvestigation: Bool,
         hasCompletedPostInvestigation: Bool,
+        restoresEnemyOnDisappear: Bool = true,
         @ViewBuilder postInvestigationContent: @escaping (@escaping () -> Void) -> PostInvestigationContent,
         @ViewBuilder entranceContent: () -> EntranceContent
     ) {
         self.sceneController = sceneController
         self.configuration = configuration
         self.hasCompletedInvestigation = hasCompletedInvestigation
+        self.restoresEnemyOnDisappear = restoresEnemyOnDisappear
         self.hasCompletedPostInvestigation = hasCompletedPostInvestigation
         self.postInvestigationContent = { completion in
             AnyView(postInvestigationContent(completion))
@@ -98,6 +106,8 @@ struct InvestigationFlow<EntranceContent: View>: View {
             value: isBossRevealTransition
         )
         .onAppear {
+            isActive = true
+            revealGeneration += 1
             let shouldPresentPostInvestigation = hasCompletedInvestigation
                 && !hasCompletedPostInvestigation
                 && postInvestigationContent != nil
@@ -115,12 +125,17 @@ struct InvestigationFlow<EntranceContent: View>: View {
             }
         }
         .onDisappear {
-            sceneController.setEnemyPreviewVisible(true)
+            isActive = false
+            revealGeneration += 1
+            entranceRevealTask?.cancel()
+            entranceRevealTask = nil
+            if restoresEnemyOnDisappear { sceneController.setEnemyPreviewVisible(true) }
             sceneController.resetBattleCamera(animated: false)
         }
     }
 
     private func completeInvestigation() {
+        guard isActive else { return }
         var immediateRemoval = Transaction(animation: nil)
         immediateRemoval.disablesAnimations = true
         withTransaction(immediateRemoval) {
@@ -140,6 +155,7 @@ struct InvestigationFlow<EntranceContent: View>: View {
     }
 
     private func completePostInvestigation() {
+        guard isActive else { return }
         var immediateRemoval = Transaction(animation: nil)
         immediateRemoval.disablesAnimations = true
         withTransaction(immediateRemoval) {
@@ -150,35 +166,51 @@ struct InvestigationFlow<EntranceContent: View>: View {
     }
 
     private func presentEntrance() {
+        guard isActive else { return }
+        let generation = revealGeneration
         sceneController.centerAndLockEntranceCamera(
             previewYaw: configuration.enemyPreviewCameraYaw,
             reducedMotion: appSettings.reducedMotion
         ) {
-            if appSettings.reducedMotion {
-                isEntrancePresented = true
-                sceneController.revealEnemyPreview(reducedMotion: true)
-                return
-            }
+            guard isActive, revealGeneration == generation else { return }
+            entranceRevealTask?.cancel()
+            entranceRevealTask = Task { @MainActor in
+                guard await sceneController.waitForEnemyReady(),
+                      isActive, revealGeneration == generation else { return }
+                if appSettings.reducedMotion {
+                    isEntrancePresented = true
+                    sceneController.revealEnemyPreview(reducedMotion: true)
+                    return
+                }
+                withAnimation(.easeOut(duration: 0.16)) {
+                    isBossRevealTransition = true
+                }
 
-            withAnimation(.easeOut(duration: 0.16)) {
-                isBossRevealTransition = true
-            }
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                guard await waitForReveal(milliseconds: 120),
+                      isActive, revealGeneration == generation else { return }
                 sceneController.revealEnemyPreview(reducedMotion: false)
-            }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) {
+                guard await waitForReveal(milliseconds: 220),
+                      isActive, revealGeneration == generation else { return }
                 withAnimation(.easeOut(duration: 0.58)) {
                     isEntrancePresented = true
                 }
-            }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                guard await waitForReveal(milliseconds: 160),
+                      isActive, revealGeneration == generation else { return }
                 withAnimation(.easeIn(duration: 0.38)) {
                     isBossRevealTransition = false
                 }
             }
+        }
+    }
+
+    private func waitForReveal(milliseconds: Int) async -> Bool {
+        do {
+            try await Task.sleep(for: .milliseconds(milliseconds))
+            return !Task.isCancelled
+        } catch {
+            return false
         }
     }
 }

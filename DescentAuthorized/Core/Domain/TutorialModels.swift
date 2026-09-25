@@ -7,6 +7,7 @@ enum TutorialSequenceID: String, Codable, CaseIterable, Hashable, Sendable {
     case riftDiscovery
     case floor10DescentSeal
     case recordsBattleBasics
+    case floor9Loadout
 
     // riftDiscovery는 기존 저장 데이터 복원을 위해 enum에는 남기되,
     // 새 튜토리얼 목록에서는 최초 두루마리 학습 안내로 통합한다.
@@ -15,7 +16,8 @@ enum TutorialSequenceID: String, Codable, CaseIterable, Hashable, Sendable {
         .floor10Investigation,
         .afterglowDiscovery,
         .floor10DescentSeal,
-        .recordsBattleBasics
+        .recordsBattleBasics,
+        .floor9Loadout
     ]
 }
 
@@ -37,6 +39,10 @@ enum TutorialStepID: String, Codable, CaseIterable, Hashable, Sendable {
     case descentInput
     case descentInformation
     case descentReset
+    case loadoutOverview
+    case loadoutCollection
+    case loadoutSlots
+    case loadoutStart
     case battlePlayerHP
     case battleTurnAndEnemyHP
     case battleIntent
@@ -167,5 +173,26 @@ struct TutorialProgress: Codable, Equatable, Sendable {
         }
 
         return migrated
+    }
+}
+
+/// The preparation guide never advances the encounter or edits the selected spells.
+enum Floor9LoadoutGuide {
+    static let steps: [TutorialStepID] = [.loadoutOverview, .loadoutCollection, .loadoutSlots, .loadoutStart]
+
+    static func currentStep(in progress: GameProgress) -> TutorialStepID? {
+        guard progress.currentFloor == .floor9,
+              progress.expansion == nil,
+              progress.currentScene == .floor9RecordsPreparation,
+              progress.tutorialProgress.shouldPresent(.floor9Loadout) else { return nil }
+        let tutorial = progress.tutorialProgress
+        if tutorial.activeSequence == .floor9Loadout,
+           let step = tutorial.activeStep, steps.contains(step) { return step }
+        return steps[0]
+    }
+
+    static func next(after step: TutorialStepID) -> TutorialStepID? {
+        guard let index = steps.firstIndex(of: step), steps.indices.contains(index + 1) else { return nil }
+        return steps[index + 1]
     }
 }

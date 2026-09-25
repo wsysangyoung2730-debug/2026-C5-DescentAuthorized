@@ -1,0 +1,385 @@
+{
+  "filepath": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F01_F02_F03_F04_F05_F06_F07_F08_F09_F10_Combined_v067_floor4_door_backwalls.blend",
+  "is_dirty": false,
+  "scenes": [
+    {
+      "scene": "DA_F01_FinalApproval",
+      "objects": 1298,
+      "active_camera": "CAM_F01_DescentDoor",
+      "cameras": [
+        "CAM_F01_RewardSelection",
+        "CAM_F01_DescentDoor",
+        "F01C_MainCamera",
+        "F01C_EyeLevel",
+        "F01C_LayoutCamera",
+        "F01C_CrownDetail",
+        "F01C_DescentDetail"
+      ],
+      "anchors": [
+        "F01C_PlayerSpawn",
+        "F01C_EnemySpawn",
+        "F01C_RewardInteract",
+        "F01C_DescentInteract"
+      ]
+    },
+    {
+      "scene": "DA_F01A_IdentityComparison",
+      "objects": 913,
+      "active_camera": "CAM_F01A_IntermediateDoor",
+      "cameras": [
+        "CAM_F01A_IntermediateDoor",
+        "F01A_MainCamera",
+        "F01A_EyeLevel",
+        "F01A_LayoutCamera",
+        "F01A_IdentityDetail"
+      ],
+      "anchors": [
+        "F01A_PlayerSpawn",
+        "F01A_EnemySpawn"
+      ]
+    },
+    {
+      "scene": "DA_F01B_ExitHandover",
+      "objects": 1477,
+      "active_camera": "CAM_F01B_IntermediateDoor",
+      "cameras": [
+        "CAM_F01B_IntermediateDoor",
+        "F01B_MainCamera",
+        "F01B_EyeLevel",
+        "F01B_LayoutCamera",
+        "F01B_InspectionDetail"
+      ],
+      "anchors": [
+        "F01B_PlayerSpawn",
+        "F01B_EnemySpawn"
+      ]
+    },
+    {
+      "scene": "DA_F02_SealHeartAdministrator",
+      "objects": 897,
+      "active_camera": "CAM_F02_DescentDoor",
+      "cameras": [
+        "F02C_RewardReview_v058",
+        "CAM_F02_RewardSelection",
+        "CAM_F02_DescentDoor",
+        "F02C_MainCamera",
+        "F02C_LayoutCamera",
+        "F02C_HeartDetail",
+        "F02C_DescentDetail"
+      ],
+      "anchors": [
+        "F02C_PlayerSpawn",
+        "F02C_EnemySpawn",
+        "F02C_DescentAnchor"
+      ]
+    },
+    {
+      "scene": "DA_F02A_PressureDistribution",
+      "objects": 817,
+      "active_camera": "F02A_MainCamera",
+      "cameras": [
+        "F02A_MainCamera",
+        "F02A_LayoutCamera",
+        "F02A_PropDetail",
+        "CAM_F02A_MiddleDoor"
+      ],
+      "anchors": [
+        "F02A_PlayerSpawn",
+        "F02A_EnemySpawn"
+      ]
+    },
+    {
+      "scene": "DA_F02B_CoolingBackflow",
+      "objects": 940,
+      "active_camera": "CAM_F02B_MiddleDoor",
+      "cameras": [
+        "F02B_MainCamera",
+        "F02B_LayoutCamera",
+        "F02B_PropDetail",
+        "CAM_F02B_MiddleDoor"
+      ],
+      "anchors": [
+        "F02B_PlayerSpawn",
+        "F02B_EnemySpawn"
+      ]
+    },
+    {
+      "scene": "DA_F03_VoluntaryIsolationAdministrator",
+      "objects": 786,
+      "active_camera": "CAM_F03_DescentDoor",
+      "cameras": [
+        "F03C_MainCamera",
+        "F03C_LayoutCamera",
+        "F03C_RewardDetail",
+        "F03C_DescentDetail",
+        "CAM_F03_DescentDoor",
+        "CAM_F03_RewardSelection"
+      ],
+      "anchors": [
+        "F03C_PlayerSpawn",
+        "F03C_EnemySpawn",
+        "F03C_DescentInteraction"
+      ]
+    },
+    {
+      "scene": "DA_F03A_ConsentArchive",
+      "objects": 383,
+      "active_camera": "CAM_F03A_MiddleDoor",
+      "cameras": [
+        "F03A_MainCamera",
+        "F03A_LayoutCamera",
+        "F03A_ArchiveDetail",
+        "CAM_F03A_MiddleDoor"
+      ],
+      "anchors": [
+        "F03A_PlayerSpawn",
+        "F03A_EnemySpawn"
+      ]
+    },
+    {
+      "scene": "DA_F03B_IsolationExecution",
+      "objects": 457,
+      "active_camera": "F03B_MainCamera",
+      "cameras": [
+        "F03B_MainCamera",
+        "F03B_LayoutCamera",
+        "F03B_CellDetail",
+        "CAM_F03B_MiddleDoor"
+      ],
+      "anchors": [
+        "F03B_PlayerSpawn",
+        "F03B_EnemySpawn"
+      ]
+    },
+    {
+      "scene": "DA_F04_ResponsibilityAdministrator",
+      "objects": 304,
+      "active_camera": "CAM_F04_DescentDoor",
+      "cameras": [
+        "F04_iPad_MainCamera",
+        "CAM_F04_InputBoard",
+        "CAM_F04_RewardSelection",
+        "CAM_F04_DescentDoor",
+        "F04C_Overview",
+        "CAM_F04_JudgementDais"
+      ],
+      "anchors": [
+        "ANCHOR_F04_RewardSlot_Left",
+        "ANCHOR_F04_RewardSlot_Center",
+        "ANCHOR_F04_RewardSlot_Right",
+        "SPAWN_ResponsibilityAdministrator"
+      ]
+    },
+    {
+      "scene": "DA_F04A_SignatureMimicWorkshop",
+      "objects": 125,
+      "active_camera": "F04A_iPad_MainCamera",
+      "cameras": [
+        "F04A_iPad_MainCamera",
+        "CAM_F04A_InputBoard",
+        "CAM_F04A_Investigation",
+        "CAM_F04A_MiddleDoor",
+        "F04A_Overview"
+      ],
+      "anchors": [
+        "SPAWN_SignatureMimicResidue"
+      ]
+    },
+    {
+      "scene": "DA_F04B_RejectionExecutionWorkshop",
+      "objects": 132,
+      "active_camera": "F04B_iPad_MainCamera",
+      "cameras": [
+        "F04B_iPad_MainCamera",
+        "CAM_F04B_InputBoard",
+        "CAM_F04B_Investigation",
+        "CAM_F04B_MiddleDoor",
+        "F04B_Overview"
+      ],
+      "anchors": [
+        "SPAWN_RejectionExecutionResidue"
+      ]
+    },
+    {
+      "scene": "DA_F05A_MemoryOmissionResidue",
+      "objects": 555,
+      "active_camera": "CAM_F05A_BossAccess",
+      "cameras": [
+        "F05A_Overview",
+        "F05A_iPad_MainCamera",
+        "F05A_SideCheck_Left",
+        "F05A_SideCheck_Right",
+        "F05A_CeilingReview",
+        "CAM_F05A_BossAccess",
+        "F05A_HeadTurn70_Left",
+        "F05A_HeadTurn90_Left",
+        "F05A_HeadTurn70_Right",
+        "F05A_HeadTurn90_Right"
+      ],
+      "anchors": [
+        "SPAWN_MemoryOmissionResidue"
+      ]
+    },
+    {
+      "scene": "DA_F05B_OriginalMemoryAdministrator",
+      "objects": 721,
+      "active_camera": "CAM_F05_DescentDoor",
+      "cameras": [
+        "F05B_Overview",
+        "F05_iPad_MainCamera",
+        "F05B_SideCheck_Left",
+        "F05B_SideCheck_Right",
+        "F05B_CeilingReview",
+        "CAM_F05_DescentDoor",
+        "CAM_F05_RewardSelection",
+        "F05B_HeadTurn70_Left",
+        "F05B_HeadTurn90_Left",
+        "F05B_HeadTurn70_Right",
+        "F05B_HeadTurn90_Right"
+      ],
+      "anchors": [
+        "SPAWN_OriginalMemoryAdministrator",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_2_00",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_2_01",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_2_02",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_2_03",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_2_04",
+        "F05B_RewardSelection__RewardSelection__RewardSlot_CenterLid",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_1_00",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_1_01",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_1_02",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_1_03",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_1_04",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_1_05",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_1_06",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_1_07",
+        "F05B_RewardSelection__RewardSelection__RewardSlot_LeftLid",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_0_00",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_0_01",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_0_02",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_0_03",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_0_04",
+        "F05B_RewardSelection__RewardSelection__RewardSlotPart_0_05",
+        "F05B_RewardSelection__RewardSelection__RewardSlot_RightLid",
+        "anchor_F05_reward_interaction",
+        "anchor_F05_descent_interaction",
+        "ANCHOR_F05_RewardSlot_Center",
+        "ANCHOR_F05_RewardSlot_Left",
+        "ANCHOR_F05_RewardSlot_Right"
+      ]
+    },
+    {
+      "scene": "DA_F06A_ResultDelayResidue",
+      "objects": 251,
+      "active_camera": "F06A_iPadCamera",
+      "cameras": [
+        "DA_F06A_ResultDelayResidue_Overview.001",
+        "F06A_iPadCamera",
+        "CAM_F06A_BossAccessDoor",
+        "F06A_RedesignOverview",
+        "F06A_SideCheck_Left",
+        "F06A_SideCheck_Right"
+      ],
+      "anchors": [
+        "SPAWN_CausalityResidue"
+      ]
+    },
+    {
+      "scene": "DA_F06B_CausalityAdministrator",
+      "objects": 449,
+      "active_camera": "F06_iPad_MainCamera",
+      "cameras": [
+        "DA_F06B_CausalityAdministrator_Overview.001",
+        "F06_iPad_MainCamera",
+        "CAM_F06_RewardSelection",
+        "CAM_F06_DescentDoor",
+        "F06B_RedesignOverview",
+        "F06B_SideCheck_Left",
+        "F06B_SideCheck_Right",
+        "F06B_DomeReview"
+      ],
+      "anchors": [
+        "SPAWN_CausalityAdministrator",
+        "anchor_F06_descent_interaction",
+        "F06B_RewardSelection__F09_RewardSlotPart_2_03",
+        "F06B_RewardSelection__F09_RewardSlot_CenterLid",
+        "F06B_RewardSelection__F09_RewardSlotPart_1_01",
+        "F06B_RewardSelection__F09_RewardSlotPart_1_07",
+        "F06B_RewardSelection__F09_RewardSlotPart_0_03",
+        "F06B_RewardSelection__F09_RewardSlot_LeftLid",
+        "F06B_RewardSelection__F09_RewardSlotPart_1_02",
+        "F06B_RewardSelection__F09_RewardSlotPart_2_04",
+        "F06B_RewardSelection__F09_RewardSlotPart_2_00",
+        "F06B_RewardSelection__F09_RewardSlotPart_0_04",
+        "F06B_RewardSelection__F09_RewardSlotPart_1_03",
+        "F06B_RewardSelection__F09_RewardSlot_RightLid",
+        "F06B_RewardSelection__F09_RewardSlotPart_2_01",
+        "F06B_RewardSelection__F09_RewardSlotPart_0_05",
+        "F06B_RewardSelection__F09_RewardSlotPart_0_00",
+        "F06B_RewardSelection__F09_RewardSlotPart_1_04",
+        "F06B_RewardSelection__F09_RewardSlotPart_1_00",
+        "F06B_RewardSelection__F09_RewardSlotPart_2_02",
+        "F06B_RewardSelection__F09_RewardSlotPart_0_01",
+        "F06B_RewardSelection__F09_RewardSlotPart_1_05",
+        "F06B_RewardSelection__F09_RewardSlotPart_0_02",
+        "F06B_RewardSelection__F09_RewardSlotPart_1_06",
+        "anchor_F06_reward_interaction"
+      ]
+    },
+    {
+      "scene": "DA_F07_CoordinateAdministrator",
+      "objects": 495,
+      "active_camera": "CAM_F07_DescentDoor",
+      "cameras": [
+        "F07_iPad_MainCamera",
+        "CAM_F07_RewardSelection",
+        "CAM_F07_DescentDoor",
+        "F07B_RedesignOverview",
+        "F07B_SideCheck_Left",
+        "F07B_SideCheck_Right"
+      ],
+      "anchors": [
+        "SPAWN_CoordinateAdministrator",
+        "anchor_F07_descent_interaction",
+        "F07B_RewardSelection__F09_RewardSlotPart_2_03",
+        "F07B_RewardSelection__F09_RewardSlot_CenterLid",
+        "F07B_RewardSelection__F09_RewardSlotPart_1_01",
+        "F07B_RewardSelection__F09_RewardSlotPart_1_07",
+        "F07B_RewardSelection__F09_RewardSlotPart_0_03",
+        "F07B_RewardSelection__F09_RewardSlot_LeftLid",
+        "F07B_RewardSelection__F09_RewardSlotPart_1_02",
+        "F07B_RewardSelection__F09_RewardSlotPart_2_04",
+        "F07B_RewardSelection__F09_RewardSlotPart_2_00",
+        "F07B_RewardSelection__F09_RewardSlotPart_0_04",
+        "F07B_RewardSelection__F09_RewardSlotPart_1_03",
+        "F07B_RewardSelection__F09_RewardSlot_RightLid",
+        "F07B_RewardSelection__F09_RewardSlotPart_2_01",
+        "F07B_RewardSelection__F09_RewardSlotPart_0_05",
+        "F07B_RewardSelection__F09_RewardSlotPart_0_00",
+        "F07B_RewardSelection__F09_RewardSlotPart_1_04",
+        "F07B_RewardSelection__F09_RewardSlotPart_1_00",
+        "F07B_RewardSelection__F09_RewardSlotPart_2_02",
+        "F07B_RewardSelection__F09_RewardSlotPart_0_01",
+        "F07B_RewardSelection__F09_RewardSlotPart_1_05",
+        "F07B_RewardSelection__F09_RewardSlotPart_0_02",
+        "F07B_RewardSelection__F09_RewardSlotPart_1_06",
+        "anchor_F07_reward_interaction"
+      ]
+    },
+    {
+      "scene": "DA_F07A_CoordinateResidue",
+      "objects": 222,
+      "active_camera": "CAM_F07A_BossAccessDoor",
+      "cameras": [
+        "F07A_iPadCamera",
+        "CAM_F07A_BossAccessDoor",
+        "F07A_RedesignOverview",
+        "F07A_SideCheck_Left",
+        "F07A_SideCheck_Right"
+      ],
+      "anchors": [
+        "SPAWN_CoordinateResidue"
+      ]
+    }
+  ]
+}

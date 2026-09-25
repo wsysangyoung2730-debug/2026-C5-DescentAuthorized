@@ -11,7 +11,8 @@ final class DemoGameSessionTests: XCTestCase {
         progress.learnedSpells = [.afterglowErasure, .riftSeverance]
         progress.completedTrainingSpells = [.afterglowErasure, .riftSeverance]
         var session = DemoGameSession(progress: progress)
-
+        _ = try session.handle(.enterRecordsEncounter)
+        _ = try session.handle(.beginRecordsBattle)
         _ = try session.handle(.startEncounter)
         XCTAssertNotNil(session.encounter)
 
@@ -28,7 +29,8 @@ final class DemoGameSessionTests: XCTestCase {
         progress.currentScene = .floor8ResidualBattle
         progress.learnedSpells = [.afterglowErasure, .basicBarrier]
         var session = DemoGameSession(progress: progress)
-
+        _ = try session.handle(.enterResidualEncounter)
+        _ = try session.handle(.beginResidualBattle)
         let events = try session.handle(.startEncounter)
 
         XCTAssertEqual(session.battleState?.player.normalBarrier, 20)
@@ -69,6 +71,8 @@ final class DemoGameSessionTests: XCTestCase {
             }
         }
 
+        XCTAssertEqual(session.lastCompletedBattleState?.phase, .victory)
+        XCTAssertEqual(session.lastCompletedBattleState?.enemy.hp, 0)
         XCTAssertEqual(session.progress.currentScene, .floor9RecordsDefeated)
         XCTAssertTrue(session.progress.defeatedEnemies.contains(.recordsAdministrator))
         XCTAssertGreaterThan(
@@ -94,9 +98,9 @@ final class DemoGameSessionTests: XCTestCase {
         let restartEvents = try session.handle(.restartEncounter)
 
         XCTAssertEqual(session.progress.playerHP, 100)
-        XCTAssertEqual(session.battleState?.player.hp, 100)
-        XCTAssertEqual(session.battleState?.phase, .playerTurn)
-        XCTAssertTrue(restartEvents.contains(.encounterStarted(.recordsAdministrator)))
+        XCTAssertNil(session.battleState)
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsPreparation)
+        XCTAssertTrue(restartEvents.contains(.progression(.sceneChanged(.floor9RecordsPreparation))))
     }
 
     func testActiveEncounterRestartsAtCheckpointHPAndResetsEnemy() throws {
@@ -108,6 +112,10 @@ final class DemoGameSessionTests: XCTestCase {
         progress.learnedSpells = [.afterglowErasure, .riftSeverance]
         progress.completedTrainingSpells = [.afterglowErasure, .riftSeverance]
         var session = DemoGameSession(progress: progress)
+        if session.progress.currentScene == .floor9RecordsPreparation {
+            _ = try session.handle(.enterRecordsEncounter)
+            _ = try session.handle(.beginRecordsBattle)
+        }
         _ = try session.handle(.startEncounter)
         let spell = SpellCatalog.spell(.afterglowErasure)
         _ = try session.handle(.castSpell(
@@ -122,13 +130,10 @@ final class DemoGameSessionTests: XCTestCase {
 
         let events = try session.handle(.restartEncounterFromCheckpoint)
 
-        XCTAssertEqual(session.progress.playerHP, 63)
-        XCTAssertEqual(session.battleState?.player.hp, 63)
-        XCTAssertEqual(
-            session.battleState?.enemy.hp,
-            EnemyCatalog.recordsAdministrator.maxHP
-        )
-        XCTAssertTrue(events.contains(.encounterStarted(.recordsAdministrator)))
+        XCTAssertEqual(session.progress.playerHP, 100)
+        XCTAssertNil(session.battleState)
+        XCTAssertEqual(session.progress.currentScene, .floor9RecordsPreparation)
+        XCTAssertTrue(events.contains(.progression(.sceneChanged(.floor9RecordsPreparation))))
     }
 
     func testTwoStrokeSpellAutomaticallyAdvancesEnemyTurn() throws {
@@ -138,6 +143,10 @@ final class DemoGameSessionTests: XCTestCase {
         progress.checkpoint = .recordsBattle
         progress.learnedSpells = [.barrierPiercing]
         var session = DemoGameSession(progress: progress)
+        if session.progress.currentScene == .floor9RecordsPreparation {
+            _ = try session.handle(.enterRecordsEncounter)
+            _ = try session.handle(.beginRecordsBattle)
+        }
         _ = try session.handle(.startEncounter)
 
         let spell = SpellCatalog.spell(.barrierPiercing)
@@ -189,7 +198,8 @@ final class DemoGameSessionTests: XCTestCase {
 
         let restored = try DemoGameSession.restore(from: store)
 
-        XCTAssertEqual(restored.progress, session.progress)
+        XCTAssertEqual(restored.progress.currentScene, .floor9RecordsPreparation)
+        XCTAssertEqual(restored.progress.learnedSpells, session.progress.learnedSpells)
         XCTAssertNil(restored.encounter)
         XCTAssertEqual(restored.progress.checkpoint, .recordsBattle)
     }
@@ -209,6 +219,7 @@ final class DemoGameSessionTests: XCTestCase {
         ))
         _ = try session.handle(.approveDescentDoor)
         _ = try session.handle(.enterRecordsBattle)
+        _ = try session.handle(.enterRecordsEncounter)
         _ = try session.handle(.beginRecordsBattle)
         return session
     }

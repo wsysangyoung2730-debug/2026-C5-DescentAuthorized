@@ -282,14 +282,14 @@ struct FloorEntrancePanel: View {
                 .padding(.trailing, panelWidth)
                 .allowsHitTesting(false)
 
-                panel(width: panelWidth)
+                panel(width: panelWidth, viewportHeight: proxy.size.height)
             }
         }
         .ignoresSafeArea(edges: .bottom)
     }
 
-    private func panel(width: CGFloat) -> some View {
-        ScrollView(showsIndicators: false) {
+    private func panel(width: CGFloat, viewportHeight: CGFloat) -> some View {
+        ScrollView(showsIndicators: true) {
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 16) {
                     if let code = configuration.code {
@@ -345,7 +345,7 @@ struct FloorEntrancePanel: View {
             .padding(.horizontal, 32)
             .padding(.top, 34)
             .padding(.bottom, 30)
-            .frame(minHeight: 760, alignment: .top)
+            .frame(minHeight: min(760, viewportHeight), alignment: .top)
         }
         .frame(width: width)
         .frame(maxHeight: .infinity)
@@ -514,9 +514,90 @@ struct FloorEntranceConfiguration {
         signalTitle: "확인된 신호",
         signalBody: "보호 절차실의 비상동력이 작동 중이다.",
         buttonAsset: "Floor8ProtectionButtonPlate",
-        actionTitle: "보호 절차실 진입",
+        actionTitle: "관측 구역 진입",
         actionIcon: "shield.lefthalf.filled"
     )
+
+    static let floor8Administrator = FloorEntranceConfiguration(
+        code: "8-D / 관측 본실",
+        title: "관측 관리자 조우 준비",
+        summary: "금빛 봉인이 해제되자 관측 본실의 장비가 다시 움직이기 시작한다.\n관리자와 조우하기 전에 출전 주문을 최종 확인해야 한다.",
+        accent: Color(red: 0.48, green: 0.32, blue: 0.92),
+        statuses: [
+            .init(icon: "lock.open.fill", title: "본실 봉인", value: "해제", color: DAColor.defense),
+            .init(icon: "eye.fill", title: "관측 관리자", value: "반응 감지", color: DAColor.magicGlow),
+            .init(icon: "scroll.fill", title: "출전 주문", value: "확인 필요", color: FloorEntrancePalette.brass)
+        ],
+        signalTitle: "관리자 반응 확인",
+        signalBody: "본실 중앙의 관측 장치가 침입자의 좌표를 고정하고 있다.",
+        buttonAsset: "Floor8ProtectionButtonPlate",
+        actionTitle: "관측 본실 입장하기",
+        actionIcon: "door.left.hand.open"
+    )
+
+    static func expansionSealAccess(floorNumber: Int, playerHP: Int) -> FloorEntranceConfiguration {
+        FloorEntranceConfiguration(
+            code: "\(floorNumber)-A / 잔류체 구역",
+            title: "잔류체 무력화",
+            summary: "잔류체의 반응이 잦아들었다.\n관리자 구역으로 향하려면 남아 있는 봉인을 해제해야 한다.",
+            accent: DAColor.gold,
+            statuses: [
+                .init(icon: "checkmark.seal.fill", title: "잔류체", value: "무력화", color: DAColor.defense),
+                .init(icon: "heart.fill", title: "생명력 회복", value: "HP \(playerHP)", color: DAColor.attack),
+                .init(icon: "lock.fill", title: "관리자 구역 봉인", value: "유지", color: FloorEntrancePalette.brass)
+            ],
+            signalTitle: "관리자 구역 접근",
+            signalBody: "봉인문 앞에서 익힌 해제 문양을 재현하면 다음 구역으로 진입할 수 있다.",
+            buttonAsset: "Floor8ProtectionButtonPlate",
+            actionTitle: "관리자 구역 봉인문으로 이동",
+            actionIcon: "door.left.hand.closed"
+        )
+    }
+
+    static func expansionPreparation(
+        floorNumber: Int,
+        areaName: String,
+        isBoss: Bool
+    ) -> FloorEntranceConfiguration {
+        let accent = isBoss
+            ? Color(red: 0.48, green: 0.32, blue: 0.92)
+            : Color(red: 0.22, green: 0.78, blue: 0.96)
+        return FloorEntranceConfiguration(
+            code: "\(floorNumber)-\(isBoss ? "B" : "A") / \(areaName)",
+            title: isBoss ? "제\(floorNumber)층 관리자 조우 준비" : "제\(floorNumber)층 잔류체 조우 준비",
+            summary: isBoss
+                ? "관리자 구역의 봉인이 해제되었다.\n구역에 입장하기 전에 출전 주문과 보호 대상을 최종 확인한다."
+                : "구역 내부에서 관측 잔류 반응이 감지되었다.\n진입하기 전에 이번 전투에 사용할 주문을 준비한다.",
+            accent: accent,
+            statuses: [
+                .init(
+                    icon: isBoss ? "lock.open.fill" : "waveform.path.ecg",
+                    title: isBoss ? "관리자 구역 봉인" : "잔류 반응",
+                    value: isBoss ? "해제" : "감지",
+                    color: isBoss ? DAColor.defense : DAColor.attack
+                ),
+                .init(
+                    icon: "scroll.fill",
+                    title: "출전 주문",
+                    value: "확인 필요",
+                    color: FloorEntrancePalette.brass
+                ),
+                .init(
+                    icon: "shield.lefthalf.filled",
+                    title: "보호 주문",
+                    value: "선택 가능",
+                    color: DAColor.defense
+                )
+            ],
+            signalTitle: isBoss ? "관리자 신호 확인" : "잔류체 신호 확인",
+            signalBody: isBoss
+                ? "구역 안쪽에서 관리자의 관측 신호가 일정한 주기로 반복된다."
+                : "전투 구역 안쪽에서 불안정한 잔류 마력 반응이 이어지고 있다.",
+            buttonAsset: "Floor8ProtectionButtonPlate",
+            actionTitle: isBoss ? "관리자 구역 입장하기" : "잔류체 구역 입장하기",
+            actionIcon: "door.left.hand.open"
+        )
+    }
 }
 
 struct FloorEntranceStatus {

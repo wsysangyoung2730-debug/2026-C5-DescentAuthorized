@@ -1,0 +1,191 @@
+[
+  {
+    "file": "IntentAmplify/intent_amplify.usdc",
+    "meshes": 1,
+    "size": [
+      1.0902227524558454,
+      0.1878712315914125,
+      1.1499999443440685
+    ]
+  },
+  {
+    "file": "IntentAmplify/intent_amplify_low.usdc",
+    "meshes": 1,
+    "size": [
+      1.0902227524558454,
+      0.1878712315914125,
+      1.1499999443440685
+    ]
+  },
+  {
+    "file": "IntentAmplify/intent_amplify_medium.usdc",
+    "meshes": 1,
+    "size": [
+      1.0902227524558454,
+      0.1878712315914125,
+      1.1499999443440685
+    ]
+  },
+  {
+    "file": "IntentDamageReservation/intent_damage_reservation.usdc",
+    "meshes": 1,
+    "size": [
+      1.1284600627608086,
+      0.5911551454453345,
+      1.1499999787192792
+    ]
+  },
+  {
+    "file": "IntentDamageReservation/intent_damage_reservation_low.usdc",
+    "meshes": 1,
+    "size": [
+      1.1284600627608086,
+      0.5911551454453345,
+      1.1499999787192792
+    ]
+  },
+  {
+    "file": "IntentDamageReservation/intent_damage_reservation_medium.usdc",
+    "meshes": 1,
+    "size": [
+      1.1284600627608086,
+      0.5911551454453345,
+      1.1499999787192792
+    ]
+  },
+  {
+    "file": "IntentMemoryRecord/intent_memory_record.usdc",
+    "meshes": 1,
+    "size": [
+      1.1010639497532217,
+      0.21566060493967762,
+      1.1500000905672616
+    ]
+  },
+  {
+    "file": "IntentMemoryRecord/intent_memory_record_low.usdc",
+    "meshes": 1,
+    "size": [
+      1.1010639497532217,
+      0.21566060493967762,
+      1.1500000905672616
+    ]
+  },
+  {
+    "file": "IntentMemoryRecord/intent_memory_record_medium.usdc",
+    "meshes": 1,
+    "size": [
+      1.1010639497532217,
+      0.21566060493967762,
+      1.1500000905672616
+    ]
+  },
+  {
+    "file": "IntentMimicAttack/intent_mimic_attack.usdc",
+    "meshes": 1,
+    "size": [
+      1.149999961208969,
+      0.5342696816180348,
+      1.1404493317240845
+    ]
+  },
+  {
+    "file": "IntentMimicAttack/intent_mimic_attack_low.usdc",
+    "meshes": 1,
+    "size": [
+      1.149999961208969,
+      0.5342696816180348,
+      1.1404493317240845
+    ]
+  },
+  {
+    "file": "IntentMimicAttack/intent_mimic_attack_medium.usdc",
+    "meshes": 1,
+    "size": [
+      1.149999961208969,
+      0.5342696816180348,
+      1.1404493317240845
+    ]
+  },
+  {
+    "file": "IntentOpeningWait/intent_opening_wait.usdc",
+    "meshes": 1,
+    "size": [
+      1.1500001252978094,
+      0.09616526651544803,
+      1.1386195846266598
+    ]
+  },
+  {
+    "file": "IntentOpeningWait/intent_opening_wait_low.usdc",
+    "meshes": 1,
+    "size": [
+      1.1500001252978094,
+      0.09616526651544803,
+      1.1386195846266598
+    ]
+  },
+  {
+    "file": "IntentOpeningWait/intent_opening_wait_medium.usdc",
+    "meshes": 1,
+    "size": [
+      1.1500001252978094,
+      0.09616526651544803,
+      1.1386195846266598
+    ]
+  },
+  {
+    "file": "IntentScheduledExecution/intent_scheduled_execution.usdc",
+    "meshes": 1,
+    "size": [
+      1.1095507054333325,
+      0.5398877103399659,
+      1.1500001488719147
+    ]
+  },
+  {
+    "file": "IntentScheduledExecution/intent_scheduled_execution_low.usdc",
+    "meshes": 1,
+    "size": [
+      1.1095507054333325,
+      0.5398877103399659,
+      1.1500001488719147
+    ]
+  },
+  {
+    "file": "IntentScheduledExecution/intent_scheduled_execution_medium.usdc",
+    "meshes": 1,
+    "size": [
+      1.1095507054333325,
+      0.5398877103399659,
+      1.1500001488719147
+    ]
+  },
+  {
+    "file": "IntentSpellSeal/intent_spell_seal.usdc",
+    "meshes": 1,
+    "size": [
+      1.1381500752307092,
+      0.5467860136466968,
+      1.1499998580379753
+    ]
+  },
+  {
+    "file": "IntentSpellSeal/intent_spell_seal_low.usdc",
+    "meshes": 1,
+    "size": [
+      1.1381500752307092,
+      0.5467860136466968,
+      1.1499998580379753
+    ]
+  },
+  {
+    "file": "IntentSpellSeal/intent_spell_seal_medium.usdc",
+    "meshes": 1,
+    "size": [
+      1.1381500752307092,
+      0.5467860136466968,
+      1.1499998580379753
+    ]
+  }
+]

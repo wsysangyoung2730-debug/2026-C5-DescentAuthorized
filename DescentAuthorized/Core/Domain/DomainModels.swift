@@ -169,12 +169,36 @@ enum SpellID: String, Codable, CaseIterable, Sendable {
     case barrierPiercing
     case basicBarrier
     case sealRelease
+    case chainInscription
+    case condensedBarrier
+    case purificationGlyph
+    case lingeringBarrier
+    case focusedRupture
+    case axisSeverance
+    case anchorGuard
+    case consequenceErasure
+    case outputReduction
+    case executionDelay
+    case advanceVerdict
+    case causalCushion
+    case memorySeverance
+    case memorySuture
+    case mimicProhibition
+    case bloodSealPiercing
+    case limitBarrier
+    case executionNullification
+    case directHitProhibition
+    case responsibilitySeverance
+    case isolationBarrier
+    case pressureRelease
+    case handoffBarrier
 }
 
 enum SpellCategory: String, Codable, Sendable {
     case attack
     case defense
     case dispel
+    case debuff
 }
 
 enum ScrollTier: String, Codable, Sendable {
@@ -188,6 +212,7 @@ enum SpellEffect: Codable, Equatable, Sendable {
     case damage(minimum: Int, maximum: Int, piercesNormalBarrier: Bool)
     case fixedBarrier(minimum: Int, maximum: Int, maxStack: Int)
     case dispelAbsoluteBarrier(minimumCharges: Int, maximumCharges: Int)
+    case expansion(ExpansionSpellEffect)
 
     var range: ClosedRange<Int> {
         switch self {
@@ -196,6 +221,8 @@ enum SpellEffect: Codable, Equatable, Sendable {
             minimum...maximum
         case let .dispelAbsoluteBarrier(minimumCharges, maximumCharges):
             minimumCharges...maximumCharges
+        case let .expansion(effect):
+            effect.range
         }
     }
 }
@@ -216,6 +243,10 @@ enum DescentDoorGlyphID: String, Codable, CaseIterable, Sendable {
     case floor10
     case floor9
     case floor8
+    case floor4Approval1, floor4Approval2, floor4Approval3
+    case floor3Approval1, floor3Approval2, floor3Approval3
+    case floor2Approval1, floor2Approval2, floor2Approval3
+    case floor1Approval1, floor1Approval2, floor1Approval3
 }
 
 struct DescentDoorGlyphDefinition: Codable, Equatable, Sendable {
@@ -295,6 +326,24 @@ enum EnemyID: String, Codable, CaseIterable, Sendable {
     case recordsAdministrator
     case observationResidual
     case observationAdministrator
+    case coordinateDriftResidual
+    case coordinateCorrectionAdministrator
+    case delayedConsequenceResidual
+    case causalityVerificationAdministrator
+    case memoryOmissionResidual
+    case memoryOriginalAdministrator
+    case signatureMimicResidual
+    case rejectionExecutionResidual
+    case responsibilityAuditAdministrator
+    case consentCustodianResidual
+    case quarantineEnforcerResidual
+    case voluntaryQuarantineAdministrator
+    case overloadResidual
+    case backflowBlockerResidual
+    case sealMaintenanceAdministrator
+    case identityComparisonResidual
+    case exitReviewResidual
+    case finalAuthorizationAdministrator
 }
 
 enum EnemyAction: Codable, Equatable, Sendable {
@@ -302,13 +351,15 @@ enum EnemyAction: Codable, Equatable, Sendable {
     case grantNormalBarrier(name: String, amount: Int)
     case grantAbsoluteBarrier(name: String, charges: Int)
     case telegraph(name: String, upcomingActionName: String)
+    case expansion(name: String, action: ExpansionEnemyAction)
 
     var name: String {
         switch self {
         case let .attack(name, _, _),
              let .grantNormalBarrier(name, _),
              let .grantAbsoluteBarrier(name, _),
-             let .telegraph(name, _):
+             let .telegraph(name, _),
+             let .expansion(name, _):
             name
         }
     }
@@ -347,6 +398,8 @@ enum BattleEvent: Equatable, Sendable {
     case erasureZoneAdded(ErasureZone)
     case enemyActionStarted(EnemyAction)
     case enemyActionCancelled
+    case expansionChanged(message: String)
+    case healingApplied(amount: Int, remainingHP: Int)
     case victory(EnemyID)
     case defeat
 }
@@ -367,6 +420,7 @@ enum SceneID: String, Codable, Sendable {
     case floor10TrainingWall
     case floor10DescentDoor
     case floor9Entrance
+    case floor9RecordsPreparation
     case floor9RecordsEncounter
     case floor9RecordsBattle
     case floor9RecordsDefeated
@@ -374,10 +428,12 @@ enum SceneID: String, Codable, Sendable {
     case floor9DescentDoor
     case floor8Antechamber
     case floor8ProtectionRoom
+    case floor8ResidualPreparation
     case floor8ResidualEncounter
     case floor8ResidualBattle
     case floor8ResidualDefeated
     case floor8SealedDoor
+    case floor8AdministratorPreparation
     case floor8AdministratorEncounter
     case floor8AdministratorBattle
     case floor8AdministratorDefeated
@@ -397,6 +453,16 @@ enum CheckpointID: String, Codable, CaseIterable, Equatable, Hashable, Sendable 
     case observationBattle
     case observationDefeated
     case demoComplete
+    case floor7Encounter, floor7SealedDoor, floor7BossEncounter, floor7Reward, floor7Descent
+    case floor6Investigation, floor6Learning, floor6Encounter, floor6SealedDoor
+    case floor6BossEncounter, floor6Reward, floor6Descent
+    case floor5Investigation, floor5Encounter, floor5SealedDoor, floor5BossEncounter
+    case floor5Reward, floor5Descent, floor5Complete
+    case floor4Encounter, floor4SecondEncounter, floor4RecordReward, floor4SealedDoor, floor4BossEncounter, floor4Reward, floor4Descent
+    case floor3Investigation, floor3Encounter, floor3SecondEncounter, floor3RecordReward, floor3SealedDoor, floor3BossEncounter, floor3Reward, floor3Descent
+    case floor2Investigation, floor2Encounter, floor2SecondEncounter, floor2SealedDoor, floor2BossEncounter, floor2Reward, floor2Descent
+    case floor1Investigation, floor1Encounter, floor1SecondEncounter, floor1SealedDoor, floor1BossEncounter, floor1FinalRecord, floor1Descent
+    case towerHandoffComplete
 
     var progressionIndex: Int {
         Self.allCases.firstIndex(of: self) ?? 0
@@ -433,7 +499,7 @@ struct SpellMastery: Codable, Equatable, Sendable {
 }
 
 struct GameProgress: Codable, Equatable, Sendable {
-    static let currentSaveVersion = 3
+    static let currentSaveVersion = 7
 
     var saveVersion: Int
     var currentFloor: FloorID
@@ -441,7 +507,23 @@ struct GameProgress: Codable, Equatable, Sendable {
     var checkpoint: CheckpointID
     var furthestCheckpoint: CheckpointID
     var playerHP: Int
-    var learnedSpells: Set<SpellID>
+    var learnedSpells: Set<SpellID> {
+        didSet {
+            synchronizeLoadout()
+            let additions = learnedSpells.subtracting(oldValue)
+            for id in SpellID.allCases where additions.contains(id) && !equippedSpells.contains(id) {
+                if LoadoutRules.canAutomaticallyEquip(id, alongside: equippedSpells) { equippedSpells.append(id) }
+            }
+            synchronizeLoadout()
+        }
+    }
+    /// Ordered battle cards, separate from the complete learned collection.
+    var equippedSpells: [SpellID]
+    var protectedAttack: SpellID?
+    var protectedDefense: SpellID?
+    var loadoutTutorials: Set<LoadoutTutorialFlag>
+    /// Later floors retain the existing 10–8F checkpoint as their migration anchor.
+    var expansion: ExpansionProgress?
     var defeatedEnemies: Set<EnemyID>
     var readRecordIDs: Set<String>
     var tutorials: Set<TutorialFlag>
@@ -449,6 +531,11 @@ struct GameProgress: Codable, Equatable, Sendable {
     var spellMastery: [SpellID: SpellMastery]
     var completedTrainingSpells: Set<SpellID>
     var selectedRewardIDs: [String]
+    /// Latest choice per floor, independent of the inventory at a rewound checkpoint.
+    var checkpointRewardChoices: [Int: String] = [:]
+    var lowerRewardOffers: [String: [RewardCandidate]] = [:]
+    var lowerRewardChoices: [String: String] = [:]
+    var completedLowerRewardSites: Set<String> = []
     var isDemoComplete: Bool
 
     init(
@@ -466,7 +553,12 @@ struct GameProgress: Codable, Equatable, Sendable {
         spellMastery: [SpellID: SpellMastery],
         completedTrainingSpells: Set<SpellID>,
         selectedRewardIDs: [String],
-        isDemoComplete: Bool
+        isDemoComplete: Bool,
+        equippedSpells: [SpellID]? = nil,
+        protectedAttack: SpellID? = nil,
+        protectedDefense: SpellID? = nil,
+        loadoutTutorials: Set<LoadoutTutorialFlag> = [],
+        expansion: ExpansionProgress? = nil
     ) {
         self.saveVersion = saveVersion
         self.currentFloor = currentFloor
@@ -475,6 +567,18 @@ struct GameProgress: Codable, Equatable, Sendable {
         self.furthestCheckpoint = furthestCheckpoint ?? checkpoint
         self.playerHP = playerHP
         self.learnedSpells = learnedSpells
+        self.equippedSpells = LoadoutRules.normalized(
+            equippedSpells ?? LoadoutRules.defaultSpells(from: learnedSpells),
+            learned: learnedSpells
+        )
+        self.protectedAttack = LoadoutRules.protectedSpell(
+            preferred: protectedAttack, category: .attack, equipped: self.equippedSpells
+        )
+        self.protectedDefense = LoadoutRules.protectedSpell(
+            preferred: protectedDefense, category: .defense, equipped: self.equippedSpells
+        )
+        self.loadoutTutorials = loadoutTutorials
+        self.expansion = expansion
         self.defeatedEnemies = defeatedEnemies
         self.readRecordIDs = readRecordIDs
         self.tutorials = tutorials
@@ -510,6 +614,11 @@ struct GameProgress: Codable, Equatable, Sendable {
         case furthestCheckpoint
         case playerHP
         case learnedSpells
+        case equippedSpells
+        case protectedAttack
+        case protectedDefense
+        case loadoutTutorials
+        case expansion
         case defeatedEnemies
         case readRecordIDs
         case tutorials
@@ -517,6 +626,8 @@ struct GameProgress: Codable, Equatable, Sendable {
         case spellMastery
         case completedTrainingSpells
         case selectedRewardIDs
+        case checkpointRewardChoices
+        case lowerRewardOffers, lowerRewardChoices, completedLowerRewardSites
         case isDemoComplete
     }
 
@@ -532,6 +643,25 @@ struct GameProgress: Codable, Equatable, Sendable {
         ) ?? checkpoint
         playerHP = try container.decode(Int.self, forKey: .playerHP)
         learnedSpells = try container.decodeIfPresent(Set<SpellID>.self, forKey: .learnedSpells) ?? []
+        let decodedEquipped = try container.decodeIfPresent([SpellID].self, forKey: .equippedSpells)
+        equippedSpells = LoadoutRules.normalized(
+            decodedEquipped ?? LoadoutRules.defaultSpells(from: learnedSpells),
+            learned: learnedSpells
+        )
+        protectedAttack = LoadoutRules.protectedSpell(
+            preferred: try container.decodeIfPresent(SpellID.self, forKey: .protectedAttack),
+            category: .attack,
+            equipped: equippedSpells
+        )
+        protectedDefense = LoadoutRules.protectedSpell(
+            preferred: try container.decodeIfPresent(SpellID.self, forKey: .protectedDefense),
+            category: .defense,
+            equipped: equippedSpells
+        )
+        loadoutTutorials = try container.decodeIfPresent(
+            Set<LoadoutTutorialFlag>.self, forKey: .loadoutTutorials
+        ) ?? []
+        expansion = try container.decodeIfPresent(ExpansionProgress.self, forKey: .expansion)
         defeatedEnemies = try container.decodeIfPresent(Set<EnemyID>.self, forKey: .defeatedEnemies) ?? []
         readRecordIDs = try container.decodeIfPresent(Set<String>.self, forKey: .readRecordIDs) ?? []
         tutorials = try container.decodeIfPresent(Set<TutorialFlag>.self, forKey: .tutorials) ?? []
@@ -561,6 +691,14 @@ struct GameProgress: Codable, Equatable, Sendable {
             )
         }
         saveVersion = max(decodedVersion, Self.currentSaveVersion)
+        migrateLegacyRewards(fromVersion: decodedVersion)
+        checkpointRewardChoices = try container.decodeIfPresent([Int: String].self, forKey: .checkpointRewardChoices) ?? [:]
+        lowerRewardOffers = try container.decodeIfPresent([String: [RewardCandidate]].self, forKey: .lowerRewardOffers) ?? [:]
+        lowerRewardChoices = try container.decodeIfPresent([String: String].self, forKey: .lowerRewardChoices) ?? [:]
+        completedLowerRewardSites = try container.decodeIfPresent(Set<String>.self, forKey: .completedLowerRewardSites) ?? []
+        rememberCheckpointRewards()
+        migrateExpansionCheckpoint()
+
     }
 
     func encode(to encoder: Encoder) throws {
@@ -572,6 +710,11 @@ struct GameProgress: Codable, Equatable, Sendable {
         try container.encode(furthestCheckpoint, forKey: .furthestCheckpoint)
         try container.encode(playerHP, forKey: .playerHP)
         try container.encode(learnedSpells, forKey: .learnedSpells)
+        try container.encode(equippedSpells, forKey: .equippedSpells)
+        try container.encodeIfPresent(protectedAttack, forKey: .protectedAttack)
+        try container.encodeIfPresent(protectedDefense, forKey: .protectedDefense)
+        try container.encode(loadoutTutorials, forKey: .loadoutTutorials)
+        try container.encodeIfPresent(expansion, forKey: .expansion)
         try container.encode(defeatedEnemies, forKey: .defeatedEnemies)
         try container.encode(readRecordIDs, forKey: .readRecordIDs)
         try container.encode(tutorials, forKey: .tutorials)
@@ -579,6 +722,10 @@ struct GameProgress: Codable, Equatable, Sendable {
         try container.encode(spellMastery, forKey: .spellMastery)
         try container.encode(completedTrainingSpells, forKey: .completedTrainingSpells)
         try container.encode(selectedRewardIDs, forKey: .selectedRewardIDs)
+        try container.encode(checkpointRewardChoices, forKey: .checkpointRewardChoices)
+        try container.encode(lowerRewardOffers, forKey: .lowerRewardOffers)
+        try container.encode(lowerRewardChoices, forKey: .lowerRewardChoices)
+        try container.encode(completedLowerRewardSites, forKey: .completedLowerRewardSites)
         try container.encode(isDemoComplete, forKey: .isDemoComplete)
     }
 }

@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct DemoFlowView: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @EnvironmentObject private var gameSession: GameSessionStore
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
@@ -8,9 +10,11 @@ struct DemoFlowView: View {
     let onExit: () -> Void
     let onSystemOverlayVisibilityChange: (Bool) -> Void
 
+    @State private var preparedBattle: PreparedLegacyBattle?
     @State private var isShowingPauseMenu = false
     @State private var isShowingSettings = false
     @State private var retryLoadingPresentation: SceneRetryLoadingPresentation?
+    @State private var checkpointPresentationID = UUID()
     @State private var checkpointTravelTask: Task<Void, Never>?
     @State private var battleTutorialStep: TutorialCoachStep?
     @State private var isNarrativeAutoAdvanceEnabled = true
@@ -36,23 +40,27 @@ struct DemoFlowView: View {
                     cameraPreset: gameSession.presentation.cameraPreset,
                     erasureZones: gameSession.battleState?.activeErasureZones ?? [],
                     reducedMotion: appSettings.reducedMotion,
-                    controller: sceneController
+                    controller: sceneController,
+                    onReturnToTitle: onExit
                 )
+                .allowsHitTesting(preparedBattle == nil && !isDialoguePresentation)
+                .accessibilityHidden(preparedBattle != nil || isDialoguePresentation)
             } else {
                 Color.black.ignoresSafeArea()
             }
 
-            if isPresentationReady {
+            if isPresentationReady && preparedBattle == nil {
                 if showsFloor10Opening {
                     Floor10OpeningExperienceView(
                         sceneController: sceneController,
                         isSceneReady: isPresentationReady
                     )
+                    .id(checkpointPresentationID)
                     .transition(.opacity)
                 } else if isNarrativePresentation {
                     ZStack(alignment: .top) {
                         sceneView
-                            .id(gameSession.presentation.progressSceneID)
+                            .id("\(gameSession.presentation.progressSceneID)-\(checkpointPresentationID)")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .padding(.top, showsRewardLearningTopBar ? topBarHeight : 0)
 
@@ -77,7 +85,7 @@ struct DemoFlowView: View {
                         }
 
                         sceneView
-                            .id(gameSession.presentation.progressSceneID)
+                            .id("\(gameSession.presentation.progressSceneID)-\(checkpointPresentationID)")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                     .animation(
@@ -85,6 +93,19 @@ struct DemoFlowView: View {
                         value: sceneController.isDescentFailurePresentationActive
                     )
                 }
+            }
+
+            if let battle = preparedBattle {
+                LoadoutPreparationView(onBegin: {
+                    withAnimation(preparationTransition) {
+                        guard gameSession.sendChecked(battle.preparationCompletionCommand) else { return }
+                        preparedBattle = nil
+                    }
+                }, onCancel: {
+                    withAnimation(preparationTransition) { preparedBattle = nil }
+                })
+                .transition(.opacity)
+                .zIndex(10)
             }
 
             Color.black
@@ -110,11 +131,15 @@ struct DemoFlowView: View {
             }
         }
         .tutorialCoach(
-            step: battleTutorialStep,
+            step: isPresentationReady ? battleTutorialStep : nil,
             onNext: advanceBattleTutorial,
             onSkip: skipBattleTutorial
         )
         .ignoresSafeArea(edges: .top)
+        .environment(
+            \.isGlyphInputSuspended,
+            isShowingPauseMenu || isShowingSettings || retryLoadingPresentation != nil || scenePhase != .active
+        )
         .sheet(isPresented: $isShowingPauseMenu) {
             PauseMenuView(
                 onTravelToCheckpoint: { checkpoint in
@@ -127,6 +152,7 @@ struct DemoFlowView: View {
             SettingsView()
         }
         .onAppear {
+            queueEncounterPreparationIfNeeded()
             synchronizeRewardLearningHUD()
             reportSystemOverlayVisibility()
             synchronizeFloorMusic()
@@ -157,6 +183,7 @@ struct DemoFlowView: View {
             synchronizeFloorMusic()
         }
         .onChange(of: gameSession.progress.currentScene) { _, _ in
+            queueEncounterPreparationIfNeeded()
             synchronizeRewardLearningHUD()
             synchronizeFloorMusic()
             synchronizeRecordsBattleTutorial()
@@ -177,17 +204,67 @@ struct DemoFlowView: View {
         onSystemOverlayVisibilityChange(isShowingPauseMenu || isShowingSettings)
     }
 
+    private var preparationTransition: Animation? {
+        appSettings.reducedMotion || systemReduceMotion ? nil : .easeInOut(duration: 0.24)
+    }
+
+    private func showPreparation(_ battle: PreparedLegacyBattle) {
+        withAnimation(preparationTransition) { preparedBattle = battle }
+    }
+
+    private func queueEncounterPreparationIfNeeded() {
+        switch gameSession.progress.currentScene {
+        case .floor9RecordsPreparation: showPreparation(.records)
+        case .floor8ResidualPreparation: showPreparation(.residual)
+        default: break
+        }
+    }
+
     private func synchronizeRewardLearningHUD() {
-        guard case let .reward(floor) = gameSession.presentation.experience else {
+        let candidates: [RewardCandidate]
+        if let current = gameSession.progress.expansion, current.stage == .reward {
+            candidates = RewardCatalog.candidates(forFloorNumber: current.floorNumber)
+        } else if case let .reward(floor) = gameSession.presentation.experience {
+            candidates = RewardCatalog.candidates(for: floor)
+        } else {
             isRewardLearningInputActive = false
             return
         }
-
-        let hasPendingLearning = RewardCatalog.candidates(for: floor).contains { candidate in
-            gameSession.progress.selectedRewardIDs.contains(candidate.id)
+        isRewardLearningInputActive = candidates.contains {
+            gameSession.progress.selectedRewardIDs.contains($0.id)
         }
-        if hasPendingLearning {
-            isRewardLearningInputActive = true
+    }
+
+    // Owned by the stable flow host: replacing BattleView must not cancel loading.
+    private func beginEncounterRestart() {
+        if gameSession.presentation.floorSceneID == nil {
+            gameSession.send(.restartEncounter)
+            return
+        }
+        guard retryLoadingPresentation == nil,
+              let sceneID = gameSession.presentation.floorSceneID else { return }
+        checkpointTravelTask?.cancel()
+        let context = LoadingScreenContext(sceneID: sceneID)
+        retryLoadingPresentation = .init(context: context, progress: 0.08,
+            tip: LoadingTipCatalog.randomTip(for: context))
+        checkpointTravelTask = Task { @MainActor in
+            defer {
+                retryLoadingPresentation = nil
+                checkpointTravelTask = nil
+            }
+            do { try await Task.sleep(for: .milliseconds(180)) } catch { return }
+            guard gameSession.sendChecked(.restartEncounter) else { return }
+            let destination = gameSession.presentation
+            guard let room = destination.floorSceneID else { return }
+            sceneController.unload()
+            sceneController.load(sceneID: room, cameraPreset: destination.cameraPreset)
+            while !sceneController.isReady(sceneID: room, cameraPreset: destination.cameraPreset) {
+                if case .failed = sceneController.loadState { return }
+                retryLoadingPresentation?.progress = max(0.15, sceneController.loadingProgress * 0.95)
+                do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
+            }
+            retryLoadingPresentation?.progress = 1
+            do { try await Task.sleep(for: .milliseconds(180)) } catch { return }
         }
     }
 
@@ -205,26 +282,29 @@ struct DemoFlowView: View {
         }
 
         checkpointTravelTask = Task { @MainActor in
-            defer { checkpointTravelTask = nil }
+            defer {
+                checkpointTravelTask = nil
+                retryLoadingPresentation = nil
+            }
 
             guard await waitForCheckpointTravel(milliseconds: 180) else { return }
             retryLoadingPresentation?.progress = 0.3
 
-            gameSession.send(.travelToCheckpoint(checkpoint))
-            guard gameSession.progress.checkpoint == checkpoint else {
-                retryLoadingPresentation = nil
-                return
-            }
-
-            sceneController.resetProgressionPresentation(
-                reducedMotion: appSettings.reducedMotion
-            )
-            retryLoadingPresentation?.progress = 0.58
-
-            for step in 0..<24 {
-                guard !isCurrentSceneReady else { break }
-                guard await waitForCheckpointTravel(milliseconds: 100) else { return }
-                retryLoadingPresentation?.progress = min(0.92, 0.58 + Double(step + 1) * 0.014)
+            guard gameSession.sendChecked(.travelToCheckpoint(checkpoint)) else { return }
+            preparedBattle = nil
+            battleTutorialStep = nil
+            isRewardLearningInputActive = false
+            checkpointPresentationID = UUID()
+            // Even a same-room rewind must discard investigation, reward and gate animation state.
+            let destination = gameSession.presentation
+            sceneController.unload()
+            if let room = destination.floorSceneID {
+                sceneController.load(sceneID: room, cameraPreset: destination.cameraPreset)
+                while !sceneController.isReady(sceneID: room, cameraPreset: destination.cameraPreset) {
+                    if case .failed = sceneController.loadState { return }
+                    retryLoadingPresentation?.progress = max(0.3, sceneController.loadingProgress * 0.95)
+                    guard await waitForCheckpointTravel(milliseconds: 100) else { return }
+                }
             }
 
             retryLoadingPresentation?.progress = 1
@@ -380,6 +460,9 @@ struct DemoFlowView: View {
             return true
         }
 
+        if let stage = gameSession.progress.expansion?.stage {
+            return stage == .residualDefeated || stage == .bossDefeated
+        }
         switch gameSession.progress.currentScene {
         case .floor9RecordsDefeated,
              .floor8ResidualDefeated,
@@ -398,7 +481,13 @@ struct DemoFlowView: View {
         )
     }
 
+    private var isDialoguePresentation: Bool {
+        if case .narrative = gameSession.presentation.experience { return true }
+        return false
+    }
+
     private var isNarrativePresentation: Bool {
+        if let stage = gameSession.progress.expansion?.stage, [.reward, .recordReward].contains(stage) { return true }
         switch gameSession.presentation.experience {
         case .narrative, .reward:
             return true
@@ -408,6 +497,7 @@ struct DemoFlowView: View {
     }
 
     private var showsRewardLearningTopBar: Bool {
+        if let stage = gameSession.progress.expansion?.stage, [.reward, .recordReward].contains(stage) { return isRewardLearningInputActive }
         guard case .reward = gameSession.presentation.experience else { return false }
         return isRewardLearningInputActive
     }
@@ -418,6 +508,9 @@ struct DemoFlowView: View {
     }
 
     private var descentTopHUDConfiguration: DescentTopHUDConfiguration? {
+        if let current = gameSession.progress.expansion, current.stage == .descent {
+            return DescentTopHUDConfiguration(areaTitle: "제\(current.floorNumber)층 · \(current.areaName)", inspectionTitle: current.isLowerFloor ? "삼중 문양 검수" : "이중 문양 검수")
+        }
         if gameSession.progress.currentScene == .floor10DescentDoor {
             return DescentTopHUDConfiguration(
                 areaTitle: "제10층 · 승인 관리 구역",
@@ -539,7 +632,8 @@ struct DemoFlowView: View {
                 } else {
                     FloorTitleAssetView(
                         floor: gameSession.progress.currentFloor,
-                        size: .standard
+                        size: .standard,
+                        floorNumber: gameSession.progress.displayedFloorNumber
                     )
                     .frame(width: min(proxy.size.width * 0.54, 560), height: 72)
                     .position(
@@ -623,7 +717,8 @@ struct DemoFlowView: View {
                 BattleTopHUDView(
                     battle: battle,
                     floor: gameSession.progress.currentFloor,
-                    enemyToNextActionSpacing: battlePlateToStatusSpacing
+                    enemyToNextActionSpacing: battlePlateToStatusSpacing,
+                    floorNumber: gameSession.progress.displayedFloorNumber
                 )
                 .frame(
                     width: statusAreaWidth,
@@ -717,13 +812,15 @@ struct DemoFlowView: View {
                 retryLoadingPresentation: $retryLoadingPresentation
             )
         case .floor9Entrance:
-            Floor9EntranceView(sceneController: sceneController)
+            Floor9EntranceView(sceneController: sceneController, onPrepareEntry: { showPreparation(.records) })
         case let .narrative(sequence):
             BossNarrativeView(
                 sequence: sequence,
                 isAutoAdvanceEnabled: $isNarrativeAutoAdvanceEnabled
             ) {
                 switch sequence {
+                case .expansion:
+                    gameSession.send(.advanceExpansion)
                 case .floor9Encounter:
                     gameSession.send(.beginRecordsBattle)
                 case .floor9Defeated:
@@ -738,10 +835,17 @@ struct DemoFlowView: View {
                     gameSession.send(.continueAfterAdministratorDefeat)
                 }
             }
+            .id(sequence.backgroundAsset)
+            .onAppear {
+                sceneController.setLimitedCameraInteractionEnabled(false)
+                sceneController.setActorMotionSuspended(true)
+            }
+            .onDisappear { sceneController.setActorMotionSuspended(false) }
         case .battle:
             BattleView(
                 realityController: sceneController,
-                restartLoadingPresentation: $retryLoadingPresentation
+                restartLoadingPresentation: $retryLoadingPresentation,
+                onRestartBattle: beginEncounterRestart
             )
         case let .reward(floor):
             RewardSelectionView(
@@ -750,7 +854,11 @@ struct DemoFlowView: View {
                 isLearningInputActive: $isRewardLearningInputActive
             )
         case .floor8Exploration:
-            Floor8ExplorationView(sceneController: sceneController)
+            Floor8ExplorationView(
+                sceneController: sceneController,
+                onPrepareResidualEntry: { showPreparation(.residual) },
+                onPrepareAdministratorEntry: { showPreparation(.administrator) }
+            )
         case let .descent(floor):
             if floor == .floor9 {
                 Floor9DescentDoorView(
@@ -764,14 +872,16 @@ struct DemoFlowView: View {
                 )
             }
         case .completion:
-            DemoCompleteView(onReturnToTitle: onExit)
+            ExpansionFlowView(sceneController: sceneController, retryLoadingPresentation: $retryLoadingPresentation, onExit: onExit, onRestartBattle: beginEncounterRestart, learningInputActive: $isRewardLearningInputActive)
+                .id("\(gameSession.progress.expansion?.floorNumber ?? 7)-\(gameSession.progress.expansion?.stage == .entrance ? "preparation" : (gameSession.progress.expansion?.stage.rawValue ?? "preparation"))")
         }
     }
 }
 
 private extension CheckpointID {
     var loadingContext: LoadingScreenContext {
-        switch self {
+        if let destination = expansionDestination { return .expansion(destination.floorNumber) }
+        return switch self {
         case .floor10Start:
             .floor10
         case .floor10Complete, .recordsBattle, .recordsDefeated:
@@ -779,6 +889,7 @@ private extension CheckpointID {
         case .floor8Start, .residualBattle, .residualDefeated,
              .observationBattle, .observationDefeated, .demoComplete:
             .floor8
+        default: .expansion(7)
         }
     }
 }
@@ -804,6 +915,7 @@ private struct DescentTopHUDConfiguration {
 
 private struct BossNarrativeView: View {
     @EnvironmentObject private var appSettings: AppSettings
+    @Environment(\.isGlyphInputSuspended) private var isSuspended
 
     let sequence: BossNarrativeSequence
     @Binding var isAutoAdvanceEnabled: Bool
@@ -811,16 +923,21 @@ private struct BossNarrativeView: View {
 
     @State private var dialogueIndex = 0
     @State private var revealedCharacterCount = 0
+    @State private var hasFinished = false
 
     var body: some View {
         ZStack {
             Button(action: advance) {
                 ZStack {
-                    Image(sequence.backgroundAsset)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .clipped()
+                    GeometryReader { proxy in
+                        Image(sequence.backgroundAsset)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            // All narrative artwork shares the original 8F/9F 4:3 composition.
+                            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .center)
+                            .clipped()
+                    }
+                    .background(.black)
 
                     LinearGradient(
                         colors: [.clear, .black.opacity(0.12), .black.opacity(0.55)],
@@ -993,7 +1110,7 @@ private struct BossNarrativeView: View {
         .padding(.leading, 4)
     }
 
-    private var currentDialogue: BossNarrativeDialogue {
+    private var currentDialogue: NarrativeDialogue {
         sequence.dialogues[dialogueIndex]
     }
 
@@ -1022,7 +1139,7 @@ private struct BossNarrativeView: View {
     }
 
     private var autoAdvanceTaskID: String {
-        "\(dialogueIndex)-\(isAutoAdvanceEnabled)-\(isDialogueFullyRevealed)"
+        "\(dialogueIndex)-\(isAutoAdvanceEnabled)-\(isDialogueFullyRevealed)-\(isSuspended)-\(hasFinished)"
     }
 
     private var autoAdvanceDelay: Duration {
@@ -1066,7 +1183,7 @@ private struct BossNarrativeView: View {
 
     @MainActor
     private func scheduleAutoAdvanceIfNeeded() async {
-        guard isAutoAdvanceEnabled, isDialogueFullyRevealed else { return }
+        guard isAutoAdvanceEnabled, isDialogueFullyRevealed, !isSuspended, !hasFinished else { return }
         let scheduledIndex = dialogueIndex
 
         do {
@@ -1076,13 +1193,15 @@ private struct BossNarrativeView: View {
         }
 
         guard !Task.isCancelled,
-              isAutoAdvanceEnabled,
+              isAutoAdvanceEnabled, !isSuspended, !hasFinished,
               scheduledIndex == dialogueIndex else { return }
         advance()
     }
 
     private func advance() {
+        guard !hasFinished, !isSuspended else { return }
         guard dialogueIndex < sequence.dialogues.count - 1 else {
+            hasFinished = true
             onFinished()
             return
         }
@@ -1131,14 +1250,10 @@ private struct AutoAdvanceSpinner: View {
     }
 }
 
-private struct BossNarrativeDialogue {
-    let speaker: String
-    let text: String
-}
-
 private extension BossNarrativeSequence {
     var backgroundAsset: String {
         switch self {
+        case let .expansion(narrative): narrative.backgroundAsset
         case .floor9Encounter: "Floor9AdministratorEncounter"
         case .floor9Defeated: "Floor9AdministratorDefeated"
         case .floor8ResidualEncounter: "Floor8ResidualEncounter"
@@ -1150,6 +1265,7 @@ private extension BossNarrativeSequence {
 
     var recordTitle: String {
         switch self {
+        case let .expansion(narrative): narrative.recordTitle
         case .floor9Encounter, .floor8ResidualEncounter, .floor8AdministratorEncounter: "조우 기록"
         case .floor9Defeated, .floor8ResidualDefeated, .floor8AdministratorDefeated: "처치 기록"
         }
@@ -1157,6 +1273,7 @@ private extension BossNarrativeSequence {
 
     var finalAccessibilityHint: String {
         switch self {
+        case let .expansion(narrative): narrative.finalAccessibilityHint
         case .floor9Encounter, .floor8ResidualEncounter, .floor8AdministratorEncounter: "전투 시작"
         case .floor9Defeated: "두루마리 선택으로 이동"
         case .floor8ResidualDefeated: "관측 본실 봉인문으로 이동"
@@ -1164,8 +1281,9 @@ private extension BossNarrativeSequence {
         }
     }
 
-    var dialogues: [BossNarrativeDialogue] {
+    var dialogues: [NarrativeDialogue] {
         switch self {
+        case let .expansion(narrative): narrative.dialogues
         case .floor9Encounter:
             [
                 .init(speaker: "기록 관리자", text: "“하강 승인서에 서명이 없군. 절차를 다시 밟도록.”"),
@@ -1216,4 +1334,16 @@ private enum SharedHUDPalette {
     static let brass = Color(red: 184 / 255, green: 139 / 255, blue: 77 / 255)
     static let title = Color(red: 225 / 255, green: 202 / 255, blue: 164 / 255)
     static let icon = Color(red: 222 / 255, green: 216 / 255, blue: 202 / 255)
+}
+
+private enum PreparedLegacyBattle: String, Identifiable {
+    case records, residual, administrator
+    var id: String { rawValue }
+    var preparationCompletionCommand: DemoCommand {
+        switch self {
+        case .records: .enterRecordsEncounter
+        case .residual: .enterResidualEncounter
+        case .administrator: .enterAdministratorEncounter
+        }
+    }
 }

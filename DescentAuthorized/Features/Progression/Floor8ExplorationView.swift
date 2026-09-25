@@ -5,6 +5,18 @@ struct Floor8ExplorationView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let sceneController: RealitySceneController
+    var onPrepareResidualEntry: () -> Void = {}
+    let onPrepareAdministratorEntry: () -> Void
+
+    init(
+        sceneController: RealitySceneController,
+        onPrepareResidualEntry: @escaping () -> Void = {},
+        onPrepareAdministratorEntry: @escaping () -> Void = {}
+    ) {
+        self.sceneController = sceneController
+        self.onPrepareResidualEntry = onPrepareResidualEntry
+        self.onPrepareAdministratorEntry = onPrepareAdministratorEntry
+    }
 
     var body: some View {
         Group {
@@ -37,6 +49,8 @@ struct Floor8ExplorationView: View {
                         )
                     }
                 )
+            } else if gameSession.progress.currentScene == .floor8ResidualPreparation {
+                FloorEntrancePanel(configuration: .floor8, action: onPrepareResidualEntry)
             } else if gameSession.progress.currentScene == .floor8SealedDoor,
                       !gameSession.progress.learnedSpells.contains(.sealRelease) {
                 ScrollSpellLearningView(
@@ -54,6 +68,11 @@ struct Floor8ExplorationView: View {
                 }
             } else if gameSession.progress.currentScene == .floor8SealedDoor {
                 sealedDoor
+            } else if gameSession.progress.currentScene == .floor8AdministratorPreparation {
+                FloorEntrancePanel(
+                    configuration: .floor8Administrator,
+                    action: onPrepareAdministratorEntry
+                )
             } else {
                 ZStack {
                     LinearGradient(
@@ -78,6 +97,10 @@ struct Floor8ExplorationView: View {
         }
         .onAppear {
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
+            prefetchBossRoomIfNeeded(for: gameSession.progress.currentScene)
+        }
+        .onChange(of: gameSession.progress.currentScene) { _, scene in
+            prefetchBossRoomIfNeeded(for: scene)
         }
     }
 
@@ -190,6 +213,14 @@ struct Floor8ExplorationView: View {
         case .floor8ProtectionRoom: 720
         default: 500
         }
+    }
+
+    private func prefetchBossRoomIfNeeded(for scene: SceneID) {
+        guard scene == .floor8SealedDoor else { return }
+        sceneController.prefetchRoom(
+            sceneID: .floor08AdministratorObservatory,
+            quality: appSettings.graphicsQuality
+        )
     }
 
     private func sceneCode(_ text: String) -> some View {

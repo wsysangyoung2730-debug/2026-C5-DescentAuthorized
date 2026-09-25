@@ -11,6 +11,7 @@ enum GameProgressValidationError: Error, Equatable, Sendable {
     case invalidMastery(SpellID)
     case invalidTutorialState(String)
     case completionStateMismatch
+    case invalidExpansionState(String)
 }
 
 struct GameProgressValidator: Sendable {
@@ -32,6 +33,32 @@ struct GameProgressValidator: Sendable {
         try validateCollectionIntegrity(progress)
         try validateTutorialState(progress.tutorialProgress)
         try validateProgressionRequirements(progress)
+        try validateExpansion(progress)
+    }
+
+    private func validateExpansion(_ progress: GameProgress) throws {
+        guard let expansion = progress.expansion else { return }
+        guard progress.currentScene == .demoComplete,
+              progress.checkpoint.expansionDestination != nil,
+              progress.isDemoComplete else {
+            throw GameProgressValidationError.invalidExpansionState("8층 완료 지점 필요")
+        }
+        guard expansion.isValid else {
+            throw GameProgressValidationError.invalidExpansionState("유효하지 않은 층 또는 진행 단계")
+        }
+        guard progress.loadoutIssues.isEmpty else {
+            throw GameProgressValidationError.invalidExpansionState(
+                progress.loadoutIssues.map(\.message).joined(separator: " ")
+            )
+        }
+        guard progress.protectedAttack.map({
+            progress.equippedSpells.contains($0) && SpellCatalog.all[$0]?.category == .attack
+        }) == true,
+              progress.protectedDefense.map({
+            progress.equippedSpells.contains($0) && SpellCatalog.all[$0]?.category == .defense
+        }) == true else {
+            throw GameProgressValidationError.invalidExpansionState("기본 대응 공격·방어 지정 필요")
+        }
     }
 
     private func validateLocation(_ progress: GameProgress) throws {
@@ -78,8 +105,7 @@ struct GameProgressValidator: Sendable {
         }
 
         let knownRewards = Dictionary(
-            uniqueKeysWithValues: [FloorID.floor9, .floor8]
-                .flatMap { RewardCatalog.candidates(for: $0) }
+            uniqueKeysWithValues: RewardCatalog.allCandidates
                 .map { ($0.id, $0) }
         )
         var selectedRewards = Set<String>()
@@ -92,11 +118,39 @@ struct GameProgressValidator: Sendable {
             }
         }
 
-        for floor in [FloorID.floor9, .floor8] {
-            let floorRewardIDs = Set(RewardCatalog.candidates(for: floor).map(\.id))
+        for (floor, choice) in progress.checkpointRewardChoices {
+            guard RewardCatalog.candidates(forFloorNumber: floor).contains(where: { $0.id == choice }) else {
+                throw GameProgressValidationError.unknownReward(choice)
+            }
+        }
+
+        for (key, offers) in progress.lowerRewardOffers {
+            guard let site = ExpansionRewardSite(rawValue: key), offers.count <= 3,
+                  Set(offers.map(\.id)).count == offers.count,
+                  Set(offers.compactMap(\.resolvedSpell)).count == offers.count,
+                  offers.allSatisfy({ candidate in
+                      candidate.resolvedSpell.map { RewardCatalog.candidate($0, at: site) == candidate } == true
+                  }) else { throw GameProgressValidationError.invalidExpansionState("유효하지 않은 후반 보상 후보") }
+            if let choice = progress.lowerRewardChoices[key], !offers.contains(where: { $0.id == choice }) {
+                throw GameProgressValidationError.unknownReward(choice)
+            }
+            if progress.completedLowerRewardSites.contains(key), !offers.isEmpty {
+                guard let choice = progress.lowerRewardChoices[key],
+                      let spell = offers.first(where: { $0.id == choice })?.resolvedSpell,
+                      progress.completedTrainingSpells.contains(spell) else {
+                    throw GameProgressValidationError.invalidExpansionState("완료 보상 학습 누락")
+                }
+            }
+            guard progress.selectedRewardIDs.filter({ id in offers.contains(where: { $0.id == id }) }).count <= 1 else {
+                throw GameProgressValidationError.duplicateReward(key)
+            }
+        }
+
+        for floor in 5...9 {
+            let floorRewardIDs = Set(RewardCatalog.candidates(forFloorNumber: floor).map(\.id))
             let count = progress.selectedRewardIDs.filter(floorRewardIDs.contains).count
             guard count <= 1 else {
-                throw GameProgressValidationError.duplicateReward("floor\(floor.rawValue)")
+                throw GameProgressValidationError.duplicateReward("floor\(floor)")
             }
         }
     }
@@ -161,10 +215,12 @@ struct GameProgressValidator: Sendable {
             .floor9DescentDoor,
             .floor8Antechamber,
             .floor8ProtectionRoom,
+            .floor8ResidualPreparation,
             .floor8ResidualEncounter,
             .floor8ResidualBattle,
             .floor8ResidualDefeated,
             .floor8SealedDoor,
+            .floor8AdministratorPreparation,
             .floor8AdministratorEncounter,
             .floor8AdministratorBattle,
             .floor8AdministratorDefeated,
@@ -181,16 +237,21 @@ struct GameProgressValidator: Sendable {
         if scene == .floor9DescentDoor || progress.currentFloor.rawValue <= FloorID.floor8.rawValue {
             try require(
                 progress.selectedRewardIDs.contains(where: floor9RewardIDs.contains)
-                    && progress.learnedSpells.contains(.barrierPiercing),
+                    && RewardCatalog.candidates(for: .floor9).contains { candidate in
+                        progress.selectedRewardIDs.contains(candidate.id)
+                            && progress.learnedSpells.contains(RewardCatalog.learningSpell(for: candidate))
+                    },
                 "9층 주문서 선택"
             )
         }
 
         if [
-            SceneID.floor8ResidualEncounter,
+            SceneID.floor8ResidualPreparation,
+            .floor8ResidualEncounter,
             .floor8ResidualBattle,
             .floor8ResidualDefeated,
             .floor8SealedDoor,
+            .floor8AdministratorPreparation,
             .floor8AdministratorBattle,
             .floor8Reward,
             .floor8DescentDoor,
@@ -206,6 +267,7 @@ struct GameProgressValidator: Sendable {
         if [
             SceneID.floor8ResidualDefeated,
             .floor8SealedDoor,
+            .floor8AdministratorPreparation,
             .floor8AdministratorEncounter,
             .floor8AdministratorBattle,
             .floor8AdministratorDefeated,
@@ -221,6 +283,7 @@ struct GameProgressValidator: Sendable {
 
         if [
             SceneID.floor8AdministratorEncounter,
+            .floor8AdministratorPreparation,
             .floor8AdministratorBattle,
             .floor8AdministratorDefeated,
             .floor8Reward,
@@ -284,6 +347,7 @@ struct GameProgressValidator: Sendable {
              .floor10DescentDoor:
             .floor10
         case .floor9Entrance,
+             .floor9RecordsPreparation,
              .floor9RecordsEncounter,
              .floor9RecordsBattle,
              .floor9RecordsDefeated,
@@ -292,10 +356,12 @@ struct GameProgressValidator: Sendable {
             .floor9
         case .floor8Antechamber,
              .floor8ProtectionRoom,
+             .floor8ResidualPreparation,
              .floor8ResidualEncounter,
              .floor8ResidualBattle,
              .floor8ResidualDefeated,
              .floor8SealedDoor,
+             .floor8AdministratorPreparation,
              .floor8AdministratorEncounter,
              .floor8AdministratorBattle,
              .floor8AdministratorDefeated,
@@ -317,22 +383,22 @@ struct GameProgressValidator: Sendable {
             [.floor10Start]
         case .floor9Entrance:
             [.floor10Complete]
-        case .floor9RecordsEncounter, .floor9RecordsBattle:
+        case .floor9RecordsPreparation, .floor9RecordsEncounter, .floor9RecordsBattle:
             [.recordsBattle]
         case .floor9RecordsDefeated, .floor9RewardVault, .floor9DescentDoor:
             [.recordsDefeated]
         case .floor8Antechamber, .floor8ProtectionRoom:
             [.floor8Start]
-        case .floor8ResidualEncounter, .floor8ResidualBattle:
+        case .floor8ResidualPreparation, .floor8ResidualEncounter, .floor8ResidualBattle:
             [.residualBattle]
         case .floor8ResidualDefeated, .floor8SealedDoor:
             [.residualDefeated]
-        case .floor8AdministratorEncounter, .floor8AdministratorBattle:
+        case .floor8AdministratorPreparation, .floor8AdministratorEncounter, .floor8AdministratorBattle:
             [.observationBattle]
         case .floor8AdministratorDefeated, .floor8Reward, .floor8DescentDoor:
             [.observationDefeated]
         case .demoComplete:
-            [.demoComplete]
+            Set(CheckpointID.allCases.filter { $0.expansionDestination != nil })
         }
     }
 

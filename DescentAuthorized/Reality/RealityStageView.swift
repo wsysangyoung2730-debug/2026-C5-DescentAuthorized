@@ -2,6 +2,7 @@ import RealityKit
 import SwiftUI
 
 enum LoadingScreenContext: Equatable {
+    case expansion(Int)
     case startup
     case floor10
     case floor9
@@ -15,12 +16,22 @@ enum LoadingScreenContext: Equatable {
             self = .floor9
         case .floor08ResidueIsolation, .floor08AdministratorObservatory:
             self = .floor8
+        case .floor07CoordinateResidue, .floor07CoordinateAdministrator: self = .expansion(7)
+        case .floor06CausalityResidue, .floor06CausalityAdministrator: self = .expansion(6)
+        case .floor05MemoryOmissionResidue, .floor05OriginalMemoryAdministrator: self = .expansion(5)
+        case .floor04SignatureMimicResidual, .floor04RejectionExecutionResidual, .floor04ResponsibilityAuditAdministrator: self = .expansion(4)
+        case .floor03ConsentCustodianResidual, .floor03QuarantineEnforcerResidual, .floor03VoluntaryQuarantineAdministrator: self = .expansion(3)
+        case .floor02OverloadResidual, .floor02BackflowBlockerResidual, .floor02SealMaintenanceAdministrator: self = .expansion(2)
+        case .floor01IdentityComparisonResidual, .floor01ExitReviewResidual, .floor01FinalAuthorizationAdministrator: self = .expansion(1)
         }
     }
 
     var backgroundImageName: String {
         switch self {
-        case .startup: "LoadingMain"
+        case .expansion(7): "LoadingFloor07"
+        case .expansion(6): "LoadingFloor06"
+        case .expansion(5): "LoadingFloor05"
+        case .startup, .expansion: "LoadingMain"
         case .floor10: "LoadingFloor10"
         case .floor9: "LoadingFloor09"
         case .floor8: "LoadingFloor08"
@@ -72,7 +83,7 @@ enum LoadingTipCatalog {
             candidates = general
         case .floor9:
             candidates = general + floor9
-        case .floor8:
+        case .floor8, .expansion:
             candidates = general + floor9 + floor8
         }
         let alternatives = candidates.filter { $0 != currentTip }
@@ -188,6 +199,7 @@ struct RealityStageView: View {
     var erasureZones: [ErasureZone] = []
     var reducedMotion = false
     @ObservedObject var controller: RealitySceneController
+    let onReturnToTitle: () -> Void
     @State private var loadingTip: String
 
     init(
@@ -195,13 +207,15 @@ struct RealityStageView: View {
         cameraPreset: RealityCameraPreset = .main,
         erasureZones: [ErasureZone] = [],
         reducedMotion: Bool = false,
-        controller: RealitySceneController
+        controller: RealitySceneController,
+        onReturnToTitle: @escaping () -> Void
     ) {
         self.sceneID = sceneID
         self.cameraPreset = cameraPreset
         self.erasureZones = erasureZones
         self.reducedMotion = reducedMotion
         self.controller = controller
+        self.onReturnToTitle = onReturnToTitle
         let context = LoadingScreenContext(sceneID: sceneID)
         _loadingTip = State(initialValue: LoadingTipCatalog.randomTip(for: context))
     }
@@ -223,7 +237,7 @@ struct RealityStageView: View {
             case let .failed(failedSceneID, message) where failedSceneID == sceneID:
                 statusOverlay(
                     icon: "exclamationmark.triangle",
-                    title: "장면 승인 반려",
+                    title: "장면을 불러오지 못했습니다",
                     detail: message
                 )
             default:
@@ -271,14 +285,28 @@ struct RealityStageView: View {
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 420)
                 }
+
+                HStack(spacing: 12) {
+                    Button("다시 시도") {
+                        controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button("타이틀로") {
+                        onReturnToTitle()
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .tint(DAColor.magic)
+                .padding(.top, 12)
             }
             .padding(24)
         }
-        .allowsHitTesting(false)
     }
 }
 
 private struct RealityARView: UIViewRepresentable {
+    @EnvironmentObject private var appSettings: AppSettings
     let sceneID: FloorSceneID
     let cameraPreset: RealityCameraPreset
     let erasureZones: [ErasureZone]
@@ -300,8 +328,108 @@ private struct RealityARView: UIViewRepresentable {
     }
 
     private func synchronizePresentation() {
-        controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--final-tour") {
+            switch controller.loadState { case .idle: break; default: return }
+        }
+        #endif
+        var quality = appSettings.graphicsQuality
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--floor9-preview") {
+            if ProcessInfo.processInfo.arguments.contains("--graphics-medium") { quality = .medium }
+            if ProcessInfo.processInfo.arguments.contains("--entrance") { controller.setEnemyPreviewVisible(false) }
+            if ProcessInfo.processInfo.arguments.contains("--graphics-low") { quality = .low }
+            if ProcessInfo.processInfo.arguments.contains("--graphics-high") { quality = .high }
+        }
+        #endif
+        controller.setGraphicsQuality(quality)
+        switch controller.loadState {
+        case let .failed(failedSceneID, _) where failedSceneID == sceneID:
+            // Keep the error visible until the player explicitly retries.
+            break
+        default:
+            controller.load(sceneID: sceneID, cameraPreset: cameraPreset)
+        }
         controller.setEnemyIdleMotion(reducedMotion: reducedMotion)
         controller.setErasureZones(erasureZones)
     }
 }
+
+
+#if DEBUG
+/// Isolated asset review, entered only with --floor9-preview. Does not advance a save.
+struct Floor9MotionPreview: View {
+    private var sceneID: FloorSceneID {
+        let args = ProcessInfo.processInfo.arguments
+        if let index = args.firstIndex(of: "--final-room"), args.indices.contains(index + 1),
+           let id = FloorSceneID(rawValue: args[index + 1]), FinalSceneContract.contract(for: id) != nil { return id }
+        for (flag, scene): (String, FloorSceneID) in [
+            ("--floor7-residue", .floor07CoordinateResidue), ("--floor7-boss", .floor07CoordinateAdministrator),
+            ("--floor6-residue", .floor06CausalityResidue), ("--floor6-boss", .floor06CausalityAdministrator),
+            ("--floor5-residue", .floor05MemoryOmissionResidue), ("--floor5-boss", .floor05OriginalMemoryAdministrator)
+        ] where args.contains(flag) { return scene }
+        if args.contains("--floor10") { return .floor10ClosedOffice }
+        if args.contains("--floor8-residue") { return .floor08ResidueIsolation }
+        if args.contains("--floor8-boss") { return .floor08AdministratorObservatory }
+        return .floor09ArchiveRedesign
+    }
+    @StateObject private var controller = RealitySceneController()
+    @State private var camera: RealityCameraPreset = ProcessInfo.processInfo.arguments.contains("--main") ? .main : ProcessInfo.processInfo.arguments.contains("--descent")
+        ? .descentInput : (ProcessInfo.processInfo.arguments.contains("--boss") ? .battle : .rewardSelection)
+    @State private var replay = 0
+    @State private var reducedMotion = false
+
+    var body: some View {
+        RealityStageView(sceneID: sceneID, cameraPreset: camera,
+                         reducedMotion: reducedMotion, controller: controller, onReturnToTitle: {})
+            .overlay(alignment: .top) {
+                HStack(spacing: 16) {
+                    Button("보스") { camera = .battle }
+                    Button("두루마리") { camera = .rewardSelection }
+                    Button("하강문") { camera = .descentInput }
+                    Button("다시 보기") { replay += 1 }
+                    Toggle("동작 줄이기", isOn: $reducedMotion).fixedSize()
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(12).background(.ultraThinMaterial)
+            }
+            .task(id: "\(camera.rawValue)-\(replay)-\(reducedMotion)") {
+                while !controller.isReady(sceneID: sceneID, cameraPreset: camera) {
+                    if Task.isCancelled { return }
+                    if case .failed = controller.loadState { return }
+                    do { try await Task.sleep(for: .milliseconds(30)) } catch { return }
+                }
+                if ProcessInfo.processInfo.arguments.contains("--final-tour") {
+                    await controller.runFinalTourDiagnostics()
+                    return
+                }
+                if ProcessInfo.processInfo.arguments.contains("--ambient-diagnostics") {
+                    await controller.runObservatoryAmbientDiagnostics()
+                    return
+                }
+                if ProcessInfo.processInfo.arguments.contains("--render-diagnostics") {
+                    await controller.runDeviceRenderDiagnostics()
+                    return
+                }
+                controller.setRewardPresentation(.inactive, reducedMotion: reducedMotion)
+                controller.setDescentPresentation(camera == .descentInput ? .ready : .inactive,
+                                                  reducedMotion: reducedMotion)
+                if camera == .rewardSelection {
+                    if let contract = FinalSceneContract.contract(for: sceneID) {
+                        let progress = ExpansionProgress(floorNumber: contract.floor, stage: .reward)
+                        let candidates = progress.rewardSite.map { RewardCatalog.candidates(for: $0, learned: []) }
+                            ?? RewardCatalog.candidates(forFloorNumber: contract.floor)
+                        controller.configureFinalRewardCandidates(candidates)
+                    }
+                    controller.setRewardPresentation(.appearing, reducedMotion: reducedMotion)
+                    if await controller.waitForRewardAppearance(), !Task.isCancelled {
+                        controller.setRewardPresentation(.choosing, reducedMotion: reducedMotion)
+                    }
+                }
+                if ProcessInfo.processInfo.arguments.contains("--expansion-diagnostics") {
+                    await controller.runExpansionDiagnostics()
+                }
+            }
+    }
+}
+#endif
