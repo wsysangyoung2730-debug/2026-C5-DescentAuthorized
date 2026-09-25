@@ -1,0 +1,56 @@
+{
+  "actor": "RejectionExecutionResidual",
+  "fps": 30,
+  "clips": {
+    "idle": {
+      "start": 0.0,
+      "end": 4.0,
+      "duration": 4.0
+    },
+    "appear": {
+      "start": 4.1,
+      "end": 5.1,
+      "duration": 1.0
+    },
+    "telegraph": {
+      "start": 5.2,
+      "end": 6.4,
+      "duration": 1.2
+    },
+    "attack": {
+      "start": 6.5,
+      "end": 7.5,
+      "duration": 1.0,
+      "impact": 0.46,
+      "settledAt": 0.96
+    },
+    "heavyAttack": {
+      "start": 7.6,
+      "end": 8.9,
+      "duration": 1.3,
+      "impact": 0.62,
+      "settledAt": 1.28
+    },
+    "special": {
+      "start": 9.0,
+      "end": 11.0,
+      "duration": 2.0
+    },
+    "hit": {
+      "start": 11.1,
+      "end": 11.9,
+      "duration": 0.8
+    },
+    "death": {
+      "start": 12.0,
+      "end": 13.8,
+      "duration": 1.8
+    }
+  },
+  "rigVersion": 2,
+  "dissolveDuration": 0.65,
+  "sourceRigPreserved": false,
+  "rigidEquipment": [
+    "equipment_shield"
+  ]
+}

@@ -145,5 +145,75 @@
       "magicInputBoard": "FINAL_F05A_MagicInputBoard"
     },
     "targetHeight": 2.8
+  },
+  {
+    "floor": 4,
+    "role": "administrator",
+    "name": "ResponsibilityAuditAdministrator",
+    "asset": "responsibility_audit_administrator",
+    "scene": "DA_F04_ResponsibilityAdministrator",
+    "prefix": "F04C",
+    "resource": "floor04_responsibility_audit_administrator",
+    "directory": "Reality/Scenes/Floor04/ResponsibilityAuditAdministrator",
+    "cameras": {
+      "battle": "F04_iPad_MainCamera",
+      "main": "F04_iPad_MainCamera",
+      "tutorial": "F04_iPad_MainCamera",
+      "descentInput": "CAM_F04_DescentDoor",
+      "rewardSelection": "CAM_F04_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F04C_EnemySpawn",
+      "magicInputBoard": "FINAL_F04C_MagicInputBoard",
+      "rewardStand": "FINAL_F04C_RewardStand",
+      "rewardScrollLeft": "FINAL_F04C_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F04C_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F04C_RewardSlot_Right",
+      "descentStele": "FINAL_F04C_DescentStele",
+      "descentPedestal": "FINAL_F04C_DescentPedestal"
+    },
+    "targetHeight": 4.2
+  },
+  {
+    "floor": 4,
+    "role": "residualA",
+    "name": "SignatureMimicResidual",
+    "asset": "signature_mimic_residual",
+    "scene": "DA_F04A_SignatureMimicWorkshop",
+    "prefix": "F04A",
+    "resource": "floor04_signature_mimic_residual",
+    "directory": "Reality/Scenes/Floor04/SignatureMimicResidual",
+    "cameras": {
+      "battle": "F04A_iPad_MainCamera",
+      "main": "F04A_iPad_MainCamera",
+      "tutorial": "F04A_iPad_MainCamera",
+      "descentInput": "CAM_F04A_MiddleDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F04A_EnemySpawn",
+      "magicInputBoard": "FINAL_F04A_MagicInputBoard"
+    },
+    "targetHeight": 2.8
+  },
+  {
+    "floor": 4,
+    "role": "residualB",
+    "name": "RejectionExecutionResidual",
+    "asset": "rejection_execution_residual",
+    "scene": "DA_F04B_RejectionExecutionWorkshop",
+    "prefix": "F04B",
+    "resource": "floor04_rejection_execution_residual",
+    "directory": "Reality/Scenes/Floor04/RejectionExecutionResidual",
+    "cameras": {
+      "battle": "F04B_iPad_MainCamera",
+      "main": "F04B_iPad_MainCamera",
+      "tutorial": "F04B_iPad_MainCamera",
+      "descentInput": "CAM_F04B_MiddleDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F04B_EnemySpawn",
+      "magicInputBoard": "FINAL_F04B_MagicInputBoard"
+    },
+    "targetHeight": 2.8
   }
 ]
