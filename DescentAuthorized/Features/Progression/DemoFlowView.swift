@@ -237,7 +237,7 @@ struct DemoFlowView: View {
 
     // Owned by the stable flow host: replacing BattleView must not cancel loading.
     private func beginEncounterRestart() {
-        if gameSession.progress.expansion?.isLowerFloor == true {
+        if gameSession.presentation.floorSceneID == nil {
             gameSession.send(.restartEncounter)
             return
         }

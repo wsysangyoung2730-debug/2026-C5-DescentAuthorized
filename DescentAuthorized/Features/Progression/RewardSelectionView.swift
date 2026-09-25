@@ -62,6 +62,11 @@ struct RewardSelectionView: View {
     }
 
     private var isLowerFloor: Bool { (1...4).contains(floorNumber) }
+    private var usesSceneRewards: Bool {
+        guard let id = gameSession.presentation.floorSceneID else { return false }
+        return RealitySceneDescriptor.descriptor(for: id).entityNames[.rewardStand] != nil
+    }
+
 
     var body: some View {
         GeometryReader { proxy in
@@ -96,6 +101,7 @@ struct RewardSelectionView: View {
             }
         }
         .onAppear {
+            if usesSceneRewards { sceneController.configureFinalRewardCandidates(candidates) }
             if let pendingLearningCandidate,
                let selectedIndex = candidates.firstIndex(where: {
                    $0.id == pendingLearningCandidate.id
@@ -108,7 +114,7 @@ struct RewardSelectionView: View {
             }
 
             isLearningInputActive = false
-            if isLowerFloor {
+            if !usesSceneRewards {
                 rewardState = .choosing
                 isSelectionInterfaceVisible = true
                 return
@@ -130,12 +136,12 @@ struct RewardSelectionView: View {
         }
         .onDisappear {
             transitionTask?.cancel()
-            if !isLowerFloor { sceneController.setRewardPresentation(.inactive, reducedMotion: appSettings.reducedMotion) }
+            if usesSceneRewards { sceneController.setRewardPresentation(.inactive, reducedMotion: appSettings.reducedMotion) }
             cancelDetailPress(playsCloseSound: false)
             isLearningInputActive = false
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
-            if !isLowerFloor { sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion) }
+            if usesSceneRewards { sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion) }
         }
     }
 
@@ -592,7 +598,7 @@ struct RewardSelectionView: View {
 
     private func setRewardState(_ state: RealityRewardPresentationState) {
         rewardState = state
-        if !isLowerFloor { sceneController.setRewardPresentation(state, reducedMotion: appSettings.reducedMotion) }
+        if usesSceneRewards { sceneController.setRewardPresentation(state, reducedMotion: appSettings.reducedMotion) }
     }
 }
 

@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// The lower floors use approved portrait artwork and the shared gameplay panels.
-/// No transition depends on a RealityKit scene, actor, or reward animation being ready.
+/// Lower-floor progression uses the same installed 3D room and shared gameplay panels.
 struct LowerFloorFlowView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
     @EnvironmentObject private var appSettings: AppSettings
+    @Environment(\.isGlyphInputSuspended) private var inputSuspended
     let current: ExpansionProgress
     @ObservedObject var sceneController: RealitySceneController
     @Binding var retryLoadingPresentation: SceneRetryLoadingPresentation?
@@ -16,11 +16,15 @@ struct LowerFloorFlowView: View {
 
     var body: some View {
         ZStack {
-            ExpansionBackdropView(floorNumber: current.floorNumber,
-                isBoss: current.showsBoss, residualIndex: current.residualIndex)
+            if gameSession.presentation.floorSceneID == nil {
+                ExpansionBackdropView(floorNumber: current.floorNumber,
+                    isBoss: current.showsBoss, residualIndex: current.residualIndex)
+            }
             content
         }
-        .onDisappear { learningInputActive = false }
+        .task(id: "\(current.floorNumber)-\(current.residualIndex)-\(current.stage.rawValue)") { synchronizeScene() }
+        .onChange(of: inputSuspended) { _, value in sceneController.setActorMotionSuspended(value) }
+        .onDisappear { learningInputActive = false; sceneController.setActorMotionSuspended(false) }
         .onChange(of: current.stage) { _, _ in
             selectedRecord = nil
             showsBag = false
@@ -55,7 +59,9 @@ struct LowerFloorFlowView: View {
                 restartLoadingPresentation: $retryLoadingPresentation, onRestartBattle: onRestartBattle)
         case .sealedDoor:
             ZStack {
-                Image("GateSealMechanism").resizable().scaledToFit().opacity(0.45)
+                if gameSession.presentation.floorSceneID == nil {
+                    Image("GateSealMechanism").resizable().scaledToFit().opacity(0.45)
+                }
                 GateSealInteractionView(title: "관리자 구역 · 중간문 봉인 해제",
                     instruction: "두 잔류체의 집행을 마쳤습니다. 봉인을 해제하여 옆 통로로 진입하십시오.",
                     spell: SpellCatalog.sealRelease, inputPreference: appSettings.inputPreference,
@@ -78,7 +84,7 @@ struct LowerFloorFlowView: View {
                 body: "봉인을 유지하겠다는 서약은 강요된 것이 아니었다.\n기억을 잃더라도, 그 책임을 다음 사람에게 넘기지 않겠다고 내가 서명했다.\n\n이제 출구의 세 승인란만이 남아 있다.",
                 button: "기록을 받아들이고 출구로", action: advance)
         case .descent:
-            LowerFloorDescentView(current: current)
+            LowerFloorDescentView(current: current, sceneController: sceneController)
         case .complete:
             storyPanel(title: "다음 탑 · 제10층", subtitle: "하강 권한 인계 완료",
                 body: "출구 너머는 바깥이 아니었다.\n낯선 탑의 접수실. 익숙한 승인 절차가 기다리고 있었다.\n\n“이전 탑의 유지 기록을 확인했습니다. 인계를 시작합니다.”\n\n이 탑의 여정이 완료되었습니다. 구간 선택에서 기록과 전투를 다시 확인할 수 있습니다.",
@@ -86,6 +92,19 @@ struct LowerFloorFlowView: View {
         case .learnDebuff:
             EmptyView() // This stage is valid only on 6F.
         }
+    }
+
+    private func synchronizeScene() {
+        guard gameSession.presentation.floorSceneID != nil else { return }
+        let visible: [ExpansionStage] = [.preparation, .residualEncounter, .residualBattle,
+            .bossPreparation, .bossEncounter, .bossBattle, .residualDefeated, .bossDefeated]
+        sceneController.setEnemyPreviewVisible(visible.contains(current.stage))
+        sceneController.setLimitedCameraInteractionEnabled(current.stage.isBattle)
+        sceneController.setActorMotionSuspended(inputSuspended)
+        if [.entrance, .residualInvestigation, .preparation, .bossPreparation].contains(current.stage) {
+            sceneController.prepareExpansionActor()
+        }
+        if current.stage.isBattle { sceneController.playExpansionActorMotion("appear") }
     }
 
     private var enemy: EnemyDefinition? {
@@ -182,6 +201,7 @@ private struct LowerFloorDescentView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
     @EnvironmentObject private var appSettings: AppSettings
     let current: ExpansionProgress
+    @ObservedObject var sceneController: RealitySceneController
     @State private var approvedThisVisit = false
 
     var body: some View {
@@ -225,7 +245,12 @@ private struct LowerFloorDescentView: View {
                 }
             }
         }
-        .background(.black.opacity(0.84))
+        .background(.black.opacity(0.40))
+        .task(id: current.descentStage) {
+            sceneController.setDescentPresentation(current.descentStage == 3 ? .approved : .ready,
+                reducedMotion: appSettings.reducedMotion)
+        }
+        .onDisappear { sceneController.setDescentPresentation(.inactive, reducedMotion: appSettings.reducedMotion) }
         .onChange(of: current.descentStage) { _, _ in approvedThisVisit = false }
     }
 

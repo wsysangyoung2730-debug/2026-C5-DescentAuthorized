@@ -1235,6 +1235,7 @@ final class RealitySceneController: ObservableObject {
 
     func unload() {
         actorMotion.reset()
+        finalRewardTemplates.removeAll()
         observatoryAmbientMotion.reset()
         environmentTask?.cancel()
         environmentTask = nil
@@ -1500,11 +1501,43 @@ final class RealitySceneController: ObservableObject {
     }
 
     /// Final rooms keep their authored pedestal. Only scroll meshes are attached to slots.
+    private var finalRewardTemplates: [ScrollTier: Entity] = [:]
+    private var requestedFinalRewardTiers: [ScrollTier]?
+
+    func configureFinalRewardCandidates(_ candidates: [RewardCandidate]) {
+        requestedFinalRewardTiers = candidates.map(\.tier)
+        applyFinalRewardCandidates()
+    }
+
+    private func applyFinalRewardCandidates() {
+        guard let id = registry.descriptor?.sceneID, let contract = FinalSceneContract.contract(for: id),
+              !finalRewardTemplates.isEmpty else { return }
+        let tiers = requestedFinalRewardTiers ?? RewardCatalog.candidates(forFloorNumber: contract.floor).map(\.tier)
+        for (index, role) in [RealityEntityRole.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight].enumerated() {
+            guard let holder = registry.entity(for: role), holder.name.hasPrefix("FINAL_Animated_") else { continue }
+            for child in Array(holder.children) { child.removeFromParent() }
+            guard tiers.indices.contains(index), let template = finalRewardTemplates[tiers[index]] else { continue }
+            let scroll = template.clone(recursive: true); holder.addChild(scroll)
+            scroll.transform = .identity
+            var bounds = scroll.visualBounds(relativeTo: holder)
+            scroll.scale = SIMD3(repeating: 0.72 / max(bounds.extents.z, 0.01))
+            bounds = scroll.visualBounds(relativeTo: holder)
+            scroll.position -= [(bounds.min.x + bounds.max.x) / 2, (bounds.min.y + bounds.max.y) / 2, bounds.min.z]
+        }
+    }
+
     private func installFinalRewardScrolls(contract: FinalSceneContract, bundle: Bundle, resources: [URL: Entity]) throws {
         guard let room = registry.root, let stand = registry.entity(for: .rewardStand) else { throw CocoaError(.fileReadCorruptFile) }
         let suffix = graphicsQuality == .high ? "" : "_\(graphicsQuality.rawValue)"
         guard let url = bundle.url(forResource: "reward_scroll" + suffix, withExtension: "usdc", subdirectory: "Reality/Interactables/RewardScroll"),
               let template = resources[url]?.findEntity(named: "F09_RewardScroll_Center") else { throw CocoaError(.fileReadCorruptFile) }
+        guard let deviceURL = bundle.url(forResource: "reward_device" + suffix, withExtension: "usdc", subdirectory: "Reality/Interactables/RewardDevice"),
+              let device = resources[deviceURL] else { throw CocoaError(.fileReadCorruptFile) }
+        finalRewardTemplates = [.engraved: template.clone(recursive: true)]
+        for (tier, slot): (ScrollTier, String) in [(.worn,"Left"),(.sealed,"Center"),(.forbidden,"Right")] {
+            guard let model = device.findEntity(named: "F08B_RewardScroll_" + slot) else { throw CocoaError(.fileReadCorruptFile) }
+            finalRewardTemplates[tier] = model.clone(recursive: true)
+        }
         let standBounds = stand.visualBounds(relativeTo: room)
         for role: RealityEntityRole in [.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight] {
             guard let slot = registry.entity(for: role) else { throw CocoaError(.fileReadCorruptFile) }
@@ -1512,16 +1545,10 @@ final class RealitySceneController: ObservableObject {
             room.addChild(holder)
             holder.position = slot.position(relativeTo: room)
             holder.position.z = max(holder.position.z, standBounds.max.z + 0.12)
-            let scroll = template.clone(recursive: true); holder.addChild(scroll)
-            scroll.transform = .identity
-            var bounds = scroll.visualBounds(relativeTo: holder)
-            let height = max(bounds.extents.z, 0.01)
-            scroll.scale = SIMD3(repeating: 0.72 / height)
-            bounds = scroll.visualBounds(relativeTo: holder)
-            scroll.position -= [(bounds.min.x + bounds.max.x) / 2, (bounds.min.y + bounds.max.y) / 2, bounds.min.z]
             holder.isEnabled = false
             registry.register(holder, for: role)
         }
+        applyFinalRewardCandidates()
     }
 
     /// Replace only the visible models: authored hole, rise and idle pivots stay intact.
@@ -1967,10 +1994,16 @@ extension RealitySceneController {
             fixtures = [([-6,1,8],[0,7,2],2600), ([6,1,8],[0,7,2],2600),
                         ([0,12,9],[0,11,1],3000), ([0,-8,6],[0,7,3],1800),
                         ([-8,9,6],[-8,12,1],1700), ([8,10,6],[8,13,1],1700)]
-        case .floor07CoordinateResidue, .floor06CausalityResidue, .floor05MemoryOmissionResidue:
+        case .floor07CoordinateResidue, .floor06CausalityResidue, .floor05MemoryOmissionResidue,
+             .floor04SignatureMimicResidual, .floor04RejectionExecutionResidual,
+             .floor03ConsentCustodianResidual, .floor03QuarantineEnforcerResidual,
+             .floor02OverloadResidual, .floor02BackflowBlockerResidual,
+             .floor01IdentityComparisonResidual, .floor01ExitReviewResidual:
             fixtures = [([-5,1,6],[0,5,1],2000), ([5,3,6],[0,6,1],2000),
                         ([0,11,6],[0,9,1],1800), ([0,-5,6],[0,2,1],1600)]
-        case .floor07CoordinateAdministrator, .floor06CausalityAdministrator, .floor05OriginalMemoryAdministrator:
+        case .floor07CoordinateAdministrator, .floor06CausalityAdministrator, .floor05OriginalMemoryAdministrator,
+             .floor04ResponsibilityAuditAdministrator, .floor03VoluntaryQuarantineAdministrator,
+             .floor02SealMaintenanceAdministrator, .floor01FinalAuthorizationAdministrator:
             fixtures = [([-6,1,8],[0,7,2],2500), ([6,1,8],[0,7,2],2500),
                         ([0,12,9],[0,11,1],2600), ([0,-8,6],[0,7,3],1800),
                         ([-8,2,6],[-7,2,1],1700), ([8,10,6],[8,13,1],1700)]
