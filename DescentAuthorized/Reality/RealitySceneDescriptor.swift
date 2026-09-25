@@ -509,6 +509,8 @@ struct FinalSceneContract: Decodable {
     let targetHeight: Float
     let doorAnimationPrefix: String?
     let doorTravel: Float?
+    let cameraPitchDegrees: [String: Float]?
+    let cameraFOVScale: [String: Float]?
 
     static let installed: [FinalSceneContract] = {
         guard let url = Bundle.main.url(forResource: "FinalSceneManifest", withExtension: "json", subdirectory: "Reality"),
@@ -524,6 +526,23 @@ struct FinalSceneContract: Decodable {
 
     static func contract(for id: FloorSceneID) -> FinalSceneContract? {
         installed.first { $0.resource == id.rawValue }
+    }
+
+    static func nextRoom(for progress: ExpansionProgress) -> FloorSceneID? {
+        let destination: (Int, String)?
+        switch progress.stage {
+        case .recordReward, .residualDefeated:
+            destination = progress.isLowerFloor && progress.residualIndex == 0
+                ? (progress.floorNumber, "residualB") : (progress.floorNumber, "administrator")
+        case .sealedDoor:
+            destination = (progress.floorNumber, "administrator")
+        case .reward, .descent, .finalRecord:
+            destination = progress.floorNumber > 1 ? (progress.floorNumber - 1, "residualA") : nil
+        default: destination = nil
+        }
+        guard let destination else { return nil }
+        return installed.first { $0.floor == destination.0 && $0.role == destination.1 }
+            .flatMap { FloorSceneID(rawValue: $0.resource) }
     }
 
     static func descriptor(for id: FloorSceneID) -> RealitySceneDescriptor? {

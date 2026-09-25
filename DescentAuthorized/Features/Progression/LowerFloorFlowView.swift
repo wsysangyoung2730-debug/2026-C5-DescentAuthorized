@@ -23,6 +23,7 @@ struct LowerFloorFlowView: View {
             content
         }
         .task(id: "\(current.floorNumber)-\(current.residualIndex)-\(current.stage.rawValue)") { synchronizeScene() }
+        .onChange(of: appSettings.graphicsQuality) { _, _ in prefetchNextScene() }
         .onChange(of: inputSuspended) { _, value in sceneController.setActorMotionSuspended(value) }
         .onDisappear { learningInputActive = false; sceneController.setActorMotionSuspended(false) }
         .onChange(of: current.stage) { _, _ in
@@ -94,7 +95,14 @@ struct LowerFloorFlowView: View {
         }
     }
 
+    private func prefetchNextScene() {
+        if let next = FinalSceneContract.nextRoom(for: current) {
+            sceneController.prefetchRoom(sceneID: next, quality: appSettings.graphicsQuality)
+        }
+    }
+
     private func synchronizeScene() {
+        prefetchNextScene()
         guard gameSession.presentation.floorSceneID != nil else { return }
         let visible: [ExpansionStage] = [.preparation, .residualEncounter, .residualBattle,
             .bossPreparation, .bossEncounter, .bossBattle, .residualDefeated, .bossDefeated]

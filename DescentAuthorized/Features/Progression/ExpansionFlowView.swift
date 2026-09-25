@@ -85,6 +85,10 @@ struct ExpansionFlowView: View {
 
     // Prepare during reading/selection, never begin speculative work during combat.
     private func prefetchNextScene(_ current: ExpansionProgress) {
+        if let installed = FinalSceneContract.nextRoom(for: current) {
+            sceneController.prefetchRoom(sceneID: installed, quality: appSettings.graphicsQuality)
+            return
+        }
         let next: FloorSceneID?
         switch (current.floorNumber, current.stage) {
         case (7, .sealedDoor): next = .floor07CoordinateAdministrator

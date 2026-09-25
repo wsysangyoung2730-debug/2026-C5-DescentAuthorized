@@ -328,6 +328,11 @@ private struct RealityARView: UIViewRepresentable {
     }
 
     private func synchronizePresentation() {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--final-tour") {
+            switch controller.loadState { case .idle: break; default: return }
+        }
+        #endif
         var quality = appSettings.graphicsQuality
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--floor9-preview") {
@@ -393,6 +398,10 @@ struct Floor9MotionPreview: View {
                     if Task.isCancelled { return }
                     if case .failed = controller.loadState { return }
                     do { try await Task.sleep(for: .milliseconds(30)) } catch { return }
+                }
+                if ProcessInfo.processInfo.arguments.contains("--final-tour") {
+                    await controller.runFinalTourDiagnostics()
+                    return
                 }
                 if ProcessInfo.processInfo.arguments.contains("--ambient-diagnostics") {
                     await controller.runObservatoryAmbientDiagnostics()

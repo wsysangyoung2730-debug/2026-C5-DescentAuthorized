@@ -4,6 +4,7 @@ import RealityKit
 import UIKit
 import ImageIO
 import os
+import Darwin
 
 struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     let maximumYaw: Float
@@ -102,6 +103,7 @@ final class RealitySceneController: ObservableObject {
     private var loadCancellable: AnyCancellable?
     private var actorLoadCancellable: AnyCancellable?
     private var environmentTask: Task<Void, Never>?
+    private var loadMeasurements: [String: Double] = [:]
     private var loadStartedAt = Date()
     private var actorStartedAt = Date()
     private static let loadLog = Logger(subsystem: "com.wsysangyoung.DescentAuthorized", category: "SceneLoading")
@@ -193,6 +195,7 @@ final class RealitySceneController: ObservableObject {
         let loadGeneration = sceneLoadGeneration
         loadingProgress = 0.2
         loadStartedAt = Date()
+        loadMeasurements = [:]
         Self.loadLog.notice("room.begin \(sceneID.rawValue, privacy: .public) quality=\(self.graphicsQuality.rawValue, privacy: .public)")
         let prepared = PreparedRealityAssets.shared
         let auxiliaryURLs = auxiliaryAssetURLs(descriptor: descriptor, quality: graphicsQuality, bundle: bundle)
@@ -204,6 +207,7 @@ final class RealitySceneController: ObservableObject {
         loadCancellable = prepared.takeRoom(url: url)
             .handleEvents(receiveOutput: { [weak self] _ in
                 guard let self else { return }
+                self.loadMeasurements["decodedSeconds"] = Date().timeIntervalSince(self.loadStartedAt)
                 Self.loadLog.notice("room.decoded seconds=\(Date().timeIntervalSince(self.loadStartedAt))")
             })
             .zip(rewardResources)
@@ -229,6 +233,7 @@ final class RealitySceneController: ObservableObject {
                     self.loadingProgress = 0.72
                     let installationStarted = Date()
                     self.install(root: root, descriptor: descriptor, in: arView, bundle: bundle, rewards: rewards)
+                    self.loadMeasurements["installCPUSeconds"] = Date().timeIntervalSince(installationStarted)
                     Self.loadLog.notice("room.installCPU seconds=\(Date().timeIntervalSince(installationStarted))")
                 }
             )
@@ -1695,6 +1700,7 @@ final class RealitySceneController: ObservableObject {
                 self.sceneLoadGeneration == readyGeneration,
                 self.requestedSceneID == descriptor.sceneID
             else { return }
+            self.loadMeasurements["readySeconds"] = Date().timeIntervalSince(self.loadStartedAt)
             Self.loadLog.notice("room.ready seconds=\(Date().timeIntervalSince(self.loadStartedAt))")
             if case .failed = self.loadState { return }
             self.loadState = .ready(descriptor.sceneID)
@@ -1711,10 +1717,15 @@ final class RealitySceneController: ObservableObject {
                 let cameraContainer = root.findEntity(named: cameraName),
                 let authoredCamera = perspectiveCamera(in: cameraContainer)
             else { continue }
-            snapshots[cameraName] = AuthoredCameraSnapshot(
-                transformMatrix: authoredCamera.transformMatrix(relativeTo: nil),
-                camera: authoredCamera.camera
-            )
+            var transform = Transform(matrix: authoredCamera.transformMatrix(relativeTo: nil))
+            var optics = authoredCamera.camera
+            if let room = FinalSceneContract.contract(for: descriptor.sceneID) {
+                // RealityKit's perspective camera omits USD aperture offsets.
+                let pitch = room.cameraPitchDegrees?[cameraName] ?? 0
+                transform.rotation *= simd_quatf(angle: pitch * .pi / 180, axis: [1, 0, 0])
+                optics.fieldOfViewInDegrees *= room.cameraFOVScale?[cameraName] ?? 1
+            }
+            snapshots[cameraName] = AuthoredCameraSnapshot(transformMatrix: transform.matrix, camera: optics)
         }
         return snapshots
     }
@@ -1936,7 +1947,7 @@ extension RealitySceneController {
         // The room root maps authored Z-up coordinates into the Y-up runtime.
         // Local fixture coordinates remain exactly as exported from Blender.
         // Six working fluorescent fixtures from DA_F09_Archive_Redesign in v022.
-        let fixtures: [Fixture] = [
+        var fixtures: [Fixture] = [
             Fixture(name: "CEILING_0", position: [-6, -3, 6.93], target: [-6, -3, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
             Fixture(name: "CEILING_1", position: [2, -3, 6.93], target: [2, -3, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
             Fixture(name: "CEILING_3", position: [-5, 4, 6.93], target: [-5, 4, 0], color: ceiling, intensity: 2700, radius: 12, outerAngle: 105),
@@ -1981,7 +1992,7 @@ extension RealitySceneController {
         }
         removeImportedLights(from: root)
         typealias Fixture = (position: SIMD3<Float>, target: SIMD3<Float>, power: Float)
-        let fixtures: [Fixture]
+        var fixtures: [Fixture]
         switch descriptor.sceneID {
         case .floor10ClosedOffice:
             fixtures = [([-4.8,1.2,6.82],[-4.8,1.2,0],2200), ([5,2.8,6.82],[5,2.8,0],2600),
@@ -2008,6 +2019,12 @@ extension RealitySceneController {
                         ([0,12,9],[0,11,1],2600), ([0,-8,6],[0,7,3],1800),
                         ([-8,2,6],[-7,2,1],1700), ([8,10,6],[8,13,1],1700)]
         default: return
+        }
+        if FinalSceneContract.contract(for: descriptor.sceneID) != nil,
+           let spawnName = descriptor.entityNames[.enemySpawn], let spawn = root.findEntity(named: spawnName) {
+            let target = spawn.position(relativeTo: root) + SIMD3<Float>(0, 0, 1.8)
+            fixtures[0] = (target + [-3.5, -5, 4], target, 2200)
+            fixtures[1] = (target + [4, -2, 3], target, 1400)
         }
         for (index, fixture) in fixtures.enumerated() {
             let lamp = SpotLight(); lamp.name = "ROOM_RUNTIME_\(index)"
@@ -2112,7 +2129,9 @@ extension RealitySceneController {
                   self.requestedSceneID == sceneID else { return }
             self.arView?.environment.lighting.resource = resource
             // Calibrate captured radiance for RealityKit; fixtures shape local shadows.
-            self.arView?.environment.lighting.intensityExponent = 2.5
+            let floor = FinalSceneContract.contract(for: sceneID)?.floor
+            let exposure: [Int: Float] = [1: 1.2, 2: 2, 3: 0, 4: 3, 5: 1.2, 6: 1.5, 7: 2.5]
+            self.arView?.environment.lighting.intensityExponent = floor.flatMap { exposure[$0] } ?? 2.5
         }
     }
 }
@@ -2144,14 +2163,20 @@ private final class PreparedRealityAssets {
     private var auxiliary: [URL: Entry] = [:]
     private var memoryWarning: AnyCancellable?
     private var environmentTasks: [FloorSceneID: Task<EnvironmentResource?, Never>] = [:]
+    private var environmentOrder: [FloorSceneID] = []
     private init() {
         memoryWarning = NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)
             .receive(on: DispatchQueue.main).sink { [weak self] _ in
                 self?.room = nil
                 self?.auxiliary.removeAll()
+                self?.environmentTasks.values.forEach { $0.cancel() }
                 self?.environmentTasks.removeAll()
+                self?.environmentOrder.removeAll()
             }
     }
+    #if DEBUG
+    var cacheCounts: [String: Int] { ["rooms": room == nil ? 0 : 1, "auxiliary": auxiliary.count, "environments": environmentTasks.count] }
+    #endif
     func prepareAuxiliary(urls: [URL]) {
         let wanted = Set(urls)
         auxiliary = auxiliary.filter { wanted.contains($0.key) }
@@ -2184,6 +2209,12 @@ private final class PreparedRealityAssets {
             .eraseToAnyPublisher()
     }
     func prepareEnvironment(bundle: Bundle, sceneID: FloorSceneID = .floor09ArchiveRedesign) {
+        environmentOrder.removeAll { $0 == sceneID }
+        environmentOrder.append(sceneID)
+        while environmentOrder.count > 2 {
+            let expired = environmentOrder.removeFirst()
+            environmentTasks.removeValue(forKey: expired)?.cancel()
+        }
         guard environmentTasks[sceneID] == nil else { return }
         let name: String
         switch sceneID {
@@ -2201,7 +2232,7 @@ private final class PreparedRealityAssets {
                                        subdirectory: directory),
                   let source = CGImageSourceCreateWithURL(url as CFURL, nil),
                   let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
-            do { return try await EnvironmentResource(equirectangular: image, withName: name) }
+            do { return try await EnvironmentResource(equirectangular: image, withName: sceneID.rawValue) }
             catch {
                 Logger(subsystem: "com.wsysangyoung.DescentAuthorized", category: "SceneLoading")
                     .error("environment.failed \(error.localizedDescription, privacy: .public)")
@@ -2404,6 +2435,74 @@ extension RealitySceneController {
             .write(to: directory.appendingPathComponent("report.json"))
         setBattleCameraInteractionEnabled(enabledOnEntry)
         print("C5_EXPLORATION_DIAGNOSTICS \(id.rawValue) \(mode) complete")
+    }
+
+    func runFinalTourDiagnostics() async {
+        guard let arView else { return }
+        let rooms = FinalSceneContract.installed.compactMap { FloorSceneID(rawValue: $0.resource) }
+        var routes: [(FloorSceneID, GraphicsQuality)] = rooms.map { ($0, .medium) }
+        routes += rooms.reversed().map { ($0, .medium) }
+        let bosses = FinalSceneContract.installed.filter { $0.role == "administrator" }
+            .compactMap { FloorSceneID(rawValue: $0.resource) }
+        routes += bosses.map { ($0, .low) } + bosses.map { ($0, .high) }
+        routes += [.floor10ClosedOffice, .floor09ArchiveRedesign, .floor08ResidueIsolation,
+                   .floor08AdministratorObservatory].map { ($0, .medium) }
+        var results: [[String: Any]] = []
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("FinalTourDiagnostics")
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        func memoryBytes() -> UInt64 {
+            var info = task_vm_info_data_t()
+            var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
+            let status = withUnsafeMutablePointer(to: &info) {
+                $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+                    task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+                }
+            }
+            return status == KERN_SUCCESS ? info.phys_footprint : 0
+        }
+        for (index, route) in routes.enumerated() {
+            guard !Task.isCancelled else { return }
+            unload()
+            setGraphicsQuality(route.1)
+            if index == rooms.count { NotificationCenter.default.post(name: UIApplication.didReceiveMemoryWarningNotification, object: nil) }
+            let begin = Date()
+            load(sceneID: route.0, cameraPreset: .battle)
+            while !isReady(sceneID: route.0, cameraPreset: .battle), Date().timeIntervalSince(begin) < 45 {
+                if case .failed = loadState { break }
+                do { try await Task.sleep(for: .milliseconds(30)) } catch { return }
+            }
+            await environmentTask?.value
+            var frames: [Double] = []
+            let subscription = arView.scene.subscribe(to: SceneEvents.Update.self) { frames.append($0.deltaTime) }
+            try? await Task.sleep(for: .milliseconds(600))
+            subscription.cancel()
+            let png: Data? = await withCheckedContinuation { continuation in
+                arView.snapshot(saveToHDR: false) { continuation.resume(returning: $0?.pngData()) }
+            }
+            // Snapshot completion is recorded separately from CPU readiness, not called first presentation.
+            let snapshotSeconds = Date().timeIntervalSince(begin)
+            if index >= rooms.count * 2, let png {
+                try? png.write(to: directory.appendingPathComponent("\(route.0.rawValue)-\(route.1.rawValue).png"))
+            }
+            frames.sort()
+            let row: [String: Any] = ["index": index, "scene": route.0.rawValue, "quality": route.1.rawValue,
+                "ready": isReady(sceneID: route.0, cameraPreset: .battle), "cpu": loadMeasurements,
+                "snapshotCompletedSeconds": snapshotSeconds, "footprintBytes": memoryBytes(),
+                "updateMedianMS": frames.isEmpty ? 0 : frames[frames.count/2] * 1000,
+                "updateP95MS": frames.isEmpty ? 0 : frames[min(frames.count-1, Int(Double(frames.count)*0.95))] * 1000,
+                "cacheCounts": PreparedRealityAssets.shared.cacheCounts,
+                "missingRoles": missingEntityRoles.map(\.rawValue), "snapshotAvailable": png != nil]
+            results.append(row)
+            let report: [String: Any] = ["complete": index == routes.count-1,
+                "device": "iPad Pro 13 M5 simulator, iOS 26.5; not physical-device GPU timing", "runs": results]
+            try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+                .write(to: directory.appendingPathComponent("report.json"))
+            if routes.indices.contains(index+1) {
+                let next = routes[index+1]
+                prefetchRoom(sceneID: next.0, quality: next.1)
+            }
+        }
     }
 
     func runExpansionDiagnostics() async {
