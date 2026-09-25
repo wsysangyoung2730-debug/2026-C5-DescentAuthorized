@@ -4,50 +4,77 @@
   "clips": {
     "idle": {
       "start": 0.0,
-      "end": 4.0,
-      "duration": 4.0
+      "end": 3.9,
+      "duration": 3.9
+    },
+    "idleVariant": {
+      "start": 4.0,
+      "end": 6.4,
+      "duration": 2.4
     },
     "appear": {
-      "start": 4.1,
-      "end": 5.1,
+      "start": 6.5,
+      "end": 7.5,
       "duration": 1.0
     },
     "telegraph": {
-      "start": 5.2,
-      "end": 6.4,
+      "start": 7.6,
+      "end": 8.8,
       "duration": 1.2
     },
     "attack": {
-      "start": 6.5,
-      "end": 7.5,
+      "start": 8.9,
+      "end": 9.9,
       "duration": 1.0,
       "impact": 0.46,
       "settledAt": 0.96
     },
     "heavyAttack": {
-      "start": 7.6,
-      "end": 8.9,
+      "start": 10.0,
+      "end": 11.3,
       "duration": 1.3,
       "impact": 0.62,
       "settledAt": 1.28
     },
     "special": {
-      "start": 9.0,
-      "end": 11.0,
+      "start": 11.4,
+      "end": 13.4,
       "duration": 2.0
     },
     "hit": {
-      "start": 11.1,
-      "end": 11.9,
+      "start": 13.5,
+      "end": 14.3,
       "duration": 0.8
     },
     "death": {
-      "start": 12.0,
-      "end": 13.8,
+      "start": 14.4,
+      "end": 16.2,
       "duration": 1.8
     }
   },
   "rigVersion": 2,
+  "profile": {
+    "style": "backflow-hook-sweep",
+    "side": "R",
+    "cycle": 3.9,
+    "arm": [
+      -0.23,
+      0.06,
+      -0.1
+    ],
+    "forearm": [
+      -0.18,
+      0.05,
+      -0.09
+    ],
+    "chest": [
+      0.07,
+      0,
+      -0.07
+    ],
+    "look": 0.03
+  },
+  "initialIdleOffset": 0.0,
   "dissolveDuration": 0.65,
   "sourceRigPreserved": false,
   "rigidEquipment": [
