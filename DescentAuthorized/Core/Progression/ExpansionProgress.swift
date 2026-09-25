@@ -261,16 +261,19 @@ extension GameProgress {
 struct ExpansionSceneRoute: Equatable, Sendable {
     enum Camera: String, Sendable { case battle, rewardSelection, descentInput }
     let floorNumber: Int
-    let isBoss: Bool
+    enum Room: String, Sendable { case residualA, residualB, administrator }
+    let room: Room
+    var isBoss: Bool { room == .administrator }
     let camera: Camera
 
     init?(_ progress: ExpansionProgress) {
-        guard (5...7).contains(progress.floorNumber), progress.stage != .complete else { return nil }
+        guard (1...7).contains(progress.floorNumber), progress.stage != .complete else { return nil }
         floorNumber = progress.floorNumber
-        isBoss = progress.showsBoss
+        room = progress.showsBoss ? .administrator
+            : (progress.isLowerFloor && progress.residualIndex == 1 ? .residualB : .residualA)
         switch progress.stage {
         case .sealedDoor, .descent: camera = .descentInput
-        case .reward: camera = .rewardSelection
+        case .reward, .finalRecord: camera = .rewardSelection
         default: camera = .battle
         }
     }
