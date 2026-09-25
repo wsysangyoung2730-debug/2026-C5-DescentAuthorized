@@ -1,0 +1,74 @@
+[
+  {
+    "floor": 1,
+    "room": "floor01_final_authorization_administrator",
+    "quality": "high",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 3
+  },
+  {
+    "floor": 1,
+    "room": "floor01_final_authorization_administrator",
+    "quality": "medium",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 3
+  },
+  {
+    "floor": 1,
+    "room": "floor01_final_authorization_administrator",
+    "quality": "low",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 3
+  },
+  {
+    "floor": 1,
+    "room": "floor01_identity_comparison_residual",
+    "quality": "high",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 1,
+    "room": "floor01_identity_comparison_residual",
+    "quality": "medium",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 1,
+    "room": "floor01_identity_comparison_residual",
+    "quality": "low",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 1,
+    "room": "floor01_exit_review_residual",
+    "quality": "high",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 1,
+    "room": "floor01_exit_review_residual",
+    "quality": "medium",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 1,
+    "room": "floor01_exit_review_residual",
+    "quality": "low",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  }
+]
