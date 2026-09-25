@@ -25,12 +25,25 @@ final class ExpansionSceneRouteTests: XCTestCase {
         XCTAssertNil(ExpansionSceneRoute(.init(floorNumber: 5, stage: .complete)))
     }
 
-    func testLowerFloorsNeverRequestAnUpperFloorRealityRoom() {
+    func testLowerFloorRoomIdentitySurvivesSaveAndBattleResume() throws {
         for floor in 1...4 {
-            for stage in ExpansionStage.allCases {
-                XCTAssertNil(ExpansionSceneRoute(.init(floorNumber: floor, stage: stage)))
+            for index in 0...1 {
+                let progress = ExpansionProgress(floorNumber: floor, stage: .residualBattle, residualIndex: index)
+                var restored = try JSONDecoder().decode(ExpansionProgress.self, from: JSONEncoder().encode(progress))
+                restored.stage = restored.resumableStage
+                XCTAssertEqual(ExpansionSceneRoute(restored), ExpansionSceneRoute(progress))
+                XCTAssertEqual(ExpansionSceneRoute(restored)?.room, index == 0 ? .residualA : .residualB)
+                let boss = ExpansionProgress(floorNumber: floor, stage: .descent, descentStage: 2, residualIndex: index)
+                XCTAssertEqual(ExpansionSceneRoute(boss)?.room, .administrator)
+                XCTAssertEqual(ExpansionSceneRoute(boss)?.camera, .descentInput)
             }
         }
+    }
+
+    func testRecordRewardStaysInResidualRoomAndFinalRecordUsesAdministrator() {
+        XCTAssertEqual(ExpansionSceneRoute(.init(floorNumber: 3, stage: .recordReward))?.room, .residualA)
+        XCTAssertEqual(ExpansionSceneRoute(.init(floorNumber: 1, stage: .finalRecord, residualIndex: 1))?.room, .administrator)
+        XCTAssertEqual(ExpansionSceneRoute(.init(floorNumber: 1, stage: .finalRecord))?.camera, .rewardSelection)
     }
 
     func testRestoredBattlesKeepTheirRoomAndPartialDescentKeepsInputCamera() {
