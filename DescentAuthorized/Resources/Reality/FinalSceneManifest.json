@@ -285,5 +285,75 @@
       "magicInputBoard": "FINAL_F03B_MagicInputBoard"
     },
     "targetHeight": 2.8
+  },
+  {
+    "floor": 2,
+    "role": "administrator",
+    "name": "SealMaintenanceAdministrator",
+    "asset": "seal_maintenance_administrator",
+    "scene": "DA_F02_SealHeartAdministrator",
+    "prefix": "F02C",
+    "resource": "floor02_seal_maintenance_administrator",
+    "directory": "Reality/Scenes/Floor02/SealMaintenanceAdministrator",
+    "cameras": {
+      "battle": "F02C_MainCamera",
+      "main": "F02C_MainCamera",
+      "tutorial": "F02C_MainCamera",
+      "descentInput": "CAM_F02_DescentDoor",
+      "rewardSelection": "CAM_F02_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F02C_EnemySpawn",
+      "magicInputBoard": "FINAL_F02C_MagicInputBoard",
+      "rewardStand": "FINAL_F02C_RewardStand",
+      "rewardScrollLeft": "FINAL_F02C_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F02C_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F02C_RewardSlot_Right",
+      "descentStele": "FINAL_F02C_DescentStele",
+      "descentPedestal": "FINAL_F02C_DescentPedestal"
+    },
+    "targetHeight": 4.2
+  },
+  {
+    "floor": 2,
+    "role": "residualA",
+    "name": "OverloadResidual",
+    "asset": "overload_residual",
+    "scene": "DA_F02A_PressureDistribution",
+    "prefix": "F02A",
+    "resource": "floor02_overload_residual",
+    "directory": "Reality/Scenes/Floor02/OverloadResidual",
+    "cameras": {
+      "battle": "F02A_MainCamera",
+      "main": "F02A_MainCamera",
+      "tutorial": "F02A_MainCamera",
+      "descentInput": "CAM_F02A_MiddleDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F02A_EnemySpawn",
+      "magicInputBoard": "FINAL_F02A_MagicInputBoard"
+    },
+    "targetHeight": 2.8
+  },
+  {
+    "floor": 2,
+    "role": "residualB",
+    "name": "BackflowBlockerResidual",
+    "asset": "backflow_blocker_residual",
+    "scene": "DA_F02B_CoolingBackflow",
+    "prefix": "F02B",
+    "resource": "floor02_backflow_blocker_residual",
+    "directory": "Reality/Scenes/Floor02/BackflowBlockerResidual",
+    "cameras": {
+      "battle": "F02B_MainCamera",
+      "main": "F02B_MainCamera",
+      "tutorial": "F02B_MainCamera",
+      "descentInput": "CAM_F02B_MiddleDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F02B_EnemySpawn",
+      "magicInputBoard": "FINAL_F02B_MagicInputBoard"
+    },
+    "targetHeight": 2.8
   }
 ]
