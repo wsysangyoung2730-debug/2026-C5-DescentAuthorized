@@ -23,9 +23,12 @@
       "rewardScrollCenter": "FINAL_F07B_RewardSlot_Center",
       "rewardScrollRight": "FINAL_F07B_RewardSlot_Right",
       "descentStele": "FINAL_F07B_DescentStele",
-      "descentPedestal": "FINAL_F07B_DescentPedestal"
+      "descentPedestal": "FINAL_F07B_DescentPedestal",
+      "descentDoor": "F07B_DescentDoor"
     },
-    "targetHeight": 4.2
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F07C",
+    "doorTravel": 0.23650000000000002
   },
   {
     "floor": 7,
@@ -72,9 +75,12 @@
       "rewardScrollCenter": "FINAL_F06B_RewardSlot_Center",
       "rewardScrollRight": "FINAL_F06B_RewardSlot_Right",
       "descentStele": "FINAL_F06B_DescentStele",
-      "descentPedestal": "FINAL_F06B_DescentPedestal"
+      "descentPedestal": "FINAL_F06B_DescentPedestal",
+      "descentDoor": "F06B_DescentDoor"
     },
-    "targetHeight": 4.2
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F06C",
+    "doorTravel": 0.24750000000000003
   },
   {
     "floor": 6,
@@ -121,9 +127,12 @@
       "rewardScrollCenter": "FINAL_F05B_RewardSlot_Center",
       "rewardScrollRight": "FINAL_F05B_RewardSlot_Right",
       "descentStele": "FINAL_F05B_DescentStele",
-      "descentPedestal": "FINAL_F05B_DescentPedestal"
+      "descentPedestal": "FINAL_F05B_DescentPedestal",
+      "descentDoor": "F05B_DecorativeClosedDoor"
     },
-    "targetHeight": 4.2
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F05C",
+    "doorTravel": 0.24750000000000003
   },
   {
     "floor": 5,
@@ -170,9 +179,12 @@
       "rewardScrollCenter": "FINAL_F04C_RewardSlot_Center",
       "rewardScrollRight": "FINAL_F04C_RewardSlot_Right",
       "descentStele": "FINAL_F04C_DescentStele",
-      "descentPedestal": "FINAL_F04C_DescentPedestal"
+      "descentPedestal": "FINAL_F04C_DescentPedestal",
+      "descentDoor": "F04C_P16_01"
     },
-    "targetHeight": 4.2
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F04C",
+    "doorTravel": 0.275
   },
   {
     "floor": 4,
@@ -240,9 +252,12 @@
       "rewardScrollCenter": "FINAL_F03C_RewardSlot_Center",
       "rewardScrollRight": "FINAL_F03C_RewardSlot_Right",
       "descentStele": "FINAL_F03C_DescentStele",
-      "descentPedestal": "FINAL_F03C_DescentPedestal"
+      "descentPedestal": "FINAL_F03C_DescentPedestal",
+      "descentDoor": "F03C_DescentGate_To_F02"
     },
-    "targetHeight": 4.2
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F03C",
+    "doorTravel": 0.28600000000000003
   },
   {
     "floor": 3,
@@ -310,9 +325,12 @@
       "rewardScrollCenter": "FINAL_F02C_RewardSlot_Center",
       "rewardScrollRight": "FINAL_F02C_RewardSlot_Right",
       "descentStele": "FINAL_F02C_DescentStele",
-      "descentPedestal": "FINAL_F02C_DescentPedestal"
+      "descentPedestal": "FINAL_F02C_DescentPedestal",
+      "descentDoor": "F02C_DescentGate_To_F01"
     },
-    "targetHeight": 4.2
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F02C",
+    "doorTravel": 0.36850000000000005
   },
   {
     "floor": 2,
@@ -380,9 +398,12 @@
       "rewardScrollCenter": "FINAL_F01C_RewardSlot_Center",
       "rewardScrollRight": "FINAL_F01C_RewardSlot_Right",
       "descentStele": "FINAL_F01C_DescentStele",
-      "descentPedestal": "FINAL_F01C_DescentPedestal"
+      "descentPedestal": "FINAL_F01C_DescentPedestal",
+      "descentDoor": "F01C_FinalDescentGate"
     },
-    "targetHeight": 4.2
+    "targetHeight": 4.2,
+    "doorAnimationPrefix": "FINAL_F01C",
+    "doorTravel": 0.28380000000000005
   },
   {
     "floor": 1,
