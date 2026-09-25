@@ -1,0 +1,23 @@
+[
+  {
+    "floor": 7,
+    "role": "residualA",
+    "name": "CoordinateResidue",
+    "asset": "coordinate_residue",
+    "scene": "DA_F07A_CoordinateResidue",
+    "prefix": "F07A",
+    "resource": "floor07_coordinate_residue",
+    "directory": "Reality/Scenes/Floor07/CoordinateResidue",
+    "cameras": {
+      "battle": "F07A_iPadCamera",
+      "main": "F07A_iPadCamera",
+      "tutorial": "F07A_iPadCamera",
+      "descentInput": "CAM_F07A_BossAccessDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F07A_EnemySpawn",
+      "magicInputBoard": "FINAL_F07A_MagicInputBoard"
+    },
+    "targetHeight": 2.8
+  }
+]

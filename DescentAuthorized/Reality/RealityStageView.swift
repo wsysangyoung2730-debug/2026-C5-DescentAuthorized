@@ -19,6 +19,10 @@ enum LoadingScreenContext: Equatable {
         case .floor07CoordinateResidue, .floor07CoordinateAdministrator: self = .expansion(7)
         case .floor06CausalityResidue, .floor06CausalityAdministrator: self = .expansion(6)
         case .floor05MemoryOmissionResidue, .floor05OriginalMemoryAdministrator: self = .expansion(5)
+        case .floor04SignatureMimicResidual, .floor04RejectionExecutionResidual, .floor04ResponsibilityAuditAdministrator: self = .expansion(4)
+        case .floor03ConsentCustodianResidual, .floor03QuarantineEnforcerResidual, .floor03VoluntaryQuarantineAdministrator: self = .expansion(3)
+        case .floor02OverloadResidual, .floor02BackflowBlockerResidual, .floor02SealMaintenanceAdministrator: self = .expansion(2)
+        case .floor01IdentityComparisonResidual, .floor01ExitReviewResidual, .floor01FinalAuthorizationAdministrator: self = .expansion(1)
         }
     }
 
