@@ -837,14 +837,37 @@ final class RealityCombatVFXRenderer {
 /// Mesh skinning is removed from runtime assets; editable source rigs are retained.
 @MainActor
 final class RealityActorMotionPlayer {
-    private struct Manifest: Decodable {
-        struct Clip: Decodable { let duration: Double }
-        let clips: [String: Clip]
+    // #135's conservative rhythm, with #139's impact timing and recoil envelope.
+    // Shared by every actor; later authored skeletal clips do not set runtime timing.
+    private enum MotionProfile {
+        static let idlePeriod = 4.0
+        static let idleYaw: Float = 0.018
+
+        static func duration(for name: String) -> Double {
+            switch name {
+            case "idle", "idleVariant": idlePeriod
+            case "appear", "attack": 1.0
+            case "heavyAttack": 1.3
+            case "telegraph": 1.2
+            case "special": 2.0
+            case "hit": 0.8
+            case "death": CombatPresentationTimeline.deathPoseDuration
+            default: 1.0
+            }
+        }
+
+        static func attackEnvelope(time: Double, strong: Bool) -> Float {
+            let impact = CombatPresentationTimeline.enemyImpactDelay(strong: strong)
+            let duration = self.duration(for: strong ? "heavyAttack" : "attack")
+            let phase = time <= impact
+                ? 0.5 * time / impact
+                : 0.5 + 0.5 * (time - impact) / (duration - impact)
+            return Float(pow(sin(.pi * min(1, max(0, phase))), 2))
+        }
     }
     private weak var visualRoot: Entity?
     private var baseTransform = Transform.identity
     private var modelHeight: Float = 3
-    private var manifest: Manifest?
     private var motionTask: Task<Void, Never>?
     private var generation = 0
     private var terminal = false
@@ -855,10 +878,6 @@ final class RealityActorMotionPlayer {
 
     func install(root: Entity, descriptor: RealityActorDescriptor, bundle: Bundle) throws {
         reset()
-        if let url = bundle.url(forResource: "motion", withExtension: "json",
-                                subdirectory: descriptor.resourceSubdirectory) {
-            manifest = try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: url))
-        }
         visualRoot = root
         baseTransform = root.transform
         modelHeight = max(root.visualBounds(relativeTo: root).extents.z * abs(baseTransform.scale.z), 0.01)
@@ -925,16 +944,16 @@ final class RealityActorMotionPlayer {
         if reduced && name != "death" { return }
         let token = generation
         motionTask = Task { @MainActor [weak self] in
-            var previous = Date.timeIntervalSinceReferenceDate
+            var previous = ProcessInfo.processInfo.systemUptime
             while !Task.isCancelled {
                 do { try await Task.sleep(for: .milliseconds(33)) } catch { return }
-                let now = Date.timeIntervalSinceReferenceDate
+                let now = ProcessInfo.processInfo.systemUptime
                 let delta = min(max(now - previous, 0), 0.1)
                 previous = now
                 guard let self, self.generation == token, let root = self.visualRoot else { return }
                 if self.suspended { continue }
                 self.elapsed += delta
-                let duration = self.manifest?.clips[name]?.duration ?? 1.0
+                let duration = MotionProfile.duration(for: name)
                 if name == "death" {
                     let pose = self.reduced ? 0 : duration
                     let fade = self.reduced ? 0.15 : CombatPresentationTimeline.dissolveDuration
@@ -945,15 +964,33 @@ final class RealityActorMotionPlayer {
                 }
                 var transform = self.baseTransform
                 if name == "idle" || name == "idleVariant" {
-                    // Less than a quarter degree of yaw. No vertical lift or scaling.
-                    let wave = Float(sin(self.elapsed * 2 * .pi / 4.5))
-                    transform.rotation *= simd_quatf(angle: 0.004 * wave, axis: [0, 0, 1])
+                    // #135 used a four-second breathing cycle and 0.018 radian sway.
+                    // Apply that amplitude as grounded yaw, without deforming equipment.
+                    let wave = Float(sin(self.elapsed * 2 * .pi / MotionProfile.idlePeriod))
+                    transform.rotation *= simd_quatf(angle: MotionProfile.idleYaw * wave, axis: [0, 0, 1])
                 } else {
                     if self.elapsed >= duration { self.play("idle"); return }
-                    let wave = Float(pow(sin(.pi * self.elapsed / duration), 2))
-                    // At most 1% of model height; translations preserve all proportions.
-                    let distance: Float = name == "hit" ? 0.006 : name == "heavyAttack" ? -0.01 : -0.007
-                    if !self.reduced { transform.translation.y += self.modelHeight * distance * wave }
+                    let progress = min(1, self.elapsed / duration)
+                    if !self.reduced {
+                        switch name {
+                        case "attack", "heavyAttack":
+                            // Keep #135's small whole-body gesture; peak with #139's impact.
+                            let strong = name == "heavyAttack"
+                            let wave = MotionProfile.attackEnvelope(time: self.elapsed, strong: strong)
+                            transform.translation.y -= self.modelHeight * (strong ? 0.02 : 0.015) * wave
+                            transform.rotation *= simd_quatf(angle: 0.045 * wave, axis: [0, 0, 1])
+                        case "hit":
+                            // #139: a quick recoil followed by a damped 0.8-second recovery.
+                            // Convert the old spine/head bend into rigid recoil, so long
+                            // weapons and back ornaments cannot stretch away from the body.
+                            let recoil = Float(sin(.pi * progress) * exp(-2 * progress))
+                            transform.translation.y += self.modelHeight * 0.06 * recoil
+                            transform.rotation *= simd_quatf(angle: -0.10 * recoil, axis: [0, 0, 1])
+                        default:
+                            let wave = Float(pow(sin(.pi * progress), 2))
+                            transform.rotation *= simd_quatf(angle: MotionProfile.idleYaw * wave, axis: [0, 0, 1])
+                        }
+                    }
                 }
                 root.transform = transform
             }
@@ -971,7 +1008,6 @@ final class RealityActorMotionPlayer {
         visualRoot?.transform = baseTransform
         visualRoot?.components.set(OpacityComponent(opacity: 1))
         visualRoot = nil
-        manifest = nil
         terminal = false; reduced = false; suspended = false
         currentMotion = "idle"; elapsed = 0
     }
