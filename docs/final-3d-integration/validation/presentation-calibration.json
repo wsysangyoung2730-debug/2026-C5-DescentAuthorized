@@ -87,10 +87,10 @@
   {
     "room": "floor01_final_authorization_administrator",
     "pitchDegrees": {
-      "F01C_MainCamera": -5
+      "F01C_MainCamera": -11
     },
     "fovScale": {
-      "F01C_MainCamera": 0.88
+      "F01C_MainCamera": 0.65
     }
   },
   {

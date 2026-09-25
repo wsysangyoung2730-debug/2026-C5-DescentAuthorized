@@ -445,10 +445,10 @@
     "doorAnimationPrefix": "FINAL_F01C",
     "doorTravel": 0.28380000000000005,
     "cameraPitchDegrees": {
-      "F01C_MainCamera": -5
+      "F01C_MainCamera": -11
     },
     "cameraFOVScale": {
-      "F01C_MainCamera": 0.88
+      "F01C_MainCamera": 0.65
     }
   },
   {

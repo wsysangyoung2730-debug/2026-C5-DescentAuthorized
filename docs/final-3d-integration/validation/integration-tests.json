@@ -1,0 +1,8 @@
+{
+  "tests": 210,
+  "failures": 0,
+  "debugSimulatorBuild": "succeeded",
+  "sourceLog": "integration-tests.log",
+  "scope": "Core rules, lower-floor approvals 0/1/2/3 and saved-state recovery; runtime checks separately recorded",
+  "physicalDeviceTested": false
+}

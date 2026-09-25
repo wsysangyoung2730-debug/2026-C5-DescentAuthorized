@@ -287,6 +287,31 @@ final class LowerFloorTests: XCTestCase {
         XCTAssertEqual(controller.progress.playerHP, 100)
     }
 
+    func testEveryLowerApprovalCountSurvivesReloadWithoutPrematureDescent() throws {
+        let checkpoints: [CheckpointID] = [.floor4Descent, .floor3Descent, .floor2Descent, .floor1Descent]
+        for checkpoint in checkpoints {
+            for approved in 0...3 {
+                var controller = try lowerController()
+                _ = try controller.travel(to: checkpoint)
+                let floor = try XCTUnwrap(controller.progress.expansion).floorNumber
+                for stage in 1..<(approved + 1) { try controller.approveExpansionStage(stage) }
+                controller = try restored(controller)
+                let progress = try XCTUnwrap(controller.progress.expansion)
+                XCTAssertEqual(progress.descentStage, approved)
+                XCTAssertEqual(ExpansionSceneRoute(progress)?.room, .administrator)
+                XCTAssertEqual(ExpansionSceneRoute(progress)?.camera, .descentInput)
+                if approved < 3 {
+                    XCTAssertThrowsError(try controller.advanceExpansion())
+                    XCTAssertEqual(controller.progress.expansion?.floorNumber, floor)
+                } else {
+                    _ = try controller.advanceExpansion()
+                    if floor == 1 { XCTAssertTrue(controller.progress.expansion?.isComplete == true) }
+                    else { XCTAssertEqual(controller.progress.expansion?.floorNumber, floor - 1) }
+                }
+            }
+        }
+    }
+
     private func learnReward(_ controller: inout GameProgressionController) throws {
         let candidates = controller.progress.currentRewardCandidates
         XCTAssertEqual(candidates.count, 3)

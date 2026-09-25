@@ -415,6 +415,12 @@ struct Floor9MotionPreview: View {
                 controller.setDescentPresentation(camera == .descentInput ? .ready : .inactive,
                                                   reducedMotion: reducedMotion)
                 if camera == .rewardSelection {
+                    if let contract = FinalSceneContract.contract(for: sceneID) {
+                        let progress = ExpansionProgress(floorNumber: contract.floor, stage: .reward)
+                        let candidates = progress.rewardSite.map { RewardCatalog.candidates(for: $0, learned: []) }
+                            ?? RewardCatalog.candidates(forFloorNumber: contract.floor)
+                        controller.configureFinalRewardCandidates(candidates)
+                    }
                     controller.setRewardPresentation(.appearing, reducedMotion: reducedMotion)
                     if await controller.waitForRewardAppearance(), !Task.isCancelled {
                         controller.setRewardPresentation(.choosing, reducedMotion: reducedMotion)

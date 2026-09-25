@@ -1,0 +1,344 @@
+[
+  {
+    "actorPresent": true,
+    "camera": "F02C_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 47.51985549926758,
+    "jointCount": 20,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor02_seal_maintenance_administrator",
+    "wallSecondsUntilReport": 10.26
+  },
+  {
+    "actorPresent": true,
+    "camera": "F02B_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 53.70162582397461,
+    "jointCount": 20,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor02_backflow_blocker_residual",
+    "wallSecondsUntilReport": 9.24
+  },
+  {
+    "actorPresent": true,
+    "camera": "F04A_iPad_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 62.608245849609375,
+    "jointCount": 19,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor04_signature_mimic_residual",
+    "wallSecondsUntilReport": 8.26
+  },
+  {
+    "actorPresent": true,
+    "camera": "F06A_iPadCamera",
+    "environmentReady": true,
+    "fieldOfView": 46.795528411865234,
+    "jointCount": 18,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor06_causality_residue",
+    "wallSecondsUntilReport": 8.26
+  },
+  {
+    "actorPresent": true,
+    "camera": "F01C_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 53.70162582397461,
+    "jointCount": 19,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor01_final_authorization_administrator",
+    "wallSecondsUntilReport": 12.26
+  },
+  {
+    "actorPresent": true,
+    "camera": "F07A_iPadCamera",
+    "environmentReady": true,
+    "fieldOfView": 46.795528411865234,
+    "jointCount": 18,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor07_coordinate_residue",
+    "wallSecondsUntilReport": 8.19
+  },
+  {
+    "actorPresent": true,
+    "camera": "F05A_iPad_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 52.12932586669922,
+    "jointCount": 18,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor05_memory_omission_residue",
+    "wallSecondsUntilReport": 8.27
+  },
+  {
+    "actorPresent": true,
+    "camera": "F05_iPad_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 52.12932586669922,
+    "jointCount": 19,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor05_original_memory_administrator",
+    "wallSecondsUntilReport": 9.28
+  },
+  {
+    "actorPresent": true,
+    "camera": "F02A_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 53.70162582397461,
+    "jointCount": 19,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor02_overload_residual",
+    "wallSecondsUntilReport": 9.26
+  },
+  {
+    "actorPresent": true,
+    "camera": "F03C_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 49.426353454589844,
+    "jointCount": 56,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor03_voluntary_quarantine_administrator",
+    "wallSecondsUntilReport": 10.28
+  },
+  {
+    "actorPresent": true,
+    "camera": "F01A_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 51.48141860961914,
+    "jointCount": 19,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor01_identity_comparison_residual",
+    "wallSecondsUntilReport": 9.26
+  },
+  {
+    "actorPresent": true,
+    "camera": "F06_iPad_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 46.795528411865234,
+    "jointCount": 19,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor06_causality_administrator",
+    "wallSecondsUntilReport": 8.3
+  },
+  {
+    "actorPresent": true,
+    "camera": "F03A_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 47.51985549926758,
+    "jointCount": 19,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor03_consent_custodian_residual",
+    "wallSecondsUntilReport": 8.27
+  },
+  {
+    "actorPresent": true,
+    "camera": "F04_iPad_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 61.25999450683594,
+    "jointCount": 20,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor04_responsibility_audit_administrator",
+    "wallSecondsUntilReport": 8.3
+  },
+  {
+    "actorPresent": true,
+    "camera": "F07_iPad_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 46.795528411865234,
+    "jointCount": 20,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor07_coordinate_administrator",
+    "wallSecondsUntilReport": 9.29
+  },
+  {
+    "actorPresent": true,
+    "camera": "F01B_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 54.87945556640625,
+    "jointCount": 19,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor01_exit_review_residual",
+    "wallSecondsUntilReport": 12.28
+  },
+  {
+    "actorPresent": true,
+    "camera": "F04B_iPad_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 62.608245849609375,
+    "jointCount": 19,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor04_rejection_execution_residual",
+    "wallSecondsUntilReport": 8.28
+  },
+  {
+    "actorPresent": true,
+    "camera": "F03B_MainCamera",
+    "environmentReady": true,
+    "fieldOfView": 49.426353454589844,
+    "jointCount": 19,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardReady": true,
+    "scene": "floor03_quarantine_enforcer_residual",
+    "wallSecondsUntilReport": 8.28
+  }
+]

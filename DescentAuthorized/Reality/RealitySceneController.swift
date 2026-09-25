@@ -2506,7 +2506,7 @@ extension RealitySceneController {
     }
 
     func runExpansionDiagnostics() async {
-        guard let id = requestedSceneID, id.isExpansion, let arView else { return }
+        guard let id = requestedSceneID, let arView else { return }
         let preset = requestedCameraPreset
         let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("ExpansionDiagnostics/\(id.rawValue)/\(graphicsQuality.rawValue)-\(preset.rawValue)")
@@ -2566,7 +2566,14 @@ extension RealitySceneController {
             try? await Task.sleep(for: .milliseconds(100))
             await capture("door-open")
         }
+        let rewardModelCount = [RealityEntityRole.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight]
+            .filter { role in
+                guard let holder = registry.entity(for: role) else { return false }
+                return holder.name.hasPrefix("FINAL_Animated_") && !holder.children.isEmpty
+            }.count
+        let expectedRewardCount = requestedFinalRewardTiers?.count ?? 0
         let report: [String: Any] = ["scene": id.rawValue, "quality": graphicsQuality.rawValue,
+            "rewardModelCount": rewardModelCount, "expectedRewardCount": expectedRewardCount,
             "camera": activeCameraName ?? "", "preset": preset.rawValue,
             "lifecycle": lifecycle,
             "fieldOfView": cameraEntity?.camera.fieldOfViewInDegrees ?? 0,
@@ -2574,7 +2581,7 @@ extension RealitySceneController {
             "jointCount": before.count, "jointMotionObserved": before != animated && !animated.isEmpty,
             "environmentReady": arView.environment.lighting.resource != nil,
             "actorPresent": actor != nil,
-            "rewardReady": preset != .rewardSelection || isRewardAppearanceComplete]
+            "rewardReady": preset != .rewardSelection || (isRewardAppearanceComplete && rewardModelCount == expectedRewardCount)]
         do {
             try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
                 .write(to: directory.appendingPathComponent("report.json"))

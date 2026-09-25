@@ -10,7 +10,7 @@ for r in rows:
   offset=camera.GetVerticalApertureOffsetAttr().Get();focal=camera.GetFocalLengthAttr().Get()
   if abs(offset)>1e-6:pitch[name]=math.degrees(math.atan(offset/focal))
  if r['role']=='administrator' and r['floor']in[1,3]:
-  name=r['cameras']['battle'];pitch[name]=-5 if r['floor']==1 else -3;fov[name]=.88 if r['floor']==1 else .95
+  name=r['cameras']['battle'];pitch[name]=-11 if r['floor']==1 else -3;fov[name]=.65 if r['floor']==1 else .95
  r['cameraPitchDegrees']=pitch;r['cameraFOVScale']=fov
  if r['floor']==1:
   for prim in stage.Traverse():
