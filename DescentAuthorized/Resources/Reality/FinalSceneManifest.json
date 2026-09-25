@@ -96,5 +96,54 @@
       "magicInputBoard": "FINAL_F06A_MagicInputBoard"
     },
     "targetHeight": 2.8
+  },
+  {
+    "floor": 5,
+    "role": "administrator",
+    "name": "OriginalMemoryAdministrator",
+    "asset": "original_memory_administrator",
+    "scene": "DA_F05B_OriginalMemoryAdministrator",
+    "prefix": "F05B",
+    "resource": "floor05_original_memory_administrator",
+    "directory": "Reality/Scenes/Floor05/OriginalMemoryAdministrator",
+    "cameras": {
+      "battle": "F05_iPad_MainCamera",
+      "main": "F05_iPad_MainCamera",
+      "tutorial": "F05_iPad_MainCamera",
+      "descentInput": "CAM_F05_DescentDoor",
+      "rewardSelection": "CAM_F05_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F05B_EnemySpawn",
+      "magicInputBoard": "FINAL_F05B_MagicInputBoard",
+      "rewardStand": "FINAL_F05B_RewardStand",
+      "rewardScrollLeft": "FINAL_F05B_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F05B_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F05B_RewardSlot_Right",
+      "descentStele": "FINAL_F05B_DescentStele",
+      "descentPedestal": "FINAL_F05B_DescentPedestal"
+    },
+    "targetHeight": 4.2
+  },
+  {
+    "floor": 5,
+    "role": "residualA",
+    "name": "MemoryOmissionResidue",
+    "asset": "memory_omission_residue",
+    "scene": "DA_F05A_MemoryOmissionResidue",
+    "prefix": "F05A",
+    "resource": "floor05_memory_omission_residue",
+    "directory": "Reality/Scenes/Floor05/MemoryOmissionResidue",
+    "cameras": {
+      "battle": "F05A_iPad_MainCamera",
+      "main": "F05A_iPad_MainCamera",
+      "tutorial": "F05A_iPad_MainCamera",
+      "descentInput": "CAM_F05A_BossAccess"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F05A_EnemySpawn",
+      "magicInputBoard": "FINAL_F05A_MagicInputBoard"
+    },
+    "targetHeight": 2.8
   }
 ]
