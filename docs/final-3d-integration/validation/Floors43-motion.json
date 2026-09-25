@@ -1,0 +1,38 @@
+[
+  {
+    "actor": "SignatureMimicResidual",
+    "joints": 19,
+    "clips": 9,
+    "profile": "signature-inscription"
+  },
+  {
+    "actor": "RejectionExecutionResidual",
+    "joints": 19,
+    "clips": 9,
+    "profile": "rejection-stamp"
+  },
+  {
+    "actor": "ResponsibilityAuditAdministrator",
+    "joints": 20,
+    "clips": 9,
+    "profile": "audit-seal-verdict"
+  },
+  {
+    "actor": "ConsentCustodianResidual",
+    "joints": 19,
+    "clips": 9,
+    "profile": "consent-book-binding"
+  },
+  {
+    "actor": "QuarantineEnforcerResidual",
+    "joints": 19,
+    "clips": 9,
+    "profile": "quarantine-clamp"
+  },
+  {
+    "actor": "VoluntaryQuarantineAdministrator",
+    "joints": 56,
+    "clips": 9,
+    "profile": "isolation-key-signal"
+  }
+]

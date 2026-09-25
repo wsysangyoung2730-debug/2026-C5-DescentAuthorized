@@ -68,7 +68,7 @@ def equipment_regions(row, points, width, head):
         sign,threshold=staffs[name]
         regions.append(('equipment_staff',(sign*x>threshold)&(y<.28)&(z<head-.08),'root','L' if sign>0 else 'R'))
     if name in ['RejectionExecutionResidual','BackflowBlockerResidual','ExitReviewResidual']:
-        threshold={'RejectionExecutionResidual':.66,'BackflowBlockerResidual':.60,'ExitReviewResidual':.46}[name]
+        threshold={'RejectionExecutionResidual':.28,'BackflowBlockerResidual':.30,'ExitReviewResidual':.25}[name]
         regions.append(('equipment_shield',(x>threshold)&(y<.14)&(z>.30)&(z<2.35),'hand_L',None))
     if name in ['ConsentCustodianResidual','IdentityComparisonResidual','SignatureMimicResidual']:
         regions.append(('equipment_book',(abs(x)<.25)&(y<-.18)&(z>1.76)&(z<2.24),'chest',None))
@@ -212,6 +212,7 @@ def animate(scene,rig,row,preserved):
             elif clip=='death':
                 q=smooth((seconds-.12)/1.45);lag=smooth((seconds-.3)/1.45)
                 if row['boss']:q*=.45;lag*=.60
+                if any(n in row['name'] for n in ['Custodian','Mimic','Comparison']):q*=.60;lag*=.45
                 if row['name']=='MemoryOmissionResidue':q*=.7;lag*=.5
                 turn('spine',(.23*q,0,.055*q));turn('chest',(.22*q,0,.045*q))
                 turn('head',(.23*lag,0,.10*lag));turn('upper_arm_L',(.12*lag,0,.08*lag))
@@ -271,7 +272,7 @@ for row in configs:
             if mod.type=='ARMATURE' and mod.object==temp:mesh.modifiers.remove(mod)
         bpy.data.objects.remove(temp,do_unlink=True);rig.name='ACTOR_'+row['name'];mesh.parent=rig
         x,y,z=points.T
-        regions=[('equipment_back',(abs(x)>.43)&(y>0)&(z>1.12),'chest',None)];preserved=True
+        regions=[('equipment_back',(abs(x)>.43)&(y>-.10)&(z>1.12),'chest',None)];preserved=True
     else:rig,regions,preserved=create_rig(scene,mesh,row)
     equipment=add_equipment(scene,mesh,rig,regions,preserved)
     ranges=animate(scene,rig,row,preserved)
