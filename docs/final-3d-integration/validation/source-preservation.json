@@ -1,0 +1,66 @@
+{
+  "blenderSHA256": "279d6af643eca9fd318533a01318e897c441cc3de0f66bc3c4e7d1558e5a7250",
+  "blenderUnchanged": true,
+  "suppliedActors": [
+    {
+      "name": "2층 관리자.glb",
+      "unchanged": true,
+      "sha256": "9b9f9469351242970e6469e21995f88681e7e5e70e8205a48f513e6cda8c03c5"
+    },
+    {
+      "name": "2층-2 역류 차단 잔류체.glb",
+      "unchanged": true,
+      "sha256": "361ef1b06af4e372e89d973b3003d35ea9d462ccfae38a43b14f6b922839caa2"
+    },
+    {
+      "name": "2층-1 과부하 잔류체.glb",
+      "unchanged": true,
+      "sha256": "7eebfe7eeba49baf7bc8585f6ed9991aaf0e38df6d6863006ecb54f346eb2c5b"
+    },
+    {
+      "name": "3층 관리자.glb",
+      "unchanged": true,
+      "sha256": "35f4e265ed99bc924270bf22bd11f3df29f677b811b090aa1258ca20e0ce3d1b"
+    },
+    {
+      "name": "3층-1 격리 집행 잔류체.glb",
+      "unchanged": true,
+      "sha256": "aa451051a182dbad226684e6af901baf523f8a43a07e23c7c7e08074f7a67710"
+    },
+    {
+      "name": "3층-2 동의 보관 잔류체.glb",
+      "unchanged": true,
+      "sha256": "4a86bf8caa45a9206d04b541985d30804c7d5ec82439e7b20e2372d667ae7421"
+    },
+    {
+      "name": "1층-1 신원 대조 잔류체.glb",
+      "unchanged": true,
+      "sha256": "cf024b25bc29845bae989ae4b396bfaaa787a83b8fa8c61333c8d079b3968491"
+    },
+    {
+      "name": "1층-2 퇴거 심사 잔류체.glb",
+      "unchanged": true,
+      "sha256": "bfd97bb639ca66c673a49fd19ae6734dd2e90659faf164505ea7bc2faed8115e"
+    },
+    {
+      "name": "1층 관리자.glb",
+      "unchanged": true,
+      "sha256": "fa0e4deebbb9806ab120b200d89c9a327d2876e8e9a18337f8b197291fdaec97"
+    },
+    {
+      "name": "4층 관리자.glb",
+      "unchanged": true,
+      "sha256": "0c93fd043f6c0a8c321fe010118d0dff3e5f647577060f6c3455000f06efd474"
+    },
+    {
+      "name": "4층-1 서명 모사 잔류체.glb",
+      "unchanged": true,
+      "sha256": "8e1c5504a59ff627006bdaf9297869dc333404fe64bcb677e8f3f4d3d86558d0"
+    },
+    {
+      "name": "4층-2 반려 집행 잔류체.glb",
+      "unchanged": true,
+      "sha256": "83ca91429df7af7a1b56e410378466b328574e0d3202e676596d8d94cc129ba1"
+    }
+  ]
+}
