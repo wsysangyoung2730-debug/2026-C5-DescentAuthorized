@@ -85,7 +85,8 @@ struct LowerFloorFlowView: View {
                 body: "봉인을 유지하겠다는 서약은 강요된 것이 아니었다.\n기억을 잃더라도, 그 책임을 다음 사람에게 넘기지 않겠다고 내가 서명했다.\n\n이제 출구의 세 승인란만이 남아 있다.",
                 button: "기록을 받아들이고 출구로", action: advance)
         case .descent:
-            LowerFloorDescentView(current: current, sceneController: sceneController)
+            LowerFloorDescentView(current: current, sceneController: sceneController,
+                retryLoadingPresentation: $retryLoadingPresentation)
         case .complete:
             storyPanel(title: "다음 탑 · 제10층", subtitle: "하강 권한 인계 완료",
                 body: "출구 너머는 바깥이 아니었다.\n낯선 탑의 접수실. 익숙한 승인 절차가 기다리고 있었다.\n\n“이전 탑의 유지 기록을 확인했습니다. 인계를 시작합니다.”\n\n이 탑의 여정이 완료되었습니다. 구간 선택에서 기록과 전투를 다시 확인할 수 있습니다.",
@@ -209,8 +210,18 @@ struct LowerFloorFlowView: View {
 private struct LowerFloorDescentView: View {
     @EnvironmentObject private var gameSession: GameSessionStore
     @EnvironmentObject private var appSettings: AppSettings
+    @EnvironmentObject private var gameFeedback: GameFeedbackManager
+    @Environment(\.isGlyphInputSuspended) private var inputSuspended
     let current: ExpansionProgress
     @ObservedObject var sceneController: RealitySceneController
+    @Binding var retryLoadingPresentation: SceneRetryLoadingPresentation?
+    @State private var remainingAttempts = 2
+    @State private var isResolvingFailure = false
+    @State private var isGameOver = false
+    @State private var isRetrying = false
+    @State private var isInputSuppressed = false
+    @State private var inputIdentity = UUID()
+    @State private var failureTask: Task<Void, Never>?
     @State private var approvedThisVisit = false
     @State private var animateFinalApproval = false
     @State private var doorReady = false
@@ -240,25 +251,40 @@ private struct LowerFloorDescentView: View {
                 let definition = definitions[current.descentStage]
                 Text("\(definition.name) · \(definition.requiredStrokes)획 · 승인 \(current.descentStage)/3")
                     .font(.title2.weight(.semibold)).foregroundStyle(DAColor.gold)
-                Text("시범을 확인한 뒤 따라 그리십시오. 실패해도 앞선 승인은 유지됩니다.")
+                Text("시범을 확인한 뒤 따라 그리십시오. 남은 기회 \(remainingAttempts)회 · 앞선 승인은 유지됩니다.")
                     .foregroundStyle(DAColor.secondary)
                 GeometryReader { geometry in
                     GlyphCastingPanel(spell: inputSpell(definition), inputPreference: appSettings.inputPreference,
                         availableMana: 150, availableStrokes: definition.requiredStrokes, erasureZones: [],
                         showsResourceHeader: false, inputFeedbackMode: .practice,
                         gateSealPresentation: .init(stageTitles: ["문양 확인", "승인 대조", "기록 저장"], castTitle: "승인 문양 제출")) { submission in
-                            guard submission.evaluation.succeeded, !approvedThisVisit else { return }
+                            guard !approvedThisVisit, !isResolvingFailure, !isGameOver, !isRetrying else { return }
+                            guard submission.evaluation.succeeded else {
+                                rejectInput()
+                                return
+                            }
+                            guard gameSession.sendChecked(.approveExpansionStage(current.descentStage + 1)) else { return }
                             approvedThisVisit = true
                             animateFinalApproval = current.descentStage == 2
-                            gameSession.send(.approveExpansionStage(current.descentStage + 1))
+                            gameFeedback.trigger(.descentSealStageCompleted(final: current.descentStage == 2),
+                                settings: appSettings.settings)
                         }
                         .frame(width: min(geometry.size.width - 40, max(430, geometry.size.height * 1.15)))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .id(definition.id)
+                        .id("\(definition.id)-\(inputIdentity)")
                 }
             }
         }
-        .background(.black.opacity(0.40))
+        .opacity(isInputSuppressed ? 0 : 1)
+        .allowsHitTesting(!isResolvingFailure && !isGameOver && !isRetrying)
+        .environment(\.isGlyphInputSuspended,
+            inputSuspended || isResolvingFailure || isGameOver || isRetrying)
+        .background(isInputSuppressed ? Color.clear : Color.black.opacity(0.40))
+        .overlay {
+            if isGameOver {
+                DescentSealGameOverOverlay(isRetrying: isRetrying, onRetry: retrySeal)
+            }
+        }
         .task(id: current.descentStage) {
             doorReady = false
             if let sceneID = gameSession.presentation.floorSceneID {
@@ -280,8 +306,79 @@ private struct LowerFloorDescentView: View {
                 sceneController.setDescentPresentation(.ready, reducedMotion: appSettings.reducedMotion)
             }
         }
-        .onDisappear { sceneController.setDescentPresentation(.inactive, reducedMotion: appSettings.reducedMotion) }
+        .onDisappear {
+            failureTask?.cancel()
+            failureTask = nil
+            retryLoadingPresentation = nil
+            sceneController.resetDescentCamera()
+            sceneController.setDescentPresentation(.inactive, reducedMotion: appSettings.reducedMotion)
+        }
         .onChange(of: current.descentStage) { _, _ in approvedThisVisit = false }
+    }
+
+    private func rejectInput() {
+        guard remainingAttempts > 0, !isResolvingFailure, !isGameOver, !isRetrying else { return }
+        remainingAttempts -= 1
+        let exhausted = remainingAttempts == 0
+        isResolvingFailure = true
+        sceneController.setDescentPresentation(.failed, reducedMotion: appSettings.reducedMotion)
+        gameFeedback.trigger(.descentSealRejected(exhausted: exhausted), settings: appSettings.settings)
+        failureTask?.cancel()
+        failureTask = Task { @MainActor in
+            await sceneController.playDescentSealRejectionCamera(reducedMotion: appSettings.reducedMotion)
+            guard !Task.isCancelled else { return }
+            if exhausted {
+                withAnimation(.easeOut(duration: 0.28)) { isInputSuppressed = true }
+                guard await waitForFailureStep(milliseconds: 300) else { return }
+                await sceneController.playDescentSealFailureCamera(reducedMotion: appSettings.reducedMotion)
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeIn(duration: 0.2)) { isGameOver = true }
+            } else {
+                inputIdentity = UUID()
+                sceneController.setDescentPresentation(.ready, reducedMotion: appSettings.reducedMotion)
+            }
+            isResolvingFailure = false
+            failureTask = nil
+        }
+    }
+
+    private func retrySeal() {
+        guard isGameOver, !isRetrying else { return }
+        failureTask?.cancel()
+        isRetrying = true
+        isGameOver = false
+        gameFeedback.playInterface(.confirm, settings: appSettings.settings)
+        let context = LoadingScreenContext.expansion(current.floorNumber)
+        retryLoadingPresentation = SceneRetryLoadingPresentation(
+            context: context, progress: 0.08, tip: LoadingTipCatalog.randomTip(for: context))
+        failureTask = Task { @MainActor in
+            guard await waitForFailureStep(milliseconds: 180) else { return }
+            retryLoadingPresentation?.progress = 0.34
+            sceneController.resetDescentCamera()
+            sceneController.setDescentPresentation(.ready, reducedMotion: appSettings.reducedMotion)
+            remainingAttempts = 2
+            inputIdentity = UUID()
+            approvedThisVisit = false
+            guard await waitForFailureStep(milliseconds: 420) else { return }
+            retryLoadingPresentation?.progress = 0.82
+            guard await waitForFailureStep(milliseconds: 220) else { return }
+            retryLoadingPresentation?.progress = 1
+            guard await waitForFailureStep(milliseconds: 180) else { return }
+            // Retain the saved approval count, just like the 8F retry keeps its stage.
+            isInputSuppressed = false
+            isResolvingFailure = false
+            isRetrying = false
+            retryLoadingPresentation = nil
+            failureTask = nil
+        }
+    }
+
+    private func waitForFailureStep(milliseconds: Int) async -> Bool {
+        do {
+            let duration = appSettings.reducedMotion ? min(milliseconds, 80) : milliseconds
+            try await Task.sleep(for: .milliseconds(duration))
+            return !Task.isCancelled
+        } catch { return false }
     }
 
     /// A presentation adapter only. Door input never grants or casts a combat spell.
