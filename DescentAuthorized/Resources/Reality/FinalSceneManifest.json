@@ -47,5 +47,54 @@
       "magicInputBoard": "FINAL_F07A_MagicInputBoard"
     },
     "targetHeight": 2.8
+  },
+  {
+    "floor": 6,
+    "role": "administrator",
+    "name": "CausalityAdministrator",
+    "asset": "causality_administrator",
+    "scene": "DA_F06B_CausalityAdministrator",
+    "prefix": "F06B",
+    "resource": "floor06_causality_administrator",
+    "directory": "Reality/Scenes/Floor06/CausalityAdministrator",
+    "cameras": {
+      "battle": "F06_iPad_MainCamera",
+      "main": "F06_iPad_MainCamera",
+      "tutorial": "F06_iPad_MainCamera",
+      "descentInput": "CAM_F06_DescentDoor",
+      "rewardSelection": "CAM_F06_RewardSelection"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F06B_EnemySpawn",
+      "magicInputBoard": "FINAL_F06B_MagicInputBoard",
+      "rewardStand": "FINAL_F06B_RewardStand",
+      "rewardScrollLeft": "FINAL_F06B_RewardSlot_Left",
+      "rewardScrollCenter": "FINAL_F06B_RewardSlot_Center",
+      "rewardScrollRight": "FINAL_F06B_RewardSlot_Right",
+      "descentStele": "FINAL_F06B_DescentStele",
+      "descentPedestal": "FINAL_F06B_DescentPedestal"
+    },
+    "targetHeight": 4.2
+  },
+  {
+    "floor": 6,
+    "role": "residualA",
+    "name": "CausalityResidue",
+    "asset": "causality_residue",
+    "scene": "DA_F06A_ResultDelayResidue",
+    "prefix": "F06A",
+    "resource": "floor06_causality_residue",
+    "directory": "Reality/Scenes/Floor06/CausalityResidue",
+    "cameras": {
+      "battle": "F06A_iPadCamera",
+      "main": "F06A_iPadCamera",
+      "tutorial": "F06A_iPadCamera",
+      "descentInput": "CAM_F06A_BossAccessDoor"
+    },
+    "anchors": {
+      "enemySpawn": "FINAL_F06A_EnemySpawn",
+      "magicInputBoard": "FINAL_F06A_MagicInputBoard"
+    },
+    "targetHeight": 2.8
   }
 ]
