@@ -1,0 +1,1302 @@
+{
+  "complete" : true,
+  "device" : "iPad Pro 13 M5 simulator, iOS 26.5; not physical-device GPU timing",
+  "runs" : [
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.8721709251403809,
+        "installCPUSeconds" : 0.0062220096588134766,
+        "readySeconds" : 2.0038599967956543
+      },
+      "footprintBytes" : 194054904,
+      "index" : 0,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor07_coordinate_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.8683069944381714,
+      "updateMedianMS" : 16.666708514094353,
+      "updateP95MS" : 16.68141596019268
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 0.68203997611999512,
+        "installCPUSeconds" : 0.0028650760650634766,
+        "readySeconds" : 0.80932092666625977
+      },
+      "footprintBytes" : 155044600,
+      "index" : 1,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor07_coordinate_residue",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.6646760702133179,
+      "updateMedianMS" : 16.666708514094353,
+      "updateP95MS" : 16.708709299564362
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.4694780111312866,
+        "installCPUSeconds" : 0.0048860311508178711,
+        "readySeconds" : 1.6023489236831665
+      },
+      "footprintBytes" : 167889656,
+      "index" : 2,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor06_causality_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.4699090719223022,
+      "updateMedianMS" : 16.666125506162643,
+      "updateP95MS" : 16.689833253622055
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 0.71032702922821045,
+        "installCPUSeconds" : 0.002611994743347168,
+        "readySeconds" : 0.83924901485443115
+      },
+      "footprintBytes" : 154192632,
+      "index" : 3,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor06_causality_residue",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.6798620223999023,
+      "updateMedianMS" : 16.667665913701057,
+      "updateP95MS" : 16.679957509040833
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.2159249782562256,
+        "installCPUSeconds" : 0.0067900419235229492,
+        "readySeconds" : 2.3489409685134888
+      },
+      "footprintBytes" : 187812624,
+      "index" : 4,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor05_original_memory_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.1425279378890991,
+      "updateMedianMS" : 16.666833311319351,
+      "updateP95MS" : 16.672374680638313
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.2524400949478149,
+        "installCPUSeconds" : 0.0047249794006347656,
+        "readySeconds" : 1.3832540512084961
+      },
+      "footprintBytes" : 173263632,
+      "index" : 5,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor05_memory_omission_residue",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.1885950565338135,
+      "updateMedianMS" : 16.666540876030922,
+      "updateP95MS" : 16.670916229486465
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.5572400093078613,
+        "installCPUSeconds" : 0.0032889842987060547,
+        "readySeconds" : 1.6899200677871704
+      },
+      "footprintBytes" : 189221648,
+      "index" : 6,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor04_responsibility_audit_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.504552960395813,
+      "updateMedianMS" : 16.666874289512634,
+      "updateP95MS" : 16.73400029540062
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 0.78236997127532959,
+        "installCPUSeconds" : 0.0017030239105224609,
+        "readySeconds" : 0.90920889377593994
+      },
+      "footprintBytes" : 179538704,
+      "index" : 7,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor04_signature_mimic_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.7191050052642822,
+      "updateMedianMS" : 16.666458919644356,
+      "updateP95MS" : 16.678959131240845
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 0.89802098274230957,
+        "installCPUSeconds" : 0.0016950368881225586,
+        "readySeconds" : 1.0278040170669556
+      },
+      "footprintBytes" : 178424592,
+      "index" : 8,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor04_rejection_execution_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.8179770708084106,
+      "updateMedianMS" : 16.666041687130928,
+      "updateP95MS" : 16.681833192706108
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.9433659315109253,
+        "installCPUSeconds" : 0.010196089744567871,
+        "readySeconds" : 3.0813539028167725
+      },
+      "footprintBytes" : 190548776,
+      "index" : 9,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor03_voluntary_quarantine_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.9095990657806396,
+      "updateMedianMS" : 16.66666753590107,
+      "updateP95MS" : 16.677292063832283
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 0.84555697441101074,
+        "installCPUSeconds" : 0.0045009851455688477,
+        "readySeconds" : 0.97919297218322754
+      },
+      "footprintBytes" : 179981120,
+      "index" : 10,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor03_consent_custodian_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.7819739580154419,
+      "updateMedianMS" : 16.667500138282776,
+      "updateP95MS" : 16.680499538779259
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.0451380014419556,
+        "installCPUSeconds" : 0.0051590204238891602,
+        "readySeconds" : 1.177603006362915
+      },
+      "footprintBytes" : 182487872,
+      "index" : 11,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor03_quarantine_enforcer_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.9942429065704346,
+      "updateMedianMS" : 16.66591688990593,
+      "updateP95MS" : 16.680208966135979
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 3.6896189451217651,
+        "installCPUSeconds" : 0.010905981063842773,
+        "readySeconds" : 3.8294439315795898
+      },
+      "footprintBytes" : 194792256,
+      "index" : 12,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor02_seal_maintenance_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 4.6231049299240112,
+      "updateMedianMS" : 16.666540876030922,
+      "updateP95MS" : 16.678832471370697
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.8829120397567749,
+        "installCPUSeconds" : 0.0075680017471313477,
+        "readySeconds" : 2.0180650949478149
+      },
+      "footprintBytes" : 237800280,
+      "index" : 13,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor02_overload_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.8260259628295898,
+      "updateMedianMS" : 16.666874289512634,
+      "updateP95MS" : 16.678417101502419
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.2695530652999878,
+        "installCPUSeconds" : 0.0085910558700561523,
+        "readySeconds" : 2.4066610336303711
+      },
+      "footprintBytes" : 248220528,
+      "index" : 14,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor02_backflow_blocker_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.225740909576416,
+      "updateMedianMS" : 16.666917130351067,
+      "updateP95MS" : 16.686208546161652
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 6.2344880104064941,
+        "installCPUSeconds" : 0.015860915184020996,
+        "readySeconds" : 6.3811759948730469
+      },
+      "footprintBytes" : 260918152,
+      "index" : 15,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor01_final_authorization_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 7.183724045753479,
+      "updateMedianMS" : 16.66591688990593,
+      "updateP95MS" : 16.716541722416878
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.40944504737854,
+        "installCPUSeconds" : 0.0090830326080322266,
+        "readySeconds" : 2.5485490560531616
+      },
+      "footprintBytes" : 239242120,
+      "index" : 16,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor01_identity_comparison_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.3472169637680054,
+      "updateMedianMS" : 16.667041927576065,
+      "updateP95MS" : 16.684750095009804
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 5.2337100505828857,
+        "installCPUSeconds" : 0.014523029327392578,
+        "readySeconds" : 5.3765799999237061
+      },
+      "footprintBytes" : 266505120,
+      "index" : 17,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor01_exit_review_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 6.1677449941635132,
+      "updateMedianMS" : 16.666499897837639,
+      "updateP95MS" : 16.710374504327774
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 1,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 5.2002620697021484,
+        "installCPUSeconds" : 0.014280080795288086,
+        "readySeconds" : 5.4607850313186646
+      },
+      "footprintBytes" : 266390432,
+      "index" : 18,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor01_exit_review_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 6.2724000215530396,
+      "updateMedianMS" : 16.66712574660778,
+      "updateP95MS" : 16.68558269739151
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.3791549205780029,
+        "installCPUSeconds" : 0.0087909698486328125,
+        "readySeconds" : 2.5156790018081665
+      },
+      "footprintBytes" : 251005832,
+      "index" : 19,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor01_identity_comparison_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.3047339916229248,
+      "updateMedianMS" : 16.666833311319351,
+      "updateP95MS" : 16.675665974617004
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 6.2667220830917358,
+        "installCPUSeconds" : 0.017982959747314453,
+        "readySeconds" : 6.4130920171737671
+      },
+      "footprintBytes" : 374721440,
+      "index" : 20,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor01_final_authorization_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 7.2156959772109985,
+      "updateMedianMS" : 16.66695810854435,
+      "updateP95MS" : 16.715250909328461
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.2795120477676392,
+        "installCPUSeconds" : 0.0088020563125610352,
+        "readySeconds" : 2.4162119626998901
+      },
+      "footprintBytes" : 337709984,
+      "index" : 21,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor02_backflow_blocker_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.2323340177536011,
+      "updateMedianMS" : 16.667624935507774,
+      "updateP95MS" : 16.683291643857956
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.8763660192489624,
+        "installCPUSeconds" : 0.0082340240478515625,
+        "readySeconds" : 2.0126090049743652
+      },
+      "footprintBytes" : 331303816,
+      "index" : 22,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor02_overload_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.7975159883499146,
+      "updateMedianMS" : 16.666416078805923,
+      "updateP95MS" : 16.695957630872726
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 3.7295399904251099,
+        "installCPUSeconds" : 0.010739922523498535,
+        "readySeconds" : 3.869737982749939
+      },
+      "footprintBytes" : 327289760,
+      "index" : 23,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor02_seal_maintenance_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 4.6508998870849609,
+      "updateMedianMS" : 16.666082665324211,
+      "updateP95MS" : 16.684167087078094
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.0212889909744263,
+        "installCPUSeconds" : 0.0047810077667236328,
+        "readySeconds" : 1.152588963508606
+      },
+      "footprintBytes" : 316722080,
+      "index" : 24,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor03_quarantine_enforcer_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.9692530632019043,
+      "updateMedianMS" : 16.665875911712646,
+      "updateP95MS" : 16.67499914765358
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 0.83135402202606201,
+        "installCPUSeconds" : 0.0041670799255371094,
+        "readySeconds" : 0.96264398097991943
+      },
+      "footprintBytes" : 315591584,
+      "index" : 25,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor03_consent_custodian_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.7795249223709106,
+      "updateMedianMS" : 16.666334122419357,
+      "updateP95MS" : 16.689000651240349
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.9455239772796631,
+        "installCPUSeconds" : 0.009904026985168457,
+        "readySeconds" : 3.083264946937561
+      },
+      "footprintBytes" : 329452448,
+      "index" : 26,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor03_voluntary_quarantine_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.9269620180130005,
+      "updateMedianMS" : 16.666749492287636,
+      "updateP95MS" : 16.680458560585976
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 0.86091101169586182,
+        "installCPUSeconds" : 0.0016499757766723633,
+        "readySeconds" : 0.99036490917205811
+      },
+      "footprintBytes" : 321686432,
+      "index" : 27,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor04_rejection_execution_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.7950100898742676,
+      "updateMedianMS" : 16.667833551764488,
+      "updateP95MS" : 16.684709116816521
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 0.85012304782867432,
+        "installCPUSeconds" : 0.0016150474548339844,
+        "readySeconds" : 0.97745299339294434
+      },
+      "footprintBytes" : 322063264,
+      "index" : 28,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor04_signature_mimic_residual",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.7913589477539062,
+      "updateMedianMS" : 16.665667295455933,
+      "updateP95MS" : 16.70495793223381
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.526481032371521,
+        "installCPUSeconds" : 0.0035300254821777344,
+        "readySeconds" : 1.6597880125045776
+      },
+      "footprintBytes" : 335596448,
+      "index" : 29,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor04_responsibility_audit_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.4975839853286743,
+      "updateMedianMS" : 16.66741631925106,
+      "updateP95MS" : 16.71895757317543
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.261868953704834,
+        "installCPUSeconds" : 0.0047889947891235352,
+        "readySeconds" : 1.3929409980773926
+      },
+      "footprintBytes" : 321784736,
+      "index" : 30,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor05_memory_omission_residue",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.2023550271987915,
+      "updateMedianMS" : 16.66695810854435,
+      "updateP95MS" : 16.676833853125572
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.1904369592666626,
+        "installCPUSeconds" : 0.0066739320755004883,
+        "readySeconds" : 2.3217699527740479
+      },
+      "footprintBytes" : 332221344,
+      "index" : 31,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor05_original_memory_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.1282100677490234,
+      "updateMedianMS" : 16.667500138282776,
+      "updateP95MS" : 16.689499840140343
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 0.72130906581878662,
+        "installCPUSeconds" : 0.003049015998840332,
+        "readySeconds" : 0.85182201862335205
+      },
+      "footprintBytes" : 311298976,
+      "index" : 32,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor06_causality_residue",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.6527799367904663,
+      "updateMedianMS" : 16.665125265717506,
+      "updateP95MS" : 16.707584261894226
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.4516509771347046,
+        "installCPUSeconds" : 0.0044120550155639648,
+        "readySeconds" : 1.5855330228805542
+      },
+      "footprintBytes" : 325028768,
+      "index" : 33,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor06_causality_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.4009820222854614,
+      "updateMedianMS" : 16.667207702994347,
+      "updateP95MS" : 16.710499301552773
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 0.69672894477844238,
+        "installCPUSeconds" : 0.0025949478149414062,
+        "readySeconds" : 0.82905101776123047
+      },
+      "footprintBytes" : 312150944,
+      "index" : 34,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor07_coordinate_residue",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.6778320074081421,
+      "updateMedianMS" : 16.666540876030922,
+      "updateP95MS" : 16.686124727129936
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.8017770051956177,
+        "installCPUSeconds" : 0.0051350593566894531,
+        "readySeconds" : 1.9360319375991821
+      },
+      "footprintBytes" : 331107208,
+      "index" : 35,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor07_coordinate_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.7861230373382568,
+      "updateMedianMS" : 16.666708514094353,
+      "updateP95MS" : 16.677333042025566
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.5452499389648438,
+        "installCPUSeconds" : 0.005001068115234375,
+        "readySeconds" : 1.6767339706420898
+      },
+      "footprintBytes" : 324996000,
+      "index" : 36,
+      "missingRoles" : [
+
+      ],
+      "quality" : "low",
+      "ready" : true,
+      "scene" : "floor07_coordinate_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.5043860673904419,
+      "updateMedianMS" : 16.6656244546175,
+      "updateP95MS" : 16.6785828769207
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.1833879947662354,
+        "installCPUSeconds" : 0.0046429634094238281,
+        "readySeconds" : 1.3145890235900879
+      },
+      "footprintBytes" : 324389792,
+      "index" : 37,
+      "missingRoles" : [
+
+      ],
+      "quality" : "low",
+      "ready" : true,
+      "scene" : "floor06_causality_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.1287050247192383,
+      "updateMedianMS" : 16.667166724801064,
+      "updateP95MS" : 16.708500683307648
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.8709501028060913,
+        "installCPUSeconds" : 0.0067439079284667969,
+        "readySeconds" : 2.0038700103759766
+      },
+      "footprintBytes" : 332188576,
+      "index" : 38,
+      "missingRoles" : [
+
+      ],
+      "quality" : "low",
+      "ready" : true,
+      "scene" : "floor05_original_memory_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.8133569955825806,
+      "updateMedianMS" : 16.667332500219345,
+      "updateP95MS" : 16.680166125297546
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.1489349603652954,
+        "installCPUSeconds" : 0.0033859014511108398,
+        "readySeconds" : 1.2805789709091187
+      },
+      "footprintBytes" : 333925280,
+      "index" : 39,
+      "missingRoles" : [
+
+      ],
+      "quality" : "low",
+      "ready" : true,
+      "scene" : "floor04_responsibility_audit_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.1166501045227051,
+      "updateMedianMS" : 16.66770875453949,
+      "updateP95MS" : 16.680166125297546
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.7848780155181885,
+        "installCPUSeconds" : 0.0095360279083251953,
+        "readySeconds" : 2.930778980255127
+      },
+      "footprintBytes" : 323799968,
+      "index" : 40,
+      "missingRoles" : [
+
+      ],
+      "quality" : "low",
+      "ready" : true,
+      "scene" : "floor03_voluntary_quarantine_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.7564159631729126,
+      "updateMedianMS" : 16.667082905769348,
+      "updateP95MS" : 16.703667119145393
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 3.5190759897232056,
+        "installCPUSeconds" : 0.010264992713928223,
+        "readySeconds" : 3.6571049690246582
+      },
+      "footprintBytes" : 325356424,
+      "index" : 41,
+      "missingRoles" : [
+
+      ],
+      "quality" : "low",
+      "ready" : true,
+      "scene" : "floor02_seal_maintenance_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 4.4626599550247192,
+      "updateMedianMS" : 16.666624695062637,
+      "updateP95MS" : 16.678666695952415
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 5.5847529172897339,
+        "installCPUSeconds" : 0.014925956726074219,
+        "readySeconds" : 5.7257119417190552
+      },
+      "footprintBytes" : 337021856,
+      "index" : 42,
+      "missingRoles" : [
+
+      ],
+      "quality" : "low",
+      "ready" : true,
+      "scene" : "floor01_final_authorization_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 6.5125489234924316,
+      "updateMedianMS" : 16.666291281580925,
+      "updateP95MS" : 16.678541898727417
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.196679949760437,
+        "installCPUSeconds" : 0.0051170587539672852,
+        "readySeconds" : 2.3282479047775269
+      },
+      "footprintBytes" : 322603936,
+      "index" : 43,
+      "missingRoles" : [
+
+      ],
+      "quality" : "high",
+      "ready" : true,
+      "scene" : "floor07_coordinate_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.1510269641876221,
+      "updateMedianMS" : 16.667665913701057,
+      "updateP95MS" : 16.793958842754364
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.9244639873504639,
+        "installCPUSeconds" : 0.0045421123504638672,
+        "readySeconds" : 2.0534909963607788
+      },
+      "footprintBytes" : 322325408,
+      "index" : 44,
+      "missingRoles" : [
+
+      ],
+      "quality" : "high",
+      "ready" : true,
+      "scene" : "floor06_causality_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.8880480527877808,
+      "updateMedianMS" : 16.666540876030922,
+      "updateP95MS" : 16.696792095899582
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.8833470344543457,
+        "installCPUSeconds" : 0.0067260265350341797,
+        "readySeconds" : 3.0164060592651367
+      },
+      "footprintBytes" : 330386336,
+      "index" : 45,
+      "missingRoles" : [
+
+      ],
+      "quality" : "high",
+      "ready" : true,
+      "scene" : "floor05_original_memory_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.8284889459609985,
+      "updateMedianMS" : 16.668958589434624,
+      "updateP95MS" : 16.694499179720879
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.0639489889144897,
+        "installCPUSeconds" : 0.0035459995269775391,
+        "readySeconds" : 2.1934660673141479
+      },
+      "footprintBytes" : 331926432,
+      "index" : 46,
+      "missingRoles" : [
+
+      ],
+      "quality" : "high",
+      "ready" : true,
+      "scene" : "floor04_responsibility_audit_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.0441230535507202,
+      "updateMedianMS" : 16.666749492287636,
+      "updateP95MS" : 16.698166728019714
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 3.2176589965820312,
+        "installCPUSeconds" : 0.010367035865783691,
+        "readySeconds" : 3.3539190292358398
+      },
+      "footprintBytes" : 322620320,
+      "index" : 47,
+      "missingRoles" : [
+
+      ],
+      "quality" : "high",
+      "ready" : true,
+      "scene" : "floor03_voluntary_quarantine_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 4.1725800037384033,
+      "updateMedianMS" : 16.6656244546175,
+      "updateP95MS" : 16.700541600584984
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 4.023750901222229,
+        "installCPUSeconds" : 0.010583043098449707,
+        "readySeconds" : 4.1698579788208008
+      },
+      "footprintBytes" : 317901728,
+      "index" : 48,
+      "missingRoles" : [
+
+      ],
+      "quality" : "high",
+      "ready" : true,
+      "scene" : "floor02_seal_maintenance_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 4.9779340028762817,
+      "updateMedianMS" : 16.666458919644356,
+      "updateP95MS" : 16.677416861057281
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 2,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 6.1366239786148071,
+        "installCPUSeconds" : 0.014789938926696777,
+        "readySeconds" : 6.2753340005874634
+      },
+      "footprintBytes" : 331140000,
+      "index" : 49,
+      "missingRoles" : [
+
+      ],
+      "quality" : "high",
+      "ready" : true,
+      "scene" : "floor01_final_authorization_administrator",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 7.1129800081253052,
+      "updateMedianMS" : 16.66799932718277,
+      "updateP95MS" : 16.683207824826241
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.8172130584716797,
+        "installCPUSeconds" : 0.0051350593566894531,
+        "readySeconds" : 1.9480949640274048
+      },
+      "footprintBytes" : 308399008,
+      "index" : 50,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor10_closed_office",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.7893990278244019,
+      "updateMedianMS" : 16.664084047079086,
+      "updateP95MS" : 16.694542020559311
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 1.573646068572998,
+        "installCPUSeconds" : 0.034502029418945312,
+        "readySeconds" : 1.7429370880126953
+      },
+      "footprintBytes" : 334105624,
+      "index" : 51,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor09_archive_redesign",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 2.642071008682251,
+      "updateMedianMS" : 16.665125265717506,
+      "updateP95MS" : 17.268916592001915
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 0.89362800121307373,
+        "installCPUSeconds" : 0.0033260583877563477,
+        "readySeconds" : 1.0352580547332764
+      },
+      "footprintBytes" : 327617560,
+      "index" : 52,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor08_residue_isolation",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 1.8514269590377808,
+      "updateMedianMS" : 16.666041687130928,
+      "updateP95MS" : 17.198750749230385
+    },
+    {
+      "cacheCounts" : {
+        "auxiliary" : 0,
+        "environments" : 2,
+        "rooms" : 0
+      },
+      "cpu" : {
+        "decodedSeconds" : 2.7904109954833984,
+        "installCPUSeconds" : 0.018461942672729492,
+        "readySeconds" : 3.0164459943771362
+      },
+      "footprintBytes" : 391367992,
+      "index" : 53,
+      "missingRoles" : [
+
+      ],
+      "quality" : "medium",
+      "ready" : true,
+      "scene" : "floor08_administrator_observatory",
+      "snapshotAvailable" : true,
+      "snapshotCompletedSeconds" : 3.8851580619812012,
+      "updateMedianMS" : 16.66799932718277,
+      "updateP95MS" : 33.349081873893738
+    }
+  ]
+}
