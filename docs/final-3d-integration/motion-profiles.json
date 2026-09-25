@@ -252,5 +252,132 @@
       -0.025
     ],
     "look": 0.035
+  },
+  "OverloadResidual": {
+    "style": "pressure-claw-strike",
+    "side": "R",
+    "cycle": 3.3,
+    "arm": [
+      -0.3,
+      0.035,
+      -0.035
+    ],
+    "forearm": [
+      -0.2,
+      0.04,
+      0
+    ],
+    "chest": [
+      0.095,
+      0,
+      -0.05
+    ],
+    "look": 0.02,
+    "hold": 0.04
+  },
+  "BackflowBlockerResidual": {
+    "style": "backflow-hook-sweep",
+    "side": "R",
+    "cycle": 3.9,
+    "arm": [
+      -0.23,
+      0.06,
+      -0.1
+    ],
+    "forearm": [
+      -0.18,
+      0.05,
+      -0.09
+    ],
+    "chest": [
+      0.07,
+      0,
+      -0.07
+    ],
+    "look": 0.03
+  },
+  "SealMaintenanceAdministrator": {
+    "style": "seal-pressure-release",
+    "side": "L",
+    "cycle": 4.6,
+    "arm": [
+      -0.17,
+      -0.05,
+      0.025
+    ],
+    "forearm": [
+      -0.12,
+      -0.09,
+      0
+    ],
+    "chest": [
+      0.045,
+      0,
+      -0.02
+    ],
+    "look": 0.025
+  },
+  "IdentityComparisonResidual": {
+    "style": "identity-compare-signal",
+    "side": "R",
+    "cycle": 4.3,
+    "arm": [
+      -0.08,
+      0.035,
+      -0.05
+    ],
+    "forearm": [
+      -0.06,
+      0.055,
+      -0.06
+    ],
+    "chest": [
+      0.03,
+      0,
+      -0.04
+    ],
+    "look": 0.065
+  },
+  "ExitReviewResidual": {
+    "style": "exit-baton-judgement",
+    "side": "R",
+    "cycle": 4.2,
+    "arm": [
+      -0.25,
+      0.03,
+      -0.04
+    ],
+    "forearm": [
+      -0.18,
+      0,
+      0.035
+    ],
+    "chest": [
+      0.06,
+      0,
+      -0.04
+    ],
+    "look": 0.025
+  },
+  "FinalAuthorizationAdministrator": {
+    "style": "final-authority-decree",
+    "side": "R",
+    "cycle": 5.2,
+    "arm": [
+      -0.1,
+      0.035,
+      -0.03
+    ],
+    "forearm": [
+      -0.075,
+      0.055,
+      0
+    ],
+    "chest": [
+      0.03,
+      0,
+      -0.02
+    ],
+    "look": 0.02
   }
 }

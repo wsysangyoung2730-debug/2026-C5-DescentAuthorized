@@ -1,0 +1,38 @@
+[
+  {
+    "actor": "OverloadResidual",
+    "joints": 19,
+    "clips": 9,
+    "profile": "pressure-claw-strike"
+  },
+  {
+    "actor": "BackflowBlockerResidual",
+    "joints": 20,
+    "clips": 9,
+    "profile": "backflow-hook-sweep"
+  },
+  {
+    "actor": "SealMaintenanceAdministrator",
+    "joints": 20,
+    "clips": 9,
+    "profile": "seal-pressure-release"
+  },
+  {
+    "actor": "IdentityComparisonResidual",
+    "joints": 19,
+    "clips": 9,
+    "profile": "identity-compare-signal"
+  },
+  {
+    "actor": "ExitReviewResidual",
+    "joints": 19,
+    "clips": 9,
+    "profile": "exit-baton-judgement"
+  },
+  {
+    "actor": "FinalAuthorizationAdministrator",
+    "joints": 19,
+    "clips": 9,
+    "profile": "final-authority-decree"
+  }
+]
