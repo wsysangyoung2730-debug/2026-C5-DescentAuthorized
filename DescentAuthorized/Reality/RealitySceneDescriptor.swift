@@ -507,6 +507,8 @@ struct FinalSceneContract: Decodable {
     let cameras: [String: String]
     let anchors: [String: String]
     let targetHeight: Float
+    let doorAnimationPrefix: String?
+    let doorTravel: Float?
 
     static let installed: [FinalSceneContract] = {
         guard let url = Bundle.main.url(forResource: "FinalSceneManifest", withExtension: "json", subdirectory: "Reality"),
@@ -534,6 +536,7 @@ struct FinalSceneContract: Decodable {
         })
         return .init(sceneID: id, resourceSubdirectory: row.directory,
             cameraNames: cameras, entityNames: entities,
+            descentDoorAnimation: row.doorAnimationPrefix.map { .init(prefix: $0, panelTravelDistance: row.doorTravel ?? 0.12) },
             actor: .init(assetID: actor, expectedEntityName: "ACTOR_" + row.name,
                 resourceSubdirectory: "Reality/Actors/" + row.name,
                 targetHeight: row.targetHeight, intentScale: row.role == "administrator" ? 1 : 0.7))

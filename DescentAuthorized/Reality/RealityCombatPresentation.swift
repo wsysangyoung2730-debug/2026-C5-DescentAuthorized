@@ -843,6 +843,7 @@ final class RealityActorMotionPlayer {
         let initialIdleOffset: Double?
     }
     private weak var root: Entity?
+    private weak var visualRoot: Entity?
     private var source: AnimationResource?
     private var manifest: Manifest?
     private var playback: AnimationPlaybackController?
@@ -871,13 +872,17 @@ final class RealityActorMotionPlayer {
                           userInfo: [NSLocalizedDescriptionKey: "캐릭터의 관절 애니메이션을 읽지 못했습니다."])
         }
         self.root = animated
+        self.visualRoot = root
+        root.components.set(OpacityComponent(opacity: 1))
         source = animation
         play("idle")
     }
 
     func prepareEncounter() {
+        visualRoot?.isEnabled = true
         terminal = false
         terminalMotionStarted = false
+        visualRoot?.components.set(OpacityComponent(opacity: 1))
         play("idle")
     }
 
@@ -954,7 +959,26 @@ final class RealityActorMotionPlayer {
             let animation = try AnimationResource.generate(with: view)
             playback = root.playAnimation(name == "idle" ? animation.repeat() : animation,
                                           transitionDuration: 0.12, startsPaused: false)
-            guard name != "death" else { return }
+            if name == "death" {
+                let token = generation
+                returnTask = Task { @MainActor [weak self] in
+                    var elapsed = 0.0
+                    let pose = self?.reduced == true ? 0 : clip.duration
+                    let fade = self?.reduced == true ? 0.15 : CombatPresentationTimeline.dissolveDuration
+                    while elapsed < pose + fade {
+                        do { try await Task.sleep(for: .milliseconds(20)) } catch { return }
+                        guard let self, self.generation == token else { return }
+                        if self.suspended { continue }
+                        elapsed += 0.02
+                        let progress = max(0, min(1, (elapsed - pose) / fade))
+                        self.visualRoot?.components.set(OpacityComponent(opacity: Float(1 - progress)))
+                    }
+                    guard let self, self.generation == token else { return }
+                    self.visualRoot?.components.set(OpacityComponent(opacity: 0))
+                    self.visualRoot?.isEnabled = false
+                }
+                return
+            }
             let hasVariation = manifest?.clips["idleVariant"] != nil
             if name == "idle", !hasVariation { return }
             let wait = name == "idle" ? clip.duration * 2 + (manifest?.initialIdleOffset ?? 0) : clip.duration
@@ -983,7 +1007,8 @@ final class RealityActorMotionPlayer {
     }
 
     func reset() {
-        stop(); root = nil; source = nil; manifest = nil
+        stop(); visualRoot?.components.set(OpacityComponent(opacity: 1))
+        root = nil; visualRoot = nil; source = nil; manifest = nil
         terminal = false; terminalMotionStarted = false; reduced = false; suspended = false
         currentMotion = "idle"
     }

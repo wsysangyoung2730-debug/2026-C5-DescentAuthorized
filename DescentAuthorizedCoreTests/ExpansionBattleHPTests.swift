@@ -3,7 +3,7 @@ import XCTest
 @testable import DescentAuthorizedCore
 
 final class ExpansionBattleHPTests: XCTestCase {
-    func testEveryNewExpansionFloorRestoresFullHPOnlyOnEntry() throws {
+    func testUpperFloorEntryHealsFullyAndLowerFloorEntryRestoresThirty() throws {
         var seed = GameProgress.newGame
         seed.currentScene = .demoComplete
         seed.isDemoComplete = true
@@ -19,7 +19,7 @@ final class ExpansionBattleHPTests: XCTestCase {
             controller.setExpansionPlayerHP(9)
             _ = try controller.advanceExpansion()
             XCTAssertEqual(controller.progress.expansion?.floorNumber, floor - 1)
-            XCTAssertEqual(controller.progress.playerHP, 100)
+            XCTAssertEqual(controller.progress.playerHP, floor == 5 ? 39 : 100)
         }
     }
 

@@ -2438,6 +2438,7 @@ extension RealitySceneController {
         let before = joints(actor)
         await capture("ready")
         var animated: [[Float]] = []
+        var lifecycle: [String: Any] = [:]
         if preset == .battle {
             actorMotion.play("attack")
             try? await Task.sleep(for: .milliseconds(500))
@@ -2446,9 +2447,30 @@ extension RealitySceneController {
             actorMotion.setReducedMotion(true)
             try? await Task.sleep(for: .milliseconds(200))
             await capture("reduced-motion")
+            actorMotion.setReducedMotion(false)
+            actorMotion.play("death")
+            try? await Task.sleep(for: .milliseconds(1950))
+            actorMotion.setSuspended(true)
+            let pausedOpacity = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 1
+            try? await Task.sleep(for: .milliseconds(200))
+            lifecycle["deathPaused"] = pausedOpacity == actor?.children.first?.components[OpacityComponent.self]?.opacity
+            actorMotion.setSuspended(false)
+            try? await Task.sleep(for: .milliseconds(900))
+            lifecycle["deathOpacity"] = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 1
+            await capture("death")
+            actorMotion.prepareEncounter()
+            lifecycle["restartOpacity"] = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 0
+        } else if preset == .descentInput {
+            setDescentPresentation(.approved, reducedMotion: false)
+            lifecycle["doorOpeningCompleted"] = await waitForDescentDoorOpening()
+            setDescentPresentation(.open, reducedMotion: false)
+            try? await Task.sleep(for: .milliseconds(100))
+            await capture("door-open")
         }
         let report: [String: Any] = ["scene": id.rawValue, "quality": graphicsQuality.rawValue,
             "camera": activeCameraName ?? "", "preset": preset.rawValue,
+            "lifecycle": lifecycle,
+            "fieldOfView": cameraEntity?.camera.fieldOfViewInDegrees ?? 0,
             "missingRoles": missingEntityRoles.map(\.rawValue),
             "jointCount": before.count, "jointMotionObserved": before != animated && !animated.isEmpty,
             "environmentReady": arView.environment.lighting.resource != nil,

@@ -105,6 +105,7 @@ struct LowerFloorFlowView: View {
             sceneController.prepareExpansionActor()
         }
         if current.stage.isBattle { sceneController.playExpansionActorMotion("appear") }
+        if [.residualDefeated, .bossDefeated].contains(current.stage) { sceneController.playExpansionActorMotion("death") }
     }
 
     private var enemy: EnemyDefinition? {
@@ -203,6 +204,8 @@ private struct LowerFloorDescentView: View {
     let current: ExpansionProgress
     @ObservedObject var sceneController: RealitySceneController
     @State private var approvedThisVisit = false
+    @State private var animateFinalApproval = false
+    @State private var doorReady = false
 
     var body: some View {
         let definitions = DescentDoorGlyphCatalog.lowerFloorApprovals(floor: current.floorNumber)
@@ -223,6 +226,7 @@ private struct LowerFloorDescentView: View {
                 Button(current.floorNumber == 1 ? "출구로 나아가기" : "제\(current.floorNumber - 1)층으로 하강") {
                     gameSession.send(.advanceExpansion)
                 }.buttonStyle(.borderedProminent).tint(DAColor.magic).controlSize(.large)
+                    .disabled(!doorReady)
                 Spacer()
             } else {
                 let definition = definitions[current.descentStage]
@@ -237,6 +241,7 @@ private struct LowerFloorDescentView: View {
                         gateSealPresentation: .init(stageTitles: ["문양 확인", "승인 대조", "기록 저장"], castTitle: "승인 문양 제출")) { submission in
                             guard submission.evaluation.succeeded, !approvedThisVisit else { return }
                             approvedThisVisit = true
+                            animateFinalApproval = current.descentStage == 2
                             gameSession.send(.approveExpansionStage(current.descentStage + 1))
                         }
                         .frame(width: min(geometry.size.width - 40, max(430, geometry.size.height * 1.15)))
@@ -247,8 +252,25 @@ private struct LowerFloorDescentView: View {
         }
         .background(.black.opacity(0.40))
         .task(id: current.descentStage) {
-            sceneController.setDescentPresentation(current.descentStage == 3 ? .approved : .ready,
-                reducedMotion: appSettings.reducedMotion)
+            doorReady = false
+            if let sceneID = gameSession.presentation.floorSceneID {
+                while !sceneController.isReady(sceneID: sceneID, cameraPreset: .descentInput) {
+                    do { try await Task.sleep(for: .milliseconds(30)) } catch { return }
+                }
+            }
+            guard !Task.isCancelled else { return }
+            if current.descentStage == 3 {
+                // Restored approval is already open; a fresh approval waits for the panels.
+                sceneController.setDescentPresentation(animateFinalApproval ? .approved : .open,
+                    reducedMotion: appSettings.reducedMotion)
+                if animateFinalApproval {
+                    guard await sceneController.waitForDescentDoorOpening(), !Task.isCancelled else { return }
+                    sceneController.setDescentPresentation(.open, reducedMotion: appSettings.reducedMotion)
+                }
+                doorReady = true
+            } else {
+                sceneController.setDescentPresentation(.ready, reducedMotion: appSettings.reducedMotion)
+            }
         }
         .onDisappear { sceneController.setDescentPresentation(.inactive, reducedMotion: appSettings.reducedMotion) }
         .onChange(of: current.descentStage) { _, _ in approvedThisVisit = false }
