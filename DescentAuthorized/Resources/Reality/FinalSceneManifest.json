@@ -28,7 +28,9 @@
     },
     "targetHeight": 4.2,
     "doorAnimationPrefix": "FINAL_F07C",
-    "doorTravel": 0.23650000000000002
+    "doorTravel": 0.23650000000000002,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   },
   {
     "floor": 7,
@@ -49,7 +51,9 @@
       "enemySpawn": "FINAL_F07A_EnemySpawn",
       "magicInputBoard": "FINAL_F07A_MagicInputBoard"
     },
-    "targetHeight": 2.8
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   },
   {
     "floor": 6,
@@ -80,7 +84,9 @@
     },
     "targetHeight": 4.2,
     "doorAnimationPrefix": "FINAL_F06C",
-    "doorTravel": 0.24750000000000003
+    "doorTravel": 0.24750000000000003,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   },
   {
     "floor": 6,
@@ -101,7 +107,9 @@
       "enemySpawn": "FINAL_F06A_EnemySpawn",
       "magicInputBoard": "FINAL_F06A_MagicInputBoard"
     },
-    "targetHeight": 2.8
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   },
   {
     "floor": 5,
@@ -132,7 +140,9 @@
     },
     "targetHeight": 4.2,
     "doorAnimationPrefix": "FINAL_F05C",
-    "doorTravel": 0.24750000000000003
+    "doorTravel": 0.24750000000000003,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   },
   {
     "floor": 5,
@@ -153,7 +163,9 @@
       "enemySpawn": "FINAL_F05A_EnemySpawn",
       "magicInputBoard": "FINAL_F05A_MagicInputBoard"
     },
-    "targetHeight": 2.8
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   },
   {
     "floor": 4,
@@ -184,7 +196,9 @@
     },
     "targetHeight": 4.2,
     "doorAnimationPrefix": "FINAL_F04C",
-    "doorTravel": 0.275
+    "doorTravel": 0.275,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   },
   {
     "floor": 4,
@@ -205,7 +219,9 @@
       "enemySpawn": "FINAL_F04A_EnemySpawn",
       "magicInputBoard": "FINAL_F04A_MagicInputBoard"
     },
-    "targetHeight": 2.8
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   },
   {
     "floor": 4,
@@ -226,7 +242,9 @@
       "enemySpawn": "FINAL_F04B_EnemySpawn",
       "magicInputBoard": "FINAL_F04B_MagicInputBoard"
     },
-    "targetHeight": 2.8
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   },
   {
     "floor": 3,
@@ -257,7 +275,13 @@
     },
     "targetHeight": 4.2,
     "doorAnimationPrefix": "FINAL_F03C",
-    "doorTravel": 0.28600000000000003
+    "doorTravel": 0.28600000000000003,
+    "cameraPitchDegrees": {
+      "F03C_MainCamera": -3
+    },
+    "cameraFOVScale": {
+      "F03C_MainCamera": 0.95
+    }
   },
   {
     "floor": 3,
@@ -278,7 +302,9 @@
       "enemySpawn": "FINAL_F03A_EnemySpawn",
       "magicInputBoard": "FINAL_F03A_MagicInputBoard"
     },
-    "targetHeight": 2.8
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   },
   {
     "floor": 3,
@@ -299,7 +325,9 @@
       "enemySpawn": "FINAL_F03B_EnemySpawn",
       "magicInputBoard": "FINAL_F03B_MagicInputBoard"
     },
-    "targetHeight": 2.8
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   },
   {
     "floor": 2,
@@ -330,7 +358,11 @@
     },
     "targetHeight": 4.2,
     "doorAnimationPrefix": "FINAL_F02C",
-    "doorTravel": 0.36850000000000005
+    "doorTravel": 0.36850000000000005,
+    "cameraPitchDegrees": {
+      "F02C_MainCamera": -8.223943939900778
+    },
+    "cameraFOVScale": {}
   },
   {
     "floor": 2,
@@ -351,7 +383,11 @@
       "enemySpawn": "FINAL_F02A_EnemySpawn",
       "magicInputBoard": "FINAL_F02A_MagicInputBoard"
     },
-    "targetHeight": 2.8
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {
+      "F02A_MainCamera": -6.008731688424321
+    },
+    "cameraFOVScale": {}
   },
   {
     "floor": 2,
@@ -372,7 +408,11 @@
       "enemySpawn": "FINAL_F02B_EnemySpawn",
       "magicInputBoard": "FINAL_F02B_MagicInputBoard"
     },
-    "targetHeight": 2.8
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {
+      "F02B_MainCamera": -7.647118752848988
+    },
+    "cameraFOVScale": {}
   },
   {
     "floor": 1,
@@ -403,7 +443,13 @@
     },
     "targetHeight": 4.2,
     "doorAnimationPrefix": "FINAL_F01C",
-    "doorTravel": 0.28380000000000005
+    "doorTravel": 0.28380000000000005,
+    "cameraPitchDegrees": {
+      "F01C_MainCamera": -5
+    },
+    "cameraFOVScale": {
+      "F01C_MainCamera": 0.88
+    }
   },
   {
     "floor": 1,
@@ -424,7 +470,9 @@
       "enemySpawn": "FINAL_F01A_EnemySpawn",
       "magicInputBoard": "FINAL_F01A_MagicInputBoard"
     },
-    "targetHeight": 2.8
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   },
   {
     "floor": 1,
@@ -445,6 +493,8 @@
       "enemySpawn": "FINAL_F01B_EnemySpawn",
       "magicInputBoard": "FINAL_F01B_MagicInputBoard"
     },
-    "targetHeight": 2.8
+    "targetHeight": 2.8,
+    "cameraPitchDegrees": {},
+    "cameraFOVScale": {}
   }
 ]
