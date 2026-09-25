@@ -840,6 +840,7 @@ final class RealityActorMotionPlayer {
     private struct Manifest: Decodable {
         struct Clip: Decodable { let start: Double; let end: Double; let duration: Double }
         let clips: [String: Clip]
+        let initialIdleOffset: Double?
     }
     private weak var root: Entity?
     private var source: AnimationResource?
@@ -953,17 +954,21 @@ final class RealityActorMotionPlayer {
             let animation = try AnimationResource.generate(with: view)
             playback = root.playAnimation(name == "idle" ? animation.repeat() : animation,
                                           transitionDuration: 0.12, startsPaused: false)
-            guard name != "idle", name != "death" else { return }
+            guard name != "death" else { return }
+            let hasVariation = manifest?.clips["idleVariant"] != nil
+            if name == "idle", !hasVariation { return }
+            let wait = name == "idle" ? clip.duration * 2 + (manifest?.initialIdleOffset ?? 0) : clip.duration
+            let next = name == "idle" ? "idleVariant" : "idle"
             let token = generation
             returnTask = Task { @MainActor [weak self] in
-                var remaining = clip.duration
+                var remaining = wait
                 while remaining > 0 {
                     do { try await Task.sleep(for: .milliseconds(20)) } catch { return }
                     guard let self, self.generation == token else { return }
                     if !self.suspended { remaining -= 0.02 }
                 }
                 guard let self, self.generation == token else { return }
-                self.play("idle")
+                self.play(next)
             }
         } catch {
             // A malformed clip does not leave a previous attack looping.

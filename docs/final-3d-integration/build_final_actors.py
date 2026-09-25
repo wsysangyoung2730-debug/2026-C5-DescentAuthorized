@@ -17,6 +17,7 @@ ap.add_argument('--final-motion',action='store_true')
 ap.add_argument('--only')
 args=ap.parse_args(sys.argv[sys.argv.index('--')+1:])
 args.output.mkdir(parents=True,exist_ok=True)
+profiles=json.loads((ROOT/'motion-profiles.json').read_text()) if (ROOT/'motion-profiles.json').exists() else {}
 configs=[r for r in json.loads((ROOT/'actor-contracts.json').read_text()) if str(r['floor']) in args.floors.split(',') and (not args.only or r['name']==args.only)]
 
 def smooth(t):
@@ -29,6 +30,9 @@ def anatomical_config(row, width):
     if name in ['RejectionExecutionResidual','OverloadResidual','BackflowBlockerResidual']:
         head=2.5; shoulder=2.25; half=.48
     if name=='ResponsibilityAuditAdministrator': shoulder=2.4;head=2.78
+    if name=='MemoryOmissionResidue': head=2.08;shoulder=2.10;half=.60;hip=.9
+    if name=='OriginalMemoryAdministrator':head=2.55;shoulder=2.05;half=.42;hip=1.10
+    if name=='CoordinateAdministrator':head=2.27;shoulder=1.98;half=.40;hip=1.10
     book=any(x in name for x in ['SignatureMimic','ConsentCustodian','IdentityComparison'])
     specs={'root':((0,0,0),(0,0,.3),None),
         'pelvis':((0,0,hip-.25),(0,0,hip),'root'),
@@ -44,6 +48,7 @@ def anatomical_config(row, width):
             hand=(sign*.14,-.26,shoulder-.28)
             if name=='SignatureMimicResidual' and sign<0:hand=(-half-.12,-.20,shoulder-.06)
             if name=='IdentityComparisonResidual' and sign<0:hand=(-.10,-.22,shoulder+.08)
+        if name=='MemoryOmissionResidue': elbow=(sign*.78,-.10,1.7);hand=(sign*.65,-.60,1.20)
         if row['boss']:
             hand=(sign*(half+.26),-.25,shoulder-.4)
         specs['upper_arm_'+side]=((sign*half,0,shoulder),elbow,'chest')
@@ -57,7 +62,7 @@ def anatomical_config(row, width):
 def equipment_regions(row, points, width, head):
     x,y,z=points.T;name=row['name'];regions=[]
     # Long staffs stay grounded. Their attached hand is held with a two-bone IK target.
-    staffs={'ResponsibilityAuditAdministrator':(-1,.65),'SealMaintenanceAdministrator':(-1,.62),
+    staffs={'CoordinateAdministrator':(-1,.56),'ResponsibilityAuditAdministrator':(-1,.65),'SealMaintenanceAdministrator':(-1,.62),
             'FinalAuthorizationAdministrator':(1,.79)}
     if name in staffs:
         sign,threshold=staffs[name]
@@ -152,8 +157,8 @@ def animate(scene,rig,row,preserved):
         'hand_L':'mixamorig:LeftHand','hand_R':'mixamorig:RightHand'}
     def turn(name,angles):rotate_world(rig,mix.get(name,name) if preserved else name,angles)
     for p in rig.pose.bones:p.rotation_mode='QUATERNION'
-    cursor=1;ranges={}
-    clips=[('idle',120),('appear',30),('telegraph',36),('attack',30),('heavyAttack',39),('special',60),('hit',24),('death',54)]
+    profile=profiles.get(row['name'],{});cursor=1;ranges={}
+    clips=[('idle',round(profile.get('cycle',4.)*30)),('idleVariant',72),('appear',30),('telegraph',36),('attack',30),('heavyAttack',39),('special',60),('hit',24),('death',54)]
     for clip,length in clips:
         start=cursor;end=start+length
         ranges[clip]={'start':(start-1)/30,'end':(end-1)/30,'duration':length/30}
@@ -162,16 +167,20 @@ def animate(scene,rig,row,preserved):
         for frame in range(start,end+1):
             t=(frame-start)/length;seconds=(frame-start)/30
             for p in rig.pose.bones:p.rotation_quaternion=Quaternion();p.location=(0,0,0)
-            if clip=='idle':
+            if clip in ['idle','idleVariant']:
                 cycle=math.sin(2*math.pi*t);soft=1-math.cos(2*math.pi*t)
                 turn('spine',(.012*soft,0,.012*cycle));turn('chest',(.009*cycle,0,0))
-                turn('head',(.012*soft,0,.035*cycle))
+                turn('head',(.012*soft,0,profile.get('look',.035)*cycle))
+                if clip=='idleVariant':
+                    turn('head',(.035*math.sin(math.pi*t),0,profile.get('look',.035)*math.sin(2*math.pi*t)))
+                    turn('hand_R',(.055*math.sin(math.pi*t),.04*cycle,0))
                 turn('forearm_R',(.018*cycle,0,0));turn('hand_L',(0,.018*cycle,0))
             elif clip in ['attack','heavyAttack']:
                 heavy=clip=='heavyAttack';impact=.62 if heavy else .46;settled=1.28 if heavy else .96
                 pull_end=impact-(.17 if heavy else .13)
+                hold=profile.get('hold',0)
                 release=smooth((seconds-pull_end)/(impact-pull_end))
-                pull=smooth(seconds/pull_end)*(1-release)
+                pull=smooth(seconds/max(.05,pull_end-hold))*(1-release)
                 strike=release*(1-smooth((seconds-impact-.06)/(settled-impact-.06)))
                 power=(1.2 if heavy else 1.)*(1. if args.final_motion else .45)
                 book=any(n in row['name'] for n in ['Custodian','Mimic','Comparison'])
@@ -185,9 +194,12 @@ def animate(scene,rig,row,preserved):
                 turn('hand_'+side,(.10*strike*power,.06*strike,0))
                 other='R' if side=='L' else 'L'
                 turn('upper_arm_'+other,(-.08*strike*power,0,.03*strike))
-                if floor==7:turn('chest',(.06*strike,0,.09*pull-.15*strike*power))
-                if floor==6:turn('upper_arm_'+side,(.30*pull-.50*strike*power,0,0))
-                if floor==5:turn('forearm_'+side,(-.18*strike,.12*pull-.25*strike*power,0))
+                if args.final_motion and profile:
+                    side=profile['side']; envelope=(strike-.4*pull)*power
+                    turn('upper_arm_'+side,tuple(a*envelope for a in profile['arm']))
+                    turn('forearm_'+side,tuple(a*envelope for a in profile['forearm']))
+                    turn('chest',tuple(a*envelope for a in profile['chest']))
+                    turn('hand_'+side,(.055*strike*power,.04*strike,0))
             elif clip=='telegraph':
                 wave=math.sin(math.pi*t);turn('head',(-.04*wave,0,.025*wave));turn('forearm_R',(.10*wave,0,0))
             elif clip=='special':
@@ -199,6 +211,8 @@ def animate(scene,rig,row,preserved):
                 turn('spine',(-.12*recoil,0,-.04*recoil));turn('head',(.10*recoil,0,0))
             elif clip=='death':
                 q=smooth((seconds-.12)/1.45);lag=smooth((seconds-.3)/1.45)
+                if row['boss']:q*=.45;lag*=.60
+                if row['name']=='MemoryOmissionResidue':q*=.7;lag*=.5
                 turn('spine',(.23*q,0,.055*q));turn('chest',(.22*q,0,.045*q))
                 turn('head',(.23*lag,0,.10*lag));turn('upper_arm_L',(.12*lag,0,.08*lag))
                 turn('upper_arm_R',(.18*lag,0,-.08*lag));turn('forearm_L',(.10*lag,0,0));turn('forearm_R',(.15*lag,0,0))
@@ -273,6 +287,7 @@ for row in configs:
         export_normals=True,generate_preview_surface=True,export_textures_mode='NEW',relative_paths=True,
         root_prim_path='/'+row['asset'],convert_scene_units='METERS',meters_per_unit=1.)
     (dest/'motion.json').write_text(json.dumps({'actor':row['name'],'fps':30,'clips':ranges,'rigVersion':2,
+        'profile':profiles.get(row['name'],{}),'initialIdleOffset':(sum(map(ord,row['name']))%90)/30,
         'dissolveDuration':.65,'sourceRigPreserved':preserved,'rigidEquipment':equipment},indent=2))
     reports.append({'actor':row['name'],'bones':len(rig.data.bones),'preservedSourceRig':preserved,'repairedSourceWeights':preserved,
         'rigidEquipment':equipment,'source':row['path'],'finalMotion':args.final_motion})

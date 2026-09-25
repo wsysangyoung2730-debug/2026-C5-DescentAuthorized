@@ -1,0 +1,130 @@
+{
+  "CoordinateResidue": {
+    "style": "coordinate-thrust",
+    "side": "R",
+    "cycle": 3.8,
+    "arm": [
+      -0.46,
+      0.08,
+      -0.08
+    ],
+    "forearm": [
+      -0.28,
+      0,
+      0.05
+    ],
+    "chest": [
+      0.08,
+      0,
+      -0.11
+    ],
+    "look": 0.08
+  },
+  "CoordinateAdministrator": {
+    "style": "coordinate-decree",
+    "side": "L",
+    "cycle": 4.6,
+    "arm": [
+      -0.27,
+      -0.12,
+      0.08
+    ],
+    "forearm": [
+      -0.18,
+      0.15,
+      0.06
+    ],
+    "chest": [
+      0.06,
+      0,
+      -0.05
+    ],
+    "look": 0.04
+  },
+  "CausalityResidue": {
+    "style": "delayed-clock-strike",
+    "side": "R",
+    "cycle": 4.8,
+    "arm": [
+      -0.4,
+      0.08,
+      0
+    ],
+    "forearm": [
+      -0.25,
+      0,
+      0
+    ],
+    "chest": [
+      0.09,
+      0,
+      0.06
+    ],
+    "look": 0.05,
+    "hold": 0.08
+  },
+  "CausalityAdministrator": {
+    "style": "delayed-record-verdict",
+    "side": "R",
+    "cycle": 4.4,
+    "arm": [
+      -0.25,
+      0,
+      -0.07
+    ],
+    "forearm": [
+      -0.18,
+      0.06,
+      0.1
+    ],
+    "chest": [
+      0.05,
+      0,
+      0.06
+    ],
+    "look": 0.035,
+    "hold": 0.09
+  },
+  "MemoryOmissionResidue": {
+    "style": "memory-claw-sweep",
+    "side": "R",
+    "cycle": 3.5,
+    "arm": [
+      -0.112,
+      0.04,
+      -0.06
+    ],
+    "forearm": [
+      -0.08,
+      0.06,
+      -0.048
+    ],
+    "chest": [
+      0.08,
+      0,
+      -0.12
+    ],
+    "look": 0.07
+  },
+  "OriginalMemoryAdministrator": {
+    "style": "memory-wave",
+    "side": "L",
+    "cycle": 5.0,
+    "arm": [
+      -0.06,
+      -0.024,
+      0.018
+    ],
+    "forearm": [
+      -0.051,
+      0.036,
+      0.027
+    ],
+    "chest": [
+      0.045,
+      0,
+      0.035
+    ],
+    "look": 0.03
+  }
+}
