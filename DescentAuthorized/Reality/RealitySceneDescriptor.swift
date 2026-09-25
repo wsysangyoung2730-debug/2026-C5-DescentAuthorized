@@ -107,6 +107,7 @@ struct RealitySceneDescriptor: Sendable {
     }
 
     var rewardMotionAsset: (directory: String, name: String)? {
+        if FinalSceneContract.contract(for: sceneID) != nil { return nil }
         if sceneID.isExpansion, entityNames[.rewardStand] != nil {
             return ("Reality/Interactables/RewardDevice", "reward_device_motion")
         }

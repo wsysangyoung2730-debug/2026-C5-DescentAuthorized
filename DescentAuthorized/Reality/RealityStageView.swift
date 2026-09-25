@@ -356,6 +356,8 @@ private struct RealityARView: UIViewRepresentable {
 struct Floor9MotionPreview: View {
     private var sceneID: FloorSceneID {
         let args = ProcessInfo.processInfo.arguments
+        if let index = args.firstIndex(of: "--final-room"), args.indices.contains(index + 1),
+           let id = FloorSceneID(rawValue: args[index + 1]), FinalSceneContract.contract(for: id) != nil { return id }
         for (flag, scene): (String, FloorSceneID) in [
             ("--floor7-residue", .floor07CoordinateResidue), ("--floor7-boss", .floor07CoordinateAdministrator),
             ("--floor6-residue", .floor06CausalityResidue), ("--floor6-boss", .floor06CausalityAdministrator),

@@ -1452,6 +1452,10 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func installExpansionRewards(bundle: Bundle, resources: [URL: Entity]) throws {
+        if let id = registry.descriptor?.sceneID, let contract = FinalSceneContract.contract(for: id) {
+            try installFinalRewardScrolls(contract: contract, bundle: bundle, resources: resources)
+            return
+        }
         let directory = "Reality/Interactables/RewardDevice"
         let name = graphicsQuality == .high ? "reward_device" : "reward_device_\(graphicsQuality.rawValue)"
         guard let url = bundle.url(forResource: name, withExtension: "usdc", subdirectory: directory),
@@ -1492,6 +1496,31 @@ final class RealitySceneController: ObservableObject {
             }
             scroll.isEnabled = false
             registry.register(scroll, for: role)
+        }
+    }
+
+    /// Final rooms keep their authored pedestal. Only scroll meshes are attached to slots.
+    private func installFinalRewardScrolls(contract: FinalSceneContract, bundle: Bundle, resources: [URL: Entity]) throws {
+        guard let room = registry.root, let stand = registry.entity(for: .rewardStand) else { throw CocoaError(.fileReadCorruptFile) }
+        let suffix = graphicsQuality == .high ? "" : "_\(graphicsQuality.rawValue)"
+        guard let url = bundle.url(forResource: "reward_scroll" + suffix, withExtension: "usdc", subdirectory: "Reality/Interactables/RewardScroll"),
+              let template = resources[url]?.findEntity(named: "F09_RewardScroll_Center") else { throw CocoaError(.fileReadCorruptFile) }
+        let standBounds = stand.visualBounds(relativeTo: room)
+        for role: RealityEntityRole in [.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight] {
+            guard let slot = registry.entity(for: role) else { throw CocoaError(.fileReadCorruptFile) }
+            let holder = Entity(); holder.name = "FINAL_Animated_" + role.rawValue
+            room.addChild(holder)
+            holder.position = slot.position(relativeTo: room)
+            holder.position.z = max(holder.position.z, standBounds.max.z + 0.12)
+            let scroll = template.clone(recursive: true); holder.addChild(scroll)
+            scroll.transform = .identity
+            var bounds = scroll.visualBounds(relativeTo: holder)
+            let height = max(bounds.extents.z, 0.01)
+            scroll.scale = SIMD3(repeating: 0.72 / height)
+            bounds = scroll.visualBounds(relativeTo: holder)
+            scroll.position -= [(bounds.min.x + bounds.max.x) / 2, (bounds.min.y + bounds.max.y) / 2, bounds.min.z]
+            holder.isEnabled = false
+            registry.register(holder, for: role)
         }
     }
 
