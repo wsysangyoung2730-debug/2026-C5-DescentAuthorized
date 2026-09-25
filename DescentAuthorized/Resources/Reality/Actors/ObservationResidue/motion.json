@@ -46,5 +46,6 @@
       "duration": 1.8
     }
   },
-  "actor": "ObservationResidue"
+  "actor": "ObservationResidue",
+  "runtimeMotion": "subtleRigid"
 }

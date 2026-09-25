@@ -79,5 +79,6 @@
   "sourceRigPreserved": false,
   "rigidEquipment": [
     "equipment_staff"
-  ]
+  ],
+  "runtimeMotion": "subtleRigid"
 }

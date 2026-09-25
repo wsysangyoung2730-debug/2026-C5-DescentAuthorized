@@ -80,5 +80,6 @@
   "rigidEquipment": [
     "equipment_staff",
     "equipment_back"
-  ]
+  ],
+  "runtimeMotion": "subtleRigid"
 }

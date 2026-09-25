@@ -833,55 +833,44 @@ final class RealityCombatVFXRenderer {
     }
 }
 
-/// Plays Blender-authored skeletal ranges on the original imported root, so
-/// animation binding paths survive actor normalization and scene installation.
+/// Moves the complete undeformed model gently. Equipment and limbs remain rigid.
+/// Mesh skinning is removed from runtime assets; editable source rigs are retained.
 @MainActor
 final class RealityActorMotionPlayer {
     private struct Manifest: Decodable {
-        struct Clip: Decodable { let start: Double; let end: Double; let duration: Double }
+        struct Clip: Decodable { let duration: Double }
         let clips: [String: Clip]
-        let initialIdleOffset: Double?
     }
-    private weak var root: Entity?
     private weak var visualRoot: Entity?
-    private var source: AnimationResource?
+    private var baseTransform = Transform.identity
+    private var modelHeight: Float = 3
     private var manifest: Manifest?
-    private var playback: AnimationPlaybackController?
-    private var returnTask: Task<Void, Never>?
+    private var motionTask: Task<Void, Never>?
     private var generation = 0
     private var terminal = false
-    private var terminalMotionStarted = false
     private var reduced = false
     private var suspended = false
     private var currentMotion = "idle"
+    private var elapsed = 0.0
 
     func install(root: Entity, descriptor: RealityActorDescriptor, bundle: Bundle) throws {
         reset()
-        guard let url = bundle.url(forResource: "motion", withExtension: "json",
-                                   subdirectory: descriptor.resourceSubdirectory) else {
-            throw NSError(domain: "ActorMotion", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "캐릭터 모션 목록이 없습니다."])
+        if let url = bundle.url(forResource: "motion", withExtension: "json",
+                                subdirectory: descriptor.resourceSubdirectory) {
+            manifest = try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: url))
         }
-        manifest = try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: url))
-        func animatedEntity(_ entity: Entity) -> Entity? {
-            if !entity.availableAnimations.isEmpty { return entity }
-            return entity.children.lazy.compactMap { animatedEntity($0) }.first
-        }
-        guard let animated = animatedEntity(root), let animation = animated.availableAnimations.first else {
-            throw NSError(domain: "ActorMotion", code: 2,
-                          userInfo: [NSLocalizedDescriptionKey: "캐릭터의 관절 애니메이션을 읽지 못했습니다."])
-        }
-        self.root = animated
-        self.visualRoot = root
+        visualRoot = root
+        baseTransform = root.transform
+        modelHeight = max(root.visualBounds(relativeTo: root).extents.z * abs(baseTransform.scale.z), 0.01)
+        root.stopAllAnimations(recursive: true)
         root.components.set(OpacityComponent(opacity: 1))
-        source = animation
         play("idle")
     }
 
     func prepareEncounter() {
-        visualRoot?.isEnabled = true
         terminal = false
-        terminalMotionStarted = false
+        visualRoot?.isEnabled = true
+        visualRoot?.transform = baseTransform
         visualRoot?.components.set(OpacityComponent(opacity: 1))
         play("idle")
     }
@@ -889,27 +878,12 @@ final class RealityActorMotionPlayer {
     func setReducedMotion(_ value: Bool) {
         guard reduced != value else { return }
         reduced = value
-        if value {
-            stop()
-            if terminal { terminalMotionStarted = false; play("death") }
-        }
-        else if terminal && !terminalMotionStarted { play("death") }
-        else if !terminal { play("idle") }
+        if value { visualRoot?.transform = baseTransform }
+        if terminal { return } // Keep death progress; do not restart its fade.
+        if value { stop() } else { play("idle") }
     }
 
-    func setSuspended(_ value: Bool) {
-        guard suspended != value else { return }
-        suspended = value
-        if value {
-            playback?.pause()
-        } else if playback != nil {
-            playback?.resume()
-        } else if terminal {
-            play("death")
-        } else {
-            play("idle")
-        }
-    }
+    func setSuspended(_ value: Bool) { suspended = value }
 
     func present(_ events: [DemoSessionEvent], state: BattleState?) {
         if state?.phase == .victory { play("death"); return }
@@ -941,76 +915,65 @@ final class RealityActorMotionPlayer {
     }
 
     func play(_ name: String) {
-        guard !terminal || name == "death" else { return }
-        if name == "death" {
-            guard !terminalMotionStarted else { return }
-            terminal = true
-        }
-        guard !suspended, (!reduced || name == "death"),
-              let root, let source, let clip = manifest?.clips[name] else { return }
+        guard !terminal else { return }
+        if name == "death" { terminal = true }
         stop()
         currentMotion = name
-        if name == "death" { terminalMotionStarted = true }
-        do {
-            let view = AnimationView(source: source.definition, name: name,
-                fillMode: name == "death" ? .forwards : [],
-                trimStart: reduced ? max(clip.start, clip.end - 1.0 / 30) : clip.start,
-                trimEnd: clip.end)
-            let animation = try AnimationResource.generate(with: view)
-            playback = root.playAnimation(name == "idle" ? animation.repeat() : animation,
-                                          transitionDuration: 0.12, startsPaused: false)
-            if name == "death" {
-                let token = generation
-                returnTask = Task { @MainActor [weak self] in
-                    var elapsed = 0.0
-                    let pose = self?.reduced == true ? 0 : clip.duration
-                    let fade = self?.reduced == true ? 0.15 : CombatPresentationTimeline.dissolveDuration
-                    while elapsed < pose + fade {
-                        do { try await Task.sleep(for: .milliseconds(20)) } catch { return }
-                        guard let self, self.generation == token else { return }
-                        if self.suspended { continue }
-                        elapsed += 0.02
-                        let progress = max(0, min(1, (elapsed - pose) / fade))
-                        self.visualRoot?.components.set(OpacityComponent(opacity: Float(1 - progress)))
-                    }
-                    guard let self, self.generation == token else { return }
-                    self.visualRoot?.components.set(OpacityComponent(opacity: 0))
-                    self.visualRoot?.isEnabled = false
+        elapsed = 0
+        guard let root = visualRoot else { return }
+        root.transform = baseTransform
+        if reduced && name != "death" { return }
+        let token = generation
+        motionTask = Task { @MainActor [weak self] in
+            var previous = Date.timeIntervalSinceReferenceDate
+            while !Task.isCancelled {
+                do { try await Task.sleep(for: .milliseconds(33)) } catch { return }
+                let now = Date.timeIntervalSinceReferenceDate
+                let delta = min(max(now - previous, 0), 0.1)
+                previous = now
+                guard let self, self.generation == token, let root = self.visualRoot else { return }
+                if self.suspended { continue }
+                self.elapsed += delta
+                let duration = self.manifest?.clips[name]?.duration ?? 1.0
+                if name == "death" {
+                    let pose = self.reduced ? 0 : duration
+                    let fade = self.reduced ? 0.15 : CombatPresentationTimeline.dissolveDuration
+                    let progress = min(1, max(0, (self.elapsed - pose) / fade))
+                    root.components.set(OpacityComponent(opacity: Float(1 - progress)))
+                    if progress >= 1 { root.isEnabled = false; return }
+                    continue
                 }
-                return
-            }
-            let hasVariation = manifest?.clips["idleVariant"] != nil
-            if name == "idle", !hasVariation { return }
-            let wait = name == "idle" ? clip.duration * 2 + (manifest?.initialIdleOffset ?? 0) : clip.duration
-            let next = name == "idle" ? "idleVariant" : "idle"
-            let token = generation
-            returnTask = Task { @MainActor [weak self] in
-                var remaining = wait
-                while remaining > 0 {
-                    do { try await Task.sleep(for: .milliseconds(20)) } catch { return }
-                    guard let self, self.generation == token else { return }
-                    if !self.suspended { remaining -= 0.02 }
+                var transform = self.baseTransform
+                if name == "idle" || name == "idleVariant" {
+                    // Less than a quarter degree of yaw. No vertical lift or scaling.
+                    let wave = Float(sin(self.elapsed * 2 * .pi / 4.5))
+                    transform.rotation *= simd_quatf(angle: 0.004 * wave, axis: [0, 0, 1])
+                } else {
+                    if self.elapsed >= duration { self.play("idle"); return }
+                    let wave = Float(pow(sin(.pi * self.elapsed / duration), 2))
+                    // At most 1% of model height; translations preserve all proportions.
+                    let distance: Float = name == "hit" ? 0.006 : name == "heavyAttack" ? -0.01 : -0.007
+                    if !self.reduced { transform.translation.y += self.modelHeight * distance * wave }
                 }
-                guard let self, self.generation == token else { return }
-                self.play(next)
+                root.transform = transform
             }
-        } catch {
-            // A malformed clip does not leave a previous attack looping.
-            playback = nil
         }
     }
 
     private func stop() {
         generation += 1
-        returnTask?.cancel(); returnTask = nil
-        playback?.stop(); playback = nil
+        motionTask?.cancel()
+        motionTask = nil
     }
 
     func reset() {
-        stop(); visualRoot?.components.set(OpacityComponent(opacity: 1))
-        root = nil; visualRoot = nil; source = nil; manifest = nil
-        terminal = false; terminalMotionStarted = false; reduced = false; suspended = false
-        currentMotion = "idle"
+        stop()
+        visualRoot?.transform = baseTransform
+        visualRoot?.components.set(OpacityComponent(opacity: 1))
+        visualRoot = nil
+        manifest = nil
+        terminal = false; reduced = false; suspended = false
+        currentMotion = "idle"; elapsed = 0
     }
 }
 

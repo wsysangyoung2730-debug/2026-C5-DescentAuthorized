@@ -80,5 +80,6 @@
   "sourceRigPreserved": false,
   "rigidEquipment": [
     "equipment_back"
-  ]
+  ],
+  "runtimeMotion": "subtleRigid"
 }

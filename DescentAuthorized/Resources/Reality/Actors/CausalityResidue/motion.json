@@ -78,5 +78,6 @@
   "initialIdleOffset": 1.4666666666666666,
   "dissolveDuration": 0.65,
   "sourceRigPreserved": false,
-  "rigidEquipment": []
+  "rigidEquipment": [],
+  "runtimeMotion": "subtleRigid"
 }

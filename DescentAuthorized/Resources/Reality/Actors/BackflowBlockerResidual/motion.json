@@ -80,5 +80,6 @@
   "rigidEquipment": [
     "equipment_shield",
     "equipment_back"
-  ]
+  ],
+  "runtimeMotion": "subtleRigid"
 }
