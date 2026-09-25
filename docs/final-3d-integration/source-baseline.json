@@ -1,0 +1,9 @@
+{
+  "path": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F01_F02_F03_F04_F05_F06_F07_F08_F09_F10_Combined_v067_floor4_door_backwalls.blend",
+  "bytes": 2801922769,
+  "mtime": "2026-09-25T15:48:32.729911+00:00",
+  "sha256": "279d6af643eca9fd318533a01318e897c441cc3de0f66bc3c4e7d1558e5a7250",
+  "base_branch": "fix/#149-descent-door-opening",
+  "base_commit": "eaeb5377eddbdad70d62736d10eba1f2aa5dd532",
+  "planning_only": true
+}
