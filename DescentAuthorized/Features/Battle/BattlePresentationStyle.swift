@@ -325,11 +325,11 @@ struct BattleTopHUDView: View {
 
     private func expansionIntentColor(_ action: ExpansionEnemyAction) -> Color {
         switch action {
-        case .correctionBarrier: DAColor.defense
-        case .correctionStrike, .copyReaction: DAColor.attack
-        case .amplify: DAColor.gold
+        case .correctionBarrier, .timedBarrier, .absoluteSeal: DAColor.defense
+        case .correctionStrike, .copyReaction, .directHits, .barrierStrike, .counterExecute: DAColor.attack
+        case .amplify, .flatAmplify, .counterPrepare: DAColor.gold
         case .schedule: DAColor.magicGlow
-        case .recordLastSpell, .lockAndSchedule, .preparedLockAndSchedule: DAColor.debuff
+        case .recordLastSpell, .lockAndSchedule, .preparedLockAndSchedule, .lockCards, .preparedCardSeal: DAColor.debuff
         case let .sequence(actions): actions.first.map(expansionIntentColor) ?? DAColor.secondary
         case .wait: DAColor.secondary
         }

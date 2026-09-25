@@ -1,0 +1,128 @@
+[
+  {
+    "name": "CoordinateResidue",
+    "asset": "coordinate_residue",
+    "floor": 7,
+    "boss": false,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/4. 7층 좌표 표류 잔류체/7층 좌표 표류 잔류체.glb"
+  },
+  {
+    "name": "CoordinateAdministrator",
+    "asset": "coordinate_administrator",
+    "floor": 7,
+    "boss": true,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/5. 7층 관리자/7층 관리자.glb"
+  },
+  {
+    "name": "CausalityResidue",
+    "asset": "causality_residue",
+    "floor": 6,
+    "boss": false,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/6. 6층 결과 지연 잔류체/6층 결과 지연 잔류체.glb"
+  },
+  {
+    "name": "CausalityAdministrator",
+    "asset": "causality_administrator",
+    "floor": 6,
+    "boss": true,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/7. 6층 관리자/6층 관리자.glb"
+  },
+  {
+    "name": "MemoryOmissionResidue",
+    "asset": "memory_omission_residue",
+    "floor": 5,
+    "boss": false,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/8. 5층 결과 지연 잔류체/5층 기억 누락 잔류체.glb"
+  },
+  {
+    "name": "OriginalMemoryAdministrator",
+    "asset": "original_memory_administrator",
+    "floor": 5,
+    "boss": true,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/9. 5층 관리자/5층 관리자.glb"
+  },
+  {
+    "name": "SignatureMimicResidual",
+    "asset": "signature_mimic_residual",
+    "floor": 4,
+    "boss": false,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/10. 4층/4층-1 서명 모사 잔류체.glb"
+  },
+  {
+    "name": "RejectionExecutionResidual",
+    "asset": "rejection_execution_residual",
+    "floor": 4,
+    "boss": false,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/10. 4층/4층-2 반려 집행 잔류체.glb"
+  },
+  {
+    "name": "ResponsibilityAuditAdministrator",
+    "asset": "responsibility_audit_administrator",
+    "floor": 4,
+    "boss": true,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/10. 4층/4층 관리자.glb"
+  },
+  {
+    "name": "ConsentCustodianResidual",
+    "asset": "consent_custodian_residual",
+    "floor": 3,
+    "boss": false,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/11. 3층/3층-2 동의 보관 잔류체.glb"
+  },
+  {
+    "name": "QuarantineEnforcerResidual",
+    "asset": "quarantine_enforcer_residual",
+    "floor": 3,
+    "boss": false,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/11. 3층/3층-1 격리 집행 잔류체.glb"
+  },
+  {
+    "name": "VoluntaryQuarantineAdministrator",
+    "asset": "voluntary_quarantine_administrator",
+    "floor": 3,
+    "boss": true,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/11. 3층/3층 관리자.glb"
+  },
+  {
+    "name": "OverloadResidual",
+    "asset": "overload_residual",
+    "floor": 2,
+    "boss": false,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/12. 2층/2층-1 과부하 잔류체.glb"
+  },
+  {
+    "name": "BackflowBlockerResidual",
+    "asset": "backflow_blocker_residual",
+    "floor": 2,
+    "boss": false,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/12. 2층/2층-2 역류 차단 잔류체.glb"
+  },
+  {
+    "name": "SealMaintenanceAdministrator",
+    "asset": "seal_maintenance_administrator",
+    "floor": 2,
+    "boss": true,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/12. 2층/2층 관리자.glb"
+  },
+  {
+    "name": "IdentityComparisonResidual",
+    "asset": "identity_comparison_residual",
+    "floor": 1,
+    "boss": false,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/13. 1층/1층-1 신원 대조 잔류체.glb"
+  },
+  {
+    "name": "ExitReviewResidual",
+    "asset": "exit_review_residual",
+    "floor": 1,
+    "boss": false,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/13. 1층/1층-2 퇴거 심사 잔류체.glb"
+  },
+  {
+    "name": "FinalAuthorizationAdministrator",
+    "asset": "final_authorization_administrator",
+    "floor": 1,
+    "boss": true,
+    "path": "/Users/sangyoung/Desktop/C5_하강승인/🔥C5 블랜더 모델링 파일 모음/2. 관리자 및 잔류체/13. 1층/1층 관리자.glb"
+  }
+]

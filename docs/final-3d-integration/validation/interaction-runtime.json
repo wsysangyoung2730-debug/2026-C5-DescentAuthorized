@@ -1,0 +1,295 @@
+{
+  "device": "iPad Pro 13 M5 simulator, iOS 26.5",
+  "checks": [
+    {
+      "actorPresent": true,
+      "camera": "F01C_MainCamera",
+      "environmentReady": true,
+      "expectedRewardCount": 0,
+      "fieldOfView": 34.90605545043945,
+      "jointCount": 19,
+      "jointMotionObserved": true,
+      "lifecycle": {
+        "deathOpacity": 0,
+        "deathPaused": true,
+        "restartOpacity": 1
+      },
+      "missingRoles": [],
+      "preset": "battle",
+      "quality": "medium",
+      "rewardModelCount": 0,
+      "rewardReady": true,
+      "scene": "floor01_final_authorization_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F01_DescentDoor",
+      "environmentReady": true,
+      "fieldOfView": 45.74732971191406,
+      "jointCount": 19,
+      "jointMotionObserved": false,
+      "lifecycle": {
+        "doorOpeningCompleted": true
+      },
+      "missingRoles": [],
+      "preset": "descentInput",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor01_final_authorization_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F01_RewardSelection",
+      "environmentReady": true,
+      "fieldOfView": 35.115394592285156,
+      "jointCount": 19,
+      "jointMotionObserved": false,
+      "lifecycle": {},
+      "missingRoles": [],
+      "preset": "rewardSelection",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor01_final_authorization_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F02_DescentDoor",
+      "environmentReady": true,
+      "fieldOfView": 45.74732971191406,
+      "jointCount": 20,
+      "jointMotionObserved": false,
+      "lifecycle": {
+        "doorOpeningCompleted": true
+      },
+      "missingRoles": [],
+      "preset": "descentInput",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor02_seal_maintenance_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F02_RewardSelection",
+      "environmentReady": true,
+      "expectedRewardCount": 3,
+      "fieldOfView": 35.115394592285156,
+      "jointCount": 20,
+      "jointMotionObserved": false,
+      "lifecycle": {},
+      "missingRoles": [],
+      "preset": "rewardSelection",
+      "quality": "medium",
+      "rewardModelCount": 3,
+      "rewardReady": true,
+      "scene": "floor02_seal_maintenance_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F03_DescentDoor",
+      "environmentReady": true,
+      "fieldOfView": 45.74732971191406,
+      "jointCount": 56,
+      "jointMotionObserved": false,
+      "lifecycle": {
+        "doorOpeningCompleted": true
+      },
+      "missingRoles": [],
+      "preset": "descentInput",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor03_voluntary_quarantine_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F03_RewardSelection",
+      "environmentReady": true,
+      "expectedRewardCount": 3,
+      "fieldOfView": 37.299076080322266,
+      "jointCount": 56,
+      "jointMotionObserved": false,
+      "lifecycle": {},
+      "missingRoles": [],
+      "preset": "rewardSelection",
+      "quality": "medium",
+      "rewardModelCount": 3,
+      "rewardReady": true,
+      "scene": "floor03_voluntary_quarantine_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F04_DescentDoor",
+      "environmentReady": true,
+      "fieldOfView": 50.22966766357422,
+      "jointCount": 20,
+      "jointMotionObserved": false,
+      "lifecycle": {
+        "doorOpeningCompleted": true
+      },
+      "missingRoles": [],
+      "preset": "descentInput",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor04_responsibility_audit_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F04_RewardSelection",
+      "environmentReady": true,
+      "expectedRewardCount": 3,
+      "fieldOfView": 41.11208724975586,
+      "jointCount": 20,
+      "jointMotionObserved": false,
+      "lifecycle": {},
+      "missingRoles": [],
+      "preset": "rewardSelection",
+      "quality": "medium",
+      "rewardModelCount": 3,
+      "rewardReady": true,
+      "scene": "floor04_responsibility_audit_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F05_DescentDoor",
+      "environmentReady": true,
+      "fieldOfView": 50.22966766357422,
+      "jointCount": 19,
+      "jointMotionObserved": false,
+      "lifecycle": {
+        "doorOpeningCompleted": true
+      },
+      "missingRoles": [],
+      "preset": "descentInput",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor05_original_memory_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F05_RewardSelection",
+      "environmentReady": true,
+      "fieldOfView": 38.739524841308594,
+      "jointCount": 19,
+      "jointMotionObserved": false,
+      "lifecycle": {},
+      "missingRoles": [],
+      "preset": "rewardSelection",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor05_original_memory_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F06_DescentDoor",
+      "environmentReady": true,
+      "fieldOfView": 56.357181549072266,
+      "jointCount": 19,
+      "jointMotionObserved": false,
+      "lifecycle": {
+        "doorOpeningCompleted": true
+      },
+      "missingRoles": [],
+      "preset": "descentInput",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor06_causality_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F06_RewardSelection",
+      "environmentReady": true,
+      "fieldOfView": 46.795528411865234,
+      "jointCount": 19,
+      "jointMotionObserved": false,
+      "lifecycle": {},
+      "missingRoles": [],
+      "preset": "rewardSelection",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor06_causality_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F07_DescentDoor",
+      "environmentReady": true,
+      "fieldOfView": 56.357181549072266,
+      "jointCount": 20,
+      "jointMotionObserved": false,
+      "lifecycle": {
+        "doorOpeningCompleted": true
+      },
+      "missingRoles": [],
+      "preset": "descentInput",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor07_coordinate_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "CAM_F07_RewardSelection",
+      "environmentReady": true,
+      "fieldOfView": 46.795528411865234,
+      "jointCount": 20,
+      "jointMotionObserved": false,
+      "lifecycle": {},
+      "missingRoles": [],
+      "preset": "rewardSelection",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor07_coordinate_administrator"
+    },
+    {
+      "actorPresent": true,
+      "camera": "F08_iPad_MainCamera",
+      "environmentReady": true,
+      "fieldOfView": 45.23972702026367,
+      "jointCount": 5,
+      "jointMotionObserved": true,
+      "lifecycle": {
+        "deathOpacity": 0,
+        "deathPaused": true,
+        "restartOpacity": 1
+      },
+      "missingRoles": [],
+      "preset": "battle",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor08_administrator_observatory"
+    },
+    {
+      "actorPresent": true,
+      "camera": "F08A_iPadCamera",
+      "environmentReady": true,
+      "fieldOfView": 54.879459381103516,
+      "jointCount": 5,
+      "jointMotionObserved": true,
+      "lifecycle": {
+        "deathOpacity": 0,
+        "deathPaused": true,
+        "restartOpacity": 1
+      },
+      "missingRoles": [],
+      "preset": "battle",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor08_residue_isolation"
+    },
+    {
+      "actorPresent": true,
+      "camera": "F09_iPad_MainCamera",
+      "environmentReady": true,
+      "fieldOfView": 48.45549011230469,
+      "jointCount": 5,
+      "jointMotionObserved": true,
+      "lifecycle": {
+        "deathOpacity": 0,
+        "deathPaused": true,
+        "restartOpacity": 1
+      },
+      "missingRoles": [],
+      "preset": "battle",
+      "quality": "medium",
+      "rewardReady": true,
+      "scene": "floor09_archive_redesign"
+    }
+  ]
+}

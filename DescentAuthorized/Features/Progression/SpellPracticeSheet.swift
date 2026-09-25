@@ -21,7 +21,8 @@ struct SpellPracticeSheet: View {
             Text("이 연습에서는 체력·획득·전투 기록이 바뀌지 않습니다.")
                 .font(.caption).foregroundStyle(DAColor.secondary)
             GlyphCastingPanel(spell: spell, inputPreference: appSettings.inputPreference,
-                availableMana: 100, availableStrokes: 2, erasureZones: [],
+                availableMana: SpellCatalog.metadata(for: spell.id).acquisitionFloor <= 4 ? 150 : 100,
+                availableStrokes: max(2, spell.requiredStrokes), erasureZones: [], inputFeedbackMode: .practice,
                 onCast: { submission in
                     result = submission.evaluation.succeeded ? "각인 성공 · 다시 시도할 수 있습니다." : "각인 실패 · 표시된 경로와 획순을 다시 확인하세요."
                     attempt += 1

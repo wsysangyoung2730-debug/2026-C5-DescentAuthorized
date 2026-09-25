@@ -112,6 +112,8 @@ final class DemoFlowIntegrationTests: XCTestCase {
         _ = try session.handle(.advanceExpansion)
         XCTAssertEqual(session.progress.expansion?.stage, .preparation)
         _ = try session.handle(.advanceExpansion)
+        XCTAssertEqual(session.progress.expansion?.stage, .residualEncounter)
+        _ = try session.handle(.advanceExpansion)
         XCTAssertEqual(session.progress.expansion?.stage, .residualBattle)
         _ = try session.handle(.startEncounter)
         XCTAssertNotNil(session.battleState)

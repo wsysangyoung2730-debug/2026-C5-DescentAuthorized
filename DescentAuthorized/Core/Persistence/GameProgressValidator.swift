@@ -39,14 +39,11 @@ struct GameProgressValidator: Sendable {
     private func validateExpansion(_ progress: GameProgress) throws {
         guard let expansion = progress.expansion else { return }
         guard progress.currentScene == .demoComplete,
-              progress.checkpoint == .demoComplete,
+              progress.checkpoint.expansionDestination != nil,
               progress.isDemoComplete else {
             throw GameProgressValidationError.invalidExpansionState("8층 완료 지점 필요")
         }
-        guard (4...7).contains(expansion.floorNumber),
-              (0...2).contains(expansion.descentStage),
-              (expansion.floorNumber == 4) == (expansion.stage == .complete),
-              expansion.stage != .learnDebuff || expansion.floorNumber == 6 else {
+        guard expansion.isValid else {
             throw GameProgressValidationError.invalidExpansionState("유효하지 않은 층 또는 진행 단계")
         }
         guard progress.loadoutIssues.isEmpty else {
@@ -118,6 +115,34 @@ struct GameProgressValidator: Sendable {
             }
             guard selectedRewards.insert(rewardID).inserted else {
                 throw GameProgressValidationError.duplicateReward(rewardID)
+            }
+        }
+
+        for (floor, choice) in progress.checkpointRewardChoices {
+            guard RewardCatalog.candidates(forFloorNumber: floor).contains(where: { $0.id == choice }) else {
+                throw GameProgressValidationError.unknownReward(choice)
+            }
+        }
+
+        for (key, offers) in progress.lowerRewardOffers {
+            guard let site = ExpansionRewardSite(rawValue: key), offers.count <= 3,
+                  Set(offers.map(\.id)).count == offers.count,
+                  Set(offers.compactMap(\.resolvedSpell)).count == offers.count,
+                  offers.allSatisfy({ candidate in
+                      candidate.resolvedSpell.map { RewardCatalog.candidate($0, at: site) == candidate } == true
+                  }) else { throw GameProgressValidationError.invalidExpansionState("유효하지 않은 후반 보상 후보") }
+            if let choice = progress.lowerRewardChoices[key], !offers.contains(where: { $0.id == choice }) {
+                throw GameProgressValidationError.unknownReward(choice)
+            }
+            if progress.completedLowerRewardSites.contains(key), !offers.isEmpty {
+                guard let choice = progress.lowerRewardChoices[key],
+                      let spell = offers.first(where: { $0.id == choice })?.resolvedSpell,
+                      progress.completedTrainingSpells.contains(spell) else {
+                    throw GameProgressValidationError.invalidExpansionState("완료 보상 학습 누락")
+                }
+            }
+            guard progress.selectedRewardIDs.filter({ id in offers.contains(where: { $0.id == id }) }).count <= 1 else {
+                throw GameProgressValidationError.duplicateReward(key)
             }
         }
 
@@ -373,7 +398,7 @@ struct GameProgressValidator: Sendable {
         case .floor8AdministratorDefeated, .floor8Reward, .floor8DescentDoor:
             [.observationDefeated]
         case .demoComplete:
-            [.demoComplete]
+            Set(CheckpointID.allCases.filter { $0.expansionDestination != nil })
         }
     }
 

@@ -5,6 +5,7 @@ import SwiftUI
 struct ExpansionBackdropView: View {
     let floorNumber: Int
     var isBoss: Bool = false
+    var residualIndex: Int = 0
 
     var body: some View {
         GeometryReader { proxy in
@@ -73,6 +74,9 @@ struct ExpansionBackdropView: View {
     }
 
     private var assetName: String? {
+        if (1...4).contains(floorNumber) {
+            return "ExpansionFloor\(floorNumber)\(isBoss ? "Boss" : (residualIndex == 0 ? "ResidualA" : "ResidualB"))"
+        }
         guard (5...7).contains(floorNumber) else { return nil }
         return "ExpansionFloor\(floorNumber)\(isBoss ? "Boss" : "Residual")"
     }
@@ -82,6 +86,10 @@ struct ExpansionBackdropView: View {
         case 7: Color(red: 0.25, green: 0.67, blue: 0.72)
         case 6: Color(red: 0.68, green: 0.39, blue: 0.16)
         case 5: Color(red: 0.48, green: 0.31, blue: 0.62)
+        case 4: Color(red: 0.62, green: 0.24, blue: 0.22)
+        case 3: Color(red: 0.19, green: 0.51, blue: 0.59)
+        case 2: Color(red: 0.66, green: 0.39, blue: 0.12)
+        case 1: Color(red: 0.75, green: 0.63, blue: 0.42)
         default: Color(red: 0.18, green: 0.17, blue: 0.24)
         }
     }

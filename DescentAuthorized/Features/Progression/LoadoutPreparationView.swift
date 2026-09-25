@@ -219,7 +219,7 @@ struct LoadoutPreparationView: View {
                 Text("제\(floorNumber)층 · 출전 준비")
                     .font(.system(size: 26, weight: .semibold, design: .serif))
                     .foregroundStyle(DAColor.gold)
-                Text("전투에 가져갈 주문을 선택하세요.")
+                Text("전투 주문 6개 · 금서 \(LoadoutRules.forbiddenCount(selected))/2 · 봉인 주문은 금서 제한 제외")
                     .font(.callout)
                     .foregroundStyle(DAColor.secondary)
             }
@@ -427,7 +427,7 @@ struct LoadoutPreparationView: View {
     private func collectionCard(_ id: SpellID) -> some View {
         let spell = SpellCatalog.spell(id)
         let isEquipped = selected.contains(id)
-        let isFull = selected.count >= LoadoutRules.maximumEquipped
+        let isFull = !LoadoutRules.canAutomaticallyEquip(id, alongside: selected)
         return HStack(spacing: 0) {
             Button {
                 inspected = id
@@ -735,7 +735,7 @@ struct LoadoutPreparationView: View {
         if let index = selected.firstIndex(of: id) {
             selected.remove(at: index)
         } else {
-            guard selected.count < LoadoutRules.maximumEquipped else { return }
+            guard LoadoutRules.canAutomaticallyEquip(id, alongside: selected) else { return }
             selected.append(id)
         }
         inspected = id

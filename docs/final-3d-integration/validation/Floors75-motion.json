@@ -1,0 +1,38 @@
+[
+  {
+    "actor": "CoordinateResidue",
+    "joints": 18,
+    "clips": 9,
+    "profile": "coordinate-thrust"
+  },
+  {
+    "actor": "CoordinateAdministrator",
+    "joints": 20,
+    "clips": 9,
+    "profile": "coordinate-decree"
+  },
+  {
+    "actor": "CausalityResidue",
+    "joints": 18,
+    "clips": 9,
+    "profile": "delayed-clock-strike"
+  },
+  {
+    "actor": "CausalityAdministrator",
+    "joints": 19,
+    "clips": 9,
+    "profile": "delayed-record-verdict"
+  },
+  {
+    "actor": "MemoryOmissionResidue",
+    "joints": 18,
+    "clips": 9,
+    "profile": "memory-claw-sweep"
+  },
+  {
+    "actor": "OriginalMemoryAdministrator",
+    "joints": 19,
+    "clips": 9,
+    "profile": "memory-wave"
+  }
+]

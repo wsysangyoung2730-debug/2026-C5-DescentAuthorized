@@ -1,0 +1,14 @@
+{
+  "actorPresent" : true,
+  "camera" : "F07A_iPadCamera",
+  "environmentReady" : true,
+  "jointCount" : 5,
+  "jointMotionObserved" : true,
+  "missingRoles" : [
+
+  ],
+  "preset" : "battle",
+  "quality" : "medium",
+  "rewardReady" : true,
+  "scene" : "floor07_coordinate_residue"
+}

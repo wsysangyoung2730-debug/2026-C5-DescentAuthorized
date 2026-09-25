@@ -1,0 +1,223 @@
+{
+  "duplicatesRemoved": 975,
+  "savedBytes": 270978113,
+  "method": "SHA-256 exact byte match; no re-encoding",
+  "layers": [
+    {
+      "file": "Reality/Scenes/Floor07/CoordinateAdministrator/floor07_coordinate_administrator.usdc",
+      "reboundTextures": 90
+    },
+    {
+      "file": "Reality/Scenes/Floor07/CoordinateAdministrator/floor07_coordinate_administrator_medium.usdc",
+      "reboundTextures": 10
+    },
+    {
+      "file": "Reality/Scenes/Floor07/CoordinateAdministrator/floor07_coordinate_administrator_low.usdc",
+      "reboundTextures": 28
+    },
+    {
+      "file": "Reality/Scenes/Floor07/CoordinateResidue/floor07_coordinate_residue.usdc",
+      "reboundTextures": 25
+    },
+    {
+      "file": "Reality/Scenes/Floor07/CoordinateResidue/floor07_coordinate_residue_medium.usdc",
+      "reboundTextures": 9
+    },
+    {
+      "file": "Reality/Scenes/Floor07/CoordinateResidue/floor07_coordinate_residue_low.usdc",
+      "reboundTextures": 25
+    },
+    {
+      "file": "Reality/Scenes/Floor06/CausalityAdministrator/floor06_causality_administrator.usdc",
+      "reboundTextures": 88
+    },
+    {
+      "file": "Reality/Scenes/Floor06/CausalityAdministrator/floor06_causality_administrator_medium.usdc",
+      "reboundTextures": 10
+    },
+    {
+      "file": "Reality/Scenes/Floor06/CausalityAdministrator/floor06_causality_administrator_low.usdc",
+      "reboundTextures": 26
+    },
+    {
+      "file": "Reality/Scenes/Floor06/CausalityResidue/floor06_causality_residue.usdc",
+      "reboundTextures": 27
+    },
+    {
+      "file": "Reality/Scenes/Floor06/CausalityResidue/floor06_causality_residue_medium.usdc",
+      "reboundTextures": 11
+    },
+    {
+      "file": "Reality/Scenes/Floor06/CausalityResidue/floor06_causality_residue_low.usdc",
+      "reboundTextures": 27
+    },
+    {
+      "file": "Reality/Scenes/Floor05/OriginalMemoryAdministrator/floor05_original_memory_administrator.usdc",
+      "reboundTextures": 100
+    },
+    {
+      "file": "Reality/Scenes/Floor05/OriginalMemoryAdministrator/floor05_original_memory_administrator_medium.usdc",
+      "reboundTextures": 20
+    },
+    {
+      "file": "Reality/Scenes/Floor05/OriginalMemoryAdministrator/floor05_original_memory_administrator_low.usdc",
+      "reboundTextures": 38
+    },
+    {
+      "file": "Reality/Scenes/Floor05/MemoryOmissionResidue/floor05_memory_omission_residue.usdc",
+      "reboundTextures": 33
+    },
+    {
+      "file": "Reality/Scenes/Floor05/MemoryOmissionResidue/floor05_memory_omission_residue_medium.usdc",
+      "reboundTextures": 17
+    },
+    {
+      "file": "Reality/Scenes/Floor05/MemoryOmissionResidue/floor05_memory_omission_residue_low.usdc",
+      "reboundTextures": 33
+    },
+    {
+      "file": "Reality/Scenes/Floor04/ResponsibilityAuditAdministrator/floor04_responsibility_audit_administrator.usdc",
+      "reboundTextures": 116
+    },
+    {
+      "file": "Reality/Scenes/Floor04/ResponsibilityAuditAdministrator/floor04_responsibility_audit_administrator_medium.usdc",
+      "reboundTextures": 7
+    },
+    {
+      "file": "Reality/Scenes/Floor04/ResponsibilityAuditAdministrator/floor04_responsibility_audit_administrator_low.usdc",
+      "reboundTextures": 54
+    },
+    {
+      "file": "Reality/Scenes/Floor04/SignatureMimicResidual/floor04_signature_mimic_residual.usdc",
+      "reboundTextures": 50
+    },
+    {
+      "file": "Reality/Scenes/Floor04/SignatureMimicResidual/floor04_signature_mimic_residual_medium.usdc",
+      "reboundTextures": 4
+    },
+    {
+      "file": "Reality/Scenes/Floor04/SignatureMimicResidual/floor04_signature_mimic_residual_low.usdc",
+      "reboundTextures": 50
+    },
+    {
+      "file": "Reality/Scenes/Floor04/RejectionExecutionResidual/floor04_rejection_execution_residual.usdc",
+      "reboundTextures": 55
+    },
+    {
+      "file": "Reality/Scenes/Floor04/RejectionExecutionResidual/floor04_rejection_execution_residual_medium.usdc",
+      "reboundTextures": 7
+    },
+    {
+      "file": "Reality/Scenes/Floor04/RejectionExecutionResidual/floor04_rejection_execution_residual_low.usdc",
+      "reboundTextures": 55
+    },
+    {
+      "file": "Reality/Scenes/Floor03/VoluntaryQuarantineAdministrator/floor03_voluntary_quarantine_administrator.usdc",
+      "reboundTextures": 81
+    },
+    {
+      "file": "Reality/Scenes/Floor03/VoluntaryQuarantineAdministrator/floor03_voluntary_quarantine_administrator_medium.usdc",
+      "reboundTextures": 8
+    },
+    {
+      "file": "Reality/Scenes/Floor03/VoluntaryQuarantineAdministrator/floor03_voluntary_quarantine_administrator_low.usdc",
+      "reboundTextures": 19
+    },
+    {
+      "file": "Reality/Scenes/Floor03/ConsentCustodianResidual/floor03_consent_custodian_residual.usdc",
+      "reboundTextures": 14
+    },
+    {
+      "file": "Reality/Scenes/Floor03/ConsentCustodianResidual/floor03_consent_custodian_residual_medium.usdc",
+      "reboundTextures": 5
+    },
+    {
+      "file": "Reality/Scenes/Floor03/ConsentCustodianResidual/floor03_consent_custodian_residual_low.usdc",
+      "reboundTextures": 14
+    },
+    {
+      "file": "Reality/Scenes/Floor03/QuarantineEnforcerResidual/floor03_quarantine_enforcer_residual.usdc",
+      "reboundTextures": 16
+    },
+    {
+      "file": "Reality/Scenes/Floor03/QuarantineEnforcerResidual/floor03_quarantine_enforcer_residual_medium.usdc",
+      "reboundTextures": 7
+    },
+    {
+      "file": "Reality/Scenes/Floor03/QuarantineEnforcerResidual/floor03_quarantine_enforcer_residual_low.usdc",
+      "reboundTextures": 16
+    },
+    {
+      "file": "Reality/Scenes/Floor02/SealMaintenanceAdministrator/floor02_seal_maintenance_administrator.usdc",
+      "reboundTextures": 79
+    },
+    {
+      "file": "Reality/Scenes/Floor02/SealMaintenanceAdministrator/floor02_seal_maintenance_administrator_medium.usdc",
+      "reboundTextures": 6
+    },
+    {
+      "file": "Reality/Scenes/Floor02/SealMaintenanceAdministrator/floor02_seal_maintenance_administrator_low.usdc",
+      "reboundTextures": 17
+    },
+    {
+      "file": "Reality/Scenes/Floor02/OverloadResidual/floor02_overload_residual.usdc",
+      "reboundTextures": 16
+    },
+    {
+      "file": "Reality/Scenes/Floor02/OverloadResidual/floor02_overload_residual_medium.usdc",
+      "reboundTextures": 4
+    },
+    {
+      "file": "Reality/Scenes/Floor02/OverloadResidual/floor02_overload_residual_low.usdc",
+      "reboundTextures": 16
+    },
+    {
+      "file": "Reality/Scenes/Floor02/BackflowBlockerResidual/floor02_backflow_blocker_residual.usdc",
+      "reboundTextures": 17
+    },
+    {
+      "file": "Reality/Scenes/Floor02/BackflowBlockerResidual/floor02_backflow_blocker_residual_medium.usdc",
+      "reboundTextures": 5
+    },
+    {
+      "file": "Reality/Scenes/Floor02/BackflowBlockerResidual/floor02_backflow_blocker_residual_low.usdc",
+      "reboundTextures": 17
+    },
+    {
+      "file": "Reality/Scenes/Floor01/FinalAuthorizationAdministrator/floor01_final_authorization_administrator.usdc",
+      "reboundTextures": 79
+    },
+    {
+      "file": "Reality/Scenes/Floor01/FinalAuthorizationAdministrator/floor01_final_authorization_administrator_medium.usdc",
+      "reboundTextures": 6
+    },
+    {
+      "file": "Reality/Scenes/Floor01/FinalAuthorizationAdministrator/floor01_final_authorization_administrator_low.usdc",
+      "reboundTextures": 17
+    },
+    {
+      "file": "Reality/Scenes/Floor01/IdentityComparisonResidual/floor01_identity_comparison_residual.usdc",
+      "reboundTextures": 13
+    },
+    {
+      "file": "Reality/Scenes/Floor01/IdentityComparisonResidual/floor01_identity_comparison_residual_medium.usdc",
+      "reboundTextures": 4
+    },
+    {
+      "file": "Reality/Scenes/Floor01/IdentityComparisonResidual/floor01_identity_comparison_residual_low.usdc",
+      "reboundTextures": 13
+    },
+    {
+      "file": "Reality/Scenes/Floor01/ExitReviewResidual/floor01_exit_review_residual.usdc",
+      "reboundTextures": 13
+    },
+    {
+      "file": "Reality/Scenes/Floor01/ExitReviewResidual/floor01_exit_review_residual_medium.usdc",
+      "reboundTextures": 4
+    },
+    {
+      "file": "Reality/Scenes/Floor01/ExitReviewResidual/floor01_exit_review_residual_low.usdc",
+      "reboundTextures": 13
+    }
+  ]
+}

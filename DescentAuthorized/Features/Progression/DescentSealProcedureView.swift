@@ -107,7 +107,7 @@ struct DescentSealProcedureConfiguration {
         return DescentSealProcedureConfiguration(
             recordSubtitle: "제\(floorNumber)층 이중 하강 승인 기록",
             destination: destination,
-            loadingContext: .floor8,
+            loadingContext: .expansion(floorNumber),
             stages: stages,
             accessibilityLabel: "제\(floorNumber)층 이중 하강 승인 정답 기록",
             maximumAttempts: nil,
@@ -137,6 +137,8 @@ struct DescentDoorSceneView: View {
             if isSealInterfaceVisible {
                 DescentSealProcedureView(
                     configuration: configuration,
+                    initialCompletedStages: isExpansion ? gameSession.progress.expansion?.descentStage ?? 0 : 0,
+                    onStageApproved: { isExpansion ? gameSession.sendChecked(.approveExpansionStage($0)) : true },
                     onStateChanged: updateDescentState,
                     onValidationFeedback: playValidationFeedback,
                     onRejected: presentSealRejection,
@@ -174,6 +176,11 @@ struct DescentDoorSceneView: View {
             retryLoadingPresentation = nil
             sceneController.resetDescentCamera()
         }
+    }
+
+    private var isExpansion: Bool {
+        if case .expansion = configuration.loadingContext { return true }
+        return false
     }
 
     private func prefetchNextRoom(quality: GraphicsQuality) {
@@ -267,16 +274,12 @@ struct DescentDoorSceneView: View {
         }
         transitionTask?.cancel()
         transitionTask = Task { @MainActor in
-            try? await Task.sleep(
-                for: RealityDescentTransitionTiming.doorOpeningDelay(
-                    reducedMotion: appSettings.reducedMotion
-                )
-            )
+            guard await sceneController.waitForDescentDoorOpening() else { return }
             guard !Task.isCancelled else { return }
             setDescentState(.open)
             try? await Task.sleep(for: RealityDescentTransitionTiming.openStateHold)
             guard !Task.isCancelled else { return }
-            gameSession.send(.approveDescentDoor)
+            gameSession.send(isExpansion ? .advanceExpansion : .approveDescentDoor)
         }
     }
 
@@ -380,7 +383,11 @@ struct DescentSealProcedureView: View {
             onNext: advanceCoach,
             onSkip: skipCoach
         )
-        .onAppear {
+        .task {
+            // Restore approval after the parent's scene reset, regardless of
+            // SwiftUI's parent/child onAppear ordering.
+            await Task.yield()
+            guard !Task.isCancelled else { return }
             if completedStageCount == configuration.stages.count {
                 phase = .approved
                 onStateChanged(.approved)

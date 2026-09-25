@@ -1,0 +1,50 @@
+[
+  {
+    "floor": 6,
+    "room": "floor06_causality_administrator",
+    "quality": "high",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 3
+  },
+  {
+    "floor": 6,
+    "room": "floor06_causality_administrator",
+    "quality": "medium",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 3
+  },
+  {
+    "floor": 6,
+    "room": "floor06_causality_administrator",
+    "quality": "low",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 3
+  },
+  {
+    "floor": 6,
+    "room": "floor06_causality_residue",
+    "quality": "high",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 6,
+    "room": "floor06_causality_residue",
+    "quality": "medium",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  },
+  {
+    "floor": 6,
+    "room": "floor06_causality_residue",
+    "quality": "low",
+    "missingAnchors": [],
+    "missingTextures": [],
+    "cameraCount": 2
+  }
+]

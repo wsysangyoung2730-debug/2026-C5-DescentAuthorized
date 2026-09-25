@@ -1,0 +1,38 @@
+[
+  {
+    "actor": "DA_ACTOR_ConsentCustodianResidual",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 35
+  },
+  {
+    "actor": "DA_ACTOR_QuarantineEnforcerResidual",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 33
+  },
+  {
+    "actor": "DA_ACTOR_RejectionExecutionResidual",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 32
+  },
+  {
+    "actor": "DA_ACTOR_ResponsibilityAuditAdministrator",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 35
+  },
+  {
+    "actor": "DA_ACTOR_SignatureMimicResidual",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 33
+  },
+  {
+    "actor": "DA_ACTOR_VoluntaryQuarantineAdministrator",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 35
+  }
+]

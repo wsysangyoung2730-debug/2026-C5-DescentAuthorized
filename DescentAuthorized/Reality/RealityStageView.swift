@@ -2,6 +2,7 @@ import RealityKit
 import SwiftUI
 
 enum LoadingScreenContext: Equatable {
+    case expansion(Int)
     case startup
     case floor10
     case floor9
@@ -15,12 +16,22 @@ enum LoadingScreenContext: Equatable {
             self = .floor9
         case .floor08ResidueIsolation, .floor08AdministratorObservatory:
             self = .floor8
+        case .floor07CoordinateResidue, .floor07CoordinateAdministrator: self = .expansion(7)
+        case .floor06CausalityResidue, .floor06CausalityAdministrator: self = .expansion(6)
+        case .floor05MemoryOmissionResidue, .floor05OriginalMemoryAdministrator: self = .expansion(5)
+        case .floor04SignatureMimicResidual, .floor04RejectionExecutionResidual, .floor04ResponsibilityAuditAdministrator: self = .expansion(4)
+        case .floor03ConsentCustodianResidual, .floor03QuarantineEnforcerResidual, .floor03VoluntaryQuarantineAdministrator: self = .expansion(3)
+        case .floor02OverloadResidual, .floor02BackflowBlockerResidual, .floor02SealMaintenanceAdministrator: self = .expansion(2)
+        case .floor01IdentityComparisonResidual, .floor01ExitReviewResidual, .floor01FinalAuthorizationAdministrator: self = .expansion(1)
         }
     }
 
     var backgroundImageName: String {
         switch self {
-        case .startup: "LoadingMain"
+        case .expansion(7): "LoadingFloor07"
+        case .expansion(6): "LoadingFloor06"
+        case .expansion(5): "LoadingFloor05"
+        case .startup, .expansion: "LoadingMain"
         case .floor10: "LoadingFloor10"
         case .floor9: "LoadingFloor09"
         case .floor8: "LoadingFloor08"
@@ -72,7 +83,7 @@ enum LoadingTipCatalog {
             candidates = general
         case .floor9:
             candidates = general + floor9
-        case .floor8:
+        case .floor8, .expansion:
             candidates = general + floor9 + floor8
         }
         let alternatives = candidates.filter { $0 != currentTip }
@@ -317,6 +328,11 @@ private struct RealityARView: UIViewRepresentable {
     }
 
     private func synchronizePresentation() {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--final-tour") {
+            switch controller.loadState { case .idle: break; default: return }
+        }
+        #endif
         var quality = appSettings.graphicsQuality
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--floor9-preview") {
@@ -345,6 +361,13 @@ private struct RealityARView: UIViewRepresentable {
 struct Floor9MotionPreview: View {
     private var sceneID: FloorSceneID {
         let args = ProcessInfo.processInfo.arguments
+        if let index = args.firstIndex(of: "--final-room"), args.indices.contains(index + 1),
+           let id = FloorSceneID(rawValue: args[index + 1]), FinalSceneContract.contract(for: id) != nil { return id }
+        for (flag, scene): (String, FloorSceneID) in [
+            ("--floor7-residue", .floor07CoordinateResidue), ("--floor7-boss", .floor07CoordinateAdministrator),
+            ("--floor6-residue", .floor06CausalityResidue), ("--floor6-boss", .floor06CausalityAdministrator),
+            ("--floor5-residue", .floor05MemoryOmissionResidue), ("--floor5-boss", .floor05OriginalMemoryAdministrator)
+        ] where args.contains(flag) { return scene }
         if args.contains("--floor10") { return .floor10ClosedOffice }
         if args.contains("--floor8-residue") { return .floor08ResidueIsolation }
         if args.contains("--floor8-boss") { return .floor08AdministratorObservatory }
@@ -376,6 +399,10 @@ struct Floor9MotionPreview: View {
                     if case .failed = controller.loadState { return }
                     do { try await Task.sleep(for: .milliseconds(30)) } catch { return }
                 }
+                if ProcessInfo.processInfo.arguments.contains("--final-tour") {
+                    await controller.runFinalTourDiagnostics()
+                    return
+                }
                 if ProcessInfo.processInfo.arguments.contains("--ambient-diagnostics") {
                     await controller.runObservatoryAmbientDiagnostics()
                     return
@@ -388,10 +415,19 @@ struct Floor9MotionPreview: View {
                 controller.setDescentPresentation(camera == .descentInput ? .ready : .inactive,
                                                   reducedMotion: reducedMotion)
                 if camera == .rewardSelection {
+                    if let contract = FinalSceneContract.contract(for: sceneID) {
+                        let progress = ExpansionProgress(floorNumber: contract.floor, stage: .reward)
+                        let candidates = progress.rewardSite.map { RewardCatalog.candidates(for: $0, learned: []) }
+                            ?? RewardCatalog.candidates(forFloorNumber: contract.floor)
+                        controller.configureFinalRewardCandidates(candidates)
+                    }
                     controller.setRewardPresentation(.appearing, reducedMotion: reducedMotion)
                     if await controller.waitForRewardAppearance(), !Task.isCancelled {
                         controller.setRewardPresentation(.choosing, reducedMotion: reducedMotion)
                     }
+                }
+                if ProcessInfo.processInfo.arguments.contains("--expansion-diagnostics") {
+                    await controller.runExpansionDiagnostics()
                 }
             }
     }

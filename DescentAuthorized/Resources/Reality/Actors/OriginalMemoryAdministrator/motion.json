@@ -1,0 +1,83 @@
+{
+  "actor": "OriginalMemoryAdministrator",
+  "fps": 30,
+  "clips": {
+    "idle": {
+      "start": 0.0,
+      "end": 5.0,
+      "duration": 5.0
+    },
+    "idleVariant": {
+      "start": 5.1,
+      "end": 7.5,
+      "duration": 2.4
+    },
+    "appear": {
+      "start": 7.6,
+      "end": 8.6,
+      "duration": 1.0
+    },
+    "telegraph": {
+      "start": 8.7,
+      "end": 9.9,
+      "duration": 1.2
+    },
+    "attack": {
+      "start": 10.0,
+      "end": 11.0,
+      "duration": 1.0,
+      "impact": 0.46,
+      "settledAt": 0.96
+    },
+    "heavyAttack": {
+      "start": 11.1,
+      "end": 12.4,
+      "duration": 1.3,
+      "impact": 0.62,
+      "settledAt": 1.28
+    },
+    "special": {
+      "start": 12.5,
+      "end": 14.5,
+      "duration": 2.0
+    },
+    "hit": {
+      "start": 14.6,
+      "end": 15.4,
+      "duration": 0.8
+    },
+    "death": {
+      "start": 15.5,
+      "end": 17.3,
+      "duration": 1.8
+    }
+  },
+  "rigVersion": 2,
+  "profile": {
+    "style": "memory-wave",
+    "side": "L",
+    "cycle": 5.0,
+    "arm": [
+      -0.06,
+      -0.024,
+      0.018
+    ],
+    "forearm": [
+      -0.051,
+      0.036,
+      0.027
+    ],
+    "chest": [
+      0.045,
+      0,
+      0.035
+    ],
+    "look": 0.03
+  },
+  "initialIdleOffset": 1.3666666666666667,
+  "dissolveDuration": 0.65,
+  "sourceRigPreserved": false,
+  "rigidEquipment": [
+    "equipment_back"
+  ]
+}

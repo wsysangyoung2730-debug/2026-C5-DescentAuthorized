@@ -1,0 +1,542 @@
+[
+  {
+    "scene": "floor07_coordinate_administrator",
+    "quality": "high",
+    "triangles": 67641,
+    "uniqueTextures": 167,
+    "textureEncodedBytes": 36281391,
+    "textureRGBA8WithMipmapsEstimateBytes": 488958635,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor07_coordinate_administrator",
+    "quality": "medium",
+    "triangles": 67641,
+    "uniqueTextures": 167,
+    "textureEncodedBytes": 19159251,
+    "textureRGBA8WithMipmapsEstimateBytes": 220523179,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor07_coordinate_administrator",
+    "quality": "low",
+    "triangles": 67641,
+    "uniqueTextures": 167,
+    "textureEncodedBytes": 5825807,
+    "textureRGBA8WithMipmapsEstimateBytes": 77916843,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor07_coordinate_residue",
+    "quality": "high",
+    "triangles": 46524,
+    "uniqueTextures": 32,
+    "textureEncodedBytes": 32950407,
+    "textureRGBA8WithMipmapsEstimateBytes": 447392427,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor07_coordinate_residue",
+    "quality": "medium",
+    "triangles": 46524,
+    "uniqueTextures": 32,
+    "textureEncodedBytes": 17720321,
+    "textureRGBA8WithMipmapsEstimateBytes": 178956971,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor07_coordinate_residue",
+    "quality": "low",
+    "triangles": 46524,
+    "uniqueTextures": 32,
+    "textureEncodedBytes": 4272720,
+    "textureRGBA8WithMipmapsEstimateBytes": 44739243,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor06_causality_administrator",
+    "quality": "high",
+    "triangles": 117808,
+    "uniqueTextures": 96,
+    "textureEncodedBytes": 44160920,
+    "textureRGBA8WithMipmapsEstimateBytes": 505511936,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor06_causality_administrator",
+    "quality": "medium",
+    "triangles": 117808,
+    "uniqueTextures": 96,
+    "textureEncodedBytes": 20493835,
+    "textureRGBA8WithMipmapsEstimateBytes": 203522048,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor06_causality_administrator",
+    "quality": "low",
+    "triangles": 117808,
+    "uniqueTextures": 96,
+    "textureEncodedBytes": 5623275,
+    "textureRGBA8WithMipmapsEstimateBytes": 60915712,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor06_causality_residue",
+    "quality": "high",
+    "triangles": 64307,
+    "uniqueTextures": 30,
+    "textureEncodedBytes": 32900651,
+    "textureRGBA8WithMipmapsEstimateBytes": 402653184,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor06_causality_residue",
+    "quality": "medium",
+    "triangles": 64307,
+    "uniqueTextures": 30,
+    "textureEncodedBytes": 17541869,
+    "textureRGBA8WithMipmapsEstimateBytes": 167772160,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor06_causality_residue",
+    "quality": "low",
+    "triangles": 64307,
+    "uniqueTextures": 30,
+    "textureEncodedBytes": 4152266,
+    "textureRGBA8WithMipmapsEstimateBytes": 41943040,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor05_original_memory_administrator",
+    "quality": "high",
+    "triangles": 193380,
+    "uniqueTextures": 101,
+    "textureEncodedBytes": 48190353,
+    "textureRGBA8WithMipmapsEstimateBytes": 650914475,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor05_original_memory_administrator",
+    "quality": "medium",
+    "triangles": 193380,
+    "uniqueTextures": 101,
+    "textureEncodedBytes": 15765020,
+    "textureRGBA8WithMipmapsEstimateBytes": 231484075,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor05_original_memory_administrator",
+    "quality": "low",
+    "triangles": 193380,
+    "uniqueTextures": 101,
+    "textureEncodedBytes": 4859717,
+    "textureRGBA8WithMipmapsEstimateBytes": 67906219,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor05_memory_omission_residue",
+    "quality": "high",
+    "triangles": 139252,
+    "uniqueTextures": 30,
+    "textureEncodedBytes": 29376111,
+    "textureRGBA8WithMipmapsEstimateBytes": 469762048,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor05_memory_omission_residue",
+    "quality": "medium",
+    "triangles": 139252,
+    "uniqueTextures": 30,
+    "textureEncodedBytes": 9256124,
+    "textureRGBA8WithMipmapsEstimateBytes": 167772160,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor05_memory_omission_residue",
+    "quality": "low",
+    "triangles": 139252,
+    "uniqueTextures": 30,
+    "textureEncodedBytes": 2563230,
+    "textureRGBA8WithMipmapsEstimateBytes": 41943040,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor04_responsibility_audit_administrator",
+    "quality": "high",
+    "triangles": 233469,
+    "uniqueTextures": 113,
+    "textureEncodedBytes": 79926732,
+    "textureRGBA8WithMipmapsEstimateBytes": 516696747,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor04_responsibility_audit_administrator",
+    "quality": "medium",
+    "triangles": 233469,
+    "uniqueTextures": 113,
+    "textureEncodedBytes": 27400897,
+    "textureRGBA8WithMipmapsEstimateBytes": 298592939,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor04_responsibility_audit_administrator",
+    "quality": "low",
+    "triangles": 233469,
+    "uniqueTextures": 113,
+    "textureEncodedBytes": 8305694,
+    "textureRGBA8WithMipmapsEstimateBytes": 84683435,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor04_signature_mimic_residual",
+    "quality": "high",
+    "triangles": 158543,
+    "uniqueTextures": 44,
+    "textureEncodedBytes": 54441952,
+    "textureRGBA8WithMipmapsEstimateBytes": 397060779,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor04_signature_mimic_residual",
+    "quality": "medium",
+    "triangles": 158543,
+    "uniqueTextures": 44,
+    "textureEncodedBytes": 18881082,
+    "textureRGBA8WithMipmapsEstimateBytes": 246065835,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor04_signature_mimic_residual",
+    "quality": "low",
+    "triangles": 158543,
+    "uniqueTextures": 44,
+    "textureEncodedBytes": 5479591,
+    "textureRGBA8WithMipmapsEstimateBytes": 61516459,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor04_rejection_execution_residual",
+    "quality": "high",
+    "triangles": 167979,
+    "uniqueTextures": 49,
+    "textureEncodedBytes": 59965749,
+    "textureRGBA8WithMipmapsEstimateBytes": 441800021,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor04_rejection_execution_residual",
+    "quality": "medium",
+    "triangles": 167979,
+    "uniqueTextures": 49,
+    "textureEncodedBytes": 21072627,
+    "textureRGBA8WithMipmapsEstimateBytes": 274027861,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor04_rejection_execution_residual",
+    "quality": "low",
+    "triangles": 167979,
+    "uniqueTextures": 49,
+    "textureEncodedBytes": 6199474,
+    "textureRGBA8WithMipmapsEstimateBytes": 68506965,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor03_voluntary_quarantine_administrator",
+    "quality": "high",
+    "triangles": 99449,
+    "uniqueTextures": 84,
+    "textureEncodedBytes": 17319100,
+    "textureRGBA8WithMipmapsEstimateBytes": 354516992,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor03_voluntary_quarantine_administrator",
+    "quality": "medium",
+    "triangles": 99449,
+    "uniqueTextures": 84,
+    "textureEncodedBytes": 6356387,
+    "textureRGBA8WithMipmapsEstimateBytes": 136413184,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor03_voluntary_quarantine_administrator",
+    "quality": "low",
+    "triangles": 99449,
+    "uniqueTextures": 84,
+    "textureEncodedBytes": 2401931,
+    "textureRGBA8WithMipmapsEstimateBytes": 44138496,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor03_consent_custodian_residual",
+    "quality": "high",
+    "triangles": 79973,
+    "uniqueTextures": 17,
+    "textureEncodedBytes": 12744102,
+    "textureRGBA8WithMipmapsEstimateBytes": 262843051,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor03_consent_custodian_residual",
+    "quality": "medium",
+    "triangles": 79973,
+    "uniqueTextures": 17,
+    "textureEncodedBytes": 4105390,
+    "textureRGBA8WithMipmapsEstimateBytes": 95070891,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor03_consent_custodian_residual",
+    "quality": "low",
+    "triangles": 79973,
+    "uniqueTextures": 17,
+    "textureEncodedBytes": 1289748,
+    "textureRGBA8WithMipmapsEstimateBytes": 23767723,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor03_quarantine_enforcer_residual",
+    "quality": "high",
+    "triangles": 96972,
+    "uniqueTextures": 18,
+    "textureEncodedBytes": 13481733,
+    "textureRGBA8WithMipmapsEstimateBytes": 285212672,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor03_quarantine_enforcer_residual",
+    "quality": "medium",
+    "triangles": 96972,
+    "uniqueTextures": 18,
+    "textureEncodedBytes": 4335323,
+    "textureRGBA8WithMipmapsEstimateBytes": 100663296,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor03_quarantine_enforcer_residual",
+    "quality": "low",
+    "triangles": 96972,
+    "uniqueTextures": 18,
+    "textureEncodedBytes": 1359765,
+    "textureRGBA8WithMipmapsEstimateBytes": 25165824,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor02_seal_maintenance_administrator",
+    "quality": "high",
+    "triangles": 123918,
+    "uniqueTextures": 83,
+    "textureEncodedBytes": 23033214,
+    "textureRGBA8WithMipmapsEstimateBytes": 348924587,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor02_seal_maintenance_administrator",
+    "quality": "medium",
+    "triangles": 123918,
+    "uniqueTextures": 83,
+    "textureEncodedBytes": 7697046,
+    "textureRGBA8WithMipmapsEstimateBytes": 130820779,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor02_seal_maintenance_administrator",
+    "quality": "low",
+    "triangles": 123918,
+    "uniqueTextures": 83,
+    "textureEncodedBytes": 2649703,
+    "textureRGBA8WithMipmapsEstimateBytes": 42740395,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor02_overload_residual",
+    "quality": "high",
+    "triangles": 127358,
+    "uniqueTextures": 17,
+    "textureEncodedBytes": 15398630,
+    "textureRGBA8WithMipmapsEstimateBytes": 246065835,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor02_overload_residual",
+    "quality": "medium",
+    "triangles": 127358,
+    "uniqueTextures": 17,
+    "textureEncodedBytes": 4716998,
+    "textureRGBA8WithMipmapsEstimateBytes": 95070891,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor02_overload_residual",
+    "quality": "low",
+    "triangles": 127358,
+    "uniqueTextures": 17,
+    "textureEncodedBytes": 1391757,
+    "textureRGBA8WithMipmapsEstimateBytes": 23767723,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor02_backflow_blocker_residual",
+    "quality": "high",
+    "triangles": 140264,
+    "uniqueTextures": 18,
+    "textureEncodedBytes": 16474409,
+    "textureRGBA8WithMipmapsEstimateBytes": 268435456,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor02_backflow_blocker_residual",
+    "quality": "medium",
+    "triangles": 140264,
+    "uniqueTextures": 18,
+    "textureEncodedBytes": 5012011,
+    "textureRGBA8WithMipmapsEstimateBytes": 100663296,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor02_backflow_blocker_residual",
+    "quality": "low",
+    "triangles": 140264,
+    "uniqueTextures": 18,
+    "textureEncodedBytes": 1466038,
+    "textureRGBA8WithMipmapsEstimateBytes": 25165824,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor01_final_authorization_administrator",
+    "quality": "high",
+    "triangles": 172234,
+    "uniqueTextures": 84,
+    "textureEncodedBytes": 24627915,
+    "textureRGBA8WithMipmapsEstimateBytes": 388071424,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor01_final_authorization_administrator",
+    "quality": "medium",
+    "triangles": 172234,
+    "uniqueTextures": 84,
+    "textureEncodedBytes": 9032986,
+    "textureRGBA8WithMipmapsEstimateBytes": 136413184,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor01_final_authorization_administrator",
+    "quality": "low",
+    "triangles": 172234,
+    "uniqueTextures": 84,
+    "textureEncodedBytes": 3162808,
+    "textureRGBA8WithMipmapsEstimateBytes": 44138496,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor01_identity_comparison_residual",
+    "quality": "high",
+    "triangles": 97919,
+    "uniqueTextures": 14,
+    "textureEncodedBytes": 10687356,
+    "textureRGBA8WithMipmapsEstimateBytes": 229288619,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor01_identity_comparison_residual",
+    "quality": "medium",
+    "triangles": 97919,
+    "uniqueTextures": 14,
+    "textureEncodedBytes": 4067345,
+    "textureRGBA8WithMipmapsEstimateBytes": 78293675,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor01_identity_comparison_residual",
+    "quality": "low",
+    "triangles": 97919,
+    "uniqueTextures": 14,
+    "textureEncodedBytes": 1291276,
+    "textureRGBA8WithMipmapsEstimateBytes": 19573419,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor01_exit_review_residual",
+    "quality": "high",
+    "triangles": 230608,
+    "uniqueTextures": 15,
+    "textureEncodedBytes": 11256785,
+    "textureRGBA8WithMipmapsEstimateBytes": 251658240,
+    "largestTextureEdge": 2048,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor01_exit_review_residual",
+    "quality": "medium",
+    "triangles": 230608,
+    "uniqueTextures": 15,
+    "textureEncodedBytes": 4250036,
+    "textureRGBA8WithMipmapsEstimateBytes": 83886080,
+    "largestTextureEdge": 1024,
+    "meshLOD": false
+  },
+  {
+    "scene": "floor01_exit_review_residual",
+    "quality": "low",
+    "triangles": 230608,
+    "uniqueTextures": 15,
+    "textureEncodedBytes": 1368576,
+    "textureRGBA8WithMipmapsEstimateBytes": 20971520,
+    "largestTextureEdge": 512,
+    "meshLOD": false
+  }
+]

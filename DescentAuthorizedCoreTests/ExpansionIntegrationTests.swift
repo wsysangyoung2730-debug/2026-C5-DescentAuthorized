@@ -4,8 +4,8 @@ import XCTest
 
 final class ExpansionIntegrationTests: XCTestCase {
     func testCatalogPathsAndLegacyRewardMigration() throws {
-        XCTAssertEqual(SpellID.allCases.count, 20)
-        XCTAssertEqual(EnemyCatalog.all.count, 9)
+        XCTAssertEqual(SpellID.allCases.count, 28)
+        XCTAssertEqual(EnemyCatalog.all.count, 21)
         for spell in SpellCatalog.all.values {
             let result = GlyphEvaluator(maximumMana: 100).evaluate(spell: spell,
                 strokes: strokes(spell), inputMethod: .pencil, erasureZones: [])
@@ -95,11 +95,15 @@ final class ExpansionIntegrationTests: XCTestCase {
                 _ = try progress.learnExpansionDebuff(grade: .approved)
             }
             _ = try progress.advanceExpansion()
+            XCTAssertEqual(progress.progress.expansion?.stage, .residualEncounter)
+            _ = try progress.advanceExpansion()
             XCTAssertEqual(progress.progress.expansion?.stage, .residualBattle)
             _ = try progress.recordExpansionVictory(enemy: XCTUnwrap(ExpansionEnemyCatalog.enemy(floor: floor, isBoss: false)).id, remainingPlayerHP: 12)
             XCTAssertEqual(progress.progress.playerHP, 60)
             _ = try progress.advanceExpansion()
             _ = try progress.releaseExpansionSeal(grade: .approved)
+            _ = try progress.advanceExpansion()
+            XCTAssertEqual(progress.progress.expansion?.stage, .bossEncounter)
             _ = try progress.advanceExpansion()
             _ = try progress.recordExpansionVictory(enemy: XCTUnwrap(ExpansionEnemyCatalog.enemy(floor: floor, isBoss: true)).id, remainingPlayerHP: 35)
             _ = try progress.advanceExpansion()
@@ -111,10 +115,17 @@ final class ExpansionIntegrationTests: XCTestCase {
             XCTAssertEqual(progress.progress.expansion?.descentStage, 1)
             XCTAssertThrowsError(try progress.advanceExpansion())
             try progress.approveExpansionStage(2)
+            // Relaunch after the final glyph but before the door transition.
+            progress = GameProgressionController(progress: try JSONDecoder().decode(GameProgress.self, from: JSONEncoder().encode(progress.progress)))
+            XCTAssertEqual(ExpansionSceneRoute(try XCTUnwrap(progress.progress.expansion))?.camera, .descentInput)
+            XCTAssertEqual(progress.progress.expansion?.descentStage, 2)
             _ = try progress.advanceExpansion()
+            XCTAssertEqual(progress.progress.expansion?.floorNumber, floor - 1)
+            XCTAssertEqual(progress.progress.expansion?.descentStage, 0)
             try GameProgressValidator().validate(progress.progress)
         }
-        XCTAssertTrue(progress.progress.expansion?.isComplete == true)
+        XCTAssertFalse(progress.progress.expansion?.isComplete == true)
+        XCTAssertEqual(progress.progress.expansion?.stage, .entrance)
         XCTAssertEqual(progress.progress.learnedSpells.count, 10)
         XCTAssertEqual(progress.progress.equippedSpells.count, 6)
     }

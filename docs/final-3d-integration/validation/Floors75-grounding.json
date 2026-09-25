@@ -1,0 +1,38 @@
+[
+  {
+    "actor": "DA_ACTOR_CausalityAdministrator",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 34
+  },
+  {
+    "actor": "DA_ACTOR_CausalityResidue",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 35
+  },
+  {
+    "actor": "DA_ACTOR_CoordinateAdministrator",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 34
+  },
+  {
+    "actor": "DA_ACTOR_CoordinateResidue",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 33
+  },
+  {
+    "actor": "DA_ACTOR_MemoryOmissionResidue",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 32
+  },
+  {
+    "actor": "DA_ACTOR_OriginalMemoryAdministrator",
+    "minFootZ": 0.0,
+    "maxFootZ": 0.0,
+    "sampleCount": 35
+  }
+]

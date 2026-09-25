@@ -55,10 +55,18 @@ struct RewardSelectionView: View {
     @State private var inspectedCandidateID: String?
     @State private var detailPressTask: Task<Void, Never>?
     @State private var isSelectionInterfaceVisible = false
+    @State private var showsPractice = false
 
     private var candidates: [RewardCandidate] {
-        RewardCatalog.candidates(forFloorNumber: floorNumber)
+        isLowerFloor ? gameSession.progress.currentRewardCandidates : RewardCatalog.candidates(forFloorNumber: floorNumber)
     }
+
+    private var isLowerFloor: Bool { (1...4).contains(floorNumber) }
+    private var usesSceneRewards: Bool {
+        guard let id = gameSession.presentation.floorSceneID else { return false }
+        return RealitySceneDescriptor.descriptor(for: id).entityNames[.rewardStand] != nil
+    }
+
 
     var body: some View {
         GeometryReader { proxy in
@@ -87,7 +95,13 @@ struct RewardSelectionView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showsPractice) {
+            if let candidate = candidates.first(where: { $0.id == selectedCandidateID }) {
+                SpellPracticeSheet(spell: displayedSpell(for: candidate))
+            }
+        }
         .onAppear {
+            if usesSceneRewards { sceneController.configureFinalRewardCandidates(candidates) }
             if let pendingLearningCandidate,
                let selectedIndex = candidates.firstIndex(where: {
                    $0.id == pendingLearningCandidate.id
@@ -100,18 +114,17 @@ struct RewardSelectionView: View {
             }
 
             isLearningInputActive = false
+            if !usesSceneRewards {
+                rewardState = .choosing
+                isSelectionInterfaceVisible = true
+                return
+            }
             isSelectionInterfaceVisible = false
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             setRewardState(.appearing)
             transitionTask?.cancel()
             transitionTask = Task { @MainActor in
-                if floorNumber == 9 || floorNumber == 8 {
-                    guard await sceneController.waitForRewardAppearance() else { return }
-                } else {
-                    try? await Task.sleep(
-                        for: RealityRewardTransitionTiming.appearanceDelay(reducedMotion: appSettings.reducedMotion)
-                    )
-                }
+                guard await sceneController.waitForRewardAppearance() else { return }
                 guard !Task.isCancelled else { return }
                 setRewardState(.choosing)
                 withAnimation(
@@ -123,12 +136,12 @@ struct RewardSelectionView: View {
         }
         .onDisappear {
             transitionTask?.cancel()
-            if floorNumber == 9 || floorNumber == 8 { sceneController.setRewardPresentation(.inactive, reducedMotion: appSettings.reducedMotion) }
+            if usesSceneRewards { sceneController.setRewardPresentation(.inactive, reducedMotion: appSettings.reducedMotion) }
             cancelDetailPress(playsCloseSound: false)
             isLearningInputActive = false
         }
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
-            sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion)
+            if usesSceneRewards { sceneController.setRewardPresentation(rewardState, reducedMotion: reducedMotion) }
         }
     }
 
@@ -187,6 +200,13 @@ struct RewardSelectionView: View {
                     x: metrics.size.width - metrics.headerLeading - 52,
                     y: metrics.headerTop + metrics.bodySize / 2
                 )
+            if isLowerFloor {
+                Button("선택 문양 시험 각인") { showsPractice = true }
+                    .buttonStyle(.bordered).tint(DAColor.gold)
+                    .disabled(selectedCandidateID == nil || isResolving)
+                    .position(x: metrics.size.width - metrics.headerLeading - 90,
+                              y: metrics.headerTop + 60)
+            }
         }
         .frame(width: metrics.size.width, height: metrics.size.height)
     }
@@ -453,7 +473,7 @@ struct RewardSelectionView: View {
 
         return ScrollSpellLearningView(
             spell: spell,
-            sourceCode: "제\(floorNumber)층 · 관리자 보상 기록",
+            sourceCode: gameSession.progress.expansion?.rewardSite?.title ?? "제\(floorNumber)층 · 관리자 보상 기록",
             discoveryText: "선택한 두루마리의 문양이 입력판과 공명합니다. 획의 순서를 재현해 주문 기록을 완전히 정착시키십시오.",
             presentation: .standard,
             tutorialSequence: nil,
@@ -578,7 +598,7 @@ struct RewardSelectionView: View {
 
     private func setRewardState(_ state: RealityRewardPresentationState) {
         rewardState = state
-        sceneController.setRewardPresentation(state, reducedMotion: appSettings.reducedMotion)
+        if usesSceneRewards { sceneController.setRewardPresentation(state, reducedMotion: appSettings.reducedMotion) }
     }
 }
 

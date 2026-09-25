@@ -1,0 +1,77 @@
+[
+  {
+    "scene": "DA_F07A_CoordinateResidue",
+    "asset": "floor07_coordinate_residue",
+    "floor": 7,
+    "boss": false,
+    "cameras": [
+      "F07A_iPadCamera",
+      "CAM_F07A_BossAccessDoor"
+    ],
+    "objects": 202,
+    "source": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_ExpansionIntegration_Source_v050_preserved.blend"
+  },
+  {
+    "scene": "DA_F07_CoordinateAdministrator",
+    "asset": "floor07_coordinate_administrator",
+    "floor": 7,
+    "boss": true,
+    "cameras": [
+      "F07_iPad_MainCamera",
+      "CAM_F07_RewardSelection",
+      "CAM_F07_DescentDoor"
+    ],
+    "objects": 441,
+    "source": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_ExpansionIntegration_Source_v050_preserved.blend"
+  },
+  {
+    "scene": "DA_F06A_ResultDelayResidue",
+    "asset": "floor06_causality_residue",
+    "floor": 6,
+    "boss": false,
+    "cameras": [
+      "F06A_iPadCamera",
+      "CAM_F06A_BossAccessDoor"
+    ],
+    "objects": 229,
+    "source": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_ExpansionIntegration_Source_v050_preserved.blend"
+  },
+  {
+    "scene": "DA_F06B_CausalityAdministrator",
+    "asset": "floor06_causality_administrator",
+    "floor": 6,
+    "boss": true,
+    "cameras": [
+      "F06_iPad_MainCamera",
+      "CAM_F06_RewardSelection",
+      "CAM_F06_DescentDoor"
+    ],
+    "objects": 397,
+    "source": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_ExpansionIntegration_Source_v050_preserved.blend"
+  },
+  {
+    "scene": "DA_F05A_MemoryOmissionResidue",
+    "asset": "floor05_memory_omission_residue",
+    "floor": 5,
+    "boss": false,
+    "cameras": [
+      "F05A_iPad_MainCamera",
+      "CAM_F05A_BossAccess"
+    ],
+    "objects": 528,
+    "source": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_ExpansionIntegration_Source_v050_preserved.blend"
+  },
+  {
+    "scene": "DA_F05B_OriginalMemoryAdministrator",
+    "asset": "floor05_original_memory_administrator",
+    "floor": 5,
+    "boss": true,
+    "cameras": [
+      "F05_iPad_MainCamera",
+      "CAM_F05_RewardSelection",
+      "CAM_F05_DescentDoor"
+    ],
+    "objects": 694,
+    "source": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_ExpansionIntegration_Source_v050_preserved.blend"
+  }
+]

@@ -1,0 +1,81 @@
+{
+  "tool": "built-in image_gen",
+  "targetSize": [
+    1448,
+    1086
+  ],
+  "images": [
+    {
+      "name": "Floor7ResidualEncounter",
+      "reference": "/Users/sangyoung/Desktop/2026-C5-DescentAuthorized/DescentAuthorized/Resources/Assets.xcassets/Floor7ResidualEncounter.imageset/Floor7ResidualEncounter.png",
+      "generated": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-0ed110f7-e664-42b8-828f-0ff614027780.png",
+      "prompt": "Edit the attached existing game artwork Floor7ResidualEncounter. Deliver ONE image, exact 1448 x 1086 pixels landscape 4:3 (same size as the game's floor8 art), NOT 16:9. Recompose/outpaint into 4:3 without stretching. Preserve this exact character identity, encounter/defeated pose, floor environment, all Korean text VERBATIM, typography and ornaments, colors and lighting. Keep title and subtitle at top within 3%-18% height with safe margins. No side information panel; character centered. Keep character's head/core and important details above 78% height. Extend the room floor naturally to bottom edge, bottom 18% is dark unobstructed floor reserved for the app's dialogue overlay: do NOT draw a dialogue box or black letterbox. Full-bleed detailed cinematic game art, no empty black bars, no new text, no watermarks. Preserve original Korean spelling exactly."
+    },
+    {
+      "name": "Floor7ResidualDefeated",
+      "reference": "/Users/sangyoung/Desktop/2026-C5-DescentAuthorized/DescentAuthorized/Resources/Assets.xcassets/Floor7ResidualDefeated.imageset/Floor7ResidualDefeated.png",
+      "generated": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-0e4400c7-9aea-47d4-893f-03c9040f43da.png",
+      "prompt": "Edit the attached existing game artwork Floor7ResidualDefeated. Deliver ONE image, exact 1448 x 1086 pixels landscape 4:3 (same size as the game's floor8 art), NOT 16:9. Recompose/outpaint into 4:3 without stretching. Preserve this exact character identity, encounter/defeated pose, floor environment, all Korean text VERBATIM, typography and ornaments, colors and lighting. Keep title and subtitle at top within 3%-18% height with safe margins. No side information panel; character centered. Keep character's head/core and important details above 78% height. Extend the room floor naturally to bottom edge, bottom 18% is dark unobstructed floor reserved for the app's dialogue overlay: do NOT draw a dialogue box or black letterbox. Full-bleed detailed cinematic game art, no empty black bars, no new text, no watermarks. Preserve original Korean spelling exactly."
+    },
+    {
+      "name": "Floor7AdministratorEncounter",
+      "reference": "/Users/sangyoung/Desktop/2026-C5-DescentAuthorized/DescentAuthorized/Resources/Assets.xcassets/Floor7AdministratorEncounter.imageset/Floor7AdministratorEncounter.png",
+      "generated": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-fe44fb01-5289-40c1-85ce-4ee9e2250cf7.png",
+      "prompt": "Edit the attached existing game artwork Floor7AdministratorEncounter. Deliver ONE image, exact 1448 x 1086 pixels landscape 4:3 (same size as the game's floor8 art), NOT 16:9. Recompose/outpaint into 4:3 without stretching. Preserve this exact character identity, encounter/defeated pose, floor environment, all Korean text VERBATIM, typography and ornaments, colors and lighting. Keep title and subtitle at top within 3%-18% height with safe margins. Keep the complete right information panel and all its text readable within x70%-94%, y32%-72%; character centered around x43%. Keep character's head/core and important details above 78% height. Extend the room floor naturally to bottom edge, bottom 18% is dark unobstructed floor reserved for the app's dialogue overlay: do NOT draw a dialogue box or black letterbox. Full-bleed detailed cinematic game art, no empty black bars, no new text, no watermarks. Preserve original Korean spelling exactly."
+    },
+    {
+      "name": "Floor7AdministratorDefeated",
+      "reference": "/Users/sangyoung/Desktop/2026-C5-DescentAuthorized/DescentAuthorized/Resources/Assets.xcassets/Floor7AdministratorDefeated.imageset/Floor7AdministratorDefeated.png",
+      "generated": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-fe761be0-ab49-4145-aef5-6262642c6ce7.png",
+      "prompt": "Edit the attached existing game artwork Floor7AdministratorDefeated. Deliver ONE image, exact 1448 x 1086 pixels landscape 4:3 (same size as the game's floor8 art), NOT 16:9. Recompose/outpaint into 4:3 without stretching. Preserve this exact character identity, encounter/defeated pose, floor environment, all Korean text VERBATIM, typography and ornaments, colors and lighting. Keep title and subtitle at top within 3%-18% height with safe margins. Keep the complete right information panel and all its text readable within x70%-94%, y32%-72%; character centered around x43%. Keep character's head/core and important details above 78% height. Extend the room floor naturally to bottom edge, bottom 18% is dark unobstructed floor reserved for the app's dialogue overlay: do NOT draw a dialogue box or black letterbox. Full-bleed detailed cinematic game art, no empty black bars, no new text, no watermarks. Preserve original Korean spelling exactly."
+    },
+    {
+      "name": "Floor6ResidualEncounter",
+      "reference": "/Users/sangyoung/Desktop/2026-C5-DescentAuthorized/DescentAuthorized/Resources/Assets.xcassets/Floor6ResidualEncounter.imageset/Floor6ResidualEncounter.png",
+      "generated": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-1b7122f4-9510-49e9-9415-2419d88e91f8.png",
+      "prompt": "Edit the attached existing game artwork Floor6ResidualEncounter. Deliver ONE image, exact 1448 x 1086 pixels landscape 4:3 (same size as the game's floor8 art), NOT 16:9. Recompose/outpaint into 4:3 without stretching. Preserve this exact character identity, encounter/defeated pose, floor environment, all Korean text VERBATIM, typography and ornaments, colors and lighting. Keep title and subtitle at top within 3%-18% height with safe margins. No side information panel; character centered. Keep character's head/core and important details above 78% height. Extend the room floor naturally to bottom edge, bottom 18% is dark unobstructed floor reserved for the app's dialogue overlay: do NOT draw a dialogue box or black letterbox. Full-bleed detailed cinematic game art, no empty black bars, no new text, no watermarks. Preserve original Korean spelling exactly."
+    },
+    {
+      "name": "Floor6ResidualDefeated",
+      "reference": "/Users/sangyoung/Desktop/2026-C5-DescentAuthorized/DescentAuthorized/Resources/Assets.xcassets/Floor6ResidualDefeated.imageset/Floor6ResidualDefeated.png",
+      "generated": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-61c490ca-a479-4f41-9ce4-e4367c61302f.png",
+      "prompt": "Edit the attached existing game artwork Floor6ResidualDefeated. Deliver ONE image, exact 1448 x 1086 pixels landscape 4:3 (same size as the game's floor8 art), NOT 16:9. Recompose/outpaint into 4:3 without stretching. Preserve this exact character identity, encounter/defeated pose, floor environment, all Korean text VERBATIM, typography and ornaments, colors and lighting. Keep title and subtitle at top within 3%-18% height with safe margins. No side information panel; character centered. Keep character's head/core and important details above 78% height. Extend the room floor naturally to bottom edge, bottom 18% is dark unobstructed floor reserved for the app's dialogue overlay: do NOT draw a dialogue box or black letterbox. Full-bleed detailed cinematic game art, no empty black bars, no new text, no watermarks. Preserve original Korean spelling exactly."
+    },
+    {
+      "name": "Floor6AdministratorEncounter",
+      "reference": "/Users/sangyoung/Desktop/2026-C5-DescentAuthorized/DescentAuthorized/Resources/Assets.xcassets/Floor6AdministratorEncounter.imageset/Floor6AdministratorEncounter.png",
+      "generated": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-f31faf80-12f2-4950-b1ba-4f89c5d1d5b3.png",
+      "prompt": "Edit the attached existing game artwork Floor6AdministratorEncounter. Deliver ONE image, exact 1448 x 1086 pixels landscape 4:3 (same size as the game's floor8 art), NOT 16:9. Recompose/outpaint into 4:3 without stretching. Preserve this exact character identity, encounter/defeated pose, floor environment, all Korean text VERBATIM, typography and ornaments, colors and lighting. Keep title and subtitle at top within 3%-18% height with safe margins. Keep the complete right information panel and all its text readable within x70%-94%, y32%-72%; character centered around x43%. Keep character's head/core and important details above 78% height. Extend the room floor naturally to bottom edge, bottom 18% is dark unobstructed floor reserved for the app's dialogue overlay: do NOT draw a dialogue box or black letterbox. Full-bleed detailed cinematic game art, no empty black bars, no new text, no watermarks. Preserve original Korean spelling exactly."
+    },
+    {
+      "name": "Floor6AdministratorDefeated",
+      "reference": "/Users/sangyoung/Desktop/2026-C5-DescentAuthorized/DescentAuthorized/Resources/Assets.xcassets/Floor6AdministratorDefeated.imageset/Floor6AdministratorDefeated.png",
+      "generated": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-a58aab3a-81b7-4c0b-b33f-b120be3a3917.png",
+      "prompt": "Edit the attached existing game artwork Floor6AdministratorDefeated. Deliver ONE image, exact 1448 x 1086 pixels landscape 4:3 (same size as the game's floor8 art), NOT 16:9. Recompose/outpaint into 4:3 without stretching. Preserve this exact character identity, encounter/defeated pose, floor environment, all Korean text VERBATIM, typography and ornaments, colors and lighting. Keep title and subtitle at top within 3%-18% height with safe margins. Keep the complete right information panel and all its text readable within x70%-94%, y32%-72%; character centered around x43%. Keep character's head/core and important details above 78% height. Extend the room floor naturally to bottom edge, bottom 18% is dark unobstructed floor reserved for the app's dialogue overlay: do NOT draw a dialogue box or black letterbox. Full-bleed detailed cinematic game art, no empty black bars, no new text, no watermarks. Preserve original Korean spelling exactly."
+    },
+    {
+      "name": "Floor5ResidualEncounter",
+      "reference": "/Users/sangyoung/Desktop/2026-C5-DescentAuthorized/DescentAuthorized/Resources/Assets.xcassets/Floor5ResidualEncounter.imageset/Floor5ResidualEncounter.png",
+      "generated": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-d2790ffd-2d4d-4bd1-a297-a0327abab707.png",
+      "prompt": "Edit the attached existing game artwork Floor5ResidualEncounter. Deliver ONE image, exact 1448 x 1086 pixels landscape 4:3 (same size as the game's floor8 art), NOT 16:9. Recompose/outpaint into 4:3 without stretching. Preserve this exact character identity, encounter/defeated pose, floor environment, all Korean text VERBATIM, typography and ornaments, colors and lighting. Keep title and subtitle at top within 3%-18% height with safe margins. No side information panel; character centered. Keep character's head/core and important details above 78% height. Extend the room floor naturally to bottom edge, bottom 18% is dark unobstructed floor reserved for the app's dialogue overlay: do NOT draw a dialogue box or black letterbox. Full-bleed detailed cinematic game art, no empty black bars, no new text, no watermarks. Preserve original Korean spelling exactly."
+    },
+    {
+      "name": "Floor5ResidualDefeated",
+      "reference": "/Users/sangyoung/Desktop/2026-C5-DescentAuthorized/DescentAuthorized/Resources/Assets.xcassets/Floor5ResidualDefeated.imageset/Floor5ResidualDefeated.png",
+      "generated": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-de66fa36-ac3e-40b0-b68e-36a1e12a95f4.png",
+      "prompt": "Edit the attached existing game artwork Floor5ResidualDefeated. Deliver ONE image, exact 1448 x 1086 pixels landscape 4:3 (same size as the game's floor8 art), NOT 16:9. Recompose/outpaint into 4:3 without stretching. Preserve this exact character identity, encounter/defeated pose, floor environment, all Korean text VERBATIM, typography and ornaments, colors and lighting. Keep title and subtitle at top within 3%-18% height with safe margins. No side information panel; character centered. Keep character's head/core and important details above 78% height. Extend the room floor naturally to bottom edge, bottom 18% is dark unobstructed floor reserved for the app's dialogue overlay: do NOT draw a dialogue box or black letterbox. Full-bleed detailed cinematic game art, no empty black bars, no new text, no watermarks. Preserve original Korean spelling exactly."
+    },
+    {
+      "name": "Floor5AdministratorEncounter",
+      "reference": "/Users/sangyoung/Desktop/2026-C5-DescentAuthorized/DescentAuthorized/Resources/Assets.xcassets/Floor5AdministratorEncounter.imageset/Floor5AdministratorEncounter.png",
+      "generated": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-bee6de3b-b561-4bfe-be90-c26ba7ef9d97.png",
+      "prompt": "Edit the attached existing game artwork Floor5AdministratorEncounter. Deliver ONE image, exact 1448 x 1086 pixels landscape 4:3 (same size as the game's floor8 art), NOT 16:9. Recompose/outpaint into 4:3 without stretching. Preserve this exact character identity, encounter/defeated pose, floor environment, all Korean text VERBATIM, typography and ornaments, colors and lighting. Keep title and subtitle at top within 3%-18% height with safe margins. Keep the complete right information panel and all its text readable within x70%-94%, y32%-72%; character centered around x43%. Keep character's head/core and important details above 78% height. Extend the room floor naturally to bottom edge, bottom 18% is dark unobstructed floor reserved for the app's dialogue overlay: do NOT draw a dialogue box or black letterbox. Full-bleed detailed cinematic game art, no empty black bars, no new text, no watermarks. Preserve original Korean spelling exactly."
+    },
+    {
+      "name": "Floor5AdministratorDefeated",
+      "reference": "/Users/sangyoung/Desktop/2026-C5-DescentAuthorized/DescentAuthorized/Resources/Assets.xcassets/Floor5AdministratorDefeated.imageset/Floor5AdministratorDefeated.png",
+      "generated": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-a772bfaf-1a4d-4976-ae26-604088577260.png",
+      "prompt": "Edit the attached existing game artwork Floor5AdministratorDefeated. Deliver ONE image, exact 1448 x 1086 pixels landscape 4:3 (same size as the game's floor8 art), NOT 16:9. Recompose/outpaint into 4:3 without stretching. Preserve this exact character identity, encounter/defeated pose, floor environment, all Korean text VERBATIM, typography and ornaments, colors and lighting. Keep title and subtitle at top within 3%-18% height with safe margins. Keep the complete right information panel and all its text readable within x70%-94%, y32%-72%; character centered around x43%. Keep character's head/core and important details above 78% height. Extend the room floor naturally to bottom edge, bottom 18% is dark unobstructed floor reserved for the app's dialogue overlay: do NOT draw a dialogue box or black letterbox. Full-bleed detailed cinematic game art, no empty black bars, no new text, no watermarks. Preserve original Korean spelling exactly."
+    }
+  ]
+}

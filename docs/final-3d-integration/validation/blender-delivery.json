@@ -1,0 +1,90 @@
+[
+  {
+    "floor": 1,
+    "file": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/final-3d-release/Blender/Floor01_Final_Animated.blend",
+    "bytes": 336583998,
+    "sha256": "c3c60540a9528819bbbd800d6493c7e0775ec55b684e0b73ae6f96e5390dace7",
+    "rooms": [
+      "DA_F01A_IdentityComparison",
+      "DA_F01B_ExitHandover",
+      "DA_F01_FinalApproval"
+    ],
+    "packedTextures": 103,
+    "runtimePreviewExcludedFromExport": true
+  },
+  {
+    "floor": 2,
+    "file": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/final-3d-release/Blender/Floor02_Final_Animated.blend",
+    "bytes": 356241528,
+    "sha256": "019894844cec01202a96af0aaad97e66de573a5195ed48457bf3d0f084489665",
+    "rooms": [
+      "DA_F02A_PressureDistribution",
+      "DA_F02B_CoolingBackflow",
+      "DA_F02_SealHeartAdministrator"
+    ],
+    "packedTextures": 104,
+    "runtimePreviewExcludedFromExport": true
+  },
+  {
+    "floor": 3,
+    "file": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/final-3d-release/Blender/Floor03_Final_Animated.blend",
+    "bytes": 285345211,
+    "sha256": "eb656c74bfeb8310cedc5a5ff5d2741f1f759fb23ba9bae9fa579f9cf942c47f",
+    "rooms": [
+      "DA_F03A_ConsentArchive",
+      "DA_F03B_IsolationExecution",
+      "DA_F03_VoluntaryIsolationAdministrator"
+    ],
+    "packedTextures": 101,
+    "runtimePreviewExcludedFromExport": true
+  },
+  {
+    "floor": 4,
+    "file": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/final-3d-release/Blender/Floor04_Final_Animated.blend",
+    "bytes": 395224262,
+    "sha256": "0e37b1ce3747133bcfd065c3abd123dd0473542b22b2d89b67c5efc024929626",
+    "rooms": [
+      "DA_F04A_SignatureMimicWorkshop",
+      "DA_F04B_RejectionExecutionWorkshop",
+      "DA_F04_ResponsibilityAdministrator"
+    ],
+    "packedTextures": 147,
+    "runtimePreviewExcludedFromExport": true
+  },
+  {
+    "floor": 5,
+    "file": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/final-3d-release/Blender/Floor05_Final_Animated.blend",
+    "bytes": 433729367,
+    "sha256": "ea81c56cfba4bbb089b1820c54dce5cf0eef59d9f567ed48d381f66fe646d330",
+    "rooms": [
+      "DA_F05A_MemoryOmissionResidue",
+      "DA_F05B_OriginalMemoryAdministrator"
+    ],
+    "packedTextures": 113,
+    "runtimePreviewExcludedFromExport": true
+  },
+  {
+    "floor": 6,
+    "file": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/final-3d-release/Blender/Floor06_Final_Animated.blend",
+    "bytes": 539235770,
+    "sha256": "f2272c2faf00f994852b5add286527fb9aa1831e2d80f537cce890b825ae29fd",
+    "rooms": [
+      "DA_F06A_ResultDelayResidue",
+      "DA_F06B_CausalityAdministrator"
+    ],
+    "packedTextures": 125,
+    "runtimePreviewExcludedFromExport": true
+  },
+  {
+    "floor": 7,
+    "file": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/final-3d-release/Blender/Floor07_Final_Animated.blend",
+    "bytes": 389023779,
+    "sha256": "f894f40e794ff3756f37836af896a44f43df9d90041dfd6c753b24ffa5170f53",
+    "rooms": [
+      "DA_F07A_CoordinateResidue",
+      "DA_F07_CoordinateAdministrator"
+    ],
+    "packedTextures": 256,
+    "runtimePreviewExcludedFromExport": true
+  }
+]

@@ -5,6 +5,8 @@ enum ExpansionSpellEffect: String, Codable, CaseIterable, Sendable {
     case chainInscription, purificationGlyph, lingeringBarrier, axisSeverance
     case anchorGuard, consequenceErasure, outputReduction, executionDelay
     case advanceVerdict, causalCushion, memorySeverance, memorySuture, mimicProhibition
+    case bloodSealPiercing, limitBarrier, executionNullification, directHitProhibition
+    case responsibilitySeverance, isolationBarrier, pressureRelease, handoffBarrier
 
     var range: ClosedRange<Int> {
         switch self {
@@ -19,6 +21,14 @@ enum ExpansionSpellEffect: String, Codable, CaseIterable, Sendable {
         case .memorySeverance: 28...38
         case .memorySuture: 12...18
         case .mimicProhibition: 2...2
+        case .bloodSealPiercing: 34...46
+        case .limitBarrier: 40...50
+        case .executionNullification: 1...2
+        case .directHitProhibition: 1...1
+        case .responsibilitySeverance: 48...62
+        case .isolationBarrier: 20...28
+        case .pressureRelease: 42...56
+        case .handoffBarrier: 22...30
         }
     }
 }
@@ -47,6 +57,15 @@ indirect enum ExpansionEnemyAction: Codable, Equatable, Sendable {
     case lockAndSchedule(count: Int, damage: Int)
     case preparedLockAndSchedule(spells: [SpellID], damage: Int)
     case sequence([ExpansionEnemyAction])
+    case directHits([Int])
+    case flatAmplify(Int)
+    case timedBarrier(amount: Int, turns: Int)
+    case barrierStrike(base: Int, bonus: Int)
+    case counterPrepare(damage: Int)
+    case counterExecute
+    case lockCards(count: Int, duration: Int, chooseOne: Bool)
+    case preparedCardSeal(spells: [SpellID], duration: Int, chooseOne: Bool)
+    case absoluteSeal(Int)
     case wait
 
     var detail: String {
@@ -60,6 +79,15 @@ indirect enum ExpansionEnemyAction: Codable, Equatable, Sendable {
         case let .lockAndSchedule(count, damage): "선택 주문 최대 \(count)개 봉인 · 다음 턴 \(damage) 피해 예약"
         case let .preparedLockAndSchedule(spells, damage): "\(spells.isEmpty ? "봉인 대상 없음" : spells.map { SpellCatalog.spell($0).name }.joined(separator: ", ")) · 다음 턴 \(damage) 피해 예약"
         case let .sequence(actions): actions.map(\.detail).joined(separator: " · ")
+        case let .directHits(hits): "일반 피해 " + hits.map(String.init).joined(separator: " → ")
+        case let .flatAmplify(amount): "다음 예약 묶음 총피해 +\(amount) · 등록 전 정화 가능"
+        case let .timedBarrier(amount, turns): "일반 방벽 \(amount) · \(turns)턴 뒤 적 행동 종료까지"
+        case let .barrierStrike(base, bonus): "일반 \(base) · 적 방벽이 남으면 +\(bonus)"
+        case let .counterPrepare(damage): "반격 준비 · 다음 턴 공격 주문 성공 시 추가 \(damage), 최대 1회"
+        case .counterExecute: "공격 주문 성공 시 준비된 반격 1회 · 공격하지 않으면 추가 피해 없음"
+        case let .lockCards(count, duration, choose): "보호 외 최대 \(count)종 \(choose ? "중 1종 선택" : "") · 다음 \(duration)턴 봉인"
+        case let .preparedCardSeal(spells, duration, choose): "\(spells.map { SpellCatalog.spell($0).name }.joined(separator: ", ")) · \(choose ? "1종 선택" : "봉인") · 다음 \(duration)턴"
+        case let .absoluteSeal(charges): "절대 방벽 \(charges) · 다음 턴 봉인 해제로 대응"
         case .wait: "새로운 공격 없음 · 도래한 예약만 집행"
         }
     }
@@ -72,6 +100,7 @@ enum ExpansionEffectTarget: Hashable, Sendable, Identifiable {
     case enemyPreservation
     case enemyCopyRecord
     case scheduledDamage(String)
+    case scheduledDamageGroup(Int)
     case enemyNormalBarrier
 
     var id: String {
@@ -82,6 +111,7 @@ enum ExpansionEffectTarget: Hashable, Sendable, Identifiable {
         case .enemyPreservation: "enemy-preservation"
         case .enemyCopyRecord: "enemy-copy"
         case let .scheduledDamage(id): "scheduled-\(id)"
+        case let .scheduledDamageGroup(turn): "scheduled-group-\(turn)"
         case .enemyNormalBarrier: "enemy-barrier"
         }
     }
@@ -126,10 +156,35 @@ struct ExpansionBattleState: Equatable, Sendable {
     var memorySutureUses = 0
     var retainsCorrectionBarrier = false
     var encounterPhase = 1
+    var flatAmplification = 0
+    var enemyBarrierExpires: Int? = nil
+    var counterDamage = 0
+    var counterExpires: Int? = nil
+    var counterTriggered = false
+    var pendingSealChoices: [SpellID] = []
+    var selectedSealChoice: SpellID? = nil
+    var limitBarrierThroughTurn: Int? = nil
+    var directHitProhibitionThroughTurn: Int? = nil
+    var executionNullificationUses = 0
+    var directHitProhibitionUses = 0
+    var reactiveDamageProtection = false
+    var isolationReservationID: String? = nil
+    var isolationThroughTurn: Int? = nil
+    var handoffBarrierAmount = 0
+    var queuedReactions: [ReactiveDamage] = []
+
+    var needsSealChoice: Bool { pendingSealChoices.count > 1 && selectedSealChoice == nil }
 
     var statusSummary: String {
         var parts: [String] = []
         if enemyAmplification != nil { parts.append("인과 증폭") }
+        if flatAmplification > 0 { parts.append("예약 증폭 +\(flatAmplification)") }
+        if counterDamage > 0 { parts.append("조건부 반격 \(counterDamage)") }
+        if limitBarrierThroughTurn != nil { parts.append("방벽 상한 60") }
+        if directHitProhibitionThroughTurn != nil { parts.append("직격 금지 1회") }
+        if reactiveDamageProtection { parts.append("모사·반격 50% 보호") }
+        if isolationReservationID != nil { parts.append("지정 예약 50% 보호") }
+        if handoffBarrierAmount > 0 { parts.append("피격 후 방벽 +\(handoffBarrierAmount)") }
         if enemyPreservation != nil { parts.append("원본 보존") }
         if playerAttackWeakening != nil { parts.append("공격 약화") }
         if outputReduction != nil { parts.append("출력 저하") }
@@ -140,7 +195,7 @@ struct ExpansionBattleState: Equatable, Sendable {
     }
 
     var hasRemovableEnemyBuff: Bool {
-        enemyAmplification != nil || enemyPreservation != nil || copyRecord != nil
+        enemyAmplification != nil || flatAmplification > 0 || enemyPreservation != nil || copyRecord != nil
     }
 
     mutating func clearTransientEffects() {
@@ -168,7 +223,7 @@ extension BattleState {
             }
             // An enemy absolute barrier never prevents cleansing oneself.
             if enemy.absoluteBarrierCharges == 0 {
-                if expansion.enemyAmplification != nil {
+                if expansion.enemyAmplification != nil || expansion.flatAmplification > 0 {
                     options.append(.init(id: .enemyAmplification, title: "인과 증폭", detail: "예약 등록 전 증폭 제거"))
                 }
                 if expansion.enemyPreservation != nil {
@@ -178,12 +233,20 @@ extension BattleState {
                     options.append(.init(id: .enemyCopyRecord, title: "모사 기록", detail: "\(SpellCatalog.spell(record.spell).name) 기록 제거"))
                 }
             }
-        case .consequenceErasure, .executionDelay:
-            guard enemy.absoluteBarrierCharges == 0 else { return [] }
+        case .consequenceErasure, .executionDelay, .isolationBarrier:
+            guard effect == .isolationBarrier || enemy.absoluteBarrierCharges == 0 else { return [] }
             for reservation in expansion.scheduledDamage.sorted(by: { $0.dueEnemyTurn < $1.dueEnemyTurn }) {
                 guard effect != .executionDelay || !reservation.wasDelayed else { continue }
+                if effect == .isolationBarrier && !(turnNumber...(turnNumber + 1)).contains(reservation.dueEnemyTurn) { continue }
                 let extra = effect == .executionDelay ? " → \(reservation.dueEnemyTurn + 1)턴에 집행" : " 취소"
-                options.append(.init(id: .scheduledDamage(reservation.id), title: reservation.name, detail: "\(reservation.dueEnemyTurn)턴 · \(reservation.damage) 피해\(extra)"))
+                options.append(.init(id: .scheduledDamage(reservation.id), title: reservation.name, detail: "\(reservation.dueEnemyTurn)턴 · \(reservation.damage) 피해\(effect == .isolationBarrier ? " → 50% 감소" : extra)"))
+            }
+        case .executionNullification:
+            guard enemy.absoluteBarrierCharges == 0 else { return [] }
+            for turn in Set(expansion.scheduledDamage.map(\.dueEnemyTurn)).sorted() {
+                let group = Array(expansion.scheduledDamage.filter { $0.dueEnemyTurn == turn }.prefix(2))
+                options.append(.init(id: .scheduledDamageGroup(turn), title: "\(turn)턴 집행 묶음",
+                    detail: group.map { "\($0.name) \($0.damage)" }.joined(separator: " + ") + " · 최대 2건 취소"))
             }
             if effect == .consequenceErasure, enemy.normalBarrier > 0 {
                 options.append(.init(id: .enemyNormalBarrier, title: "일반 방벽", detail: "방벽 \(enemy.normalBarrier) 소멸"))
@@ -194,12 +257,15 @@ extension BattleState {
     }
 
     func spellUnavailabilityReason(for spell: SpellDefinition) -> String? {
+        if expansion.needsSealChoice { return "먼저 이번 절차에서 봉인할 주문을 선택하세요." }
         if !learnedSpells.contains(spell.id) { return "아직 배우지 않은 주문입니다." }
         if let equipped = expansion.equippedSpells, !equipped.contains(spell.id) { return "출전 가방에 없는 주문입니다." }
         if expansion.lockedSpells[spell.id] != nil { return "이번 턴 봉인된 주문입니다." }
+        if spell.hpCost > 0 && player.hp <= spell.hpCost { return "HP가 \(spell.hpCost)보다 많아야 사용할 수 있습니다." }
         guard case let .expansion(effect) = spell.effect else { return nil }
         switch effect {
-        case .purificationGlyph, .consequenceErasure, .executionDelay:
+        case .purificationGlyph, .consequenceErasure, .executionDelay, .executionNullification:
+            if effect == .executionNullification && expansion.executionNullificationUses > 0 { return "이 전투의 성공 사용 1회를 사용했습니다." }
             if availableEffectTargets(for: spell).isEmpty { return "현재 선택할 수 있는 대상이 없습니다." }
         case .memorySuture:
             if expansion.memorySutureUses >= 2 { return "이 전투의 사용 횟수 2회를 모두 사용했습니다." }
@@ -207,6 +273,9 @@ extension BattleState {
             if player.hp <= 6 { return "HP가 6보다 많아야 사용할 수 있습니다." }
             if enemy.absoluteBarrierCharges > 0 { return "먼저 절대 방벽을 해제해야 합니다." }
         case .outputReduction:
+            if enemy.absoluteBarrierCharges > 0 { return "먼저 절대 방벽을 해제해야 합니다." }
+        case .directHitProhibition:
+            if expansion.directHitProhibitionUses > 0 { return "이 전투의 성공 사용 1회를 사용했습니다." }
             if enemy.absoluteBarrierCharges > 0 { return "먼저 절대 방벽을 해제해야 합니다." }
         default: break
         }

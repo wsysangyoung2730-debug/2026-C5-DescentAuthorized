@@ -173,18 +173,36 @@ private struct BattleUIPresentation {
     }
 }
 
+private struct BattleCameraHitRegion: Shape {
+    let inputFrame: CGRect
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.addRect(rect)
+        let excluded = inputFrame.intersection(rect)
+        if !excluded.isNull && !excluded.isEmpty {
+            path.addRect(excluded)
+        }
+        return path
+    }
+}
+
 struct BattleView: View {
+    @Environment(\.isGlyphInputSuspended) private var isInputSuspended
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
     @ObservedObject var realityController: RealitySceneController
     @Binding var restartLoadingPresentation: SceneRetryLoadingPresentation?
+    let onRestartBattle: () -> Void
 
     @State private var selectedSpellID: SpellID?
     @State private var selectedEffectTarget: ExpansionEffectTarget?
     @State private var enemyHitFlash = false
     @State private var playerHitFlash = false
     @State private var strongAttackFlash = false
+    @State private var playerGuardFlash: RealityShieldState = .none
+    @State private var enemyAttackIsStrong = false
     @State private var feedbackText: String?
     @State private var feedbackColor = Color.white
     @State private var showsFirstTurnBriefing = false
@@ -205,7 +223,6 @@ struct BattleView: View {
     @State private var cameraLookTranslationOrigin: CGSize?
     @State private var isDefeatPanelVisible = false
     @State private var defeatPresentationTask: Task<Void, Never>?
-    @State private var restartTask: Task<Void, Never>?
 
     private var isRestartLoading: Bool {
         restartLoadingPresentation != nil
@@ -213,10 +230,11 @@ struct BattleView: View {
 
     var body: some View {
         ZStack {
-            if isExpansionBattle, let expansion = gameSession.progress.expansion {
+            if realitySceneID == nil, isExpansionBattle, let expansion = gameSession.progress.expansion {
                 ExpansionBackdropView(
                     floorNumber: expansion.floorNumber,
-                    isBoss: expansion.stage == .bossBattle
+                    isBoss: expansion.stage == .bossBattle,
+                    residualIndex: expansion.residualIndex
                 )
                 .brightness(enemyHitFlash && !appSettings.reducedFlashes ? 0.07 : 0)
             } else if realitySceneID != nil {
@@ -229,22 +247,29 @@ struct BattleView: View {
 
             if let battle = gameSession.battleState {
                 battleContent(presentation(for: battle))
+                    .disabled(gameSession.isCombatPresentationActive)
                     .overlay(alignment: .top) {
                         ExpansionCombatStatusView(battle: battle)
+                    }
+                    .overlay(alignment: .bottomTrailing) {
+                        ExpansionPlayerStatusAuraView(battle: battle)
+                            .padding(.trailing, 32).padding(.bottom, 208)
                     }
             } else {
                 encounterStandby
             }
 
-            Color.red
-                .opacity(playerHitFlash ? (appSettings.reducedFlashes ? 0.08 : 0.24) : 0)
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
-
-            if strongAttackFlash && !appSettings.reducedFlashes {
-                Rectangle()
-                    .stroke(Color.red.opacity(0.85), lineWidth: 8)
+            if playerHitFlash || playerGuardFlash != .none {
+                RadialGradient(
+                    colors: [.clear, impactColor.opacity(appSettings.reducedFlashes ? 0.12 : 0.48)],
+                    center: .center, startRadius: 160, endRadius: 650
+                )
                     .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                RoundedRectangle(cornerRadius: 28)
+                    .stroke(impactColor.opacity(appSettings.reducedFlashes ? 0.18 : 0.65),
+                            lineWidth: strongAttackFlash ? 5 : 2)
+                    .padding(12)
                     .allowsHitTesting(false)
             }
 
@@ -265,6 +290,12 @@ struct BattleView: View {
                     .transition(.opacity)
             }
 
+            if let battle = gameSession.battleState,
+               battle.phase == .playerTurn, battle.expansion.needsSealChoice {
+                sealChoiceOverlay(battle)
+                    .zIndex(25)
+            }
+
             if gameSession.battleState?.phase == .defeat,
                isDefeatPanelVisible {
                 defeatOverlay
@@ -274,6 +305,7 @@ struct BattleView: View {
 
         }
         .task(id: encounterIdentity) {
+            gameFeedback.synchronizesProjectileAudio = realitySceneID != nil
             battleLogEntries = []
             lastLoggedEventSequence = nil
             previewMana = nil
@@ -294,7 +326,7 @@ struct BattleView: View {
                gameSession.battleState?.turnNumber == 1 {
                 showsFirstTurnBriefing = true
             }
-            if !isExpansionBattle {
+            if realitySceneID != nil {
                 realityController.synchronizeCombatState(
                     gameSession.battleState,
                     reducedMotion: appSettings.reducedMotion
@@ -306,6 +338,7 @@ struct BattleView: View {
                 }
             }
             updateDefeatPresentation(for: gameSession.battleState?.phase)
+            synchronizePresentationSuspension()
         }
         .onChange(of: gameSession.eventSequence) { _, _ in
             appendBattleLog(
@@ -317,20 +350,30 @@ struct BattleView: View {
             autoFinishPlayerTurnIfNeeded()
             updateDefeatPresentation(for: gameSession.battleState?.phase)
         }
+        .onChange(of: gameSession.isCombatPresentationActive) { _, active in
+            if !active {
+                selectAvailableSpell()
+                autoFinishPlayerTurnIfNeeded()
+                updateDefeatPresentation(for: gameSession.battleState?.phase)
+            }
+        }
+        .onChange(of: isInputSuspended) { _, _ in
+            synchronizePresentationSuspension()
+        }
         .onDisappear {
+            gameSession.cancelCombatPresentation()
+            gameSession.setCombatPresentationSuspended(false)
+            gameFeedback.synchronizesProjectileAudio = false
             enemyPulseTask?.cancel()
             playerPulseTask?.cancel()
             feedbackTask?.cancel()
             detailPressTask?.cancel()
             defeatPresentationTask?.cancel()
             defeatPresentationTask = nil
-            restartTask?.cancel()
-            restartTask = nil
             isCameraLooking = false
             isCameraZooming = false
             cameraLookTranslationOrigin = nil
             isDefeatPanelVisible = false
-            restartLoadingPresentation = nil
             realityController.setBattleCameraInteractionEnabled(false)
         }
         .preferredColorScheme(.dark)
@@ -341,13 +384,19 @@ struct BattleView: View {
             let isDefeated = presentation.phase == .defeat
             let bottomBarHeight: CGFloat = isDefeated ? 0 : 242
             let horizontalContentInset: CGFloat = 18
+            let verticalContentInset: CGFloat = 10
             let contentWidth = max(0, proxy.size.width - (horizontalContentInset * 2))
             let inputPanelWidth = min(520, max(390, contentWidth * 0.36))
             let inputPanelHeight = min(390, max(280, inputPanelWidth * 0.76))
-            let stageHeight = proxy.size.height - bottomBarHeight
+            let stageHeight = max(0, proxy.size.height - verticalContentInset * 2 - bottomBarHeight)
             let inputPanelCenterY = min(
                 stageHeight * 0.55,
                 stageHeight - (inputPanelHeight / 2) - 12
+            )
+            let inputFrame = CGRect(
+                x: inputPanelX(availableWidth: contentWidth, panelWidth: inputPanelWidth) - inputPanelWidth / 2,
+                y: inputPanelCenterY - inputPanelHeight / 2,
+                width: inputPanelWidth, height: inputPanelHeight
             )
 
             ZStack(alignment: .bottom) {
@@ -358,17 +407,6 @@ struct BattleView: View {
                 intentTutorialTarget(in: proxy)
 
                 if !isDefeated {
-                    if isBattleScene, realitySceneID != nil {
-                        battleCameraInteractionSurface(
-                            viewportSize: CGSize(
-                                width: contentWidth,
-                                height: max(stageHeight, 1)
-                            )
-                        )
-                        .frame(width: contentWidth, height: max(stageHeight, 1))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    }
-
                     if isBattleScene,
                        realitySceneID != nil,
                        realityController.isBattleCameraAdjusted {
@@ -411,6 +449,19 @@ struct BattleView: View {
                         .frame(height: 218)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 12)
+
+                    if isBattleScene, realitySceneID != nil {
+                        // A sibling surface with a real hit-testing hole keeps
+                        // camera recognizers out of the UIKit drawing touch stream.
+                        battleCameraInteractionSurface(
+                            viewportSize: CGSize(width: contentWidth, height: max(stageHeight, 1)),
+                            inputFrame: inputFrame
+                        )
+                        .frame(width: contentWidth, height: max(stageHeight, 1))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .allowsHitTesting(!isInputSuspended && !gameSession.isCombatPresentationActive
+                                          && detailedSpell == nil && !showsFirstTurnBriefing)
+                    }
                 }
             }
             .overlay {
@@ -419,39 +470,18 @@ struct BattleView: View {
                     .allowsHitTesting(false)
             }
             .padding(.horizontal, horizontalContentInset)
-            .padding(.vertical, 10)
+            .padding(.vertical, verticalContentInset)
         }
     }
 
-    private func battleCameraInteractionSurface(viewportSize: CGSize) -> some View {
+    private func battleCameraInteractionSurface(viewportSize: CGSize, inputFrame: CGRect) -> some View {
         Color.clear
-            .contentShape(Rectangle())
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 4)
-                    .onChanged { value in
-                        guard !isCameraZooming else { return }
-                        if !isCameraLooking {
-                            isCameraLooking = true
-                            cameraLookTranslationOrigin = value.translation
-                            realityController.beginBattleCameraLook()
-                        }
-                        let origin = cameraLookTranslationOrigin ?? .zero
-                        realityController.updateBattleCameraLook(
-                            translation: CGSize(
-                                width: value.translation.width - origin.width,
-                                height: value.translation.height - origin.height
-                            ),
-                            viewportSize: viewportSize
-                        )
-                    }
-                    .onEnded { _ in
-                        isCameraLooking = false
-                        cameraLookTranslationOrigin = nil
-                    }
-            )
+            .contentShape(BattleCameraHitRegion(inputFrame: inputFrame), eoFill: true)
+            .simultaneousGesture(battleCameraLookGesture(viewportSize: viewportSize, inputFrame: inputFrame))
             .simultaneousGesture(
                 MagnifyGesture(minimumScaleDelta: 0.01)
                     .onChanged { value in
+                        guard !isInputSuspended, !gameSession.isCombatPresentationActive else { return }
                         if !isCameraZooming {
                             isCameraZooming = true
                             isCameraLooking = false
@@ -467,6 +497,34 @@ struct BattleView: View {
                     }
             )
             .accessibilityHidden(true)
+    }
+
+    private func battleCameraLookGesture(viewportSize: CGSize, inputFrame: CGRect) -> some Gesture {
+        DragGesture(minimumDistance: 4)
+            .onChanged { value in
+                guard isBattleScene, realitySceneID != nil,
+                      !isInputSuspended, !gameSession.isCombatPresentationActive,
+                      detailedSpell == nil, !showsFirstTurnBriefing,
+                      gameSession.battleState?.phase != .defeat,
+                      !isCameraZooming,
+                      CGRect(origin: .zero, size: viewportSize).contains(value.startLocation),
+                      !inputFrame.contains(value.startLocation) else { return }
+                if !isCameraLooking {
+                    isCameraLooking = true
+                    cameraLookTranslationOrigin = .zero
+                    realityController.beginBattleCameraLook()
+                }
+                let origin = cameraLookTranslationOrigin ?? .zero
+                realityController.updateBattleCameraLook(
+                    translation: CGSize(width: value.translation.width - origin.width,
+                                        height: value.translation.height - origin.height),
+                    viewportSize: viewportSize
+                )
+            }
+            .onEnded { _ in
+                isCameraLooking = false
+                cameraLookTranslationOrigin = nil
+            }
     }
 
     private var battleCameraResetButton: some View {
@@ -769,7 +827,7 @@ struct BattleView: View {
                     .frame(width: 176, height: 60)
             }
             .buttonStyle(BattleTurnEndButtonStyle())
-            .disabled(presentation.phase != .playerTurn)
+            .disabled(presentation.phase != .playerTurn || gameSession.battleState?.expansion.needsSealChoice == true)
             .accessibilityHint("현재 봉인관 차례를 종료합니다")
         }
     }
@@ -905,6 +963,19 @@ struct BattleView: View {
             .padding(10)
         }
         .frame(width: width, height: 176)
+        .overlay {
+            if let battle = gameSession.battleState, battle.phase != .victory, battle.phase != .defeat {
+                if battle.expansion.lockedSpells[spell.id] != nil {
+                    SpellSealVisualOverlay()
+                } else if spell.category == .attack, battle.expansion.playerAttackWeakening != nil {
+                    RoundedRectangle(cornerRadius: 8).stroke(.purple.opacity(0.65), style: StrokeStyle(lineWidth: 2, dash: [6,4]))
+                        .allowsHitTesting(false)
+                } else if spell.category == .attack, battle.expansion.chainAttackBonus > 0 {
+                    RoundedRectangle(cornerRadius: 8).stroke(.orange.opacity(0.65), lineWidth: 2)
+                        .allowsHitTesting(false)
+                }
+            }
+        }
         .overlay(alignment: .topLeading) {
             if gameSession.battleState?.expansion.lockedSpells[spell.id] != nil {
                 Text("봉인").font(.caption2.bold()).foregroundStyle(.white)
@@ -1120,7 +1191,8 @@ struct BattleView: View {
                 isSelected: selectedSpellID == spell.id,
                 isAffordable: isAffordable,
                 isPermitted: isPermitted,
-                canInteract: battle.phase == .playerTurn && isAffordable && isPermitted
+                canInteract: battle.phase == .playerTurn && !gameSession.isCombatPresentationActive
+                    && isAffordable && isPermitted
             )
         }
 
@@ -1250,6 +1322,33 @@ struct BattleView: View {
         gameSession.send(.startEncounter)
     }
 
+    private func sealChoiceOverlay(_ battle: BattleState) -> some View {
+        ZStack {
+            Color.black.opacity(0.88).ignoresSafeArea()
+            VStack(spacing: 22) {
+                Text("봉인할 주문을 선택하십시오").font(.title2.weight(.semibold)).foregroundStyle(DAColor.gold)
+                Text("표시된 후보 중 1개가 적 행동 시 봉인됩니다.\n보호한 공격·방어 주문과 봉인 해제는 후보에서 제외됩니다.")
+                    .multilineTextAlignment(.center).foregroundStyle(DAColor.body)
+                HStack(spacing: 20) {
+                    ForEach(battle.expansion.pendingSealChoices, id: \.self) { id in
+                        Button {
+                            gameSession.send(.chooseCardSeal(id))
+                            selectAvailableSpell()
+                        } label: {
+                            VStack(spacing: 14) {
+                                SpellGlyphPreview(spell: SpellCatalog.spell(id)).frame(width: 90, height: 90)
+                                Text(SpellCatalog.spell(id).name).font(.headline)
+                                Text("이 주문 봉인").font(.caption)
+                            }.foregroundStyle(DAColor.gold).padding(24)
+                                .background(DAColor.panel).overlay(Rectangle().stroke(DAColor.gold))
+                        }.buttonStyle(.plain)
+                    }
+                }
+            }.padding(30)
+        }
+        .accessibilityAddTraits(.isModal)
+    }
+
     private func selectAvailableSpell() {
         guard let battle = gameSession.battleState else {
             selectedSpellID = nil
@@ -1268,8 +1367,10 @@ struct BattleView: View {
     }
 
     private func autoFinishPlayerTurnIfNeeded() {
+        guard !gameSession.isCombatPresentationActive else { return }
         guard let battle = gameSession.battleState else { return }
         guard battle.phase == .playerTurn else { return }
+        guard !battle.expansion.needsSealChoice else { return }
         guard availableSpells(in: battle).contains(where: {
             $0.requiredStrokes <= battle.resources.remainingStrokes
                 && isSpellPermitted($0, battle: battle)
@@ -1284,17 +1385,26 @@ struct BattleView: View {
     }
 
     private func present(_ events: [DemoSessionEvent]) {
-        if !isExpansionBattle {
+        if realitySceneID != nil {
             realityController.presentCombat(
                 events: events,
                 battleState: gameSession.battleState,
-                reducedMotion: appSettings.reducedMotion
+                reducedMotion: appSettings.reducedMotion,
+                onProjectileLaunch: {
+                    gameFeedback.playProjectileLaunch(settings: appSettings.settings)
+                },
+                onProjectileImpact: {
+                    gameFeedback.playProjectileImpact(settings: appSettings.settings)
+                    pulseEnemy()
+                }
             )
         }
         var enemyWasHit = false
         var playerWasHit = false
         var playerBarrierWasHit = false
-        var strongAttack = false
+        var strongAttack = enemyAttackIsStrong
+        var absoluteGuard = false
+        var receivedDamage = 0
         var banner: (String, Color)?
 
         for event in events {
@@ -1303,7 +1413,8 @@ struct BattleView: View {
             case let .damageApplied(target, amount, _):
                 switch target {
                 case .player:
-                    playerWasHit = amount > 0
+                    playerWasHit = playerWasHit || amount > 0
+                    receivedDamage += amount
                 case .enemy:
                     enemyWasHit = amount > 0
                 }
@@ -1311,32 +1422,46 @@ struct BattleView: View {
                 banner = (gradeTitle(grade), gradeColor(grade))
             case let .spellRejected(_, reason):
                 banner = (failureTitle(reason), .red)
-            case .attackNegatedByAbsoluteBarrier:
-                banner = ("절대 방벽으로 무효화", .yellow)
-                didExperienceAbsoluteBarrier = true
-            case let .normalBarrierChanged(target, amount):
+            case let .attackNegatedByAbsoluteBarrier(target):
                 if case .player = target {
+                    absoluteGuard = true
+                    banner = ("절대 방벽으로 무효화", .yellow)
+                } else {
+                    banner = ("관리자의 절대 방벽", .yellow)
+                    didExperienceAbsoluteBarrier = true
+                }
+            case let .normalBarrierChanged(target, amount):
+                if case .player = target,
+                   gameSession.battleState?.phase == .resolvingEnemyAction || gameSession.battleState?.phase == .defeat {
                     playerBarrierWasHit = true
+                    banner = (amount > 0 ? "방벽 방어" : "방벽 파괴", .cyan)
                 } else if case .enemy = target, amount > 0 {
                     banner = (isExpansionBattle ? "교정 방벽 전개" : "문서 방벽 전개", .cyan)
                 }
             case .erasureZoneAdded:
                 banner = ("말소 구역 발생", .red)
             case let .enemyActionStarted(action):
-                if case let .attack(_, _, isStrong) = action {
-                    strongAttack = isStrong
-                }
+                strongAttack = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
+                    .contains(.enemyAttack(strong: true))
+                enemyAttackIsStrong = strongAttack
+                banner = (action.name, strongAttack ? .orange : .purple)
             default:
                 break
             }
         }
 
-        if enemyWasHit { pulseEnemy() }
-        if playerWasHit { pulsePlayer(strong: strongAttack) }
-        if !isExpansionBattle, strongAttack, playerWasHit || playerBarrierWasHit {
+        if enemyWasHit, realitySceneID == nil { pulseEnemy() }
+        if playerWasHit {
+            pulsePlayer(strong: strongAttack)
+            banner = ("피격 −\(receivedDamage)", .red)
+        } else if absoluteGuard || playerBarrierWasHit {
+            pulsePlayerGuard(absolute: absoluteGuard)
+        }
+        if realitySceneID != nil, playerWasHit || playerBarrierWasHit || absoluteGuard {
             realityController.playStrongAttackCameraImpact(
-                guarded: playerBarrierWasHit && !playerWasHit,
-                reducedMotion: appSettings.reducedMotion
+                guarded: !playerWasHit,
+                reducedMotion: appSettings.reducedMotion,
+                strong: strongAttack
             )
         }
         if let banner { showFeedback(banner.0, color: banner.1) }
@@ -1355,6 +1480,7 @@ struct BattleView: View {
     private func pulsePlayer(strong: Bool) {
         playerPulseTask?.cancel()
         animate(.easeOut(duration: 0.08)) {
+            playerGuardFlash = .none
             playerHitFlash = true
             strongAttackFlash = strong
         }
@@ -1366,6 +1492,32 @@ struct BattleView: View {
                 strongAttackFlash = false
             }
         }
+    }
+
+    private var impactColor: Color {
+        switch playerGuardFlash {
+        case .none: .red
+        case .general: .cyan
+        case .absolute: .yellow
+        }
+    }
+
+    private func pulsePlayerGuard(absolute: Bool) {
+        playerPulseTask?.cancel()
+        animate(.easeOut(duration: 0.08)) {
+            playerHitFlash = false
+            strongAttackFlash = false
+            playerGuardFlash = absolute ? .absolute : .general
+        }
+        playerPulseTask = Task { @MainActor in
+            do { try await Task.sleep(for: .milliseconds(280)) } catch { return }
+            animate(.easeOut(duration: 0.20)) { playerGuardFlash = .none }
+        }
+    }
+
+    private func synchronizePresentationSuspension() {
+        gameSession.setCombatPresentationSuspended(isInputSuspended)
+        realityController.setActorMotionSuspended(isInputSuspended)
     }
 
     private func showFeedback(_ text: String, color: Color) {
@@ -1403,7 +1555,7 @@ struct BattleView: View {
     }
 
     private var realitySceneID: FloorSceneID? {
-        isExpansionBattle ? nil : gameSession.presentation.floorSceneID
+        gameSession.presentation.floorSceneID
     }
 
     private var isExpansionBattle: Bool {
@@ -1416,7 +1568,7 @@ struct BattleView: View {
 
     private var encounterIdentity: String {
         if let expansion = gameSession.progress.expansion, expansion.stage.isBattle {
-            return "expansion-\(expansion.floorNumber)-\(expansion.stage.rawValue)"
+            return "expansion-\(expansion.floorNumber)-\(expansion.residualIndex)-\(expansion.stage.rawValue)"
         }
         return gameSession.progress.currentScene.rawValue
     }
@@ -1621,6 +1773,8 @@ struct BattleView: View {
     }
 
     private func updateDefeatPresentation(for phase: BattlePhase?) {
+        // Finish the lethal strike and recoil before dropping the player's camera.
+        guard !gameSession.isCombatPresentationActive else { return }
         guard phase == .defeat else {
             let wasPresentingDefeat = defeatPresentationTask != nil || isDefeatPanelVisible
             defeatPresentationTask?.cancel()
@@ -1632,7 +1786,7 @@ struct BattleView: View {
             }
             if wasPresentingDefeat,
                isBattleScene,
-               !isExpansionBattle,
+               realitySceneID != nil,
                !isRestartLoading {
                 realityController.resetBattleCamera(animated: false)
                 realityController.setBattleCameraInteractionEnabled(true)
@@ -1654,7 +1808,7 @@ struct BattleView: View {
         isCameraLooking = false
         isCameraZooming = false
         cameraLookTranslationOrigin = nil
-        if isExpansionBattle {
+        if realitySceneID == nil {
             isDefeatPanelVisible = true
             return
         }
@@ -1673,44 +1827,18 @@ struct BattleView: View {
         }
     }
 
-    private var restartLoadingContext: LoadingScreenContext {
-        guard let realitySceneID else { return .floor9 }
-        return LoadingScreenContext(sceneID: realitySceneID)
-    }
-
     private func restartDefeatedBattle() {
         guard !isRestartLoading else { return }
         gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-        if gameSession.sendChecked(.restartEncounter) {
-            defeatPresentationTask?.cancel()
-            restartTask?.cancel()
-            restartLoadingPresentation = nil
-            isDefeatPanelVisible = false
-            clearTransientBattleEffects()
-        }
-    }
-
-    private func waitForRestartStep(milliseconds: Int) async -> Bool {
-        guard !appSettings.reducedMotion else { return !Task.isCancelled }
-        do {
-            try await Task.sleep(for: .milliseconds(milliseconds))
-            return !Task.isCancelled
-        } catch {
-            return false
-        }
-    }
-
-    private func restoreDefeatPanelAfterRestartFailure() {
-        withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
-            restartLoadingPresentation = nil
-            isDefeatPanelVisible = true
-        }
+        onRestartBattle()
     }
 
     private func clearTransientBattleEffects() {
         enemyHitFlash = false
         playerHitFlash = false
         strongAttackFlash = false
+        playerGuardFlash = .none
+        enemyAttackIsStrong = false
     }
 
     private var residualBriefing: some View {

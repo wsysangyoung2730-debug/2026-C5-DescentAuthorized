@@ -8,52 +8,141 @@ struct ExpansionFlowView: View {
     @ObservedObject var sceneController: RealitySceneController
     @Binding var retryLoadingPresentation: SceneRetryLoadingPresentation?
     let onExit: () -> Void
+    let onRestartBattle: () -> Void
     @State private var showsBag = false
-    @State private var learningInputActive = false
+    @Binding var learningInputActive: Bool
     @State private var practiceSpell: SpellID?
     @State private var showsPractice = false
 
     var body: some View {
         if let current = gameSession.progress.expansion {
+            if current.isLowerFloor {
+                LowerFloorFlowView(current: current, sceneController: sceneController,
+                    retryLoadingPresentation: $retryLoadingPresentation,
+                    learningInputActive: $learningInputActive, onExit: onExit,
+                    onRestartBattle: onRestartBattle)
+            } else {
             ZStack {
-                if !current.stage.isBattle {
+                if gameSession.presentation.floorSceneID == nil && !current.stage.isBattle {
                     ExpansionBackdropView(floorNumber: current.floorNumber, isBoss: current.showsBoss)
                 }
                 content(current)
                     .environment(\.isGlyphInputSuspended, inheritedInputSuspension || combatGuide != nil)
                 if let guide = combatGuide { ExpansionCombatGuideView(guide: guide) }
             }
+            .task(id: current.stage) {
+                synchronizeScene(current)
+                #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--expansion-exploration-diagnostics"),
+                   ExpansionPreviewSupport.floor != nil {
+                    await sceneController.runExpansionExplorationDiagnostics(isBattle: current.stage.isBattle)
+                }
+                #endif
+            }
+            .onChange(of: inheritedInputSuspension) { _, suspended in
+                sceneController.setActorMotionSuspended(suspended || combatGuide != nil)
+            }
+            .onChange(of: appSettings.graphicsQuality) { _, _ in
+                prefetchNextScene(current)
+            }
+            .onChange(of: combatGuide != nil) { _, showing in
+                sceneController.setActorMotionSuspended(showing || inheritedInputSuspension)
+            }
+            .onDisappear { sceneController.setActorMotionSuspended(false) }
             .sheet(isPresented: $showsPractice) {
                 if let practiceSpell { SpellPracticeSheet(spell: SpellCatalog.spell(practiceSpell)) }
+            }
             }
         }
     }
 
+    private func synchronizeScene(_ current: ExpansionProgress) {
+        prefetchNextScene(current)
+        let hidden: [ExpansionStage] = [.sealedDoor, .reward, .descent, .learnDebuff, .complete]
+        // Initialize entry before the first frame; InvestigationFlow then owns
+        // the transition from exploration to the locked enemy reveal.
+        if current.stage == .entrance || current.stage == .preparation {
+            let completed = ExpansionInvestigationCatalog.isComplete(
+                floor: current.floorNumber, readRecordIDs: gameSession.progress.readRecordIDs
+            )
+            sceneController.setEnemyPreviewVisible(completed)
+            sceneController.setLimitedCameraInteractionEnabled(!completed)
+        } else {
+            sceneController.setEnemyPreviewVisible(!hidden.contains(current.stage))
+            sceneController.setLimitedCameraInteractionEnabled(current.stage.isBattle)
+        }
+        sceneController.setActorMotionSuspended(inheritedInputSuspension || combatGuide != nil)
+        switch current.stage {
+        case .preparation, .bossPreparation, .entrance:
+            sceneController.prepareExpansionActor()
+        case .residualBattle, .bossBattle:
+            sceneController.playExpansionActorMotion("appear")
+        case .residualDefeated, .bossDefeated:
+            sceneController.playExpansionActorMotion("death")
+        default: break
+        }
+    }
+
+    // Prepare during reading/selection, never begin speculative work during combat.
+    private func prefetchNextScene(_ current: ExpansionProgress) {
+        if let installed = FinalSceneContract.nextRoom(for: current) {
+            sceneController.prefetchRoom(sceneID: installed, quality: appSettings.graphicsQuality)
+            return
+        }
+        let next: FloorSceneID?
+        switch (current.floorNumber, current.stage) {
+        case (7, .sealedDoor): next = .floor07CoordinateAdministrator
+        case (6, .sealedDoor): next = .floor06CausalityAdministrator
+        case (5, .sealedDoor): next = .floor05OriginalMemoryAdministrator
+        case (7, .reward), (7, .descent): next = .floor06CausalityResidue
+        case (6, .reward), (6, .descent): next = .floor05MemoryOmissionResidue
+        default: next = nil
+        }
+        if let next { sceneController.prefetchRoom(sceneID: next, quality: appSettings.graphicsQuality) }
+    }
+
     private var combatGuide: ExpansionCombatGuide? {
-        ExpansionCombatGuide.current(progress: gameSession.progress, battle: gameSession.battleState, events: gameSession.latestEvents)
+        ExpansionCombatGuide.current(progress: gameSession.progress, battle: gameSession.battleState, events: gameSession.latestCommandEvents)
     }
 
     @ViewBuilder
     private func content(_ current: ExpansionProgress) -> some View {
         switch current.stage {
-        case .entrance:
-            procedure(title: "제\(current.floorNumber)층 · \(current.areaName)",
-                detail: "관측 잔류체를 처리하고 봉인 해제로 관리자 구역을 개방하세요.",
-                button: "입장하기", enabled: ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: false) != nil) {
-                gameSession.send(.advanceExpansion)
-            }
-        case .preparation:
-            if showsBag {
-                LoadoutPreparationView(onBegin: { gameSession.send(.advanceExpansion) }, onCancel: { showsBag = false })
-            } else {
-                FloorEntrancePanel(
-                    configuration: .expansionPreparation(
-                        floorNumber: current.floorNumber,
-                        areaName: current.areaName,
-                        isBoss: false
-                    ),
-                    action: { showsBag = true }
-                )
+        case .residualInvestigation, .recordReward, .finalRecord:
+            EmptyView() // LowerFloorFlowView owns these durable stages.
+        case .entrance, .preparation:
+            InvestigationFlow(
+                sceneController: sceneController,
+                configuration: .expansion(floor: current.floorNumber),
+                hasCompletedInvestigation: ExpansionInvestigationCatalog.isComplete(
+                    floor: current.floorNumber, readRecordIDs: gameSession.progress.readRecordIDs
+                ),
+                hasCompletedPostInvestigation: current.floorNumber != 6
+                    || gameSession.progress.learnedSpells.contains(.outputReduction),
+                restoresEnemyOnDisappear: false,
+                postInvestigationContent: { _ in
+                    Color.clear.task {
+                        gameSession.send(.advanceExpansion)
+                    }
+                }
+            ) {
+                if showsBag {
+                    LoadoutPreparationView(onBegin: {
+                        showsBag = false
+                        gameSession.send(.advanceExpansion)
+                    }, onCancel: { showsBag = false })
+                } else {
+                    FloorEntrancePanel(
+                        configuration: .expansionPreparation(floorNumber: current.floorNumber,
+                            areaName: current.areaName, isBoss: false),
+                        action: {
+                            if current.stage == .entrance {
+                                gameSession.send(.advanceExpansion)
+                            }
+                            showsBag = true
+                        }
+                    )
+                }
             }
         case .bossPreparation:
             if showsBag {
@@ -69,34 +158,29 @@ struct ExpansionFlowView: View {
                 )
             }
         case .residualBattle, .bossBattle:
-            BattleView(realityController: sceneController, restartLoadingPresentation: $retryLoadingPresentation)
-        case .residualDefeated:
-            procedure(title: "잔류체 무력화", detail: "생명력 회복 완료 · 현재 HP \(gameSession.progress.playerHP)\n관리자 구역의 봉인이 남아 있습니다.", button: "봉인문으로") {
-                gameSession.send(.advanceExpansion)
-            }
+            BattleView(realityController: sceneController, restartLoadingPresentation: $retryLoadingPresentation, onRestartBattle: onRestartBattle)
+        case .residualEncounter, .bossEncounter, .residualDefeated, .bossDefeated:
+            // The shared narrative presentation owns these stages, just as on 8F.
+            EmptyView()
         case .sealedDoor:
-            VStack(spacing: 14) {
-                Text("관리자 구역 · 봉인 해제").font(.title2.weight(.semibold)).foregroundStyle(DAColor.gold)
-                Text("배웠던 봉인 해제 문양을 재현하세요.").foregroundStyle(DAColor.body)
-                GlyphCastingPanel(spell: SpellCatalog.sealRelease, inputPreference: appSettings.inputPreference,
-                    availableMana: 100, availableStrokes: 2, erasureZones: [], onCast: { submission in
-                        if submission.evaluation.succeeded { gameSession.send(.releaseExpansionSeal(submission.evaluation.grade)) }
-                    })
-                    .frame(maxWidth: 640)
-            }
-            .padding(28).background(.black.opacity(0.66))
-        case .bossDefeated:
-            procedure(title: "관리자 무력화", detail: "관리 권한을 회수했습니다. 주문 기록 세 가지 중 하나를 선택하세요.", button: "보상 기록 열기") {
-                gameSession.send(.advanceExpansion)
+            GateSealInteractionView(
+                title: SpellCatalog.sealRelease.name,
+                instruction: "금색 핵심점을 따라 해제 문양을 완성하십시오.",
+                spell: SpellCatalog.sealRelease,
+                inputPreference: appSettings.inputPreference,
+                availableMana: 100,
+                availableStrokes: 2,
+                presentation: GateSealGlyphPresentation()
+            ) { submission in
+                guard submission.evaluation.succeeded else { return }
+                gameSession.send(.releaseExpansionSeal(submission.evaluation.grade))
             }
         case .reward:
             RewardSelectionView(floorNumber: current.floorNumber, sceneController: sceneController,
                 isLearningInputActive: $learningInputActive)
         case .descent:
-            DescentSealProcedureView(configuration: .expansion(floorNumber: current.floorNumber),
-                initialCompletedStages: current.descentStage,
-                onStageApproved: { gameSession.sendChecked(.approveExpansionStage($0)) },
-                onApproved: { gameSession.send(.advanceExpansion) })
+            DescentDoorSceneView(configuration: .expansion(floorNumber: current.floorNumber),
+                sceneController: sceneController, retryLoadingPresentation: $retryLoadingPresentation)
         case .learnDebuff:
             ScrollSpellLearningView(spell: SpellCatalog.spell(.outputReduction),
                 sourceCode: "제6층 · 출력 저하 기록",
@@ -125,20 +209,4 @@ struct ExpansionFlowView: View {
         }
     }
 
-    private func procedure(title: String, detail: String, button: String, enabled: Bool = true,
-        action: @escaping () -> Void) -> some View {
-        VStack(spacing: 20) {
-            Spacer()
-            VStack(spacing: 16) {
-                Text(title).font(.system(size: 30, weight: .semibold, design: .serif)).foregroundStyle(DAColor.gold)
-                Text(detail).font(.callout).foregroundStyle(DAColor.body).multilineTextAlignment(.center)
-                Button(button, action: action).buttonStyle(.borderedProminent).tint(DAColor.magic)
-                    .controlSize(.large).disabled(!enabled)
-            }
-            .padding(28).frame(maxWidth: 650)
-            .background(.black.opacity(0.88), in: RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(DAColor.gold.opacity(0.35)))
-            Spacer().frame(height: 44)
-        }.padding(24)
-    }
 }

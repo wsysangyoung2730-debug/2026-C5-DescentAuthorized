@@ -5,8 +5,25 @@ import SwiftUI
 final class GameSessionStore: ObservableObject {
     @Published private(set) var session: DemoGameSession
     @Published private(set) var latestEvents: [DemoSessionEvent] = []
+    /// Full command context for guides, independent of one-shot audiovisual stages.
+    @Published private(set) var latestCommandEvents: [DemoSessionEvent] = []
     @Published private(set) var eventSequence: UInt64 = 0
+    @Published private(set) var isCombatPresentationActive = false
     @Published var presentedError: PresentedGameError?
+
+    private struct CombatSnapshot {
+        let progress: GameProgress
+        var battle: BattleState
+    }
+
+    @Published private var combatSnapshot: CombatSnapshot?
+    private var combatPresentationTask: Task<Void, Never>?
+    private var combatPresentationGeneration: UInt64 = 0
+    private var combatPresentationSuspended = false
+    private var pendingCombatSteps: [CombatPresentationTimeline.Step] = []
+    private var finalCombatState: BattleState?
+    private var nextCombatStepDelay: TimeInterval = 0
+    private var combatStepStartedAt: ContinuousClock.Instant?
 
     private var coordinator: GameSessionCoordinator
     private let persistentSaveStore: any GameSaveStore
@@ -42,22 +59,38 @@ final class GameSessionStore: ObservableObject {
         reportAchievementSnapshot()
     }
 
-    var progress: GameProgress { session.progress }
-    var battleState: BattleState? { session.battleState }
+    var progress: GameProgress { combatSnapshot?.progress ?? session.progress }
+    var battleState: BattleState? { combatSnapshot?.battle ?? session.battleState }
     var hasSavedProgress: Bool { coordinator.hasSavedProgress }
     var presentation: DemoScenePresentation {
-        .presentation(for: progress.currentScene)
+        .presentation(for: progress.currentScene, expansion: progress.expansion)
     }
 
     @discardableResult
     func send(_ command: DemoCommand) -> [DemoSessionEvent] {
+        if isCombatPresentationActive {
+            switch command {
+            case .castSpell, .finishTurn: return []
+            default: cancelCombatPresentation()
+            }
+        }
+        let previousProgress = progress
+        let previousBattle = battleState
         do {
             let events = try coordinator.execute(command)
+            latestCommandEvents = events
             session = coordinator.session
-            latestEvents = events
-            eventSequence &+= 1
             presentedError = nil
             reportAchievementSnapshot(events: events)
+            let steps = CombatPresentationTimeline.steps(for: events)
+            if let previousBattle,
+               let finalBattle = session.battleState ?? session.lastCompletedBattleState,
+               !steps.isEmpty {
+                beginCombatPresentation(steps, progress: previousProgress,
+                                        previousBattle: previousBattle, finalBattle: finalBattle)
+            } else {
+                publish(events)
+            }
             return events
         } catch {
             presentedError = PresentedGameError(
@@ -79,6 +112,7 @@ final class GameSessionStore: ObservableObject {
 
     @discardableResult
     func startNewGame() -> Bool {
+        cancelCombatPresentation()
         do {
             if isRecoverySession {
                 var replacement = try GameSessionCoordinator(
@@ -93,6 +127,7 @@ final class GameSessionStore: ObservableObject {
             }
             session = coordinator.session
             latestEvents = []
+            latestCommandEvents = []
             eventSequence &+= 1
             presentedError = nil
             reportAchievementSnapshot()
@@ -107,7 +142,98 @@ final class GameSessionStore: ObservableObject {
     }
 
     func clearEvents() {
+        cancelCombatPresentation()
         latestEvents = []
+        latestCommandEvents = []
+        eventSequence &+= 1
+    }
+
+    /// Pause the presentation clock along with actor motion, including app backgrounding.
+    func setCombatPresentationSuspended(_ suspended: Bool) {
+        guard combatPresentationSuspended != suspended else { return }
+        combatPresentationSuspended = suspended
+        if suspended {
+            combatPresentationGeneration &+= 1
+            if let started = combatStepStartedAt {
+                let elapsed = started.duration(to: ContinuousClock.now).components
+                let seconds = Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18
+                nextCombatStepDelay = max(0, nextCombatStepDelay - seconds)
+            }
+            combatPresentationTask?.cancel()
+            combatPresentationTask = nil
+            combatStepStartedAt = nil
+        } else {
+            scheduleCombatStep()
+        }
+    }
+
+    /// Navigation and retry discard stale visual work; the coordinator is already current.
+    func cancelCombatPresentation() {
+        combatPresentationGeneration &+= 1
+        combatPresentationTask?.cancel()
+        combatPresentationTask = nil
+        combatStepStartedAt = nil
+        pendingCombatSteps = []
+        finalCombatState = nil
+        combatSnapshot = nil
+        nextCombatStepDelay = 0
+        isCombatPresentationActive = false
+    }
+
+    private func beginCombatPresentation(
+        _ steps: [CombatPresentationTimeline.Step],
+        progress: GameProgress,
+        previousBattle: BattleState,
+        finalBattle: BattleState
+    ) {
+        cancelCombatPresentation()
+        combatSnapshot = CombatSnapshot(progress: progress, battle: previousBattle)
+        finalCombatState = finalBattle
+        pendingCombatSteps = steps
+        isCombatPresentationActive = true
+        // The launch/windup event must reach observers in the command's own update.
+        presentCombatStep(pendingCombatSteps.removeFirst())
+        nextCombatStepDelay = pendingCombatSteps.first?.delay ?? 0
+        scheduleCombatStep()
+    }
+
+    private func scheduleCombatStep() {
+        guard isCombatPresentationActive, !combatPresentationSuspended,
+              combatPresentationTask == nil, !pendingCombatSteps.isEmpty else { return }
+        let generation = combatPresentationGeneration
+        let delay = nextCombatStepDelay
+        combatStepStartedAt = ContinuousClock.now
+        combatPresentationTask = Task { @MainActor [weak self] in
+            do { try await Task.sleep(for: .seconds(delay)) }
+            catch { return }
+            guard let self, self.combatPresentationGeneration == generation,
+                  !self.combatPresentationSuspended else { return }
+            self.combatPresentationTask = nil
+            self.combatStepStartedAt = nil
+            guard !self.pendingCombatSteps.isEmpty else { return }
+            self.presentCombatStep(self.pendingCombatSteps.removeFirst())
+            self.nextCombatStepDelay = self.pendingCombatSteps.first?.delay ?? 0
+            self.scheduleCombatStep()
+        }
+    }
+
+    private func presentCombatStep(_ step: CombatPresentationTimeline.Step) {
+        guard var snapshot = combatSnapshot, let finalCombatState else { return }
+        snapshot.battle = CombatPresentationTimeline.applying(
+            step, to: snapshot.battle, finalState: finalCombatState
+        )
+        if step.kind == .recovery || step.kind == .victoryRelease {
+            combatSnapshot = nil
+            self.finalCombatState = nil
+            isCombatPresentationActive = false
+        } else {
+            combatSnapshot = snapshot
+        }
+        publish(step.events)
+    }
+
+    private func publish(_ events: [DemoSessionEvent]) {
+        latestEvents = events
         eventSequence &+= 1
     }
 
