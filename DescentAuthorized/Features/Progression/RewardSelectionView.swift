@@ -55,13 +55,13 @@ struct RewardSelectionView: View {
     @State private var inspectedCandidateID: String?
     @State private var detailPressTask: Task<Void, Never>?
     @State private var isSelectionInterfaceVisible = false
-    @State private var showsPractice = false
 
     private var candidates: [RewardCandidate] {
         isLowerFloor ? gameSession.progress.currentRewardCandidates : RewardCatalog.candidates(forFloorNumber: floorNumber)
     }
 
     private var isLowerFloor: Bool { (1...4).contains(floorNumber) }
+    private var isRecordDecoding: Bool { gameSession.progress.expansion?.stage == .recordReward }
     private var usesSceneRewards: Bool {
         guard let id = gameSession.presentation.floorSceneID else { return false }
         return RealitySceneDescriptor.descriptor(for: id).entityNames[.rewardStand] != nil
@@ -95,11 +95,6 @@ struct RewardSelectionView: View {
             }
         }
         .preferredColorScheme(.dark)
-        .sheet(isPresented: $showsPractice) {
-            if let candidate = candidates.first(where: { $0.id == selectedCandidateID }) {
-                SpellPracticeSheet(spell: displayedSpell(for: candidate))
-            }
-        }
         .onAppear {
             if usesSceneRewards { sceneController.configureFinalRewardCandidates(candidates) }
             if let pendingLearningCandidate,
@@ -170,6 +165,12 @@ struct RewardSelectionView: View {
                     .font(.system(size: metrics.eyebrowSize, weight: .medium, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.gold)
                     .padding(.leading, metrics.titleContentLeadingInset)
+                if isRecordDecoding {
+                    Text("조사 기록 해독")
+                        .font(.system(size: metrics.bodySize * 1.8, weight: .semibold, design: .serif))
+                        .foregroundStyle(RewardSelectionPalette.gold)
+                        .frame(width: metrics.titleAssetWidth, height: metrics.titleAssetHeight, alignment: .leading)
+                } else {
                 Image("RewardScrollHeaderTitle")
                     .resizable()
                     .scaledToFit()
@@ -179,6 +180,7 @@ struct RewardSelectionView: View {
                         alignment: .leading
                     )
                     .accessibilityLabel("보상 두루마리 선택")
+                }
                 Text("승인된 주문 기록 \(candidates.count)건 중 1건을 수령하십시오.")
                     .font(.system(size: metrics.bodySize, weight: .regular, design: .serif))
                     .foregroundStyle(RewardSelectionPalette.body)
@@ -200,13 +202,7 @@ struct RewardSelectionView: View {
                     x: metrics.size.width - metrics.headerLeading - 52,
                     y: metrics.headerTop + metrics.bodySize / 2
                 )
-            if isLowerFloor {
-                Button("선택 문양 시험 각인") { showsPractice = true }
-                    .buttonStyle(.bordered).tint(DAColor.gold)
-                    .disabled(selectedCandidateID == nil || isResolving)
-                    .position(x: metrics.size.width - metrics.headerLeading - 90,
-                              y: metrics.headerTop + 60)
-            }
+
         }
         .frame(width: metrics.size.width, height: metrics.size.height)
     }
