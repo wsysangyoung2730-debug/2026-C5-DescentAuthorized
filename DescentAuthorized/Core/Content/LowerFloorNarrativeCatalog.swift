@@ -25,21 +25,268 @@ extension ExpansionInvestigationCatalog {
 }
 
 enum LowerFloorNarrativeCatalog {
-    static func encounter(_ current: ExpansionProgress) -> [NarrativeDialogue] {
-        let enemy = ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: current.showsBoss, residualIndex: current.residualIndex)
-        let defeated = [.residualDefeated, .bossDefeated].contains(current.stage)
-        let line: String = switch (current.floorNumber, current.showsBoss, defeated) {
-        case (4, true, false): "위험 고지와 책임자 서명이 일치합니다. 자신이 승인한 절차를 감당하십시오."
-        case (4, true, true): "기억 손실 위험 고지 완료… 책임자 승인은 철회되지 않았습니다."
-        case (3, true, false): "격리 동의자를 확인했습니다. 외부의 명령이 아닌 본인의 요청을 집행합니다."
-        case (3, true, true): "강제 수용 명령 없음. 당신은 봉인을 유지하기 위해 스스로 남았습니다."
-        case (2, true, false): "균열 폐쇄 불가. 유지 업무를 넘길 자격을 검증합니다."
-        case (2, true, true): "분산 유지 승인. 다음 구간의 접수 절차를 진행하십시오."
-        case (1, true, false): "신원 심사, 유지 심사, 인계 심사. 마지막 승인 절차를 개시합니다."
-        case (1, true, true): "심사 완료. 최종 기록을 열람하고 출구의 세 승인란을 완성하십시오."
-        case (_, false, true): current.residualIndex == 0 ? "첫 집행이 멎었다. 같은 방의 다른 조사 구역에서 신호가 남아 있다." : "두 번째 집행이 멎었다. 관리자 구역의 중간문에 접근할 수 있다."
-        default: current.residualIndex == 0 ? "기록 속 절차가 형태를 얻었다. 첫 번째 잔류체가 승인자를 대조한다." : "남은 집행이 깨어난다. 이번 절차의 예고를 확인하라."
+    static func dialogues(floor: Int, isBoss: Bool, residualIndex: Int, isDefeated: Bool) -> [NarrativeDialogue] {
+        // Indices follow game order, including 3F consent before quarantine.
+        switch (floor, isBoss ? 2 : residualIndex, isDefeated) {
+        case (4, 0, false):
+            [
+                .init(speaker: "서명 모사 잔류체", text: "기억 손실 위험을 감수하고 봉인을 유지한다. 당신이 서명한 문서입니다."),
+                .init(speaker: "주인공", text: "나를 기억해?"),
+                .init(speaker: "서명 모사 잔류체", text: "그 선을 기억합니다. 당신은 망설이면 끝의 갈고리를 덧그립니다."),
+                .init(speaker: "주인공", text: "너도 내 필체를 그릴 수 있잖아. 위조가 아니라는 증거는?"),
+                .init(speaker: "서명 모사 잔류체", text: "당시의 말도 남아 있습니다. ‘위험을 설명했다고만 쓰지 말고, 누가 들었는지 남겨.’"),
+                .init(speaker: "주인공", text: "그 사람들 이름은 어디 있어?"),
+                .init(speaker: "서명 모사 잔류체", text: "사라졌습니다. 당신의 서명만 살아남았지요."),
+                .init(speaker: "주인공", text: "그럼 그 서명 하나로 내가 전부 알았다고 말하지 마.")
+            ]
+        case (4, 0, true):
+            [
+                .init(speaker: "서명 모사 잔류체", text: "뒷면도 읽으십시오. ‘반려된 요청도 책임자에게 전달할 것.’ 당신의 추가 지시입니다."),
+                .init(speaker: "주인공", text: "전달됐어?"),
+                .init(speaker: "서명 모사 잔류체", text: "저는 복사했습니다. 누가 받았는지는 집행 대장에 있습니다."),
+                .init(speaker: "주인공", text: "이번에는 내가 직접 확인할게.")
+            ]
+        case (4, 1, false):
+            [
+                .init(speaker: "반려 집행 잔류체", text: "열람은 끝났다. 다음 창구로 가라."),
+                .init(speaker: "주인공", text: "반려된 요청도 내게 보내라는 지시가 있었어. 전달했나?"),
+                .init(speaker: "반려 집행 잔류체", text: "보냈다. 책임자가 응답하지 않았다. 집행은 계속됐고."),
+                .init(speaker: "주인공", text: "방패 아래 문서는 왜 아직 들고 있지?"),
+                .init(speaker: "반려 집행 잔류체", text: "격리 철회 요청. 이름은 지워졌지만 내용은 분명했다. 그만하고 싶다고."),
+                .init(speaker: "주인공", text: "무슨 말인지 알면서도 반려했어? 그 문서를 줘."),
+                .init(speaker: "반려 집행 잔류체", text: "알아듣는 것과 받아 주는 것은 다르다. 승인 없이 가져가면 너도 집행 대상이다.")
+            ]
+        case (4, 1, true):
+            [
+                .init(speaker: "반려 집행 잔류체", text: "버릴 수가 없었다. 도장을 찍어도…… 그만하고 싶다는 말은 남아 있었거든."),
+                .init(speaker: "주인공", text: "내가 가져갈게."),
+                .init(speaker: "반려 집행 잔류체", text: "내 잘못까지 네 이름으로 가져가지는 마라."),
+                .init(speaker: "주인공", text: "네가 읽고도 막았다는 것까지 남길 거야. 나를 포함해서 누구도 빠지지 않게.")
+            ]
+        case (4, 2, false):
+            [
+                .init(speaker: "책임 심사 관리자", text: "이전에도 당신은 남의 반려 문서부터 들여다봤습니다."),
+                .init(speaker: "주인공", text: "그걸 아는 사람이 왜 이 문서를 내버려 뒀지?"),
+                .init(speaker: "책임 심사 관리자", text: "책임자가 사라졌습니다. 승인 기록만 남았지요."),
+                .init(speaker: "주인공", text: "내게 어떤 위험을 설명했어?"),
+                .init(speaker: "책임 심사 관리자", text: "당신의 기억이 손실될 수 있다고 했습니다. 이후 발생한 다른 사람들의 피해까지 승인받은 것은 아닙니다."),
+                .init(speaker: "주인공", text: "그런데 왜 전부 내 승인 아래 묶여 있어?"),
+                .init(speaker: "책임 심사 관리자", text: "책임자를 더 만들면 절차를 멈춰야 했으니까요. 지금도 모두 당신 책임이라고 하면 가장 빨리 끝납니다."),
+                .init(speaker: "주인공", text: "내 서명은 지우지 마. 대신 이 요청과, 이걸 읽은 사람들과, 네가 방금 한 말도 같이 남겨."),
+                .init(speaker: "책임 심사 관리자", text: "기존 승인에 대한 이의로 접수하겠습니다. 기록을 지키는 제 권한과 충돌합니다."),
+                .init(speaker: "주인공", text: "알아. 이번에는 내가 무슨 뜻으로 선을 긋는지 보고 있어.")
+            ]
+        case (4, 2, true):
+            [
+                .init(speaker: "책임 심사 관리자", text: "당신의 승인과…… 이의 기록을 함께 보존합니다."),
+                .init(speaker: "주인공", text: "넌 왜 알면서 계속 심사했어?"),
+                .init(speaker: "책임 심사 관리자", text: "멈추면 제 이름도 심사대에 올라올 테니까요."),
+                .init(speaker: "주인공", text: "그 말도 남겨. 내 것 옆에."),
+                .init(speaker: "책임 심사 관리자", text: "그 요청서는 3층에서 올라왔습니다. 당신의 격리 동의서와 함께 읽으십시오."),
+                .init(speaker: "주인공", text: "내가 왜 남았는지, 이번엔 직접 물어볼 거야.")
+            ]
+        case (3, 0, false):
+            [
+                .init(speaker: "동의 보관 잔류체", text: "여기 당신의 동의서가 있습니다. 요청자와 격리 대상자, 두 칸 모두 당신이에요."),
+                .init(speaker: "주인공", text: "내가 들어오겠다고 한 건 알겠어. 지금 나가겠다고 하면?"),
+                .init(speaker: "동의 보관 잔류체", text: "이 서류에는 퇴실 날짜가 없습니다."),
+                .init(speaker: "주인공", text: "날짜를 안 썼다고 영원히 머무르겠다는 뜻은 아니잖아."),
+                .init(speaker: "동의 보관 잔류체", text: "당신이 남긴 말이 이것뿐이라면, 저는 이것을 지켜야 합니다."),
+                .init(speaker: "주인공", text: "지금도 내가 말하고 있어. 예전의 내 말 옆에 남겨 줘."),
+                .init(speaker: "동의 보관 잔류체", text: "서로 다른 의사는 하나의 보관함에 넣을 수 없어요."),
+                .init(speaker: "주인공", text: "너는 내가 아니라 서류 한 장을 지키고 있구나. 내 기록을 돌려줘.")
+            ]
+        case (3, 0, true):
+            [
+                .init(speaker: "동의 보관 잔류체", text: "이제 그 동의서를 없애실 건가요?"),
+                .init(speaker: "주인공", text: "아니. 그때 동의한 사실과, 지금 다시 생각하는 건 같이 있을 수 있어."),
+                .init(speaker: "동의 보관 잔류체", text: "보관자 의견란에…… ‘현재 대상자의 의사 확인 필요’라고 적겠습니다."),
+                .init(speaker: "주인공", text: "그래. 그건 네 판단으로 남겨.")
+            ]
+        case (3, 1, false):
+            [
+                .init(speaker: "격리 집행 잔류체", text: "그 문은 당신이 직접 닫았습니다. 한참 손잡이를 잡고 계셨지요."),
+                .init(speaker: "주인공", text: "그 뒤에 열어 달라고 한 사람은 없었어?"),
+                .init(speaker: "격리 집행 잔류체", text: "있었습니다. 안쪽 잠금쇠를 풀면 제가 다시 잠갔습니다."),
+                .init(speaker: "주인공", text: "안에서 잠근 문이라더니, 나가는 건 너희가 결정했군."),
+                .init(speaker: "격리 집행 잔류체", text: "잠금 해제는 격리 중 이상 행동으로 분류되었습니다."),
+                .init(speaker: "주인공", text: "지금 나도 열 거야. 내가 왜 그러는지 물어볼 생각은 없어?"),
+                .init(speaker: "격리 집행 잔류체", text: "……집행 명령이 먼저 도착했습니다. 첫 충격 뒤에도 다음 집행이 남습니다. 대비하십시오.")
+            ]
+        case (3, 1, true):
+            [
+                .init(speaker: "격리 집행 잔류체", text: "처음 문을 닫으며 부탁하셨습니다. ‘내가 열어 달라고 하면, 이유부터 물어봐 줘.’"),
+                .init(speaker: "주인공", text: "그 말은 들어주지 않았구나."),
+                .init(speaker: "격리 집행 잔류체", text: "예. 지금이라도…… 왜 나가려 하십니까?"),
+                .init(speaker: "주인공", text: "기억 없는 내 말은 모두 틀린 건지, 그걸 정한 사람에게 묻고 싶어.")
+            ]
+        case (3, 2, false):
+            [
+                .init(speaker: "자발 격리 관리자", text: "당신은 판단이 흐려진 뒤에도 격리를 유지해 달라고 요청했습니다."),
+                .init(speaker: "주인공", text: "그래서 밖으로 나가고 싶다는 말도 증상으로 처리했어?"),
+                .init(speaker: "자발 격리 관리자", text: "남아야 할 이유를 잊었을 때, 잊기 전의 의사를 지킨 겁니다."),
+                .init(speaker: "주인공", text: "마음을 바꾼 것과 이유를 잊은 건 어떻게 구분했지?"),
+                .init(speaker: "자발 격리 관리자", text: "승인된 기준을 적용했습니다."),
+                .init(speaker: "주인공", text: "나가겠다고 하면 판단 손상. 남겠다고 하면 원래 의사. 다른 답은 전부 틀리게 해 놓았네."),
+                .init(speaker: "자발 격리 관리자", text: "당신을 다시 그 위험 속으로 보내고 싶지 않습니다."),
+                .init(speaker: "주인공", text: "그건 네 뜻이야. 내 동의서에 쓰인 말처럼 말하지 마."),
+                .init(speaker: "자발 격리 관리자", text: "……맞습니다. 저는 동의하지 않습니다. 당신이 문을 연다면 다시 잠글 겁니다."),
+                .init(speaker: "주인공", text: "그럼 이번에는 문을 여는 나를 똑바로 보고 있어.")
+            ]
+        case (3, 2, true):
+            [
+                .init(speaker: "자발 격리 관리자", text: "격리 유지 권한을…… 잃었습니다."),
+                .init(speaker: "주인공", text: "처음 들어올 때의 나는, 왜 남아야 한다고 했어?"),
+                .init(speaker: "자발 격리 관리자", text: "아래 유지기관에 자신의 승인이 필요하다고 했습니다. 2층에 작동 기록이 있습니다."),
+                .init(speaker: "주인공", text: "그걸 끝내면 나갈 수 있었어?"),
+                .init(speaker: "자발 격리 관리자", text: "저는 끝나는 날짜를 드리지 못했습니다. 그런데도 동의를 받았습니다."),
+                .init(speaker: "주인공", text: "그 대목도 처음부터 말했어야지.")
+            ]
+        case (2, 0, false):
+            [
+                .init(speaker: "과부하 잔류체", text: "오른쪽 관에서 떨어져. 내 쪽도 거의 찼어."),
+                .init(speaker: "주인공", text: "네 몸을 연결한 거야? 균열을 닫지도 못하는데, 언제까지 이러고 있어야 해?"),
+                .init(speaker: "과부하 잔류체", text: "모르지. 그래도 압력이 한 번 늦게 올라온 날, 대피 인원이 두 자리 늘었어."),
+                .init(speaker: "주인공", text: "실제로 사람들을 내보냈구나."),
+                .init(speaker: "과부하 잔류체", text: "‘한 명 더 탔습니다.’ 그 교신은 아직 기억해. 조금만 더 버틸 이유는 됐지."),
+                .init(speaker: "주인공", text: "이대로 두면 네 몸이 먼저 망가지겠어. 널 분리하면 어떻게 돼?"),
+                .init(speaker: "과부하 잔류체", text: "누출로 잡고 압력을 네 쪽으로 보낼 거야. 방어부터 해. 말한다고 내가 멈출 수는 없어.")
+            ]
+        case (2, 0, true):
+            [
+                .init(speaker: "과부하 잔류체", text: "계기판…… 아직 움직이지?"),
+                .init(speaker: "주인공", text: "응. 냉각은 돌아가고 있어."),
+                .init(speaker: "과부하 잔류체", text: "다행이네. 내가 멎으면 전부 끝나는 줄 알았거든."),
+                .init(speaker: "주인공", text: "그건 진작 알려 줬어야 했는데.")
+            ]
+        case (2, 1, false):
+            [
+                .init(speaker: "역류 차단 잔류체", text: "앞의 축압기를 멈췄군. 더는 압력이 고르지 않았지."),
+                .init(speaker: "주인공", text: "알면서 왜 도와주지 않았어?"),
+                .init(speaker: "역류 차단 잔류체", text: "내가 비키면 뒤로 샌다."),
+                .init(speaker: "주인공", text: "뒤에는 아무도 없는데."),
+                .init(speaker: "역류 차단 잔류체", text: "관은 이어져 있다. 보이지 않는 쪽이라고 비어 있는 건 아니다."),
+                .init(speaker: "주인공", text: "네가 계속 막고 있을 수는 없잖아. 관리자에게 인계를 요청하러 갈 거야."),
+                .init(speaker: "역류 차단 잔류체", text: "승인자는 늘 그렇게 말하고 지나갔다. 정말 바꾸겠다면, 돌아오는 힘까지 보고 가라.")
+            ]
+        case (2, 1, true):
+            [
+                .init(speaker: "역류 차단 잔류체", text: "교대를 요청했다고 전해라. 탈주했다고 적지 말고."),
+                .init(speaker: "주인공", text: "교대 요청. 그대로 전할게."),
+                .init(speaker: "역류 차단 잔류체", text: "너도 더는 못 버틸 때…… 그렇게 말해라.")
+            ]
+        case (2, 2, false):
+            [
+                .init(speaker: "봉인 유지 관리자", text: "두 보조 장치가 멎었습니다. 압력은 기본 유지 회로로 넘겼습니다."),
+                .init(speaker: "주인공", text: "장치라고 하지 마. 하나는 쉬고 싶어 했고, 하나는 교대를 요청했어."),
+                .init(speaker: "봉인 유지 관리자", text: "……교대 요청으로 기록하겠습니다."),
+                .init(speaker: "주인공", text: "탑이 번 시간 동안 사람들이 대피했더군. 지금도 그 사람들을 지키고 있어?"),
+                .init(speaker: "봉인 유지 관리자", text: "장담할 수 없습니다. 바깥의 회신은 끊겼습니다. 다만 유지마저 끊으면 더 나빠질 수 있습니다."),
+                .init(speaker: "주인공", text: "그래서 내가 남았구나. 왜 다른 사람이 아니라 나여야 했지?"),
+                .init(speaker: "봉인 유지 관리자", text: "기록이 어긋나면 설계자의 문양으로 연결을 맞춰야 했습니다. 기억을 잃어도 손은 일할 수 있도록 했지요."),
+                .init(speaker: "주인공", text: "언제까지 그러라는 거야. 지금 상태를 확인하고 다음 구간에 넘길 방법부터 찾아."),
+                .init(speaker: "봉인 유지 관리자", text: "현 권한이 손상된 승인을 고정하고 있습니다. 제게서 제어권을 가져가야 합니다. 해제에는 방어 절차가 반응할 겁니다."),
+                .init(speaker: "주인공", text: "흐름까지 지우진 않을게. 대신 예전의 내 승인만 계속 붙잡고 있지도 않겠어.")
+            ]
+        case (2, 2, true):
+            [
+                .init(speaker: "봉인 유지 관리자", text: "권한 분리 확인. 남은 유지 업무를 인계할 수 있습니다."),
+                .init(speaker: "주인공", text: "내가 끝없이 버티는 걸, 멈추려 한 사람은 없었어?"),
+                .init(speaker: "봉인 유지 관리자", text: "있었습니다. 최종 승인 관리자입니다. 당신이 자신을 남기지 않을까 걱정했지요."),
+                .init(speaker: "주인공", text: "나를 아는 사람이 아직 있군."),
+                .init(speaker: "봉인 유지 관리자", text: "‘괜찮다’고만 답하지 마십시오. 그 사람은 당신의 그 말을 가장 믿지 않습니다."),
+                .init(speaker: "주인공", text: "이번엔 나도 무엇이 괜찮은지 모르겠어. 그렇게 말할게.")
+            ]
+        case (1, 0, false):
+            [
+                .init(speaker: "신원 대조 잔류체", text: "성명과 최종 직책을 말씀해 주십시오."),
+                .init(speaker: "주인공", text: "이름은 기억하지 못해. 설계자였고 봉인관이었다고 들었어."),
+                .init(speaker: "신원 대조 잔류체", text: "타인의 진술은 본인의 기억으로 기재할 수 없습니다. 필체만으로 원본을 확정하기도 어렵습니다."),
+                .init(speaker: "주인공", text: "5층에서도 그렇게 말했어. 너는 구분할 수 있어?"),
+                .init(speaker: "신원 대조 잔류체", text: "보관된 문장을 완성하십시오. ‘내가 남아 있는 동안에는……’"),
+                .init(speaker: "주인공", text: "몰라. 대신 내려오며 만난 사람들에 대해서는 말할 수 있어."),
+                .init(speaker: "신원 대조 잔류체", text: "심사 대상은 당신입니다. 기억을 확인할 수 없다면 문양으로 대조하겠습니다."),
+                .init(speaker: "주인공", text: "그 사람들을 만나고 여기까지 온 것도 나야. 그것도 빼놓지 마.")
+            ]
+        case (1, 0, true):
+            [
+                .init(speaker: "신원 대조 잔류체", text: "원본 판정은 불가합니다. 현재 승인자의 진술을 별도 보존합니다."),
+                .init(speaker: "주인공", text: "아까 못 끝낸 문장도 알려 줘."),
+                .init(speaker: "신원 대조 잔류체", text: "‘내가 남아 있는 동안에는, 밖의 사람들이 조금 더 살 수 있다.’ 보관된 문장은 그렇습니다."),
+                .init(speaker: "주인공", text: "왜 남았는지는 알 것 같아. 그때와 같은 답을 할지는, 내가 정할게.")
+            ]
+        case (1, 1, false):
+            [
+                .init(speaker: "퇴거 심사 잔류체", text: "퇴거를 신청하십니까? 미완료 업무와 잔여 책임이 없어야 합니다."),
+                .init(speaker: "주인공", text: "균열은 아직 열려 있어. 그 조건으로 나간 사람이 있어?"),
+                .init(speaker: "퇴거 심사 잔류체", text: "제 기록에는 없습니다. 저도 마지막 접수를 끝내야 퇴근할 수 있습니다."),
+                .init(speaker: "주인공", text: "아무도 못 보내니까 너도 못 가는군."),
+                .init(speaker: "퇴거 심사 잔류체", text: "남겨진 일을 없애 드릴 수는 없습니다."),
+                .init(speaker: "주인공", text: "없애 달라는 게 아니야. 남은 일을 적어 왔어. 마지막 승인자에게 가져갈게."),
+                .init(speaker: "퇴거 심사 잔류체", text: "인계 신청으로 분류합니다. 그러나 출구 승인은 별개입니다. 미승인 통과를 차단합니다.")
+            ]
+        case (1, 1, true):
+            [
+                .init(speaker: "퇴거 심사 잔류체", text: "철회 요청, 교대 요청, 외부 교신 미확인…… 완료된 것이 거의 없군요."),
+                .init(speaker: "주인공", text: "완료했다고 꾸미지는 않았어. 그대로 넘겨 줘."),
+                .init(speaker: "퇴거 심사 잔류체", text: "접수했습니다. 이번에는 다음 책상에 놓을 수 있겠습니다."),
+                .init(speaker: "주인공", text: "이제 네 접수는 끝났어. 고마워.")
+            ]
+        case (1, 2, false):
+            [
+                .init(speaker: "최종 승인 관리자", text: "그 손, 아직도 펜을 너무 세게 쥐는군."),
+                .init(speaker: "주인공", text: "나를 아는 사람이라고 들었어."),
+                .init(speaker: "최종 승인 관리자", text: "함께 일했다. 네가 회의에서 못 끝낸 말을 복도에서 들었고, 마지막 문서도 내가 받았다."),
+                .init(speaker: "주인공", text: "미안해. 기억이 안 나."),
+                .init(speaker: "최종 승인 관리자", text: "……알고 있다. 가져온 것부터 내려놔. 여기서는 더 승인하지 않아도 돼."),
+                .init(speaker: "주인공", text: "2층은 아직 버티고 있어. 여기서 기다리면 달라지는 게 있어?"),
+                .init(speaker: "최종 승인 관리자", text: "적어도 지금 남아 있는 너를 더 잃지는 않을 수 있다. 진행하면 네 말조차 네 것으로 느끼지 못할 수도 있어."),
+                .init(speaker: "주인공", text: "예전의 나는 그걸 알면서 남았겠지. 넌 왜 막는 거야?"),
+                .init(speaker: "최종 승인 관리자", text: "네가 부탁했어. ‘내가 나를 기억하지 못하면서 또 괜찮다고 하면, 보내기 전에 이유부터 다시 설명해 줘.’"),
+                .init(speaker: "주인공", text: "그 뒤에는? 다 듣고도 가겠다고 하면?"),
+                .init(speaker: "최종 승인 관리자", text: "무서운지도 물어 달라고 했지. 하지만 넌 늘 괜찮다고 했어. 그러고는 네 몫을 늘렸고."),
+                .init(speaker: "주인공", text: "지금은 괜찮지 않아. 무섭고, 멈추고 싶은 마음도 있어. 그래도 이어진 일을 확인하고 싶어."),
+                .init(speaker: "최종 승인 관리자", text: "그 문 너머의 회신도 끊겼다. 어디에 도착할지, 네가 무사할지 약속할 수 없어. 난 널 보내고 싶지 않다."),
+                .init(speaker: "주인공", text: "네가 바라는 답만 내 답으로 인정하면, 3층과 똑같아."),
+                .init(speaker: "최종 승인 관리자", text: "네 생각을 말하는 건지, 남겨진 의무가 말하게 하는 건지 어떻게 알아?"),
+                .init(speaker: "주인공", text: "모를 수 있겠지. 그렇다고 네가 나 대신 정할 수 있는 건 아니야."),
+                .init(speaker: "최종 승인 관리자", text: "……알고 있다. 그런데도 비켜 줄 수가 없어. 최종 승인 보류. 심사 권한을 활성화합니다."),
+                .init(speaker: "주인공", text: "지금 나를 보고 싸워. 네가 기억하는 사람 말고.")
+            ]
+        case (1, 2, true):
+            [
+                .init(speaker: "최종 승인 관리자", text: "네가 다치는 걸 보면서도…… 멈추지 못했군. 지켜 준다는 말을 할 자격도 없어."),
+                .init(speaker: "주인공", text: "왜 그렇게까지 붙잡았어?"),
+                .init(speaker: "최종 승인 관리자", text: "너를 살려 두려고. 그리고…… 혹시 한마디쯤은 나를 기억한다고 해 줄까 봐."),
+                .init(speaker: "주인공", text: "계속 기다렸구나."),
+                .init(speaker: "최종 승인 관리자", text: "내 기다림까지 네 책임으로 만들고 있었어."),
+                .init(speaker: "주인공", text: "예전의 너는 기억하지 못해. 하지만 지금 네가 한 말은 들었어. 그건 내가 가져갈 수 있어."),
+                .init(speaker: "최종 승인 관리자", text: "……그것으로 충분하다고, 내가 먼저 말했어야 했는데. 보류 명령은 해제한다. 마지막 기록을 읽고 네 손으로 승인해."),
+                .init(speaker: "주인공", text: "조건을 하나 남길게. 앞으로 내가 못 하겠다고 말하면, 그때의 내 말도 지금만큼 들어 줘."),
+                .init(speaker: "최종 승인 관리자", text: "기록하겠다. 이번 승인을…… 앞으로의 모든 동의로 취급하지 않겠다."),
+                .init(speaker: "주인공", text: "네 기록도 가져갈게. 날 지키려 한 것과 내 말을 듣지 않은 것, 둘 다."),
+                .init(speaker: "최종 승인 관리자", text: "그래. 좋은 쪽만 남기면…… 또 네가 전부 떠안을 테니까."),
+                .init(speaker: "최종 승인 관리자", text: "손에 힘을 조금 풀어. 그렇게 쥐면…… 네가 먼저 아프다.")
+            ]
+        default: []
         }
-        return [.init(speaker: defeated && !current.showsBoss ? "주인공" : enemy?.name ?? "승인 기록", text: line)]
     }
+
+    static let finalRecord = """
+    보관된 서약
+    완전 폐쇄가 보장되지 않음과 기억 손실 위험을 설명받았다. 본인의 의사로 격리 및 유지 업무에 동의한다.
+    기억이 손상된 뒤에는 목적과 대가를 다시 설명할 것. 이 서명을 이후의 모든 의사에 대한 동의로 간주하지 말 것.
+
+    현재 승인자의 진술
+    과거 서약을 확인했다. 모든 기억을 되찾은 것은 아니다.
+    남은 업무를 기록과 함께 인계하고, 지금의 의사로 출구 통과를 요청한다. 이후 중단을 요청하면 그 말을 먼저 들을 것.
+    """
+
+    static let ending: [NarrativeDialogue] = [
+        .init(speaker: "주인공", text: "……10층?"),
+        .init(speaker: "시스템", text: "인계 완료. 신규 관리 구획, 제10층. 하강 봉인 절차를 재개하십시오."),
+        .init(speaker: "주인공", text: "바깥으로 나온 게 아니었어. 다른 탑으로 이어져 있었군."),
+        .init(speaker: "시스템", text: "이전 승인 이력을 적용하시겠습니까?"),
+        .init(speaker: "주인공", text: "그 전에 설명부터 해. 여기는 무엇을 막고 있지?")
+    ]
 }
