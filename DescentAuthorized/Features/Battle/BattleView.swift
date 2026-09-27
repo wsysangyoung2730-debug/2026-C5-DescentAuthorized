@@ -238,9 +238,16 @@ struct BattleView: View {
                 )
                 .brightness(enemyHitFlash && !appSettings.reducedFlashes ? 0.07 : 0)
             } else if realitySceneID != nil {
-                Color.black.opacity(0.2)
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
+                GeometryReader { proxy in
+                    RadialGradient(
+                        colors: [.clear, .black.opacity(0.24)],
+                        center: .center,
+                        startRadius: min(proxy.size.width, proxy.size.height) * 0.32,
+                        endRadius: max(proxy.size.width, proxy.size.height) * 0.75
+                    )
+                }
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
             } else {
                 battleBackground
             }
