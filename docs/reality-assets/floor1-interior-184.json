@@ -1,0 +1,29 @@
+[
+  {
+    "asset": "floor01_identity_comparison_residual.usdc",
+    "cameraPosition": [
+      0.0,
+      -18.0,
+      5.400000095367432
+    ],
+    "interiorVaultFaces": 48
+  },
+  {
+    "asset": "floor01_exit_review_residual.usdc",
+    "cameraPosition": [
+      0.0,
+      -18.0,
+      5.199999809265137
+    ],
+    "interiorVaultFaces": 48
+  },
+  {
+    "asset": "floor01_final_authorization_administrator.usdc",
+    "cameraPosition": [
+      0.0,
+      -12.0,
+      6.0
+    ],
+    "interiorVaultFaces": 1280
+  }
+]
