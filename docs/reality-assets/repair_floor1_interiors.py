@@ -3,7 +3,7 @@ Also finish the open presentation-set backs/roof shoulders using their existing
 materials, so free look cannot expose the environment behind the set.
 """
 from pathlib import Path
-import json
+import json, math
 from pxr import Usd, UsdGeom, UsdShade, Sdf, Gf
 root = Path(__file__).resolve().parents[2]
 contracts = json.loads((root/'docs/final-3d-integration/room-contracts.json').read_text())
@@ -43,6 +43,17 @@ for r in contracts:
         UsdShade.MaterialBindingAPI.Apply(cube.GetPrim()).Bind(material)
     boss = r['role'] == 'administrator'
     if boss:
+        # Dome radius is 25 m while the wall is 26 m: bridge the annular
+        # gap with a downward-facing shoulder using the authored dome material.
+        ring = UsdGeom.Mesh.Define(stage, prefix + 'DomeWallShoulder')
+        points = [Gf.Vec3f(radius*math.cos(i*math.tau/128), 9+radius*math.sin(i*math.tau/128), 20)
+                  for radius in (25,26.6) for i in range(128)]
+        ring.CreatePointsAttr(points)
+        ring.CreateFaceVertexCountsAttr([4]*128)
+        ring.CreateFaceVertexIndicesAttr([v for i in range(128) for v in (i,(i+1)%128,(i+1)%128+128,i+128)])
+        ring.CreateNormalsAttr([Gf.Vec3f(0,0,-1)]*128); ring.SetNormalsInterpolation('uniform')
+        ring.CreateSubdivisionSchemeAttr('none')
+        UsdShade.MaterialBindingAPI.Apply(ring.GetPrim()).Bind(roof_material)
         # The round hall opens into an authored 22 m wide entrance floor.
         box('EntranceBack', (0,-27,10), (22,.4,20), wall_material)
         for side in [-1,1]:
