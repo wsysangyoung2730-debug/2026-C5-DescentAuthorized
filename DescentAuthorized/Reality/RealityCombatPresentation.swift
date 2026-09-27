@@ -519,10 +519,15 @@ final class RealityCombatVFXRenderer {
                     payload: entity,
                     name: "DA_RUNTIME_ENEMY_INTENT"
                 )
-                container.scale = SIMD3(repeating: self.intentScale)
+                // Different authored cues have different dimensions; keep a common visual height.
+                let nativeHeight = container.visualBounds(relativeTo: container).extents.z
+                let actorHeight = self.enemyBounds(relativeTo: enemyAnchor)?.extents.z ?? 4
+                let displayHeight = min(0.85, max(0.4, actorHeight * 0.20))
+                let scale = nativeHeight > 0.001 ? displayHeight / nativeHeight : self.intentScale
+                container.scale = SIMD3(repeating: scale)
                 // Measure the authored symbol before smoke/appearance animation changes its bounds.
                 let symbolBounds = container.visualBounds(relativeTo: container)
-                self.intentHalfHeight = max(0, symbolBounds.extents.z * self.intentScale * 0.5)
+                self.intentHalfHeight = max(0, symbolBounds.extents.z * scale * 0.5)
                 container.position = self.intentPosition(relativeTo: enemyAnchor)
                 self.pendingIntentCue = nil
                 self.currentIntentCue = cue
@@ -651,7 +656,7 @@ final class RealityCombatVFXRenderer {
         }
         return SIMD3(
             (bounds.min.x + bounds.max.x) * 0.5,
-            bounds.min.y - 0.35,
+            (bounds.min.y + bounds.max.y) * 0.5,
             resolvedHeight
         )
     }

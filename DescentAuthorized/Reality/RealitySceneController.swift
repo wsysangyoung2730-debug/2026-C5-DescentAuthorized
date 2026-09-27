@@ -2617,6 +2617,20 @@ extension RealitySceneController {
             }
         }
         await capture("base")
+        let intentCues: [RealityEnemyIntentCue] = [.attack, .heavyAttack, .generalShield, .absoluteShield,
+            .memoryRecord, .mimicAttack, .openingWait, .scheduledExecution, .spellSeal, .amplify, .damageReservation]
+        var intentChecks: [[String: Any]] = []
+        if registry.entity(for: .enemyActor) != nil {
+            for (index, cue) in intentCues.enumerated() {
+                combatVFXRenderer.present([.intent(cue)], registry: registry, reducedMotion: true)
+                try? await Task.sleep(for: .milliseconds(600))
+                await capture("intent-\(index)")
+                let frame = combatVFXRenderer.projectedIntentFrame(in: arView)
+                intentChecks.append(["cue": String(describing: cue), "visible": frame != nil,
+                    "insideViewport": frame.map { arView.bounds.contains($0) } ?? false])
+            }
+            combatVFXRenderer.present([.clearIntent], registry: registry, reducedMotion: true)
+        }
         beginBattleCameraLook()
         updateBattleCameraLook(translation: CGSize(width: 450, height: -180), viewportSize: CGSize(width: 1000, height: 700))
         beginBattleCameraZoom()
@@ -2640,7 +2654,7 @@ extension RealitySceneController {
         resetBattleCamera(animated: false)
         let report: [String: Any] = ["scene": id.rawValue, "lookChanged": base != adjusted,
             "resetMatrixError": error, "resetFOVError": fovError,
-            "resetButtonHidden": resetButtonHidden]
+            "resetButtonHidden": resetButtonHidden, "intents": intentChecks]
         try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
             .write(to: directory.appendingPathComponent("report.json"))
         print("C5_CAMERA_RESET \(report)")
