@@ -1694,13 +1694,10 @@ final class RealitySceneController: ObservableObject {
     private func restoreDarkSubjectDetail(_ entity: Entity) {
         if var model = entity.components[ModelComponent.self] {
             model.materials = model.materials.map { source in
-                guard var material = source as? PhysicallyBasedMaterial,
-                      material.emissiveColor.texture == nil,
-                      let texture = material.baseColor.texture else { return source }
-                // A restrained texture-based fill restores details lost in the brown room's shadows.
-                // Existing emissive maps, surface normals, metallic and roughness stay intact.
-                material.emissiveColor = .init(color: .white, texture: texture)
-                material.emissiveIntensity = 0.30
+                guard var material = source as? PhysicallyBasedMaterial else { return source }
+                // Reduce mirror-like metal response so the front light reveals the bronze detail.
+                // Keep the authored color, normal, roughness and emissive textures untouched.
+                material.metallic.scale = min(material.metallic.scale, 0.35)
                 return material
             }
             entity.components.set(model)
