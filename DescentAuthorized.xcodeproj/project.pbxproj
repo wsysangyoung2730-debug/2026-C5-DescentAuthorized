@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A18000000000000000000001 /* CombatStatusPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18000000000000000000002 /* CombatStatusPresentation.swift */; };
 		C54100000000000000000001 /* LowerFloorContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000001 /* LowerFloorContracts.swift */; };
 		C54100000000000000000002 /* LowerFloorSpellCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000002 /* LowerFloorSpellCatalog.swift */; };
 		C54100000000000000000003 /* LowerFloorDescentGlyphs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000003 /* LowerFloorDescentGlyphs.swift */; };
@@ -108,6 +109,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A18000000000000000000002 /* CombatStatusPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/CombatEngine/CombatStatusPresentation.swift"; sourceTree = SOURCE_ROOT; };
 		C54200000000000000000001 /* LowerFloorContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorContracts.swift"; sourceTree = SOURCE_ROOT; };
 		C54200000000000000000002 /* LowerFloorSpellCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorSpellCatalog.swift"; sourceTree = SOURCE_ROOT; };
 		C54200000000000000000003 /* LowerFloorDescentGlyphs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorDescentGlyphs.swift"; sourceTree = SOURCE_ROOT; };
@@ -254,6 +256,7 @@
 				236557319E433CE6FBF68FE0 /* RewardMigration.swift */,
 				2B26BCC5CC0FA38C5DED2DC9 /* ExpansionCombatStatusView.swift */,
 				8EE05552E0088B791F83B0EC /* ExpansionCombatModels.swift */,
+				A18000000000000000000002 /* CombatStatusPresentation.swift */,
 				9B4B466720AADD1752CF1C1F /* ExpansionBackdropView.swift */,
 				9E44F77750E0CB3904476235 /* ExpansionProgress.swift */,
 				131000000000000000000002 /* ExpansionNarrativeCatalog.swift */,
@@ -594,6 +597,7 @@
 				ACD1AF82D2B3105E7D0A843E /* RewardMigration.swift in Sources */,
 				A9D7E7DE37C6297EDA264C86 /* ExpansionCombatStatusView.swift in Sources */,
 				DEAAE5D0E8EC60E4E06D12AC /* ExpansionCombatModels.swift in Sources */,
+				A18000000000000000000001 /* CombatStatusPresentation.swift in Sources */,
 				B6DC40859EEA9499B5F3C8CE /* ExpansionBackdropView.swift in Sources */,
 				0E4EB4F5CDE8D923787595C0 /* ExpansionProgress.swift in Sources */,
 				131000000000000000000001 /* ExpansionNarrativeCatalog.swift in Sources */,

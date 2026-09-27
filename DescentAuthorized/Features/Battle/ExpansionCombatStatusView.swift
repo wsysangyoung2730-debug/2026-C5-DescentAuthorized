@@ -6,81 +6,12 @@ struct ExpansionCombatStatusView: View {
     @State private var showsThreats = false
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                if case let .enemy(id) = battle.enemy.id, id.lowerFloorNumber != nil {
-                    Button { showsThreats = true } label: {
-                        chip("위협 순서 확인", detail: "직접 → 예약 → 모사·반격", color: DAColor.gold)
-                    }.buttonStyle(.plain)
-                }
-                if battle.expansion.encounterPhase > 1 {
-                    chip("\(battle.expansion.encounterPhase)단계", detail: "현재 적용 중인 강화 패턴", color: .orange)
-                }
-                if battle.expansion.flatAmplification > 0 {
-                    chip("예약 증폭 +\(battle.expansion.flatAmplification)", detail: "등록 전 정화 가능", color: .orange)
-                }
-                if battle.expansion.counterDamage > 0 {
-                    chip("반격 \(battle.expansion.counterDamage)", detail: battle.expansion.counterTriggered ? "공격 감지 · 추가타 예정" : "공격 성공 시 최대 1회", color: .red)
-                }
-                if let turn = battle.expansion.enemyBarrierExpires {
-                    chip("적 방벽", detail: "\(turn)턴 적 행동 종료 시 만료", color: .cyan)
-                }
-                if battle.expansion.limitBarrierThroughTurn != nil {
-                    chip("한계 방벽", detail: "상한 60 · 이번 적 턴 후 40으로 복귀", color: .cyan)
-                }
-                if let through = battle.expansion.directHitProhibitionThroughTurn {
-                    chip("직격 금지", detail: "\(through)턴까지 직접 피해 1회 무효 · 예약 제외", color: .purple)
-                }
-                if let id = battle.expansion.isolationReservationID,
-                   let reservation = battle.expansion.scheduledDamage.first(where: { $0.id == id }) {
-                    chip("격리 방벽", detail: "\(reservation.name) −50%", color: .cyan)
-                }
-                if battle.expansion.handoffBarrierAmount > 0 {
-                    chip("인계 방벽", detail: "다음 타격 처리 후 +\(battle.expansion.handoffBarrierAmount)", color: .cyan)
-                }
-                if battle.expansion.reactiveDamageProtection {
-                    chip("책임 단절", detail: "모사·반격 피해 −50%", color: .purple)
-                }
-                if let amplification = battle.expansion.enemyAmplification {
-                    chip("인과 증폭", detail: "다음 예약 \(Int(amplification * 100))% · 등록 전 정화", color: .orange)
-                }
-                if battle.expansion.enemyPreservation != nil {
-                    chip("원본 보존", detail: "적이 받는 다음 공격 감소 · 정화 가능", color: .purple)
-                }
-                if battle.expansion.playerAttackWeakening != nil {
-                    chip("공격 약화", detail: "다음 공격 감소 · 정화 가능", color: .red)
-                }
-                if let reduction = battle.expansion.outputReduction {
-                    chip("출력 저하", detail: "다음 타격 −25% · \(reduction.expiresAfterTurn)턴까지", color: .cyan)
-                }
-                if battle.expansion.nextHitFlatReduction > 0 {
-                    chip("기준점 수호", detail: "이번 적 턴 다음 피해 −6", color: .cyan)
-                }
-                if battle.expansion.scheduledHitReduction != nil {
-                    chip("인과 완충", detail: "이번 턴 첫 예약 피해 −30%", color: .cyan)
-                }
-                if battle.expansion.nextTurnBarrier > 0 {
-                    chip("잔류 방벽", detail: "다음 턴 방벽 +10", color: .cyan)
-                }
-                if battle.expansion.chainAttackBonus > 0 {
-                    chip("연쇄 각인", detail: "이번 턴 다음 공격 +12", color: .orange)
-                }
-                if let record = battle.expansion.copyRecord {
-                    chip("기록: \(SpellCatalog.spell(record.spell).name)", detail: record.reused ? "재사용 감지 · 다음 행동에서 모사" : "재사용하면 추가 반응", color: .purple)
-                }
-                if let through = battle.expansion.mimicProhibitionThroughEnemyTurn {
-                    chip("모사 금지", detail: "\(through)턴까지 기록·반응 차단", color: .purple)
-                }
-                ForEach(battle.expansion.scheduledDamage) { pending in
-                    chip(pending.name, detail: "\(pending.dueEnemyTurn == battle.turnNumber ? "이번" : "\(pending.dueEnemyTurn)번") 적 턴 · \(pending.damage) 피해\(pending.wasDelayed ? " · 지연됨" : "")", color: .orange)
-                }
-                ForEach(battle.expansion.lockedSpells.keys.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { id in
-                    chip("\(SpellCatalog.spell(id).name) 봉인", detail: "\(battle.expansion.lockedSpells[id] ?? 0)턴까지 · 정화 가능", color: .red)
-                }
-            }
-            .padding(.horizontal, 16)
+        HStack(alignment: .top, spacing: 24) {
+            statusLane(.player, title: "내 상태", symbol: "person.fill", color: .cyan)
+            statusLane(.enemy, title: "적 상태 · 위협", symbol: "exclamationmark.shield.fill", color: .orange)
         }
-        .frame(height: 58)
+        .padding(.horizontal, 16)
+        .frame(height: 76, alignment: .top)
         .sheet(isPresented: $showsThreats) {
             NavigationStack {
                 ScrollView {
@@ -108,16 +39,53 @@ struct ExpansionCombatStatusView: View {
         }
     }
 
+    private var isLowerFloorEnemy: Bool {
+        if case let .enemy(id) = battle.enemy.id { return id.lowerFloorNumber != nil }
+        return false
+    }
+
+    private func statusLane(_ side: CombatStatusItem.Side, title: String, symbol: String, color: Color) -> some View {
+        let items = battle.statusItems(for: side)
+        let showsThreatButton = side == .enemy && isLowerFloorEnemy
+            && battle.phase != .victory && battle.phase != .defeat
+        return VStack(alignment: side == .player ? .leading : .trailing, spacing: 4) {
+            if !items.isEmpty || showsThreatButton {
+                Label(title, systemImage: symbol)
+                    .font(.caption2.weight(.bold)).foregroundStyle(color)
+                    .padding(.horizontal, 8)
+                    .background(.black.opacity(0.65), in: Capsule())
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        if showsThreatButton {
+                            Button { showsThreats = true } label: {
+                                chip("위협 순서 확인", detail: "직접 → 예약 → 모사·반격", color: color)
+                            }.buttonStyle(.plain)
+                        }
+                        ForEach(items) { item in
+                            chip(item.title, detail: item.detail, color: color)
+                        }
+                    }
+                }
+                .defaultScrollAnchor(side == .player ? .leading : .trailing)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: side == .player ? .topLeading : .topTrailing)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(title)
+    }
+
     private func chip(_ title: String, detail: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title).font(.caption.weight(.semibold)).foregroundStyle(color)
             Text(detail).font(.caption2).foregroundStyle(DAColor.body)
         }
-        .padding(.horizontal, 12).padding(.vertical, 8)
-        .background(.black.opacity(0.86), in: RoundedRectangle(cornerRadius: 6))
-        .overlay(RoundedRectangle(cornerRadius: 6).stroke(color.opacity(0.35)))
+        .padding(.horizontal, 10).padding(.vertical, 6)
+        .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
+        .background(.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 6))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(color.opacity(0.65)))
         .accessibilityElement(children: .combine)
     }
+
 }
 
 /// Player effects stay near the casting hand, separate from the enemy's status markers.

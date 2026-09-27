@@ -249,7 +249,9 @@ struct BattleView: View {
                 battleContent(presentation(for: battle))
                     .disabled(gameSession.isCombatPresentationActive)
                     .overlay(alignment: .top) {
-                        ExpansionCombatStatusView(battle: battle)
+                        if battle.showsCombatStatus {
+                            ExpansionCombatStatusView(battle: battle)
+                        }
                     }
                     .overlay(alignment: .bottomTrailing) {
                         ExpansionPlayerStatusAuraView(battle: battle)
@@ -396,11 +398,14 @@ struct BattleView: View {
                 stageHeight * 0.55,
                 stageHeight - (inputPanelHeight / 2) - 12
             )
-            let inputFrame = CGRect(
+            let showsInputPad = presentation.phase == .playerTurn
+                && !gameSession.isCombatPresentationActive
+                && presentation.spells.contains { $0.isSelected && $0.canInteract }
+            let inputFrame = showsInputPad ? CGRect(
                 x: inputPanelX(availableWidth: contentWidth, panelWidth: inputPanelWidth) - inputPanelWidth / 2,
                 y: inputPanelCenterY - inputPanelHeight / 2,
                 width: inputPanelWidth, height: inputPanelHeight
-            )
+            ) : .zero
 
             ZStack(alignment: .bottom) {
                 enemyStage(presentation)
@@ -414,7 +419,7 @@ struct BattleView: View {
                        realitySceneID != nil,
                        realityController.isBattleCameraAdjusted {
                         battleCameraResetButton
-                            .padding(.top, 14)
+                            .padding(.top, gameSession.battleState?.showsCombatStatus == true ? 90 : 14)
                             .padding(.trailing, 16)
                             .frame(
                                 width: contentWidth,
@@ -438,15 +443,18 @@ struct BattleView: View {
                     .frame(height: bottomBarHeight + 74)
                     .allowsHitTesting(false)
 
-                    glyphInputPanel(presentation)
-                        .frame(width: inputPanelWidth, height: inputPanelHeight)
-                        .position(
+                    if showsInputPad {
+                        glyphInputPanel(presentation)
+                            .frame(width: inputPanelWidth, height: inputPanelHeight)
+                            .position(
                             x: inputPanelX(
                                 availableWidth: contentWidth,
                                 panelWidth: inputPanelWidth
                             ),
                             y: inputPanelCenterY
                         )
+
+                    }
 
                     spellBar(presentation, availableWidth: contentWidth - 24)
                         .frame(height: 218)
@@ -544,6 +552,9 @@ struct BattleView: View {
 
     private var battleCameraResetButton: some View {
         Button {
+            isCameraLooking = false
+            isCameraZooming = false
+            cameraLookTranslationOrigin = nil
             withAnimation(.easeOut(duration: appSettings.reducedMotion ? 0 : 0.18)) {
                 realityController.resetBattleCamera(animated: !appSettings.reducedMotion)
             }
@@ -625,12 +636,7 @@ struct BattleView: View {
             )
             .tutorialTarget("battle.input")
             }
-        } else {
-            Text("시전할 수 있는 주문이 없습니다")
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(DAColor.background.opacity(0.94))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+
         }
     }
 
