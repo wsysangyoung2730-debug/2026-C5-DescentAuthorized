@@ -18,10 +18,10 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     static let standard = BattleCameraInteractionConfiguration(
         maximumYaw: .pi * 12 / 180,
         maximumUpwardPitch: .pi * 6 / 180,
-        maximumDownwardPitch: .pi * 6 / 180,
+        maximumDownwardPitch: .pi * 3 / 180,
         yawRadiansPerViewport: .pi * 36 / 180,
         pitchRadiansPerViewport: .pi * 18 / 180,
-        minimumFieldOfViewScale: 0.85,
+        minimumFieldOfViewScale: 0.95,
         maximumFieldOfViewScale: 1.10
     )
 
@@ -2669,6 +2669,19 @@ extension RealitySceneController {
         updateBattleCameraLook(translation: CGSize(width: -1000, height: 700), viewportSize: CGSize(width: 1000, height: 700))
         await capture("right-ceiling")
         resetBattleCamera(animated: false)
+        for (name, x) in [("left-down", CGFloat(1000)), ("right-down", CGFloat(-1000))] {
+            beginBattleCameraLook()
+            updateBattleCameraLook(translation: CGSize(width: x, height: -700), viewportSize: CGSize(width: 1000, height: 700))
+            beginBattleCameraZoom()
+            updateBattleCameraZoom(magnification: 2)
+            await capture(name)
+            let frame = combatVFXRenderer.projectedIntentFrame(in: arView, clipped: false)
+            if registry.entity(for: .enemyActor) != nil {
+                intentChecks.append(["cue": name, "insideViewport": frame.map { arView.bounds.contains($0) } ?? false,
+                    "clearance": combatVFXRenderer.intentClearanceDiagnostics()])
+            }
+            resetBattleCamera(animated: false)
+        }
         let report: [String: Any] = ["scene": id.rawValue, "lookChanged": base != adjusted,
             "resetMatrixError": error, "resetFOVError": fovError,
             "resetButtonHidden": resetButtonHidden, "intents": intentChecks]
