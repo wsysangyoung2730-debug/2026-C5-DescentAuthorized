@@ -1741,6 +1741,7 @@ final class RealitySceneController: ObservableObject {
                 + SIMD3<Float>(0, height * 0.6, 0)
             lamp.look(at: center, from: source, relativeTo: nil)
         }
+        applyFloor9ShadowQuality()
     }
 
     private func completeInstallation(descriptor: RealitySceneDescriptor) {
@@ -2155,14 +2156,17 @@ extension RealitySceneController {
     }
 
     private func applyFloor9ShadowQuality() {
+        let subjectLight = registry.entity(named: "DA_SUBJECT_LIGHT_0") as? SpotLight
+        subjectLight?.shadow = graphicsQuality.shadowLightCount > 0 ? SpotLightComponent.Shadow() : nil
+        let roomShadowCount = max(0, graphicsQuality.shadowLightCount - (subjectLight == nil ? 0 : 1))
         for index in 0..<6 {
             guard let lamp = registry.entity(named: "ROOM_RUNTIME_\(index)") as? SpotLight else { continue }
-            lamp.shadow = index < graphicsQuality.shadowLightCount ? SpotLightComponent.Shadow() : nil
+            lamp.shadow = index < roomShadowCount ? SpotLightComponent.Shadow() : nil
         }
         // Alternate fixtures retain even coverage when only two shadows are enabled.
         for (rank, index) in [3, 4, 0, 7].enumerated() {
             guard let lamp = registry.entity(named: "F09_RUNTIME_CEILING_\(index)") as? SpotLight else { continue }
-            lamp.shadow = rank < graphicsQuality.shadowLightCount ? SpotLightComponent.Shadow() : nil
+            lamp.shadow = rank < roomShadowCount ? SpotLightComponent.Shadow() : nil
         }
     }
 }
