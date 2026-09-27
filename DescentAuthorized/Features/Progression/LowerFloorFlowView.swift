@@ -171,21 +171,21 @@ struct LowerFloorFlowView: View {
             if read {
                 entryPanel.frame(maxWidth: .infinity)
             } else {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text(selectedRecord?.title ?? (read ? visible.first?.title : "조사 기록" ) ?? "조사 기록")
-                        .font(.title2.weight(.semibold)).foregroundStyle(DAColor.gold)
-                    Text(selectedRecord?.body ?? (read ? visible.first?.body : "빛나는 기록을 선택하여 열람하십시오.") ?? "")
-                        .font(.system(size: 20, design: .serif)).lineSpacing(8)
-                        .foregroundStyle(DAColor.body)
-                }.padding(28).frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .background(.black.opacity(0.92))
-            .overlay {
-                Rectangle().stroke(DAColor.gold.opacity(0.4))
-                    .allowsHitTesting(false)
-            }
-            .frame(maxWidth: .infinity)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        Text(selectedRecord?.title ?? (read ? visible.first?.title : "조사 기록" ) ?? "조사 기록")
+                            .font(.title2.weight(.semibold)).foregroundStyle(DAColor.gold)
+                        Text(selectedRecord?.body ?? (read ? visible.first?.body : "빛나는 기록을 선택하여 열람하십시오.") ?? "")
+                            .font(.system(size: 20, design: .serif)).lineSpacing(8)
+                            .foregroundStyle(DAColor.body)
+                    }.padding(28).frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .background(.black.opacity(0.92))
+                .overlay {
+                    Rectangle().stroke(DAColor.gold.opacity(0.4))
+                        .allowsHitTesting(false)
+                }
+                .frame(maxWidth: .infinity)
             }
         }
         .padding(36)
@@ -232,4 +232,3 @@ struct LowerFloorFlowView: View {
 
     private func advance() { gameSession.send(.advanceExpansion) }
 }
-
