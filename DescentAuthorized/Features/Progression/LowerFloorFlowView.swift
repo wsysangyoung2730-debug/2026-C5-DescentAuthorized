@@ -23,6 +23,7 @@ struct LowerFloorFlowView: View {
             content
         }
         .task(id: "\(current.floorNumber)-\(current.residualIndex)-\(current.stage.rawValue)") { synchronizeScene() }
+        .onChange(of: gameSession.progress.readRecordIDs) { _, _ in synchronizeScene() }
         .onChange(of: appSettings.graphicsQuality) { _, _ in prefetchNextScene() }
         .onChange(of: inputSuspended) { _, value in sceneController.setActorMotionSuspended(value) }
         .onDisappear { learningInputActive = false; sceneController.setActorMotionSuspended(false) }
@@ -39,22 +40,14 @@ struct LowerFloorFlowView: View {
     @ViewBuilder private var content: some View {
         switch current.stage {
         case .entrance, .residualInvestigation:
-            investigation
-        case .preparation, .bossPreparation:
-            if showsBag {
-                LoadoutPreparationView(onBegin: advance, onCancel: { showsBag = false })
-            } else {
-                storyPanel(title: enemy?.name ?? current.areaName,
-                    subtitle: current.showsBoss ? "관리자 심사" : "잔류체 \(current.residualIndex + 1) / 2",
-                    body: "턴당 3획 · 마나 150\n출전 주문 최대 6개 / 금서 최대 2개\n\n적 체력 \(enemy?.maxHP ?? 0)\n첫 예고: \(enemy?.pattern.first?.name ?? "대기")",
-                    button: "출전 가방 준비") { showsBag = true }
-            }
-        case .residualEncounter, .bossEncounter, .residualDefeated, .bossDefeated:
+            if showsBag { loadout } else { investigation }
+        case .preparation, .bossPreparation, .residualEncounter, .bossEncounter:
+            if showsBag { loadout } else { entryPanel }
+        case .residualDefeated, .bossDefeated:
             let dialogues = LowerFloorNarrativeCatalog.encounter(current)
             storyPanel(title: dialogues.first?.speaker ?? current.areaName,
-                subtitle: current.stage.isEncounter ? "조우 기록" : "집행 종료",
-                body: dialogues.map(\.text).joined(separator: "\n\n"),
-                button: current.stage.isEncounter ? "전투 시작" : "계속하기", action: advance)
+                subtitle: "집행 종료", body: dialogues.map(\.text).joined(separator: "\n\n"),
+                button: "계속하기", action: advance)
         case .residualBattle, .bossBattle:
             BattleView(realityController: sceneController,
                 restartLoadingPresentation: $retryLoadingPresentation, onRestartBattle: onRestartBattle)
@@ -107,7 +100,11 @@ struct LowerFloorFlowView: View {
         guard gameSession.presentation.floorSceneID != nil else { return }
         let visible: [ExpansionStage] = [.preparation, .residualEncounter, .residualBattle,
             .bossPreparation, .bossEncounter, .bossBattle, .residualDefeated, .bossDefeated]
-        sceneController.setEnemyPreviewVisible(visible.contains(current.stage))
+        let records = ExpansionInvestigationCatalog.records(for: current.floorNumber)
+        let record = current.stage == .residualInvestigation ? records.last : records.first
+        let investigated = [.entrance, .residualInvestigation].contains(current.stage)
+            && record.map { gameSession.progress.readRecordIDs.contains($0.id) } == true
+        sceneController.setEnemyPreviewVisible(visible.contains(current.stage) || investigated)
         sceneController.setLimitedCameraInteractionEnabled(current.stage.isBattle)
         sceneController.setActorMotionSuspended(inputSuspended)
         if [.entrance, .residualInvestigation, .preparation, .bossPreparation].contains(current.stage) {
@@ -120,6 +117,16 @@ struct LowerFloorFlowView: View {
     private var enemy: EnemyDefinition? {
         ExpansionEnemyCatalog.enemy(floor: current.floorNumber,
             isBoss: current.showsBoss, residualIndex: current.residualIndex)
+    }
+
+    private var loadout: some View {
+        LoadoutPreparationView(onBegin: {
+            gameSession.send(.beginPreparedLowerBattle)
+        }, onCancel: { showsBag = false })
+    }
+
+    private var entryPanel: some View {
+        FloorEntrancePanel(configuration: .lowerPreparation(current: current)) { showsBag = true }
     }
 
     private var investigation: some View {
@@ -160,9 +167,10 @@ struct LowerFloorFlowView: View {
                 }
                 Text("잔류체 \(followup ? "A 처치 → B 조사" : "A → B") · 순차 전투")
                     .font(.caption).foregroundStyle(DAColor.secondary)
-                actionButton(followup ? "두 번째 잔류체 준비" : "첫 번째 잔류체 준비", action: advance)
-                    .disabled(!read)
             }.frame(maxWidth: .infinity)
+            if read {
+                entryPanel.frame(maxWidth: .infinity)
+            } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     Text(selectedRecord?.title ?? (read ? visible.first?.title : "조사 기록" ) ?? "조사 기록")
@@ -178,6 +186,7 @@ struct LowerFloorFlowView: View {
                     .allowsHitTesting(false)
             }
             .frame(maxWidth: .infinity)
+            }
         }
         .padding(36)
         .background(.black.opacity(0.45))

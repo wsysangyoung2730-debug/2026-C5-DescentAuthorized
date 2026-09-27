@@ -74,6 +74,29 @@ struct GameProgressionController: Sendable {
         progress.migrateExpansionCheckpoint()
     }
 
+    /// Commit preparation and entry together so the bag cannot lead to a second entry screen.
+    mutating func beginPreparedLowerBattle() throws -> [ProgressionEvent] {
+        guard let current = progress.expansion, current.isLowerFloor,
+              [.entrance, .residualInvestigation, .preparation, .bossPreparation,
+               .residualEncounter, .bossEncounter].contains(current.stage) else {
+            throw ProgressionError.requirementMissing("하층 전투 준비")
+        }
+        if [.entrance, .residualInvestigation].contains(current.stage) {
+            let records = ExpansionInvestigationCatalog.records(for: current.floorNumber)
+            let required = current.stage == .entrance ? Array(records.prefix(1)) : Array(records.suffix(1))
+            guard required.allSatisfy({ progress.readRecordIDs.contains($0.id) }) else {
+                throw ProgressionError.requirementMissing("조사 기록 열람")
+            }
+        }
+        var prepared = self
+        var events: [ProgressionEvent] = []
+        while prepared.progress.expansion?.stage.isBattle == false {
+            events += try prepared.advanceExpansion()
+        }
+        self = prepared
+        return events
+    }
+
     mutating func advanceExpansion() throws -> [ProgressionEvent] {
         guard var current = progress.expansion else {
             try beginExpansion()

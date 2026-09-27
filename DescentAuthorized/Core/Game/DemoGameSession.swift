@@ -3,6 +3,7 @@ import Foundation
 enum DemoCommand: Sendable {
     case beginExpansion
     case advanceExpansion
+    case beginPreparedLowerBattle
     case learnExpansionDebuff(CastingGrade)
     case releaseExpansionSeal(CastingGrade)
     case approveExpansionStage(Int)
@@ -88,6 +89,9 @@ struct DemoGameSession: Sendable {
             guard encounter != nil else { throw DemoSessionError.noActiveEncounter }
             try encounter?.chooseCardSeal(spell)
             return []
+        case .beginPreparedLowerBattle:
+            guard encounter == nil else { throw DemoSessionError.encounterAlreadyActive }
+            return wrap(try progression.beginPreparedLowerBattle())
         case .advanceExpansion:
             guard encounter == nil else { throw DemoSessionError.encounterAlreadyActive }
             return wrap(try progression.advanceExpansion())

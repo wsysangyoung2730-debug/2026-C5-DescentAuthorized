@@ -40,6 +40,27 @@ final class LowerFloorTests: XCTestCase {
         }
     }
 
+    func testPreparedLowerEntryRequiresInvestigationAndSkipsDuplicateEncounter() throws {
+        var controller = try lowerController()
+        for (checkpoint, stage, index, boss) in [
+            (CheckpointID.floor5Complete, ExpansionStage.entrance, 0, false),
+            (.floor4SecondEncounter, .residualInvestigation, 1, false),
+            (.floor4BossEncounter, .bossPreparation, 1, true)
+        ] {
+            _ = try controller.travel(to: checkpoint)
+            if stage == .entrance {
+                XCTAssertThrowsError(try controller.beginPreparedLowerBattle())
+                XCTAssertEqual(controller.progress.expansion?.stage, .entrance)
+                for record in ExpansionInvestigationCatalog.records(for: 4) { _ = controller.readRecord(id: record.id) }
+            }
+            _ = try controller.beginPreparedLowerBattle()
+            XCTAssertEqual(controller.progress.expansion?.stage, boss ? .bossBattle : .residualBattle)
+            XCTAssertEqual(controller.progress.expansion?.residualIndex, index)
+            try GameProgressValidator().validate(controller.progress)
+            XCTAssertThrowsError(try controller.beginPreparedLowerBattle())
+        }
+    }
+
     func testLowerResourcesDoNotChangeUpperFloors() throws {
         var lower = makeEngine()
         _ = try lower.beginPlayerTurn(intent: idle)
