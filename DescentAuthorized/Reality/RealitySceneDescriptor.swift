@@ -294,6 +294,7 @@ enum DemoSceneExperience: Equatable, Sendable {
 }
 
 enum BossNarrativeSequence: Equatable, Sendable {
+    case towerHandoff
     case expansion(ExpansionNarrative)
     case floor9Encounter
     case floor9Defeated
@@ -310,6 +311,10 @@ struct DemoScenePresentation: Equatable, Sendable {
     let experience: DemoSceneExperience
 
     static func presentation(for sceneID: SceneID, expansion: ExpansionProgress?) -> DemoScenePresentation {
+        if let expansion, expansion.isValid, expansion.isComplete {
+            return .init(progressSceneID: sceneID, floorSceneID: nil,
+                         cameraPreset: .battle, experience: .narrative(.towerHandoff))
+        }
         if let expansion, let route = ExpansionSceneRoute(expansion),
            let finalRoom = FinalSceneContract.room(for: route) {
             return .init(progressSceneID: sceneID, floorSceneID: finalRoom,
@@ -319,7 +324,9 @@ struct DemoScenePresentation: Equatable, Sendable {
         }
         if expansion?.isLowerFloor == true {
             return .init(progressSceneID: sceneID, floorSceneID: nil,
-                         cameraPreset: .battle, experience: .completion)
+                         cameraPreset: .battle,
+                         experience: expansion.flatMap(ExpansionNarrative.init(progress:))
+                            .map { .narrative(.expansion($0)) } ?? .completion)
         }
         guard let expansion, let route = ExpansionSceneRoute(expansion) else {
             return presentation(for: sceneID)

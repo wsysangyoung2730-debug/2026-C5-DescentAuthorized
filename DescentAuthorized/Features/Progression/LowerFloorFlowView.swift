@@ -41,13 +41,10 @@ struct LowerFloorFlowView: View {
         switch current.stage {
         case .entrance, .residualInvestigation:
             if showsBag { loadout } else { investigation }
-        case .preparation, .bossPreparation, .residualEncounter, .bossEncounter:
+        case .preparation, .bossPreparation:
             if showsBag { loadout } else { entryPanel }
-        case .residualDefeated, .bossDefeated:
-            let dialogues = LowerFloorNarrativeCatalog.encounter(current)
-            storyPanel(title: dialogues.first?.speaker ?? current.areaName,
-                subtitle: "집행 종료", body: dialogues.map(\.text).joined(separator: "\n\n"),
-                button: "계속하기", action: advance)
+        case .residualEncounter, .bossEncounter, .residualDefeated, .bossDefeated:
+            EmptyView() // DemoFlowView routes all narrative stages through BossNarrativeView.
         case .residualBattle, .bossBattle:
             BattleView(realityController: sceneController,
                 restartLoadingPresentation: $retryLoadingPresentation, onRestartBattle: onRestartBattle)
@@ -75,15 +72,13 @@ struct LowerFloorFlowView: View {
             }
         case .finalRecord:
             storyPanel(title: "최초 승인자의 기록", subtitle: "제1층 · 최종 기록",
-                body: "봉인을 유지하겠다는 서약은 강요된 것이 아니었다.\n기억을 잃더라도, 그 책임을 다음 사람에게 넘기지 않겠다고 내가 서명했다.\n\n이제 출구의 세 승인란만이 남아 있다.",
+                body: LowerFloorNarrativeCatalog.finalRecord,
                 button: "기록을 받아들이고 출구로", action: advance)
         case .descent:
             DescentDoorSceneView(configuration: .expansion(floorNumber: current.floorNumber),
                 sceneController: sceneController, retryLoadingPresentation: $retryLoadingPresentation)
         case .complete:
-            storyPanel(title: "다음 탑 · 제10층", subtitle: "하강 권한 인계 완료",
-                body: "출구 너머는 바깥이 아니었다.\n낯선 탑의 접수실. 익숙한 승인 절차가 기다리고 있었다.\n\n“이전 탑의 유지 기록을 확인했습니다. 인계를 시작합니다.”\n\n이 탑의 여정이 완료되었습니다. 구간 선택에서 기록과 전투를 다시 확인할 수 있습니다.",
-                button: "타이틀로", action: onExit)
+            EmptyView() // The completed handoff uses the shared dialogue player as well.
         case .learnDebuff:
             EmptyView() // This stage is valid only on 6F.
         }

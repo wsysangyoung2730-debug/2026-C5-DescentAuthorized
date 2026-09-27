@@ -819,6 +819,8 @@ struct DemoFlowView: View {
                 isAutoAdvanceEnabled: $isNarrativeAutoAdvanceEnabled
             ) {
                 switch sequence {
+                case .towerHandoff:
+                    onExit()
                 case .expansion:
                     gameSession.send(.advanceExpansion)
                 case .floor9Encounter:
@@ -930,12 +932,24 @@ private struct BossNarrativeView: View {
             Button(action: advance) {
                 ZStack {
                     GeometryReader { proxy in
-                        Image(sequence.backgroundAsset)
+                        if sequence == .towerHandoff {
+                            ZStack {
+                                Color.black
+                                VStack(spacing: 20) {
+                                    Text("다음 탑").font(.title2)
+                                    Text("제10층").font(.system(size: 64, weight: .light, design: .serif))
+                                }
+                                .foregroundStyle(DAColor.gold)
+                                .frame(width: proxy.size.width, height: proxy.size.height * 0.65)
+                            }
+                        } else {
+                            Image(sequence.backgroundAsset)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             // All narrative artwork shares the original 8F/9F 4:3 composition.
                             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .center)
                             .clipped()
+                        }
                     }
                     .background(.black)
 
@@ -1253,6 +1267,7 @@ private struct AutoAdvanceSpinner: View {
 private extension BossNarrativeSequence {
     var backgroundAsset: String {
         switch self {
+        case .towerHandoff: "TowerHandoff"
         case let .expansion(narrative): narrative.backgroundAsset
         case .floor9Encounter: "Floor9AdministratorEncounter"
         case .floor9Defeated: "Floor9AdministratorDefeated"
@@ -1265,6 +1280,7 @@ private extension BossNarrativeSequence {
 
     var recordTitle: String {
         switch self {
+        case .towerHandoff: "인계 기록"
         case let .expansion(narrative): narrative.recordTitle
         case .floor9Encounter, .floor8ResidualEncounter, .floor8AdministratorEncounter: "조우 기록"
         case .floor9Defeated, .floor8ResidualDefeated, .floor8AdministratorDefeated: "처치 기록"
@@ -1273,6 +1289,7 @@ private extension BossNarrativeSequence {
 
     var finalAccessibilityHint: String {
         switch self {
+        case .towerHandoff: "타이틀로 이동"
         case let .expansion(narrative): narrative.finalAccessibilityHint
         case .floor9Encounter, .floor8ResidualEncounter, .floor8AdministratorEncounter: "전투 시작"
         case .floor9Defeated: "두루마리 선택으로 이동"
@@ -1283,6 +1300,7 @@ private extension BossNarrativeSequence {
 
     var dialogues: [NarrativeDialogue] {
         switch self {
+        case .towerHandoff: LowerFloorNarrativeCatalog.ending
         case let .expansion(narrative): narrative.dialogues
         case .floor9Encounter:
             [

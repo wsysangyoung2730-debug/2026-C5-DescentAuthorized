@@ -74,11 +74,10 @@ struct GameProgressionController: Sendable {
         progress.migrateExpansionCheckpoint()
     }
 
-    /// Commit preparation and entry together so the bag cannot lead to a second entry screen.
+    /// Commit preparation once, then let the shared encounter dialogue start combat.
     mutating func beginPreparedLowerBattle() throws -> [ProgressionEvent] {
         guard let current = progress.expansion, current.isLowerFloor,
-              [.entrance, .residualInvestigation, .preparation, .bossPreparation,
-               .residualEncounter, .bossEncounter].contains(current.stage) else {
+              [.entrance, .residualInvestigation, .preparation, .bossPreparation].contains(current.stage) else {
             throw ProgressionError.requirementMissing("하층 전투 준비")
         }
         if [.entrance, .residualInvestigation].contains(current.stage) {
@@ -90,7 +89,7 @@ struct GameProgressionController: Sendable {
         }
         var prepared = self
         var events: [ProgressionEvent] = []
-        while prepared.progress.expansion?.stage.isBattle == false {
+        while prepared.progress.expansion?.stage.isEncounter == false {
             events += try prepared.advanceExpansion()
         }
         self = prepared
