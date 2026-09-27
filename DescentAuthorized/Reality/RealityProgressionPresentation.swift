@@ -527,6 +527,33 @@ private final class AuthoredRewardPlayer {
         }
         fps = data.fps
         frames = data.frames
+        if registry.descriptor.map({ FinalSceneContract.contract(for: $0.sceneID) != nil }) == true {
+            // Rebase the 8F controller chain onto each final room's scroll slot.
+            // Absolute source room offsets and pedestal scale must never leak here.
+            let source = Dictionary(uniqueKeysWithValues: data.tracks.map { ($0.entity, $0) })
+            let roles: [RealityEntityRole] = [.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight]
+            tracks = try zip(["Left", "Center", "Right"], roles).map { slot, role in
+                guard let entity = registry.entity(for: role) else { throw CocoaError(.fileReadCorruptFile) }
+                let chain = try ["HoleAnchor", "Appear", "Idle"].map { suffix in
+                    guard let track = source["F08B_RewardScroll_" + slot + "_" + suffix],
+                          track.matrices.count == data.frames else { throw CocoaError(.fileReadCorruptFile) }
+                    return try track.matrices.map(Self.matrix)
+                }
+                let poses = (0..<data.frames).map { frame in
+                    Transform(matrix: chain[0][frame] * chain[1][frame] * chain[2][frame])
+                }
+                guard let rest = poses.last, abs(rest.scale.z) > 0.0001 else { throw CocoaError(.fileReadCorruptFile) }
+                let base = entity.transform
+                let travelScale: Float = 0.72 / abs(rest.scale.z)
+                let samples = poses.map { pose in
+                    Transform(scale: base.scale * pose.scale / rest.scale,
+                        rotation: base.rotation * pose.rotation * rest.rotation.inverse,
+                        translation: base.translation + base.rotation.act((pose.translation - rest.translation) * travelScale))
+                }
+                return Track(entity: entity, samples: samples)
+            }
+            return
+        }
         tracks = try data.tracks.map { track in
             guard let entity = registry.entity(named: track.entity),
                   track.matrices.count == data.frames else { throw CocoaError(.fileReadCorruptFile) }
@@ -543,6 +570,15 @@ private final class AuthoredRewardPlayer {
             }
             return Track(entity: entity, samples: samples)
         }
+    }
+
+    private static func matrix(_ values: [Float]) throws -> simd_float4x4 {
+        guard values.count == 16, values.allSatisfy(\.isFinite) else { throw CocoaError(.fileReadCorruptFile) }
+        return simd_float4x4(columns: (
+            SIMD4(values[0], values[1], values[2], values[3]),
+            SIMD4(values[4], values[5], values[6], values[7]),
+            SIMD4(values[8], values[9], values[10], values[11]),
+            SIMD4(values[12], values[13], values[14], values[15])))
     }
 
     func cancel() {

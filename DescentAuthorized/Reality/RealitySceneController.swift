@@ -1540,7 +1540,7 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func installFinalRewardScrolls(contract: FinalSceneContract, bundle: Bundle, resources: [URL: Entity]) throws {
-        guard let room = registry.root, let stand = registry.entity(for: .rewardStand) else { throw CocoaError(.fileReadCorruptFile) }
+        guard let room = registry.root, registry.entity(for: .rewardStand) != nil else { throw CocoaError(.fileReadCorruptFile) }
         let suffix = graphicsQuality == .high ? "" : "_\(graphicsQuality.rawValue)"
         guard let url = bundle.url(forResource: "reward_scroll" + suffix, withExtension: "usdc", subdirectory: "Reality/Interactables/RewardScroll"),
               let template = resources[url]?.findEntity(named: "F09_RewardScroll_Center") else { throw CocoaError(.fileReadCorruptFile) }
@@ -1551,13 +1551,11 @@ final class RealitySceneController: ObservableObject {
             guard let model = device.findEntity(named: "F08B_RewardScroll_" + slot) else { throw CocoaError(.fileReadCorruptFile) }
             finalRewardTemplates[tier] = model.clone(recursive: true)
         }
-        let standBounds = stand.visualBounds(relativeTo: room)
         for role: RealityEntityRole in [.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight] {
             guard let slot = registry.entity(for: role) else { throw CocoaError(.fileReadCorruptFile) }
             let holder = Entity(); holder.name = "FINAL_Animated_" + role.rawValue
             room.addChild(holder)
             holder.position = slot.position(relativeTo: room)
-            holder.position.z = max(holder.position.z, standBounds.max.z + 0.12)
             holder.isEnabled = false
             registry.register(holder, for: role)
         }
