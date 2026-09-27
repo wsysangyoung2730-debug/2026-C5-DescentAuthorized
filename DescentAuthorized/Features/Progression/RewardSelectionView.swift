@@ -555,7 +555,7 @@ struct RewardSelectionView: View {
 
     private func categoryColor(_ category: SpellCategory) -> Color {
         switch category {
-        case .attack: RewardSelectionPalette.violet
+        case .attack: DAColor.attack
         case .defense: RewardSelectionPalette.cyan
         case .dispel: Color(red: 0.94, green: 0.72, blue: 0.22)
         case .debuff: Color(red: 0.76, green: 0.43, blue: 0.84)

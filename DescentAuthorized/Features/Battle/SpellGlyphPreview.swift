@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Uses finished artwork where available and the actual casting path for new spells.
+/// Attack glyphs use their casting paths so every attack shares the same red ink.
+/// Other categories retain their finished artwork where available.
 struct SpellGlyphPreview: View {
     enum Artwork: Equatable {
         case battle
@@ -32,7 +33,7 @@ struct SpellGlyphPreview: View {
         Canvas { context, size in
             let side = min(size.width, size.height)
             let lineWidth = max(1.5, min(side * 0.025, 5))
-            let tint = color ?? categoryColor
+            let tint = spell.category == .attack ? DAColor.attack : (color ?? categoryColor)
 
             for (index, stroke) in spell.glyph.strokes.enumerated() {
                 guard let first = stroke.referencePath.first else { continue }
@@ -80,7 +81,7 @@ struct SpellGlyphPreview: View {
     }
 
     private var assetName: String? {
-        guard artwork != .path else { return nil }
+        guard artwork != .path, spell.category != .attack else { return nil }
         let suffix: String
         switch spell.id {
         case .afterglowErasure: suffix = "AfterglowErasure"

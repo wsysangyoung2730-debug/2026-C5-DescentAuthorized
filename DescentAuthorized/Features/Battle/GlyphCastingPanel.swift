@@ -853,7 +853,7 @@ struct GlyphCastingPanel: View {
 
     private var categoryColor: Color {
         switch spell.category {
-        case .attack: Color(red: 0.86, green: 0.2, blue: 0.38)
+        case .attack: DAColor.attack
         case .defense: Color(red: 0.2, green: 0.72, blue: 0.92)
         case .dispel: Color(red: 0.94, green: 0.68, blue: 0.18)
         case .debuff: DAColor.debuff

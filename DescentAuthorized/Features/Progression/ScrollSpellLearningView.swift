@@ -489,7 +489,7 @@ struct ScrollSpellLearningView: View {
 
     private var categoryColor: Color {
         switch spell.category {
-        case .attack: Color(red: 0.84, green: 0.24, blue: 0.68)
+        case .attack: DAColor.attack
         case .defense: Color(red: 0.24, green: 0.76, blue: 0.94)
         case .dispel: Color(red: 0.94, green: 0.68, blue: 0.2)
         case .debuff: DAColor.debuff
