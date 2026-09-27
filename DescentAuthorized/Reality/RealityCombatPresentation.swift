@@ -944,7 +944,17 @@ final class RealityActorMotionPlayer {
     }
 
     func play(_ name: String) {
-        guard !terminal else { return }
+        if terminal {
+            // Defeat/record panels can re-enable the preview after victory.
+            // Reapply the terminal pose without restarting or resurrecting it.
+            if name == "death", let root = visualRoot {
+                let pose = GroundedDeathPose.sample(elapsed: elapsed, reducedMotion: reduced)
+                root.transform = groundedDeathTransform(pose)
+                root.components.set(OpacityComponent(opacity: pose.opacity))
+                root.isEnabled = pose.opacity > 0
+            }
+            return
+        }
         if name == "death" { terminal = true }
         stop()
         currentMotion = name
