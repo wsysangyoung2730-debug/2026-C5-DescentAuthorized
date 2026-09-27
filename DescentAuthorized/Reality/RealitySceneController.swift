@@ -1566,7 +1566,7 @@ final class RealitySceneController: ObservableObject {
         let scale = oldBounds.extents.x / sourceBounds.extents.x
         let oldBase = SIMD3<Float>(oldBounds.center.x, oldBounds.center.y, oldBounds.min.z)
         let sourceBase = SIMD3<Float>(sourceBounds.center.x, sourceBounds.center.y, sourceBounds.min.z)
-        let localFit = Transform(scale: SIMD3(repeating: scale), rotation: simd_quatf(),
+        let localFit = Transform(scale: SIMD3(repeating: scale), rotation: simd_quatf(angle: 0, axis: [0, 0, 1]),
                                  translation: oldBase - sourceBase * scale)
         let placement = oldStand.transformMatrix(relativeTo: room) * localFit.matrix
         room.addChild(device)
@@ -2644,6 +2644,9 @@ extension RealitySceneController {
         if preset == .rewardSelection {
             let lidNames = ["Left", "Center", "Right"].map { "F08B_RewardSlot_\($0)Lid" }
             let lift = registry.entity(named: "F08B_RewardPedestal_CentralLift")
+            if let stand = registry.entity(for: .rewardStand), let root = registry.root {
+                lifecycle["pedestalWidth"] = stand.visualBounds(relativeTo: root).extents.x
+            }
             setRewardPresentation(.inactive, reducedMotion: true)
             let closedLids = lidNames.compactMap { registry.entity(named: $0)?.transform.matrix }
             let closedLift = lift?.transform.matrix
