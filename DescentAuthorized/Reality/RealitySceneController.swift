@@ -1747,7 +1747,8 @@ final class RealitySceneController: ObservableObject {
             lamp.name = "DA_SUBJECT_LIGHT_\(index)"
             lamp.light.color = index == 0 ? UIColor(red: 1, green: 0.94, blue: 0.85, alpha: 1)
                 : UIColor(red: 0.70, green: 0.83, blue: 1, alpha: 1)
-            lamp.light.intensity = (index == 0 ? 700 : 500) * height * height
+            let detailBoost: Float = descriptor.sceneID == .floor06CausalityResidue ? 4 : 1
+            lamp.light.intensity = (index == 0 ? 700 : 500) * height * height * detailBoost
             lamp.light.innerAngleInDegrees = 22
             lamp.light.outerAngleInDegrees = 48
             lamp.light.attenuationRadius = height * 3
