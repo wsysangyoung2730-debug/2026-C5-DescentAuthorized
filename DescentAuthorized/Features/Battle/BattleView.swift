@@ -447,13 +447,12 @@ struct BattleView: View {
                         glyphInputPanel(presentation)
                             .frame(width: inputPanelWidth, height: inputPanelHeight)
                             .position(
-                            x: inputPanelX(
-                                availableWidth: contentWidth,
-                                panelWidth: inputPanelWidth
-                            ),
-                            y: inputPanelCenterY
-                        )
-
+                                x: inputPanelX(
+                                    availableWidth: contentWidth,
+                                    panelWidth: inputPanelWidth
+                                ),
+                                y: inputPanelCenterY
+                            )
                     }
 
                     spellBar(presentation, availableWidth: contentWidth - 24)

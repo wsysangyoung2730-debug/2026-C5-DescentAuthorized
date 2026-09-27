@@ -2511,6 +2511,52 @@ extension RealitySceneController {
         }
     }
 
+    func runBattleCameraResetDiagnostics() async {
+        guard let cameraEntity, let id = requestedSceneID, let arView else { return }
+        await environmentTask?.value
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CameraResetDiagnostics/\(id.rawValue)")
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let base = cameraEntity.transformMatrix(relativeTo: nil)
+        let fov = cameraEntity.camera.fieldOfViewInDegrees
+        func capture(_ name: String) async {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                arView.snapshot(saveToHDR: false) { image in
+                    try? image?.pngData()?.write(to: directory.appendingPathComponent(name + ".png"))
+                    continuation.resume()
+                }
+            }
+        }
+        await capture("base")
+        beginBattleCameraLook()
+        updateBattleCameraLook(translation: CGSize(width: 450, height: -180), viewportSize: CGSize(width: 1000, height: 700))
+        beginBattleCameraZoom()
+        updateBattleCameraZoom(magnification: 1.15)
+        let adjusted = cameraEntity.transformMatrix(relativeTo: nil)
+        await capture("look")
+        resetBattleCamera(animated: true)
+        try? await Task.sleep(for: .milliseconds(400))
+        let restored = cameraEntity.transformMatrix(relativeTo: nil)
+        let error = (0..<4).flatMap { c in (0..<4).map { r in abs(base[c][r] - restored[c][r]) } }.max() ?? 0
+        let fovError = abs(fov - cameraEntity.camera.fieldOfViewInDegrees)
+        let resetButtonHidden = !isBattleCameraAdjusted
+        await capture("reset")
+        beginBattleCameraLook()
+        updateBattleCameraLook(translation: CGSize(width: 1000, height: 700), viewportSize: CGSize(width: 1000, height: 700))
+        await capture("left-ceiling")
+        resetBattleCamera(animated: false)
+        beginBattleCameraLook()
+        updateBattleCameraLook(translation: CGSize(width: -1000, height: 700), viewportSize: CGSize(width: 1000, height: 700))
+        await capture("right-ceiling")
+        resetBattleCamera(animated: false)
+        let report: [String: Any] = ["scene": id.rawValue, "lookChanged": base != adjusted,
+            "resetMatrixError": error, "resetFOVError": fovError,
+            "resetButtonHidden": resetButtonHidden]
+        try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+            .write(to: directory.appendingPathComponent("report.json"))
+        print("C5_CAMERA_RESET \(report)")
+    }
+
     func runExpansionDiagnostics() async {
         guard let id = requestedSceneID, let arView else { return }
         let preset = requestedCameraPreset

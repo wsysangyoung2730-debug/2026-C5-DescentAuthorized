@@ -411,6 +411,11 @@ struct Floor9MotionPreview: View {
                     await controller.runDeviceRenderDiagnostics()
                     return
                 }
+                if ProcessInfo.processInfo.arguments.contains("--camera-reset-diagnostics") {
+                    controller.setBattleCameraInteractionEnabled(true)
+                    await controller.runBattleCameraResetDiagnostics()
+                    return
+                }
                 controller.setRewardPresentation(.inactive, reducedMotion: reducedMotion)
                 controller.setDescentPresentation(camera == .descentInput ? .ready : .inactive,
                                                   reducedMotion: reducedMotion)
