@@ -1753,6 +1753,11 @@ final class RealitySceneController: ObservableObject {
                 let pitch = room.cameraPitchDegrees?[cameraName] ?? 0
                 transform.rotation *= simd_quatf(angle: pitch * .pi / 180, axis: [1, 0, 0])
                 optics.fieldOfViewInDegrees *= room.cameraFOVScale?[cameraName] ?? 1
+                if cameraName == descriptor.cameraName(for: .rewardSelection) {
+                    // The shared device raises scrolls above the old static slots.
+                    // Leave room for the entire ascent, including the center cap.
+                    optics.fieldOfViewInDegrees = max(optics.fieldOfViewInDegrees, 55)
+                }
             }
             snapshots[cameraName] = AuthoredCameraSnapshot(transformMatrix: transform.matrix, camera: optics)
         }
