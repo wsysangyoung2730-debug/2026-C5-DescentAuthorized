@@ -200,6 +200,7 @@ final class RealityCombatVFXRenderer {
     private var intentGeneration = 0
     private var intentScale: Float = 1.15
     private var intentVerticalOffset: Float = 0.3
+    private var intentHalfHeight: Float = 0
     private var intentShieldClearance: Float?
     private var currentShieldState: RealityShieldState = .none
     private var shieldAuraEntity: Entity?
@@ -519,6 +520,9 @@ final class RealityCombatVFXRenderer {
                     name: "DA_RUNTIME_ENEMY_INTENT"
                 )
                 container.scale = SIMD3(repeating: self.intentScale)
+                // Measure the authored symbol before smoke/appearance animation changes its bounds.
+                let symbolBounds = container.visualBounds(relativeTo: container)
+                self.intentHalfHeight = max(0, symbolBounds.extents.z * self.intentScale * 0.5)
                 container.position = self.intentPosition(relativeTo: enemyAnchor)
                 self.pendingIntentCue = nil
                 self.currentIntentCue = cue
@@ -636,11 +640,12 @@ final class RealityCombatVFXRenderer {
         guard let bounds = enemyBounds(relativeTo: anchor) else {
             return SIMD3(0, -0.16, 2.15)
         }
-        let baseHeight = bounds.max.z + intentVerticalOffset
+        let gap = max(0.35, intentVerticalOffset, bounds.extents.z * 0.09)
+        let baseHeight = bounds.max.z + gap + intentHalfHeight
         let resolvedHeight: Float
-        if let intentShieldClearance, let shieldAuraEntity {
+        if let shieldAuraEntity {
             let shieldTop = shieldAuraEntity.visualBounds(relativeTo: anchor).max.z
-            resolvedHeight = max(baseHeight, shieldTop + intentShieldClearance)
+            resolvedHeight = max(baseHeight, shieldTop + max(gap, intentShieldClearance ?? 0) + intentHalfHeight)
         } else {
             resolvedHeight = baseHeight
         }

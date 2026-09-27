@@ -224,7 +224,7 @@ struct RealitySceneDescriptor: Sendable {
                 expectedEntityName: "ACTOR_RecordAdministrator",
                 resourceSubdirectory: "Reality/Actors/RecordAdministrator",
                 targetHeight: 6.5,
-                intentVerticalOffset: -0.8
+                intentVerticalOffset: 0.4
             )
         ),
         .floor08ResidueIsolation: .init(
