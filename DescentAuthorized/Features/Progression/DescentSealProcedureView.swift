@@ -135,6 +135,7 @@ struct DescentDoorSceneView: View {
     @State private var transitionTask: Task<Void, Never>?
     @State private var isSealInterfaceVisible = true
     @State private var isCompletingDescent = false
+    @State private var transitionError: String?
 
     var body: some View {
         ZStack {
@@ -154,6 +155,19 @@ struct DescentDoorSceneView: View {
                 )
                 .transition(.opacity)
             }
+
+            if let transitionError {
+                VStack(spacing: 18) {
+                    Text(transitionError)
+                        .foregroundStyle(DAColor.body)
+                        .multilineTextAlignment(.center)
+                    Button("하강 다시 진행", action: completeDescent)
+                        .buttonStyle(.borderedProminent)
+                        .tint(DAColor.magic)
+                }
+                .padding(28)
+                .background(.black.opacity(0.9), in: RoundedRectangle(cornerRadius: 12))
+            }
         }
         .animation(
             .easeOut(duration: RealityDescentTransitionTiming.interfaceFadeDuration),
@@ -164,6 +178,7 @@ struct DescentDoorSceneView: View {
             transitionTask = nil
             isSealInterfaceVisible = true
             isCompletingDescent = false
+            transitionError = nil
             retryLoadingPresentation = nil
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             sceneController.resetDescentCamera()
@@ -273,20 +288,36 @@ struct DescentDoorSceneView: View {
 
     private func completeDescent() {
         guard !isCompletingDescent else { return }
+        let isRetry = transitionError != nil
         isCompletingDescent = true
+        transitionError = nil
         isSealInterfaceVisible = false
-        if descentState != .approved {
-            setDescentState(.approved)
-        }
+        // Reapply approval when retrying an interrupted presentation. The
+        // durable approved stages stay intact; the player need not redraw them.
+        if isRetry { setDescentState(.ready) }
+        setDescentState(.approved)
         transitionTask?.cancel()
         transitionTask = Task { @MainActor in
-            guard await sceneController.waitForDescentDoorOpening() else { return }
+            guard await sceneController.waitForDescentDoorOpening() else {
+                guard !Task.isCancelled else { return }
+                restoreDescentRetry("문 열림이 중단되었습니다. 승인된 문양을 유지한 채 다시 진행할 수 있습니다.")
+                return
+            }
             guard !Task.isCancelled else { return }
             setDescentState(.open)
             try? await Task.sleep(for: RealityDescentTransitionTiming.openStateHold)
             guard !Task.isCancelled else { return }
-            gameSession.send(isExpansion ? .advanceExpansion : .approveDescentDoor)
+            guard gameSession.sendChecked(isExpansion ? .advanceExpansion : .approveDescentDoor) else {
+                restoreDescentRetry("하강 진행을 저장하지 못했습니다. 다시 진행해 주세요.")
+                return
+            }
         }
+    }
+
+    private func restoreDescentRetry(_ message: String) {
+        isCompletingDescent = false
+        transitionTask = nil
+        transitionError = message
     }
 
     private func setDescentState(_ state: RealityDescentPresentationState) {
