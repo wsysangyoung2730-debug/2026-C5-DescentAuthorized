@@ -1249,6 +1249,7 @@ final class RealitySceneController: ObservableObject {
     func unload() {
         actorMotion.reset()
         finalRewardTemplates.removeAll()
+        finalRewardModelTransforms.removeAll()
         observatoryAmbientMotion.reset()
         environmentTask?.cancel()
         environmentTask = nil
@@ -1513,8 +1514,9 @@ final class RealitySceneController: ObservableObject {
         }
     }
 
-    /// Final rooms keep their authored pedestal. Only scroll meshes are attached to slots.
+    /// Final rooms use the complete 8F device: lift, lids and scroll controller chains.
     private var finalRewardTemplates: [ScrollTier: Entity] = [:]
+    private var finalRewardModelTransforms: [RealityEntityRole: Transform] = [:]
     private var requestedFinalRewardTiers: [ScrollTier]?
 
     func configureFinalRewardCandidates(_ candidates: [RewardCandidate]) {
@@ -1527,35 +1529,56 @@ final class RealitySceneController: ObservableObject {
               !finalRewardTemplates.isEmpty else { return }
         let tiers = requestedFinalRewardTiers ?? RewardCatalog.candidates(forFloorNumber: contract.floor).map(\.tier)
         for (index, role) in [RealityEntityRole.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight].enumerated() {
-            guard let holder = registry.entity(for: role), holder.name.hasPrefix("FINAL_Animated_") else { continue }
+            guard let holder = registry.entity(for: role),
+                  let modelTransform = finalRewardModelTransforms[role] else { continue }
             for child in Array(holder.children) { child.removeFromParent() }
             guard tiers.indices.contains(index), let template = finalRewardTemplates[tiers[index]] else { continue }
             let scroll = template.clone(recursive: true); holder.addChild(scroll)
-            scroll.transform = .identity
-            var bounds = scroll.visualBounds(relativeTo: holder)
-            scroll.scale = SIMD3(repeating: 0.72 / max(bounds.extents.z, 0.01))
-            bounds = scroll.visualBounds(relativeTo: holder)
-            scroll.position -= [(bounds.min.x + bounds.max.x) / 2, (bounds.min.y + bounds.max.y) / 2, bounds.min.z]
+            // Keep the source slot's lean and unit-height convention. The parent
+            // controllers own emergence; candidate changes never reset their pose.
+            scroll.transform = modelTransform
         }
     }
 
     private func installFinalRewardScrolls(contract: FinalSceneContract, bundle: Bundle, resources: [URL: Entity]) throws {
-        guard let room = registry.root, registry.entity(for: .rewardStand) != nil else { throw CocoaError(.fileReadCorruptFile) }
+        guard let room = registry.root, let oldStand = registry.entity(for: .rewardStand) else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
         let suffix = graphicsQuality == .high ? "" : "_\(graphicsQuality.rawValue)"
         guard let url = bundle.url(forResource: "reward_scroll" + suffix, withExtension: "usdc", subdirectory: "Reality/Interactables/RewardScroll"),
-              let template = resources[url]?.findEntity(named: "F09_RewardScroll_Center") else { throw CocoaError(.fileReadCorruptFile) }
-        guard let deviceURL = bundle.url(forResource: "reward_device" + suffix, withExtension: "usdc", subdirectory: "Reality/Interactables/RewardDevice"),
-              let device = resources[deviceURL] else { throw CocoaError(.fileReadCorruptFile) }
-        finalRewardTemplates = [.engraved: template.clone(recursive: true)]
+              let engraved = resources[url]?.findEntity(named: "F09_RewardScroll_Center"),
+              let deviceURL = bundle.url(forResource: "reward_device" + suffix, withExtension: "usdc", subdirectory: "Reality/Interactables/RewardDevice"),
+              let source = resources[deviceURL]?.findEntity(named: "DA_SharedRewardDevice") else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        let device = source.clone(recursive: true)
+        guard let stand = device.findEntity(named: "F08B_RewardStand") else { throw CocoaError(.fileReadCorruptFile) }
+        finalRewardTemplates = [.engraved: engraved.clone(recursive: true)]
         for (tier, slot): (ScrollTier, String) in [(.worn,"Left"),(.sealed,"Center"),(.forbidden,"Right")] {
             guard let model = device.findEntity(named: "F08B_RewardScroll_" + slot) else { throw CocoaError(.fileReadCorruptFile) }
             finalRewardTemplates[tier] = model.clone(recursive: true)
         }
-        for role: RealityEntityRole in [.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight] {
-            guard let slot = registry.entity(for: role) else { throw CocoaError(.fileReadCorruptFile) }
-            let holder = Entity(); holder.name = "FINAL_Animated_" + role.rawValue
-            room.addChild(holder)
-            holder.position = slot.position(relativeTo: room)
+        // Some room wrappers have large inherited offsets; fit physical pedestal
+        // bounds in that wrapper's local space instead of using its origin/slots.
+        let oldBounds = oldStand.visualBounds(relativeTo: oldStand)
+        let sourceBounds = stand.visualBounds(relativeTo: device)
+        guard oldBounds.extents.x > 0.01, sourceBounds.extents.x > 0.01 else { throw CocoaError(.fileReadCorruptFile) }
+        let scale = oldBounds.extents.x / sourceBounds.extents.x
+        let oldBase = SIMD3<Float>(oldBounds.center.x, oldBounds.center.y, oldBounds.min.z)
+        let sourceBase = SIMD3<Float>(sourceBounds.center.x, sourceBounds.center.y, sourceBounds.min.z)
+        let localFit = Transform(scale: SIMD3(repeating: scale), rotation: simd_quatf(),
+                                 translation: oldBase - sourceBase * scale)
+        let placement = oldStand.transformMatrix(relativeTo: room) * localFit.matrix
+        room.addChild(device)
+        device.setTransformMatrix(placement, relativeTo: room)
+        oldStand.isEnabled = false
+        registry.register(stand, for: .rewardStand)
+        let roles: [RealityEntityRole] = [.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight]
+        for (slot, role) in zip(["Left", "Center", "Right"], roles) {
+            guard let holder = device.findEntity(named: "F08B_RewardScroll_\(slot)_Idle"),
+                  let model = device.findEntity(named: "F08B_RewardScroll_\(slot)") else { throw CocoaError(.fileReadCorruptFile) }
+            registry.entity(for: role)?.isEnabled = false
+            finalRewardModelTransforms[role] = model.transform
             holder.isEnabled = false
             registry.register(holder, for: role)
         }
@@ -2618,10 +2641,33 @@ extension RealitySceneController {
             try? await Task.sleep(for: .milliseconds(100))
             await capture("door-open")
         }
+        if preset == .rewardSelection {
+            let lidNames = ["Left", "Center", "Right"].map { "F08B_RewardSlot_\($0)Lid" }
+            let lift = registry.entity(named: "F08B_RewardPedestal_CentralLift")
+            setRewardPresentation(.inactive, reducedMotion: true)
+            let closedLids = lidNames.compactMap { registry.entity(named: $0)?.transform.matrix }
+            let closedLift = lift?.transform.matrix
+            await capture("reward-closed")
+            setRewardPresentation(.appearing, reducedMotion: false)
+            try? await Task.sleep(for: .seconds(1))
+            await capture("reward-opening")
+            lifecycle["appearanceCompleted"] = await waitForRewardAppearance()
+            setRewardPresentation(.choosing, reducedMotion: false)
+            let openLids = lidNames.compactMap { registry.entity(named: $0)?.transform.matrix }
+            lifecycle["movingLidCount"] = zip(closedLids, openLids).filter { $0 != $1 }.count
+            lifecycle["liftMoved"] = closedLift != lift?.transform.matrix
+            await capture("reward-open")
+            setRewardPresentation(.inactive, reducedMotion: true)
+            lifecycle["closedPoseRestored"] = closedLids == lidNames.compactMap { registry.entity(named: $0)?.transform.matrix }
+                && closedLift == lift?.transform.matrix
+            setRewardPresentation(.appearing, reducedMotion: true)
+            lifecycle["reducedMotionCompleted"] = await waitForRewardAppearance()
+            setRewardPresentation(.choosing, reducedMotion: true)
+        }
         let rewardModelCount = [RealityEntityRole.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight]
             .filter { role in
                 guard let holder = registry.entity(for: role) else { return false }
-                return holder.name.hasPrefix("FINAL_Animated_") && !holder.children.isEmpty
+                return finalRewardModelTransforms[role] != nil && !holder.children.isEmpty
             }.count
         let expectedRewardCount = requestedFinalRewardTiers?.count ?? 0
         let report: [String: Any] = ["scene": id.rawValue, "quality": graphicsQuality.rawValue,
