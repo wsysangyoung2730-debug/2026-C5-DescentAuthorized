@@ -131,7 +131,7 @@ struct RealityCombatPresentationMapper {
     private static func expansionIntentCue(for action: ExpansionEnemyAction, battleState: BattleState?) -> RealityEnemyIntentCue? {
         switch action {
         case .correctionBarrier, .timedBarrier: .generalShield
-        case .absoluteSeal: .generalShield
+        case .absoluteSeal: .absoluteShield
         case .correctionStrike, .barrierStrike, .directHits, .counterExecute: .heavyAttack
         case .counterPrepare: .openingWait
         case .copyReaction: .mimicAttack
