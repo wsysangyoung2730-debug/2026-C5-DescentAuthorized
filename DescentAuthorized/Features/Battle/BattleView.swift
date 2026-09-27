@@ -340,6 +340,9 @@ struct BattleView: View {
             updateDefeatPresentation(for: gameSession.battleState?.phase)
             synchronizePresentationSuspension()
         }
+        .onChange(of: realityController.loadState) { _, state in
+            if case .ready = state { enableBattleCameraIfAvailable() }
+        }
         .onChange(of: gameSession.eventSequence) { _, _ in
             appendBattleLog(
                 gameSession.latestEvents,
@@ -474,6 +477,16 @@ struct BattleView: View {
         }
     }
 
+    private func enableBattleCameraIfAvailable() {
+        guard isBattleScene, realitySceneID != nil, !isInputSuspended,
+              !isRestartLoading, !isDefeatPanelVisible,
+              gameSession.battleState?.phase != .defeat,
+              gameSession.battleState?.phase != .victory else { return }
+        // Loading/replacing a room clears controller state. Reassert the active
+        // battle's policy after readiness and before the shared drag/pinch begins.
+        realityController.setBattleCameraInteractionEnabled(true)
+    }
+
     private func battleCameraInteractionSurface(viewportSize: CGSize, inputFrame: CGRect) -> some View {
         Color.clear
             .contentShape(BattleCameraHitRegion(inputFrame: inputFrame), eoFill: true)
@@ -486,6 +499,7 @@ struct BattleView: View {
                             isCameraZooming = true
                             isCameraLooking = false
                             cameraLookTranslationOrigin = nil
+                            enableBattleCameraIfAvailable()
                             realityController.beginBattleCameraZoom()
                         }
                         realityController.updateBattleCameraZoom(
@@ -512,6 +526,7 @@ struct BattleView: View {
                 if !isCameraLooking {
                     isCameraLooking = true
                     cameraLookTranslationOrigin = .zero
+                    enableBattleCameraIfAvailable()
                     realityController.beginBattleCameraLook()
                 }
                 let origin = cameraLookTranslationOrigin ?? .zero

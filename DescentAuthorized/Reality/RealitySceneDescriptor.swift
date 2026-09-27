@@ -314,8 +314,8 @@ struct DemoScenePresentation: Equatable, Sendable {
            let finalRoom = FinalSceneContract.room(for: route) {
             return .init(progressSceneID: sceneID, floorSceneID: finalRoom,
                 cameraPreset: RealityCameraPreset(rawValue: route.camera.rawValue) ?? .battle,
-                experience: ExpansionNarrative(progress: expansion)
-                    .map { .narrative(.expansion($0)) } ?? .completion)
+                experience: expansion.isLowerFloor && expansion.stage.isBattle ? .battle
+                    : ExpansionNarrative(progress: expansion).map { .narrative(.expansion($0)) } ?? .completion)
         }
         if expansion?.isLowerFloor == true {
             return .init(progressSceneID: sceneID, floorSceneID: nil,
