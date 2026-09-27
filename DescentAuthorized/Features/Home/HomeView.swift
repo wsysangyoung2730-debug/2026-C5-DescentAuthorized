@@ -61,7 +61,11 @@ struct HomeView: View {
             "LoadingFloor08",
             "LoadingFloor07",
             "LoadingFloor06",
-            "LoadingFloor05"
+            "LoadingFloor05",
+            "LoadingFloor04",
+            "LoadingFloor03",
+            "LoadingFloor02",
+            "LoadingFloor01"
         ]
         for (index, imageName) in imageNames.enumerated() {
             autoreleasepool {
