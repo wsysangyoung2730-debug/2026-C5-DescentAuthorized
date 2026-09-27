@@ -108,7 +108,7 @@ struct ExpansionFlowView: View {
     @ViewBuilder
     private func content(_ current: ExpansionProgress) -> some View {
         switch current.stage {
-        case .residualInvestigation, .recordReward, .finalRecord:
+        case .residualInvestigation, .residualGate, .recordReward, .finalRecord:
             EmptyView() // LowerFloorFlowView owns these durable stages.
         case .entrance, .preparation:
             InvestigationFlow(
@@ -166,7 +166,7 @@ struct ExpansionFlowView: View {
             GateSealInteractionView(
                 title: SpellCatalog.sealRelease.name,
                 instruction: "금색 핵심점을 따라 해제 문양을 완성하십시오.",
-                spell: SpellCatalog.sealRelease,
+                spell: SpellCatalog.middleDoor(floor: current.floorNumber),
                 inputPreference: appSettings.inputPreference,
                 availableMana: 100,
                 availableStrokes: 2,

@@ -8,6 +8,7 @@ extension ExpansionProgress {
               stage != .complete || (floorNumber == 1 && descentStage == 3),
               stage != .finalRecord || floorNumber == 1,
               stage != .recordReward || ([3,4].contains(floorNumber) && residualIndex == 1),
+              stage != .residualGate || (isLowerFloor && residualIndex == 0),
               stage != .residualInvestigation || (isLowerFloor && residualIndex == 0) else { return false }
         return true
     }
@@ -18,7 +19,8 @@ extension ExpansionProgress {
         case .entrance: "Investigation"
         case .preparation, .residualEncounter, .residualBattle: residualIndex == 0 ? "Encounter" : "SecondEncounter"
         case .residualInvestigation: "SecondEncounter"
-        case .residualDefeated: residualIndex == 0 ? "SecondEncounter" : ([3,4].contains(floorNumber) ? "RecordReward" : "SealedDoor")
+        case .residualGate: "ResidualGate"
+        case .residualDefeated: residualIndex == 0 ? "ResidualGate" : ([3,4].contains(floorNumber) ? "RecordReward" : "SealedDoor")
         case .sealedDoor: "SealedDoor"
         case .recordReward: "RecordReward"
         case .bossPreparation, .bossEncounter, .bossBattle: "BossEncounter"
@@ -39,6 +41,7 @@ extension CheckpointID {
         let stage: ExpansionStage
         switch suffix {
         case "Investigation": stage = .entrance
+        case "ResidualGate": stage = .residualGate
         case "Encounter", "SecondEncounter": stage = .preparation
         case "RecordReward": stage = .recordReward
         case "SealedDoor": stage = .sealedDoor
@@ -48,7 +51,7 @@ extension CheckpointID {
         case "Descent": stage = .descent
         default: return nil
         }
-        return .init(floorNumber: floor, stage: stage, residualIndex: ["Investigation", "Encounter"].contains(suffix) ? 0 : 1)
+        return .init(floorNumber: floor, stage: stage, residualIndex: ["Investigation", "Encounter", "ResidualGate"].contains(suffix) ? 0 : 1)
     }
 }
 
@@ -72,7 +75,7 @@ extension GameProgress {
             let bossReached = completed || (same && destination.showsBoss)
             for index in 0...1 {
                 let residualComplete = completed || (same && (destination.residualIndex > index || bossReached ||
-                    (destination.residualIndex == index && [.recordReward, .sealedDoor].contains(destination.stage))))
+                    (destination.residualIndex == index && [.residualGate, .residualInvestigation, .recordReward, .sealedDoor].contains(destination.stage))))
                 if residualComplete, let enemy = ExpansionEnemyCatalog.enemy(floor: floor, isBoss: false, residualIndex: index) { defeatedEnemies.insert(enemy.id) }
             }
             if completed || (same && [.reward,.finalRecord,.descent].contains(destination.stage)),

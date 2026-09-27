@@ -25,6 +25,21 @@ final class LowerFloorTests: XCTestCase {
         }
     }
 
+    func testMiddleDoorPatternsAreDistinctAndSingleStroke() {
+        var paths = Set<String>()
+        for floor in 1...7 {
+            for transfer in (floor <= 4 ? [false, true] : [false]) {
+                let spell = SpellCatalog.middleDoor(floor: floor, residualTransfer: transfer)
+                XCTAssertEqual(spell.requiredStrokes, 1)
+                let result = GlyphEvaluator(maximumMana: 100).evaluate(spell: spell,
+                    strokes: strokes(spell), inputMethod: .pencil, erasureZones: [])
+                XCTAssertTrue(result.succeeded, "\(floor) transfer=\(transfer)")
+                let key = spell.glyph.strokes[0].referencePath.map { "\($0.x),\($0.y)" }.joined(separator: ";")
+                XCTAssertTrue(paths.insert(key).inserted)
+            }
+        }
+    }
+
     func testLowerResourcesDoNotChangeUpperFloors() throws {
         var lower = makeEngine()
         _ = try lower.beginPlayerTurn(intent: idle)
@@ -160,7 +175,13 @@ final class LowerFloorTests: XCTestCase {
                 _ = try controller.recordExpansionVictory(enemy: enemy.id, remainingPlayerHP: 30)
                 _ = try controller.advanceExpansion()
                 if residual == 0 {
+                    XCTAssertEqual(controller.progress.expansion?.stage, .residualGate)
+                    controller = try restored(controller)
+                    XCTAssertThrowsError(try controller.advanceExpansion())
+                    XCTAssertThrowsError(try controller.releaseExpansionSeal(grade: .rejected))
+                    _ = try controller.releaseExpansionSeal(grade: .approved)
                     XCTAssertEqual(controller.progress.expansion?.stage, .residualInvestigation)
+                    XCTAssertEqual(ExpansionSceneRoute(controller.progress.expansion!)?.room, .residualB)
                     _ = try controller.advanceExpansion()
                     controller = try restored(controller)
                     XCTAssertEqual(controller.progress.expansion?.residualIndex, 1)

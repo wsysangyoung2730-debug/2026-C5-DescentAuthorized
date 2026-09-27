@@ -8,6 +8,7 @@ enum ExpansionStage: String, Codable, CaseIterable, Sendable {
     case residualBattle
     case residualDefeated
     case residualInvestigation
+    case residualGate
     case recordReward
     case sealedDoor
     case bossPreparation
@@ -270,9 +271,9 @@ struct ExpansionSceneRoute: Equatable, Sendable {
         guard (1...7).contains(progress.floorNumber), progress.stage != .complete else { return nil }
         floorNumber = progress.floorNumber
         room = progress.showsBoss ? .administrator
-            : (progress.isLowerFloor && progress.residualIndex == 1 ? .residualB : .residualA)
+            : (progress.isLowerFloor && (progress.residualIndex == 1 || progress.stage == .residualInvestigation) ? .residualB : .residualA)
         switch progress.stage {
-        case .sealedDoor, .descent: camera = .descentInput
+        case .residualGate, .sealedDoor, .descent: camera = .descentInput
         case .reward, .finalRecord: camera = .rewardSelection
         default: camera = .battle
         }
@@ -324,7 +325,7 @@ extension ExpansionProgress {
         case .learnDebuff: return .floor6Learning
         case .preparation, .residualEncounter, .residualBattle: return checkpoints[1]
         case .residualDefeated, .sealedDoor: return checkpoints[2]
-        case .residualInvestigation: return checkpoints[1]
+        case .residualInvestigation, .residualGate: return checkpoints[1]
         case .bossPreparation, .bossEncounter, .bossBattle: return checkpoints[3]
         case .bossDefeated, .reward, .recordReward, .finalRecord: return checkpoints[4]
         case .descent, .complete: return checkpoints[5]

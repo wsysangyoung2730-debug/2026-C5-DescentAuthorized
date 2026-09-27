@@ -34,3 +34,27 @@ extension DescentDoorGlyphCatalog {
         }
     }
 }
+
+
+extension SpellCatalog {
+    /// Door-only glyphs. Combat seal-release remains the learned spell.
+    static func middleDoor(floor: Int, residualTransfer: Bool = false) -> SpellDefinition {
+        let coordinates: [(Double, Double)] = switch floor {
+        case 7: [(20,75),(20,25),(50,25),(50,65),(80,65),(80,35)]
+        case 6: [(20,25),(50,25),(50,75),(80,75),(80,45),(65,45)]
+        case 5: [(20,70),(35,25),(50,60),(65,25),(80,70)]
+        case 4: [(20,25),(50,45),(80,25),(80,75),(50,55),(20,75)]
+        case 3: [(20,75),(20,25),(80,25),(80,75),(50,75),(50,50)]
+        case 2: [(20,30),(40,30),(40,70),(60,70),(60,30),(80,30)]
+        default: [(20,75),(35,45),(50,25),(65,45),(80,75),(50,65)]
+        }
+        let points = coordinates.map { NormalizedPoint(x: residualTransfer ? 100 - $0.0 : $0.0, y: $0.1) }
+        return SpellDefinition(id: .sealRelease, name: "제\(floor)층 중앙문 승인",
+            category: .dispel, tier: .worn, recommendedMana: 28,
+            effect: sealRelease.effect,
+            glyph: GlyphDefinition(difficulty: .normal,
+                strokes: [GlyphStrokeSpec(start: points.first!, end: points.last!,
+                    requiredNodes: Array(points.dropFirst().dropLast()), referencePath: points,
+                    nodeRadius: 8, pathRadius: 9)], crossings: []))
+    }
+}

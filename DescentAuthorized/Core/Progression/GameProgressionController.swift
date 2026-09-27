@@ -99,7 +99,7 @@ struct GameProgressionController: Sendable {
             }
             current.stage = current.stage == .residualEncounter ? .residualBattle : .bossBattle
         case .residualDefeated:
-            if current.isLowerFloor && current.residualIndex == 0 { current.stage = .residualInvestigation }
+            if current.isLowerFloor && current.residualIndex == 0 { current.stage = .residualGate }
             else { current.stage = [3,4].contains(current.floorNumber) ? .recordReward : .sealedDoor }
         case .residualInvestigation:
             current.residualIndex = 1
@@ -144,11 +144,11 @@ struct GameProgressionController: Sendable {
     }
 
     mutating func releaseExpansionSeal(grade: CastingGrade) throws -> [ProgressionEvent] {
-        guard progress.expansion?.stage == .sealedDoor,
+        guard let current = progress.expansion, [.sealedDoor, .residualGate].contains(current.stage),
               progress.learnedSpells.contains(.sealRelease), grade != .rejected else {
             throw ProgressionError.requirementMissing("봉인 해제 각인 성공")
         }
-        progress.expansion?.stage = .bossPreparation
+        progress.expansion?.stage = current.stage == .residualGate ? .residualInvestigation : .bossPreparation
         progress.migrateExpansionCheckpoint()
         return [updateMastery(spell: .sealRelease, grade: grade)]
     }

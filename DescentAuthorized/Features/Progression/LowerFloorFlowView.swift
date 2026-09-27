@@ -58,14 +58,14 @@ struct LowerFloorFlowView: View {
         case .residualBattle, .bossBattle:
             BattleView(realityController: sceneController,
                 restartLoadingPresentation: $retryLoadingPresentation, onRestartBattle: onRestartBattle)
-        case .sealedDoor:
+        case .residualGate, .sealedDoor:
             ZStack {
                 if gameSession.presentation.floorSceneID == nil {
                     Image("GateSealMechanism").resizable().scaledToFit().opacity(0.45)
                 }
-                GateSealInteractionView(title: "관리자 구역 · 중간문 봉인 해제",
-                    instruction: "두 잔류체의 집행을 마쳤습니다. 봉인을 해제하여 옆 통로로 진입하십시오.",
-                    spell: SpellCatalog.sealRelease, inputPreference: appSettings.inputPreference,
+                GateSealInteractionView(title: current.stage == .residualGate ? "잔류체 B 구역 · 중앙문 봉인 해제" : "관리자 구역 · 중간문 봉인 해제",
+                    instruction: "핵심점을 한 번의 획으로 이어 중앙문을 해제하십시오.",
+                    spell: SpellCatalog.middleDoor(floor: current.floorNumber, residualTransfer: current.stage == .residualGate), inputPreference: appSettings.inputPreference,
                     availableMana: 100, availableStrokes: 2, presentation: GateSealGlyphPresentation()) { submission in
                         guard submission.evaluation.succeeded else { return }
                         gameSession.send(.releaseExpansionSeal(submission.evaluation.grade))

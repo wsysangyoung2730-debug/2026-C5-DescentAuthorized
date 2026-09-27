@@ -458,10 +458,10 @@ enum CheckpointID: String, Codable, CaseIterable, Equatable, Hashable, Sendable 
     case floor6BossEncounter, floor6Reward, floor6Descent
     case floor5Investigation, floor5Encounter, floor5SealedDoor, floor5BossEncounter
     case floor5Reward, floor5Descent, floor5Complete
-    case floor4Encounter, floor4SecondEncounter, floor4RecordReward, floor4SealedDoor, floor4BossEncounter, floor4Reward, floor4Descent
-    case floor3Investigation, floor3Encounter, floor3SecondEncounter, floor3RecordReward, floor3SealedDoor, floor3BossEncounter, floor3Reward, floor3Descent
-    case floor2Investigation, floor2Encounter, floor2SecondEncounter, floor2SealedDoor, floor2BossEncounter, floor2Reward, floor2Descent
-    case floor1Investigation, floor1Encounter, floor1SecondEncounter, floor1SealedDoor, floor1BossEncounter, floor1FinalRecord, floor1Descent
+    case floor4Encounter, floor4ResidualGate, floor4SecondEncounter, floor4RecordReward, floor4SealedDoor, floor4BossEncounter, floor4Reward, floor4Descent
+    case floor3Investigation, floor3Encounter, floor3ResidualGate, floor3SecondEncounter, floor3RecordReward, floor3SealedDoor, floor3BossEncounter, floor3Reward, floor3Descent
+    case floor2Investigation, floor2Encounter, floor2ResidualGate, floor2SecondEncounter, floor2SealedDoor, floor2BossEncounter, floor2Reward, floor2Descent
+    case floor1Investigation, floor1Encounter, floor1ResidualGate, floor1SecondEncounter, floor1SealedDoor, floor1BossEncounter, floor1FinalRecord, floor1Descent
     case towerHandoffComplete
 
     var progressionIndex: Int {
