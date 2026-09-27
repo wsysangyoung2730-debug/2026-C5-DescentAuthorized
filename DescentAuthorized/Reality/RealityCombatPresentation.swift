@@ -377,6 +377,7 @@ final class RealityCombatVFXRenderer {
             if reducedMotion {
                 previousAura.removeFromParent()
                 shieldAuraEntity = nil
+                repositionCurrentIntent()
                 return
             }
 

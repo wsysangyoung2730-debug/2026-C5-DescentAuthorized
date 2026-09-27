@@ -1709,8 +1709,8 @@ final class RealitySceneController: ObservableObject {
         let oldDistance = simd_length(towardViewer)
         guard oldDistance > 0.1 else { return }
         towardViewer /= oldDistance
-        let distance = min(oldDistance, height * 2.15)
-        let target = SIMD3<Float>(center.x, bounds.min.y + height * 0.63, center.z)
+        let distance = min(oldDistance, height * 2.45)
+        let target = SIMD3<Float>(center.x, bounds.min.y + height * 0.70, center.z)
         let lateral = SIMD3<Float>(towardViewer.z, 0, -towardViewer.x)
         // A slight off-axis viewpoint separates crowns/halos from the central door machinery.
         let position = target + towardViewer * distance + lateral * height * 0.18
