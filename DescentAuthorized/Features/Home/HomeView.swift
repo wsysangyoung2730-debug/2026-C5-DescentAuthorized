@@ -86,7 +86,14 @@ struct HomeView: View {
         #if DEBUG
         if ExpansionPreviewSupport.floor != nil || ExpansionPreviewSupport.loadoutFloor != nil {
             isPlaying = true
-            if ExpansionPreviewSupport.floor != nil && ExpansionPreviewSupport.isBattle { gameSession.send(.advanceExpansion) }
+            if let floor = ExpansionPreviewSupport.floor, floor <= 4,
+               ProcessInfo.processInfo.arguments.contains("--preview-direct-battle") {
+                // In-memory preview only: use the real preparation/encounter transitions.
+                gameSession.send(.beginPreparedLowerBattle)
+                gameSession.send(.advanceExpansion)
+            } else if ExpansionPreviewSupport.floor != nil && ExpansionPreviewSupport.isBattle {
+                gameSession.send(.advanceExpansion)
+            }
         }
         #endif
         withAnimation(.easeOut(duration: 0.2)) {
