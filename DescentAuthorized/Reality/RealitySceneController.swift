@@ -16,11 +16,11 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     let maximumFieldOfViewScale: Float
 
     static let standard = BattleCameraInteractionConfiguration(
-        maximumYaw: .pi * 60 / 180,
-        maximumUpwardPitch: .pi * 25 / 180,
-        maximumDownwardPitch: .pi * 25 / 180,
-        yawRadiansPerViewport: .pi * 120 / 180,
-        pitchRadiansPerViewport: .pi * 50 / 180,
+        maximumYaw: .pi * 12 / 180,
+        maximumUpwardPitch: .pi * 6 / 180,
+        maximumDownwardPitch: .pi * 6 / 180,
+        yawRadiansPerViewport: .pi * 36 / 180,
+        pitchRadiansPerViewport: .pi * 18 / 180,
         minimumFieldOfViewScale: 0.85,
         maximumFieldOfViewScale: 1.10
     )
@@ -126,6 +126,15 @@ final class RealitySceneController: ObservableObject {
     private var activeCameraName: String?
     private var pendingCameraName: String?
     private var authoredCameraSnapshots: [String: AuthoredCameraSnapshot] = [:]
+    private var battleSubjectSnapshot: (name: String, snapshot: AuthoredCameraSnapshot)?
+    private var activeUsesBattleFraming = false
+
+    private func resolvedCameraSnapshot(_ name: String) -> AuthoredCameraSnapshot? {
+        if requestedCameraPreset == .battle, let subject = battleSubjectSnapshot, subject.name == name {
+            return subject.snapshot
+        }
+        return authoredCameraSnapshots[name]
+    }
     private var battleCameraYaw: Float = 0
     private var battleCameraPitch: Float = 0
     private var battleCameraFieldOfViewScale: Float = 1
@@ -256,7 +265,7 @@ final class RealitySceneController: ObservableObject {
         guard requestedSceneID == .floor10ClosedOffice,
               requestedCameraPreset == .tutorial,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         floor10OpeningCameraGeneration &+= 1
@@ -277,7 +286,7 @@ final class RealitySceneController: ObservableObject {
         floor10OpeningCameraGeneration &+= 1
         guard requestedSceneID == .floor10ClosedOffice,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
         cameraEntity.stopAllAnimations(recursive: false)
         cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
@@ -292,7 +301,7 @@ final class RealitySceneController: ObservableObject {
         guard requestedSceneID == .floor10ClosedOffice,
               requestedCameraPreset == .tutorial,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         floor10OpeningCameraGeneration &+= 1
@@ -436,7 +445,7 @@ final class RealitySceneController: ObservableObject {
 
         guard [.main, .battle, .tutorial].contains(requestedCameraPreset),
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else {
             completion()
             return
@@ -539,7 +548,7 @@ final class RealitySceneController: ObservableObject {
 
         guard [.main, .battle, .tutorial].contains(requestedCameraPreset),
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         if animated {
@@ -565,7 +574,7 @@ final class RealitySceneController: ObservableObject {
         guard !reducedMotion,
               canAdjustBattleCamera,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         cancelBattleCameraImpact(restoreCamera: true)
@@ -616,7 +625,7 @@ final class RealitySceneController: ObservableObject {
         setBattleCameraInteractionEnabled(false)
         guard requestedCameraPreset == .battle,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         cameraEntity.stopAllAnimations(recursive: false)
@@ -673,7 +682,7 @@ final class RealitySceneController: ObservableObject {
         cancelDescentCameraEffect(restoreCamera: true)
         guard requestedCameraPreset == .descentInput,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         descentCameraEffectGeneration &+= 1
@@ -723,7 +732,7 @@ final class RealitySceneController: ObservableObject {
         cancelDescentCameraEffect(restoreCamera: true)
         guard requestedCameraPreset == .descentInput,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         descentCameraEffectGeneration &+= 1
@@ -830,7 +839,7 @@ final class RealitySceneController: ObservableObject {
             let cameraName = descriptor.cameraName(for: preset)
         else { return }
         guard cameraName != pendingCameraName else { return }
-        guard cameraName != activeCameraName else {
+        guard cameraName != activeCameraName || activeUsesBattleFraming != (preset == .battle) else {
             if pendingCameraName != nil || isCameraTransitioning {
                 cancelCameraTransition()
             }
@@ -883,7 +892,7 @@ final class RealitySceneController: ObservableObject {
 
     private func applyCamera(named cameraName: String) {
         guard
-            let snapshot = authoredCameraSnapshots[cameraName],
+            let snapshot = resolvedCameraSnapshot(cameraName),
             let cameraEntity
         else { return }
 
@@ -893,6 +902,7 @@ final class RealitySceneController: ObservableObject {
         )
         cameraEntity.camera = snapshot.camera
         activeCameraName = cameraName
+        activeUsesBattleFraming = requestedCameraPreset == .battle
         clearBattleCameraAdjustmentState()
         scheduleBoardProjectionRefresh()
     }
@@ -908,7 +918,7 @@ final class RealitySceneController: ObservableObject {
     private func applyBattleCameraTransform() {
         guard canAdjustBattleCamera,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         let adjustedMatrix = adjustedBattleCameraMatrix(from: snapshot)
@@ -1055,7 +1065,7 @@ final class RealitySceneController: ObservableObject {
         guard restoreCamera,
               requestedCameraPreset == .descentInput,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
         restoreDescentCamera(snapshot: snapshot, cameraEntity: cameraEntity)
     }
@@ -1444,6 +1454,7 @@ final class RealitySceneController: ObservableObject {
                     )
                     spawn.addChild(actorContainer)
                     self.registry.register(actorContainer, for: .enemyActor)
+                    self.frameBattleSubject(descriptor: descriptor)
                     self.registry.setEnabled(
                         self.requestedEnemyPreviewVisibility,
                         for: .enemyActor
@@ -1680,6 +1691,55 @@ final class RealitySceneController: ObservableObject {
         enemyPreviewFinalTransform = nil
     }
 
+    /// Frame the loaded actor, including its crown, while reserving space above for intent.
+    /// Move only down the authored sight line so the camera stays inside the room.
+    private func frameBattleSubject(descriptor: RealitySceneDescriptor) {
+        guard let actor = registry.entity(for: .enemyActor),
+              let name = descriptor.cameraName(for: .battle),
+              let snapshot = authoredCameraSnapshots[name] else { return }
+        let bounds = actor.visualBounds(relativeTo: nil)
+        let height = bounds.extents.y
+        guard height > 0.1 else { return }
+        let center = bounds.center
+        let oldPosition = SIMD3<Float>(snapshot.transformMatrix.columns.3.x,
+                                      snapshot.transformMatrix.columns.3.y,
+                                      snapshot.transformMatrix.columns.3.z)
+        var towardViewer = oldPosition - center
+        towardViewer.y = 0
+        let oldDistance = simd_length(towardViewer)
+        guard oldDistance > 0.1 else { return }
+        towardViewer /= oldDistance
+        let distance = min(oldDistance, height * 2.15)
+        let target = SIMD3<Float>(center.x, bounds.min.y + height * 0.63, center.z)
+        let position = target + towardViewer * distance + SIMD3<Float>(0, height * 0.06, 0)
+        let framing = PerspectiveCamera()
+        framing.look(at: target, from: position, relativeTo: nil)
+        var optics = snapshot.camera
+        optics.fieldOfViewInDegrees = 48
+        battleSubjectSnapshot = (name, AuthoredCameraSnapshot(
+            transformMatrix: framing.transformMatrix(relativeTo: nil), camera: optics))
+        if activeCameraName == name { applyCamera(named: name) }
+
+        // Actor-local illumination keeps dark silhouettes readable without lifting the room.
+        guard let root = registry.root else { return }
+        for (index, side) in [Float(-1), Float(1)].enumerated() {
+            let lamp = SpotLight()
+            lamp.name = "DA_SUBJECT_LIGHT_\(index)"
+            lamp.light.color = index == 0 ? UIColor(red: 1, green: 0.94, blue: 0.85, alpha: 1)
+                : UIColor(red: 0.70, green: 0.83, blue: 1, alpha: 1)
+            lamp.light.intensity = index == 0 ? 1800 : 1400
+            lamp.light.innerAngleInDegrees = 22
+            lamp.light.outerAngleInDegrees = 48
+            lamp.light.attenuationRadius = height * 3
+            root.addChild(lamp)
+            let right = SIMD3<Float>(towardViewer.z, 0, -towardViewer.x)
+            let source = center + right * side * height * 0.65
+                + towardViewer * (index == 0 ? height : -height * 0.45)
+                + SIMD3<Float>(0, height * 0.6, 0)
+            lamp.look(at: center, from: source, relativeTo: nil)
+        }
+    }
+
     private func completeInstallation(descriptor: RealitySceneDescriptor) {
         setErasureZones(requestedErasureZones)
         combatVFXRenderer.attach(to: registry)
@@ -1740,6 +1800,7 @@ final class RealitySceneController: ObservableObject {
         in root: Entity,
         descriptor: RealitySceneDescriptor
     ) -> [String: AuthoredCameraSnapshot] {
+        battleSubjectSnapshot = nil
         var snapshots: [String: AuthoredCameraSnapshot] = [:]
         for cameraName in Set(descriptor.cameraNames.values) {
             guard
@@ -2288,7 +2349,7 @@ extension RealitySceneController {
     func runDeviceRenderDiagnostics() async {
         guard ProcessInfo.processInfo.arguments.contains("--render-diagnostics"),
               let cameraEntity, let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName], let arView else { return }
+              let snapshot = resolvedCameraSnapshot(activeCameraName), let arView else { return }
         let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("RenderDiagnostics", isDirectory: true)
         do { try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true) }
