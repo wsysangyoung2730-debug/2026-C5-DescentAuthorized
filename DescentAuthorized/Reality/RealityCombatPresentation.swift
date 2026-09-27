@@ -208,7 +208,7 @@ final class RealityCombatVFXRenderer {
     private var shieldTransitionGeneration = 0
     var onIntentLayoutChanged: (() -> Void)?
 
-    func projectedIntentFrame(in arView: ARView) -> CGRect? {
+    func projectedIntentFrame(in arView: ARView, clipped: Bool = true) -> CGRect? {
         guard let currentIntentEntity else { return nil }
         let bounds = currentIntentEntity.visualBounds(relativeTo: nil)
         let corners = [
@@ -234,6 +234,7 @@ final class RealityCombatVFXRenderer {
             width: maxX - minX,
             height: maxY - minY
         )
+        if !clipped { return rawFrame }
         let minimumTargetSize: CGFloat = 64
         let maximumTargetSize = CGSize(width: 148, height: 176)
         let targetSize = CGSize(
@@ -255,6 +256,16 @@ final class RealityCombatVFXRenderer {
         guard targetFrame.width >= 44, targetFrame.height >= 44 else { return nil }
         return targetFrame
     }
+
+    #if DEBUG
+    func intentClearanceDiagnostics() -> [String: Any] {
+        guard let anchor = enemyAnchor, let entity = currentIntentEntity,
+              let bounds = enemyBounds(relativeTo: anchor) else { return ["loaded": false] }
+        let bottom = entity.position.z - intentHalfHeight
+        return ["loaded": true, "actorGap": bottom - bounds.max.z,
+                "shieldGap": shieldAuraEntity.map { bottom - $0.visualBounds(relativeTo: anchor).max.z } ?? 0]
+    }
+    #endif
 
     func attach(to registry: RealityEntityRegistry) {
         root = registry.root
@@ -451,30 +462,21 @@ final class RealityCombatVFXRenderer {
         guard let enemyAnchor,
               let actorBounds = enemyBounds(relativeTo: enemyAnchor) else { return nil }
 
-        let role: RealityEntityRole
         let tint: UIColor
         let materialOpacity: Float
         switch state {
         case .general:
-            role = .generalShield
             tint = UIColor(red: 0.2, green: 0.72, blue: 1, alpha: 1)
             materialOpacity = 0.14
         case .absolute:
-            role = .absoluteShield
             tint = UIColor(red: 1, green: 0.7, blue: 0.16, alpha: 1)
             materialOpacity = 0.17
         case .none:
             return nil
         }
         let actorSize = actorBounds.max - actorBounds.min
-        let barrierBounds = registry.entity(for: role)?.visualBounds(relativeTo: enemyAnchor)
-        let barrierSize = barrierBounds.map { $0.max - $0.min } ?? actorSize
-        let horizontalDiameter = max(
-            max(barrierSize.x, barrierSize.y),
-            max(actorSize.x, actorSize.y) * 1.45,
-            4.6
-        )
-        let verticalDiameter = max(actorSize.z + 0.4, horizontalDiameter * 0.8)
+        let horizontalDiameter = max(max(actorSize.x, actorSize.y) * 1.25, actorSize.z * 0.75)
+        let verticalDiameter = actorSize.z + 0.4
 
         var material = UnlitMaterial(color: tint)
         material.blending = .transparent(opacity: .init(scale: materialOpacity))
@@ -524,6 +526,7 @@ final class RealityCombatVFXRenderer {
                 let actorHeight = self.enemyBounds(relativeTo: enemyAnchor)?.extents.z ?? 4
                 let displayHeight = min(0.85, max(0.4, actorHeight * 0.20))
                 let scale = nativeHeight > 0.001 ? displayHeight / nativeHeight : self.intentScale
+                self.makeIntentReadable(entity)
                 container.scale = SIMD3(repeating: scale)
                 // Measure the authored symbol before smoke/appearance animation changes its bounds.
                 let symbolBounds = container.visualBounds(relativeTo: container)
@@ -630,6 +633,26 @@ final class RealityCombatVFXRenderer {
                 self.logger.error("\(message, privacy: .public)")
             }
         )
+    }
+
+    // Intent is gameplay information: room beams must not hide it, and room lighting
+    // must not turn the attack/defence colors into indistinguishable dark silhouettes.
+    private func makeIntentReadable(_ entity: Entity) {
+        if var model = entity.components[ModelComponent.self] {
+            model.materials = model.materials.map { source in
+                var material = UnlitMaterial(color: .white)
+                if let pbr = source as? PhysicallyBasedMaterial {
+                    material.color = .init(tint: pbr.baseColor.tint, texture: pbr.baseColor.texture)
+                } else if let unlit = source as? UnlitMaterial {
+                    material = unlit
+                }
+                material.readsDepth = false
+                material.writesDepth = false
+                return material
+            }
+            entity.components.set(model)
+        }
+        for child in entity.children { makeIntentReadable(child) }
     }
 
     private func clearIntent() {

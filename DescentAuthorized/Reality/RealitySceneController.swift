@@ -1727,7 +1727,7 @@ final class RealitySceneController: ObservableObject {
             lamp.name = "DA_SUBJECT_LIGHT_\(index)"
             lamp.light.color = index == 0 ? UIColor(red: 1, green: 0.94, blue: 0.85, alpha: 1)
                 : UIColor(red: 0.70, green: 0.83, blue: 1, alpha: 1)
-            lamp.light.intensity = index == 0 ? 1800 : 1400
+            lamp.light.intensity = (index == 0 ? 700 : 500) * height * height
             lamp.light.innerAngleInDegrees = 22
             lamp.light.outerAngleInDegrees = 48
             lamp.light.attenuationRadius = height * 3
@@ -2625,11 +2625,21 @@ extension RealitySceneController {
                 combatVFXRenderer.present([.intent(cue)], registry: registry, reducedMotion: true)
                 try? await Task.sleep(for: .milliseconds(600))
                 await capture("intent-\(index)")
-                let frame = combatVFXRenderer.projectedIntentFrame(in: arView)
+                let frame = combatVFXRenderer.projectedIntentFrame(in: arView, clipped: false)
                 intentChecks.append(["cue": String(describing: cue), "visible": frame != nil,
-                    "insideViewport": frame.map { arView.bounds.contains($0) } ?? false])
+                    "insideViewport": frame.map { arView.bounds.contains($0) } ?? false,
+                    "clearance": combatVFXRenderer.intentClearanceDiagnostics()])
             }
-            combatVFXRenderer.present([.clearIntent], registry: registry, reducedMotion: true)
+            for (name, state) in [("general", RealityShieldState.general), ("absolute", .absolute)] {
+                combatVFXRenderer.present([.shield(state), .intent(.attack)], registry: registry, reducedMotion: true)
+                try? await Task.sleep(for: .milliseconds(600))
+                await capture("shield-\(name)")
+                let frame = combatVFXRenderer.projectedIntentFrame(in: arView, clipped: false)
+                intentChecks.append(["cue": "shield-\(name)",
+                    "insideViewport": frame.map { arView.bounds.contains($0) } ?? false,
+                    "clearance": combatVFXRenderer.intentClearanceDiagnostics()])
+            }
+            combatVFXRenderer.present([.shield(.none)], registry: registry, reducedMotion: true)
         }
         beginBattleCameraLook()
         updateBattleCameraLook(translation: CGSize(width: 450, height: -180), viewportSize: CGSize(width: 1000, height: 700))
