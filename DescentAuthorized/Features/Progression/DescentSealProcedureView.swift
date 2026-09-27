@@ -81,7 +81,7 @@ struct DescentSealProcedureConfiguration {
     )
 
     static func expansion(floorNumber: Int) -> DescentSealProcedureConfiguration {
-        precondition((5...7).contains(floorNumber), "Expansion seals exist on floors 7, 6, and 5")
+        precondition((1...7).contains(floorNumber), "Expansion seals exist on floors 7 through 1")
         let destination: String
         let stages: [DescentSealStageConfiguration]
         switch floorNumber {
@@ -101,7 +101,7 @@ struct DescentSealProcedureConfiguration {
                 .init(recordTitle: "2단계 · 결과 승인", inputTitle: "2차 결과 인계 승인",
                       sequence: [8, 5, 2, 3, 0, 1, 4, 7])
             ]
-        default:
+        case 5:
             destination = "제4층 하강 구역"
             stages = [
                 .init(recordTitle: "1단계 · 원본 대조", inputTitle: "1차 원본 기억 대조",
@@ -109,14 +109,20 @@ struct DescentSealProcedureConfiguration {
                 .init(recordTitle: "2단계 · 기억 인계", inputTitle: "2차 기억 인계 승인",
                       sequence: [2, 5, 4, 1, 0, 3, 6, 8, 9])
             ]
+        default:
+            destination = floorNumber == 1 ? "다음 탑 · 제10층" : "제\(floorNumber - 1)층 하강 구역"
+            stages = LowerDescentApprovalPattern.patterns(floor: floorNumber).enumerated().map { index, pattern in
+                .init(recordTitle: "\(index + 1)단계 · \(pattern.title)",
+                      inputTitle: "\(index + 1)차 \(pattern.title)", sequence: pattern.sequence)
+            }
         }
         return DescentSealProcedureConfiguration(
-            recordSubtitle: "제\(floorNumber)층 이중 하강 승인 기록",
+            recordSubtitle: "제\(floorNumber)층 \(stages.count)단계 하강 승인 기록",
             destination: destination,
             loadingContext: .expansion(floorNumber),
             stages: stages,
-            accessibilityLabel: "제\(floorNumber)층 이중 하강 승인 정답 기록",
-            maximumAttempts: floorNumber == 5 ? 2 : nil,
+            accessibilityLabel: "제\(floorNumber)층 \(stages.count)단계 하강 승인 정답 기록",
+            maximumAttempts: floorNumber <= 5 ? 2 : nil,
             layout: .standard
         )
     }
@@ -989,18 +995,7 @@ struct DescentSealPatternLayout {
     let centerMark: CGPoint
 
     static let standard = DescentSealPatternLayout(
-        nodes: [
-            CGPoint(x: 0.50, y: 0.08),
-            CGPoint(x: 0.22, y: 0.25),
-            CGPoint(x: 0.78, y: 0.25),
-            CGPoint(x: 0.50, y: 0.33),
-            CGPoint(x: 0.27, y: 0.50),
-            CGPoint(x: 0.73, y: 0.50),
-            CGPoint(x: 0.50, y: 0.68),
-            CGPoint(x: 0.30, y: 0.82),
-            CGPoint(x: 0.70, y: 0.82),
-            CGPoint(x: 0.50, y: 0.94)
-        ],
+        nodes: LowerDescentApprovalPattern.nodes.map { CGPoint(x: $0.x / 100, y: $0.y / 100) },
         guideEdges: [
             (0, 3), (1, 3), (3, 2), (1, 4), (2, 5),
             (4, 5), (4, 7), (5, 8), (7, 6), (6, 8), (6, 9)

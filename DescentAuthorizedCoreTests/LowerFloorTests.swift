@@ -25,6 +25,19 @@ final class LowerFloorTests: XCTestCase {
         }
     }
 
+    func testLowerDescentPatternsUseThreeDistinctSingleStrokeApprovals() {
+        var seen = Set<[Int]>()
+        for floor in 1...4 {
+            let patterns = LowerDescentApprovalPattern.patterns(floor: floor)
+            XCTAssertEqual(patterns.count, 3)
+            for pattern in patterns {
+                XCTAssertEqual(Set(pattern.sequence).count, pattern.sequence.count)
+                XCTAssertTrue(pattern.sequence.allSatisfy { LowerDescentApprovalPattern.nodes.indices.contains($0) })
+                XCTAssertTrue(seen.insert(pattern.sequence).inserted)
+            }
+        }
+    }
+
     func testMiddleDoorPatternsAreDistinctAndSingleStroke() {
         var paths = Set<String>()
         for floor in 1...7 {
