@@ -194,7 +194,7 @@ struct RealitySceneDescriptor: Sendable {
                 .descentStele: "F10_DescentStele",
                 .descentPedestal: "F10_DescentPedestal"
             ],
-            descentDoorAnimation: .init(prefix: "F10")
+            descentDoorAnimation: .init(prefix: "FINAL_F07C", panelTravelDistance: 0.2365)
         ),
         .floor09ArchiveRedesign: .init(
             sceneID: .floor09ArchiveRedesign,
@@ -218,7 +218,7 @@ struct RealitySceneDescriptor: Sendable {
                 .rewardScrollRight: "F09_RewardScroll_Right_Idle",
                 .generalShield: "F09_GeneralShield"
             ],
-            descentDoorAnimation: .init(prefix: "F09"),
+            descentDoorAnimation: .init(prefix: "FINAL_F07C", panelTravelDistance: 0.2365),
             actor: .init(
                 assetID: .recordAdministrator,
                 expectedEntityName: "ACTOR_RecordAdministrator",
