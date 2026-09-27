@@ -201,9 +201,17 @@ final class RealitySceneController: ObservableObject {
         let auxiliaryURLs = auxiliaryAssetURLs(descriptor: descriptor, quality: graphicsQuality, bundle: bundle)
         prepared.prepareAuxiliary(urls: auxiliaryURLs)
         let rewards = rewardAssetURLs(descriptor: descriptor, quality: graphicsQuality, bundle: bundle)
-        let rewardResources = Publishers.MergeMany(rewards.map { resourceURL in
-            prepared.cloneAuxiliary(url: resourceURL).map { (resourceURL, $0) }.eraseToAnyPublisher()
-        }).collect().map { Dictionary(uniqueKeysWithValues: $0) }
+        let rewardResources: AnyPublisher<[URL: Entity], Error>
+        if rewards.isEmpty {
+            // Residual rooms have no reward device. Zip still needs one value
+            // before it can hand the decoded room to install().
+            rewardResources = Just([URL: Entity]())
+                .setFailureType(to: Error.self).eraseToAnyPublisher()
+        } else {
+            rewardResources = Publishers.MergeMany(rewards.map { resourceURL in
+                prepared.cloneAuxiliary(url: resourceURL).map { (resourceURL, $0) }.eraseToAnyPublisher()
+            }).collect().map { Dictionary(uniqueKeysWithValues: $0) }.eraseToAnyPublisher()
+        }
         loadCancellable = prepared.takeRoom(url: url)
             .handleEvents(receiveOutput: { [weak self] _ in
                 guard let self else { return }
