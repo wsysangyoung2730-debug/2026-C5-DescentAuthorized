@@ -53,7 +53,7 @@ final class LowerFloorTests: XCTestCase {
         }
     }
 
-    func testPreparedLowerEntryRequiresInvestigationAndSkipsDuplicateEncounter() throws {
+    func testPreparedLowerEntryRequiresInvestigationAndStopsAtDialogue() throws {
         var controller = try lowerController()
         for (checkpoint, stage, index, boss) in [
             (CheckpointID.floor5Complete, ExpansionStage.entrance, 0, false),
@@ -67,6 +67,9 @@ final class LowerFloorTests: XCTestCase {
                 for record in ExpansionInvestigationCatalog.records(for: 4) { _ = controller.readRecord(id: record.id) }
             }
             _ = try controller.beginPreparedLowerBattle()
+            XCTAssertEqual(controller.progress.expansion?.stage, boss ? .bossEncounter : .residualEncounter)
+            XCTAssertThrowsError(try controller.beginPreparedLowerBattle())
+            _ = try controller.advanceExpansion()
             XCTAssertEqual(controller.progress.expansion?.stage, boss ? .bossBattle : .residualBattle)
             XCTAssertEqual(controller.progress.expansion?.residualIndex, index)
             try GameProgressValidator().validate(controller.progress)
