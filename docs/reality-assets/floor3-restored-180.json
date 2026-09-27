@@ -3,6 +3,7 @@
     "asset": "floor03_voluntary_quarantine_administrator.usdc",
     "restoredCurveObjects": 365,
     "remainingCurves": 0,
+    "interiorCeilingPanels": 24,
     "cameraPosition": [
       0.0,
       -7.5,
@@ -13,6 +14,7 @@
     "asset": "floor03_voluntary_quarantine_administrator_low.usdc",
     "restoredCurveObjects": 365,
     "remainingCurves": 0,
+    "interiorCeilingPanels": 24,
     "cameraPosition": [
       0.0,
       -7.5,
@@ -23,6 +25,7 @@
     "asset": "floor03_voluntary_quarantine_administrator_medium.usdc",
     "restoredCurveObjects": 365,
     "remainingCurves": 0,
+    "interiorCeilingPanels": 24,
     "cameraPosition": [
       0.0,
       -7.5,
