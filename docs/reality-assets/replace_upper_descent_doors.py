@@ -47,5 +47,14 @@ for suffix in ['', '_medium', '_low']:
         for child in list(target.GetChildren()): stage.RemovePrim(child.GetPath())
         target.GetReferences().ClearReferences()
         target.GetReferences().AddReference(os.path.relpath(dest, file.parent))
-        stage.GetRootLayer().Save()
+        # RealityKit rejects these nested room references even though OpenUSD resolves them.
+        # Flatten the composed gate into the room and keep texture paths relocatable.
+        flattened = stage.Flatten()
+        composed = Usd.Stage.Open(flattened)
+        for prim in composed.Traverse():
+            for attr in prim.GetAttributes():
+                value = attr.Get()
+                if isinstance(value, Sdf.AssetPath) and value.path.startswith('/'):
+                    attr.Set(Sdf.AssetPath(os.path.relpath(value.path, file.parent)))
+        flattened.Export(str(file))
 print('Updated 9F/10F gates for high, medium and low quality.')
