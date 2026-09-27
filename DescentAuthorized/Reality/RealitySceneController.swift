@@ -1691,12 +1691,32 @@ final class RealitySceneController: ObservableObject {
         enemyPreviewFinalTransform = nil
     }
 
+    private func restoreDarkSubjectDetail(_ entity: Entity) {
+        if var model = entity.components[ModelComponent.self] {
+            model.materials = model.materials.map { source in
+                guard var material = source as? PhysicallyBasedMaterial,
+                      material.emissiveColor.texture == nil,
+                      let texture = material.baseColor.texture else { return source }
+                // A restrained texture-based fill restores details lost in the brown room's shadows.
+                // Existing emissive maps, surface normals, metallic and roughness stay intact.
+                material.emissiveColor = .init(color: .white, texture: texture)
+                material.emissiveIntensity = 0.30
+                return material
+            }
+            entity.components.set(model)
+        }
+        for child in entity.children { restoreDarkSubjectDetail(child) }
+    }
+
     /// Frame the loaded actor, including its crown, while reserving space above for intent.
     /// Move only down the authored sight line so the camera stays inside the room.
     private func frameBattleSubject(descriptor: RealitySceneDescriptor) {
         guard let actor = registry.entity(for: .enemyActor),
               let name = descriptor.cameraName(for: .battle),
               let snapshot = authoredCameraSnapshots[name] else { return }
+        if descriptor.sceneID == .floor06CausalityResidue {
+            restoreDarkSubjectDetail(actor)
+        }
         let bounds = actor.visualBounds(relativeTo: nil)
         let height = bounds.extents.y
         guard height > 0.1 else { return }
