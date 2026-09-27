@@ -212,7 +212,7 @@
     "cameras": {
       "battle": "F04A_iPad_MainCamera",
       "main": "F04A_iPad_MainCamera",
-      "tutorial": "F04A_iPad_MainCamera",
+      "tutorial": "CAM_F04A_Investigation",
       "descentInput": "CAM_F04A_MiddleDoor"
     },
     "anchors": {
@@ -235,7 +235,7 @@
     "cameras": {
       "battle": "F04B_iPad_MainCamera",
       "main": "F04B_iPad_MainCamera",
-      "tutorial": "F04B_iPad_MainCamera",
+      "tutorial": "CAM_F04B_Investigation",
       "descentInput": "CAM_F04B_MiddleDoor"
     },
     "anchors": {

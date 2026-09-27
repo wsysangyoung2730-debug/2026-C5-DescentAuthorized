@@ -260,7 +260,7 @@ extension GameProgress {
 
 /// A single route drives room and camera selection, including restored progress.
 struct ExpansionSceneRoute: Equatable, Sendable {
-    enum Camera: String, Sendable { case battle, rewardSelection, descentInput }
+    enum Camera: String, Sendable { case battle, rewardSelection, descentInput, tutorial }
     let floorNumber: Int
     enum Room: String, Sendable { case residualA, residualB, administrator }
     let room: Room
@@ -275,6 +275,7 @@ struct ExpansionSceneRoute: Equatable, Sendable {
         switch progress.stage {
         case .residualGate, .sealedDoor, .descent: camera = .descentInput
         case .reward, .finalRecord: camera = .rewardSelection
+        case .entrance, .residualInvestigation: camera = progress.floorNumber == 4 ? .tutorial : .battle
         default: camera = .battle
         }
     }

@@ -74,6 +74,15 @@ final class LowerFloorTests: XCTestCase {
         }
     }
 
+    func testFourthFloorInvestigationRoutesToCorrectRoomAndCamera() {
+        XCTAssertEqual(ExpansionSceneRoute(.init(floorNumber: 4, stage: .entrance))?.camera, .tutorial)
+        let followup = ExpansionSceneRoute(.init(floorNumber: 4, stage: .residualInvestigation))
+        XCTAssertEqual(followup?.room, .residualB)
+        XCTAssertEqual(followup?.camera, .tutorial)
+        XCTAssertEqual(ExpansionSceneRoute(.init(floorNumber: 4, stage: .residualBattle, residualIndex: 1))?.camera, .battle)
+        XCTAssertEqual(ExpansionSceneRoute(.init(floorNumber: 5, stage: .entrance))?.camera, .battle)
+    }
+
     func testLowerResourcesDoNotChangeUpperFloors() throws {
         var lower = makeEngine()
         _ = try lower.beginPlayerTurn(intent: idle)
