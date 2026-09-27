@@ -148,8 +148,14 @@ struct LowerFloorFlowView: View {
                             }
                             Spacer()
                             Image(systemName: "chevron.right").foregroundStyle(DAColor.gold)
-                        }.padding(16).background(.black.opacity(0.8))
-                            .overlay(Rectangle().stroke(DAColor.gold.opacity(0.5)))
+                        }
+                        .padding(16)
+                        .background(.black.opacity(0.8))
+                        .overlay {
+                            Rectangle().stroke(DAColor.gold.opacity(0.5))
+                                .allowsHitTesting(false)
+                        }
+                        .contentShape(Rectangle())
                     }.buttonStyle(.plain)
                 }
                 Text("잔류체 \(followup ? "A 처치 → B 조사" : "A → B") · 순차 전투")
@@ -167,7 +173,10 @@ struct LowerFloorFlowView: View {
                 }.padding(28).frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(.black.opacity(0.92))
-            .overlay(Rectangle().stroke(DAColor.gold.opacity(0.4)))
+            .overlay {
+                Rectangle().stroke(DAColor.gold.opacity(0.4))
+                    .allowsHitTesting(false)
+            }
             .frame(maxWidth: .infinity)
         }
         .padding(36)
@@ -190,7 +199,10 @@ struct LowerFloorFlowView: View {
             }
             .padding(30).frame(maxWidth: 530)
             .background(.black.opacity(0.9))
-            .overlay(Rectangle().stroke(DAColor.gold.opacity(0.55)))
+            .overlay {
+                Rectangle().stroke(DAColor.gold.opacity(0.55))
+                    .allowsHitTesting(false)
+            }
         }.padding(32)
     }
 
@@ -200,7 +212,12 @@ struct LowerFloorFlowView: View {
                 .padding(.horizontal, 28).padding(.vertical, 14).frame(maxWidth: .infinity)
                 .background {
                     Image("Floor9EntryButtonPlate").resizable().scaledToFill()
-                }.clipped()
+                        .allowsHitTesting(false)
+                }
+                .clipped()
+                // Clipping the artwork does not clip its hit region. Keep the
+                // disabled preparation button from covering the record above it.
+                .contentShape(Rectangle())
         }.buttonStyle(.plain)
     }
 
