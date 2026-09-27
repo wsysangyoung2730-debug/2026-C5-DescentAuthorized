@@ -163,3 +163,25 @@ struct CombatPresentationTimeline {
         return state
     }
 }
+
+/// Deterministic whole-model fall. No joint indices or accumulated transforms are used.
+struct GroundedDeathPose {
+    let forwardTilt: Float
+    let sideTilt: Float
+    let opacity: Float
+
+    static func sample(elapsed: TimeInterval, reducedMotion: Bool) -> Self {
+        let time = elapsed.isFinite ? max(0, elapsed) : 0
+        func smooth(_ value: Double) -> Float {
+            let t = min(1, max(0, value))
+            return Float(t * t * (3 - 2 * t))
+        }
+        let droop = smooth(time / 0.65)
+        let fall = smooth((time - 0.65) / 0.95)
+        let fadeStart = reducedMotion ? 0 : CombatPresentationTimeline.deathPoseDuration
+        let fadeDuration = reducedMotion ? 0.15 : CombatPresentationTimeline.dissolveDuration
+        return Self(forwardTilt: reducedMotion ? 0 : 0.18 * droop + 1.22 * fall,
+                    sideTilt: reducedMotion ? 0 : 0.12 * fall,
+                    opacity: 1 - smooth((time - fadeStart) / fadeDuration))
+    }
+}

@@ -2,6 +2,30 @@ import XCTest
 @testable import DescentAuthorizedCore
 
 final class CombatPresentationTimelineTests: XCTestCase {
+    func testDeathDroopsThenFallsBeforeDissolvingWithoutUnboundedAngles() {
+        let start = GroundedDeathPose.sample(elapsed: 0, reducedMotion: false)
+        XCTAssertEqual(start.forwardTilt, 0)
+        let droop = GroundedDeathPose.sample(elapsed: 0.65, reducedMotion: false)
+        XCTAssertEqual(droop.forwardTilt, 0.18, accuracy: 0.001)
+        XCTAssertEqual(droop.sideTilt, 0)
+        var previous: Float = 0
+        for step in 0...245 {
+            let pose = GroundedDeathPose.sample(elapsed: Double(step) / 100, reducedMotion: false)
+            XCTAssertTrue(pose.forwardTilt.isFinite && pose.sideTilt.isFinite)
+            XCTAssertGreaterThanOrEqual(pose.forwardTilt, previous)
+            XCTAssertLessThanOrEqual(pose.forwardTilt, 1.401)
+            XCTAssertTrue((0...1).contains(pose.opacity))
+            if step <= 180 { XCTAssertEqual(pose.opacity, 1) }
+            previous = pose.forwardTilt
+        }
+        XCTAssertEqual(GroundedDeathPose.sample(elapsed: 2.45, reducedMotion: false).opacity, 0, accuracy: 0.001)
+        let reduced = GroundedDeathPose.sample(elapsed: 0.2, reducedMotion: true)
+        XCTAssertEqual(reduced.forwardTilt, 0)
+        XCTAssertEqual(reduced.sideTilt, 0)
+        XCTAssertEqual(reduced.opacity, 0)
+        XCTAssertEqual(GroundedDeathPose.sample(elapsed: .nan, reducedMotion: false).forwardTilt, 0)
+    }
+
     func testCombinedTurnLaunchesProjectileThenStagesEnemyImpactAndRecovery() {
         let attack = EnemyAction.attack(name: "공격", damage: 12, isStrong: false)
         let damage = DemoSessionEvent.combat(.damageApplied(

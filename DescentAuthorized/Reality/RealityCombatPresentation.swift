@@ -868,6 +868,8 @@ final class RealityActorMotionPlayer {
     private weak var visualRoot: Entity?
     private var baseTransform = Transform.identity
     private var modelHeight: Float = 3
+    private var groundedCorners: [SIMD3<Float>] = []
+    private var footPivot = SIMD3<Float>.zero
     private var motionTask: Task<Void, Never>?
     private var generation = 0
     private var terminal = false
@@ -880,7 +882,15 @@ final class RealityActorMotionPlayer {
         reset()
         visualRoot = root
         baseTransform = root.transform
-        modelHeight = max(root.visualBounds(relativeTo: root).extents.z * abs(baseTransform.scale.z), 0.01)
+        let bounds = root.visualBounds(relativeTo: root.parent)
+        modelHeight = max(bounds.extents.z, 0.01)
+        footPivot = SIMD3((bounds.min.x + bounds.max.x) * 0.5,
+                          (bounds.min.y + bounds.max.y) * 0.5, bounds.min.z)
+        groundedCorners = [bounds.min.x, bounds.max.x].flatMap { x in
+            [bounds.min.y, bounds.max.y].flatMap { y in
+                [bounds.min.z, bounds.max.z].map { z in SIMD3(x, y, z) }
+            }
+        }
         root.stopAllAnimations(recursive: true)
         root.components.set(OpacityComponent(opacity: 1))
         play("idle")
@@ -955,11 +965,10 @@ final class RealityActorMotionPlayer {
                 self.elapsed += delta
                 let duration = MotionProfile.duration(for: name)
                 if name == "death" {
-                    let pose = self.reduced ? 0 : duration
-                    let fade = self.reduced ? 0.15 : CombatPresentationTimeline.dissolveDuration
-                    let progress = min(1, max(0, (self.elapsed - pose) / fade))
-                    root.components.set(OpacityComponent(opacity: Float(1 - progress)))
-                    if progress >= 1 { root.isEnabled = false; return }
+                    let pose = GroundedDeathPose.sample(elapsed: self.elapsed, reducedMotion: self.reduced)
+                    root.transform = self.groundedDeathTransform(pose)
+                    root.components.set(OpacityComponent(opacity: pose.opacity))
+                    if pose.opacity <= 0 { root.isEnabled = false; return }
                     continue
                 }
                 var transform = self.baseTransform
@@ -997,6 +1006,19 @@ final class RealityActorMotionPlayer {
         }
     }
 
+    private func groundedDeathTransform(_ pose: GroundedDeathPose) -> Transform {
+        let rotation = simd_quatf(angle: pose.sideTilt, axis: [0, 1, 0])
+            * simd_quatf(angle: pose.forwardTilt, axis: [1, 0, 0])
+        var result = baseTransform
+        result.rotation = rotation * baseTransform.rotation
+        result.translation = footPivot + rotation.act(baseTransform.translation - footPivot)
+        // The complete model, including long weapons, stays above its original
+        // floor plane. Always sample the original bounds, never last frame's pose.
+        let lowest = groundedCorners.map { (footPivot + rotation.act($0 - footPivot)).z }.min() ?? footPivot.z
+        result.translation.z += max(0, footPivot.z - lowest)
+        return result
+    }
+
     private func stop() {
         generation += 1
         motionTask?.cancel()
@@ -1008,6 +1030,8 @@ final class RealityActorMotionPlayer {
         visualRoot?.transform = baseTransform
         visualRoot?.components.set(OpacityComponent(opacity: 1))
         visualRoot = nil
+        groundedCorners = []
+        footPivot = .zero
         terminal = false; reduced = false; suspended = false
         currentMotion = "idle"; elapsed = 0
     }
