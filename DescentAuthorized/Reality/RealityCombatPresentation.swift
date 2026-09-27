@@ -467,10 +467,10 @@ final class RealityCombatVFXRenderer {
         switch state {
         case .general:
             tint = UIColor(red: 0.2, green: 0.72, blue: 1, alpha: 1)
-            materialOpacity = 0.14
+            materialOpacity = 0.06
         case .absolute:
             tint = UIColor(red: 1, green: 0.7, blue: 0.16, alpha: 1)
-            materialOpacity = 0.17
+            materialOpacity = 0.075
         case .none:
             return nil
         }
@@ -481,7 +481,7 @@ final class RealityCombatVFXRenderer {
         var material = UnlitMaterial(color: tint)
         material.blending = .transparent(opacity: .init(scale: materialOpacity))
         material.triangleFillMode = .lines
-        material.faceCulling = .none
+        material.faceCulling = .back
         material.writesDepth = false
         material.readsDepth = true
 

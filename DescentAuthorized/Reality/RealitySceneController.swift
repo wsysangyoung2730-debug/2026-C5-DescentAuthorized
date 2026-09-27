@@ -1711,7 +1711,10 @@ final class RealitySceneController: ObservableObject {
         towardViewer /= oldDistance
         let distance = min(oldDistance, height * 2.15)
         let target = SIMD3<Float>(center.x, bounds.min.y + height * 0.63, center.z)
-        let position = target + towardViewer * distance + SIMD3<Float>(0, height * 0.06, 0)
+        let lateral = SIMD3<Float>(towardViewer.z, 0, -towardViewer.x)
+        // A slight off-axis viewpoint separates crowns/halos from the central door machinery.
+        let position = target + towardViewer * distance + lateral * height * 0.18
+            + SIMD3<Float>(0, height * 0.06, 0)
         let framing = PerspectiveCamera()
         framing.look(at: target, from: position, relativeTo: nil)
         var optics = snapshot.camera
