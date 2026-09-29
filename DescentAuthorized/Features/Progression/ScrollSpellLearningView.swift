@@ -374,6 +374,21 @@ struct ScrollSpellLearningView: View {
 
                 spellGlyphAsset
                 .frame(width: min(size.width * 0.29, 320))
+                .overlay {
+                    TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { timeline in
+                        let phase = reduceMotion ? 0.5 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 2.8) / 2.8
+                        GeometryReader { geometry in
+                            LinearGradient(colors: [.clear, .white.opacity(0.9), .clear], startPoint: .leading, endPoint: .trailing)
+                                .frame(width: geometry.size.width * 0.22)
+                                .rotationEffect(.degrees(22))
+                                .offset(x: geometry.size.width * (phase * 1.5 - 0.25))
+                        }
+                        .mask(spellGlyphAsset)
+                        .blendMode(.plusLighter)
+                    }
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+                }
                 .shadow(color: categoryColor.opacity(0.92), radius: pulse ? 22 : 14)
             }
             .frame(height: min(size.height * 0.46, 420))
