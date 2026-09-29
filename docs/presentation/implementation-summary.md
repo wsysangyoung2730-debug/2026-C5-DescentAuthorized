@@ -1,3 +1,5 @@
+> 2026-09-30 후속 수정 및 실제 시뮬레이터 검증 결과는 [presentation-review.md](presentation-review.md)를 참고하세요. 아래는 최초 구현 당시 기록입니다.
+
 # 전투·획득·문 연출 구현 기록
 
 기준: `fix/#191-floor8-entry-room`의 `f1536e0`. 원격 갱신 후 develop 포함 여부를 확인하고 시작했다.
