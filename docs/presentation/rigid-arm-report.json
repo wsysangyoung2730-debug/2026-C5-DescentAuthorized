@@ -1,22 +1,22 @@
 [
   {
     "actor": "RejectionExecutionResidual",
-    "rigidArmVertices": 10951
+    "rigidArmVertices": 9764
   },
   {
     "actor": "QuarantineEnforcerResidual",
-    "rigidArmVertices": 7442
+    "rigidArmVertices": 5553
   },
   {
     "actor": "OverloadResidual",
-    "rigidArmVertices": 16735
+    "rigidArmVertices": 14977
   },
   {
     "actor": "BackflowBlockerResidual",
-    "rigidArmVertices": 12986
+    "rigidArmVertices": 10571
   },
   {
     "actor": "ExitReviewResidual",
-    "rigidArmVertices": 14571
+    "rigidArmVertices": 12820
   }
 ]

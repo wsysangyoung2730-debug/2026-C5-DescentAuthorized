@@ -18,6 +18,8 @@ for name in names:
    # Rigid arm outside the shoulder cuff. Blend only the cuff, never the weapon.
    for i,(x,y,z) in enumerate(points):
     if not (.48<z<shoulder[2]+.16 and y<.30 and sign*x>half*.60):continue
+    # Keep thighs and knees on their original leg joints; low outer geometry is equipment.
+    if z < 1.2 and sign*x < half*1.25:continue
     t=min(1,max(0,(sign*x-half*.60)/(half*.38)));t=t*t*(3-2*t)
     ji[i]=[arm,chest]+[0]*(n-2);jw[i]=[t,1-t]+[0]*(n-2);changed+=1
   ids.Set(Vt.IntArray(ji.reshape(-1).tolist()));weights.Set(Vt.FloatArray(jw.reshape(-1).tolist()));report.append({'actor':name,'rigidArmVertices':changed})
