@@ -123,13 +123,20 @@ struct GateSealInteractionView: View {
             if let sceneController {
                 sceneController.prepareMiddleDoorPreview(floorNumber: floorNumber)
                 sceneController.setDescentPresentation(.approved, reducedMotion: reduced)
-                guard await sceneController.waitForDescentDoorOpening(), !Task.isCancelled else { return }
+                guard await sceneController.waitForDescentDoorOpening(), !Task.isCancelled else {
+                    isOpening = false
+                    return
+                }
                 sceneController.setDescentPresentation(.open, reducedMotion: reduced)
             }
             do { try await Task.sleep(for: .milliseconds(reduced ? 450 : 1400)) } catch { return }
             isLoading = true
             do { try await Task.sleep(for: .milliseconds(250)) } catch { return }
+            sceneController?.setDescentPresentation(.inactive, reducedMotion: reduced)
             onCast(submission)
+        }
+        .onDisappear {
+            sceneController?.setDescentPresentation(.inactive, reducedMotion: appSettings.reducedMotion || systemReduceMotion)
         }
     }
 }
