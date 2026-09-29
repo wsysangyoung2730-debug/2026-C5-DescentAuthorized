@@ -951,6 +951,10 @@ struct BattleView: View {
                     .scaledToFill()
             }
 
+            if sealedTurns != nil {
+                SpellSealChainsOverlay()
+            }
+
             VStack(spacing: 5) {
                 Spacer(minLength: 30)
 
@@ -971,11 +975,13 @@ struct BattleView: View {
                     .font(.system(size: 14, weight: .semibold, design: .serif))
                     .foregroundStyle(DAColor.body)
                     .lineLimit(1).minimumScaleFactor(0.68)
+                    .background(.black.opacity(sealedTurns == nil ? 0 : 0.82))
 
                 Text("\(spell.battleEffectRangeTitle) · \(spell.requiredStrokes)획")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(DAColor.body.opacity(0.82))
                     .lineLimit(1)
+                    .background(.black.opacity(sealedTurns == nil ? 0 : 0.82))
 
                 Spacer(minLength: 10)
             }

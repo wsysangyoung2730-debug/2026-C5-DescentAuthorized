@@ -138,18 +138,29 @@ struct ExpansionPlayerStatusAuraView: View {
     }
 }
 
-/// Confined to the glyph area so the spell name and effect remain readable.
+/// The chain ends extend past all four card corners and are clipped by the card,
+/// so the seal binds the whole card rather than appearing as a small glyph icon.
+struct SpellSealChainsOverlay: View {
+    var body: some View {
+        GeometryReader { geometry in
+            SealedCardArtwork.chains.image
+                .resizable()
+                .frame(width: geometry.size.width + 14, height: geometry.size.height + 48)
+                .position(x: geometry.size.width / 2, y: geometry.size.height * 0.4)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+/// Keep the seal and its caption above the glyph; the chains use the full card bounds.
 struct SpellSealVisualOverlay: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
-                SealedCardArtwork.chains.image
-                    .resizable().scaledToFit()
-                    .frame(width: geometry.size.width, height: 65)
-                    .frame(maxHeight: .infinity, alignment: .top)
                 SealedCardArtwork.emblem.image
                     .resizable().scaledToFit()
-                    .frame(width: 38, height: 38)
+                    .frame(width: 44, height: 44)
                     .position(x: geometry.size.width / 2, y: 32)
                 Text("시전 불가")
                     .font(.system(size: 9, weight: .semibold))
