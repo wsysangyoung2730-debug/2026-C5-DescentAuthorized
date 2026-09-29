@@ -867,8 +867,8 @@ final class RealityCombatVFXRenderer {
     }
 }
 
-/// Moves the complete undeformed model gently. Equipment and limbs remain rigid.
-/// Mesh skinning is removed from runtime assets; editable source rigs are retained.
+/// Attack gestures retain rigid equipment. Defeat separates the authored surface
+/// into independently moving pieces instead of tipping the whole actor over.
 @MainActor
 final class RealityActorMotionPlayer {
     // #135's conservative rhythm, with #139's impact timing and recoil envelope.
@@ -911,6 +911,9 @@ final class RealityActorMotionPlayer {
     private var suspended = false
     private var currentMotion = "idle"
     private var elapsed = 0.0
+    private var fragments: [(entity: Entity, closed: Transform, position: SIMD3<Float>)] = []
+    private var attackOrdinal = 0
+    private var attackStyle = "thrust"
 
     func install(root: Entity, descriptor: RealityActorDescriptor, bundle: Bundle) throws {
         reset()
@@ -925,12 +928,19 @@ final class RealityActorMotionPlayer {
                 [bounds.min.z, bounds.max.z].map { z in SIMD3(x, y, z) }
             }
         }
+        func collect(_ entity: Entity) {
+            if entity.name.hasPrefix("DA_Fragment_") {
+                fragments.append((entity, entity.transform, entity.position(relativeTo: root.parent)))
+            } else { entity.children.forEach(collect) }
+        }
+        collect(root)
         root.stopAllAnimations(recursive: true)
         root.components.set(OpacityComponent(opacity: 1))
         play("idle")
     }
 
     func prepareEncounter() {
+        restoreFragments()
         terminal = false
         visualRoot?.isEnabled = true
         visualRoot?.transform = baseTransform
@@ -941,7 +951,7 @@ final class RealityActorMotionPlayer {
     func setReducedMotion(_ value: Bool) {
         guard reduced != value else { return }
         reduced = value
-        if value { visualRoot?.transform = baseTransform }
+        if value { visualRoot?.transform = baseTransform; restoreFragments() }
         if terminal { return } // Keep death progress; do not restart its fade.
         if value { stop() } else { play("idle") }
     }
@@ -956,6 +966,13 @@ final class RealityActorMotionPlayer {
             switch event {
             case .victory: motion = "death"
             case let .enemyActionStarted(action):
+                attackOrdinal += 1
+                switch action.statusArtworkID {
+                case "heavy-ray": attackStyle = "slam"
+                case "multi-hit", "copy-reaction", "counterattack": attackStyle = "sweep"
+                case "direct-attack": attackStyle = attackOrdinal.isMultiple(of: 2) ? "sweep" : "thrust"
+                default: attackStyle = "channel"
+                }
                 let cues = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
                 if let attack = cues.first(where: { if case .enemyAttack = $0 { return true }; return false }),
                    case let .enemyAttack(strong) = attack {
@@ -982,10 +999,7 @@ final class RealityActorMotionPlayer {
             // Defeat/record panels can re-enable the preview after victory.
             // Reapply the terminal pose without restarting or resurrecting it.
             if name == "death", let root = visualRoot {
-                let pose = GroundedDeathPose.sample(elapsed: elapsed, reducedMotion: reduced)
-                root.transform = groundedDeathTransform(pose)
-                root.components.set(OpacityComponent(opacity: pose.opacity))
-                root.isEnabled = pose.opacity > 0
+                applyFracture(elapsed: elapsed, root: root)
             }
             return
         }
@@ -1009,10 +1023,8 @@ final class RealityActorMotionPlayer {
                 self.elapsed += delta
                 let duration = MotionProfile.duration(for: name)
                 if name == "death" {
-                    let pose = GroundedDeathPose.sample(elapsed: self.elapsed, reducedMotion: self.reduced)
-                    root.transform = self.groundedDeathTransform(pose)
-                    root.components.set(OpacityComponent(opacity: pose.opacity))
-                    if pose.opacity <= 0 { root.isEnabled = false; return }
+                    self.applyFracture(elapsed: self.elapsed, root: root)
+                    if self.elapsed >= CombatPresentationTimeline.deathDuration { root.isEnabled = false; return }
                     continue
                 }
                 var transform = self.baseTransform
@@ -1027,11 +1039,25 @@ final class RealityActorMotionPlayer {
                     if !self.reduced {
                         switch name {
                         case "attack", "heavyAttack":
-                            // Keep #135's small whole-body gesture; peak with #139's impact.
                             let strong = name == "heavyAttack"
-                            let wave = MotionProfile.attackEnvelope(time: self.elapsed, strong: strong)
-                            transform.translation.y -= self.modelHeight * (strong ? 0.02 : 0.015) * wave
-                            transform.rotation *= simd_quatf(angle: 0.045 * wave, axis: [0, 0, 1])
+                            let impact = CombatPresentationTimeline.enemyImpactDelay(strong: strong)
+                            let strike = MotionProfile.attackEnvelope(time: self.elapsed, strong: strong)
+                            let anticipation = self.elapsed < impact ? Float(sin(.pi * self.elapsed / impact)) : 0
+                            switch self.attackStyle {
+                            case "sweep":
+                                transform.rotation *= simd_quatf(angle: -0.12 * anticipation + 0.22 * strike, axis: [0, 0, 1])
+                                transform.translation.x += self.modelHeight * 0.025 * strike
+                                transform.translation.y -= self.modelHeight * 0.045 * strike
+                            case "slam":
+                                transform.translation.y += self.modelHeight * (0.018 * anticipation - 0.07 * strike)
+                                transform.rotation *= simd_quatf(angle: 0.035 * anticipation - 0.09 * strike, axis: [1, 0, 0])
+                            case "channel":
+                                transform.rotation *= simd_quatf(angle: 0.06 * anticipation, axis: [0, 0, 1])
+                                transform.translation.y -= self.modelHeight * 0.035 * strike
+                            default:
+                                transform.translation.y += self.modelHeight * (0.025 * anticipation - 0.075 * strike)
+                                transform.rotation *= simd_quatf(angle: -0.045 * strike, axis: [1, 0, 0])
+                            }
                         case "hit":
                             // #139: a quick recoil followed by a damped 0.8-second recovery.
                             // Convert the old spine/head bend into rigid recoil, so long
@@ -1039,9 +1065,14 @@ final class RealityActorMotionPlayer {
                             let recoil = Float(sin(.pi * progress) * exp(-2 * progress))
                             transform.translation.y += self.modelHeight * 0.06 * recoil
                             transform.rotation *= simd_quatf(angle: -0.10 * recoil, axis: [0, 0, 1])
+                        case "telegraph":
+                            let wave = Float(pow(sin(.pi * progress), 2))
+                            transform.translation.y += self.modelHeight * 0.025 * wave
+                            transform.rotation *= simd_quatf(angle: 0.08 * wave, axis: [0, 0, 1])
                         default:
                             let wave = Float(pow(sin(.pi * progress), 2))
-                            transform.rotation *= simd_quatf(angle: MotionProfile.idleYaw * wave, axis: [0, 0, 1])
+                            transform.rotation *= simd_quatf(angle: 0.055 * wave, axis: [0, 0, 1])
+                            transform.translation.y -= self.modelHeight * 0.014 * wave
                         }
                     }
                 }
@@ -1050,17 +1081,38 @@ final class RealityActorMotionPlayer {
         }
     }
 
-    private func groundedDeathTransform(_ pose: GroundedDeathPose) -> Transform {
-        let rotation = simd_quatf(angle: pose.sideTilt, axis: [0, 1, 0])
-            * simd_quatf(angle: pose.forwardTilt, axis: [1, 0, 0])
-        var result = baseTransform
-        result.rotation = rotation * baseTransform.rotation
-        result.translation = footPivot + rotation.act(baseTransform.translation - footPivot)
-        // The complete model, including long weapons, stays above its original
-        // floor plane. Always sample the original bounds, never last frame's pose.
-        let lowest = groundedCorners.map { (footPivot + rotation.act($0 - footPivot)).z }.min() ?? footPivot.z
-        result.translation.z += max(0, footPivot.z - lowest)
-        return result
+    private func restoreFragments() {
+        for piece in fragments {
+            piece.entity.transform = piece.closed
+            piece.entity.components.set(OpacityComponent(opacity: 1))
+            piece.entity.isEnabled = true
+        }
+    }
+
+    private func applyFracture(elapsed: Double, root: Entity) {
+        root.transform = baseTransform
+        let end = CombatPresentationTimeline.deathDuration
+        root.isEnabled = elapsed < end
+        if reduced || fragments.isEmpty {
+            root.components.set(OpacityComponent(opacity: Float(max(0, 1 - elapsed / end))))
+            return
+        }
+        root.components.set(OpacityComponent(opacity: 1))
+        for (index, piece) in fragments.enumerated() {
+            let delay = 0.10 + Double(index % 5) * 0.045
+            let t = Float(max(0, elapsed - delay))
+            let angle = Float(index) * 2.399963
+            let velocity = modelHeight * (0.10 + Float(index % 3) * 0.025)
+            let lift = modelHeight * (0.12 + Float(index % 4) * 0.025)
+            var position = piece.position + SIMD3(cos(angle) * velocity * t, sin(angle) * velocity * t, lift * t - modelHeight * 0.24 * t * t)
+            // Dissolve above the floor; fragments never tumble through the room.
+            position.z = max(footPivot.z + modelHeight * 0.025, position.z)
+            piece.entity.transform = piece.closed
+            piece.entity.setPosition(position, relativeTo: root.parent)
+            piece.entity.orientation *= simd_quatf(angle: t * (index.isMultiple(of: 2) ? 1.1 : -0.8), axis: simd_normalize(SIMD3<Float>(1, Float(index % 3 + 1), 0.4)))
+            let fade = Float(max(0, min(1, (end - elapsed) / 1.1)))
+            piece.entity.components.set(OpacityComponent(opacity: fade))
+        }
     }
 
     private func stop() {
@@ -1071,6 +1123,9 @@ final class RealityActorMotionPlayer {
 
     func reset() {
         stop()
+        restoreFragments()
+        fragments.removeAll()
+        attackOrdinal = 0
         visualRoot?.transform = baseTransform
         visualRoot?.components.set(OpacityComponent(opacity: 1))
         visualRoot = nil
