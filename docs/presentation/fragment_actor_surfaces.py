@@ -16,7 +16,7 @@ for file in (root/'DescentAuthorized/Resources/Reality/Actors').rglob('*.usdc'):
    fs=np.where(labels==label)[0];corners=np.concatenate([np.arange(offset[f],offset[f+1]) for f in fs]);verts=indices[corners];dest=prim.GetParent().GetPath().AppendChild('DA_Fragment_'+str(k));Sdf.CopySpec(layer,prim.GetPath(),layer,dest);part=UsdGeom.Mesh(stage.GetPrimAtPath(dest));data=points[verts]
    part.GetPointsAttr().Set(Vt.Vec3fArray([Gf.Vec3f(*v) for v in data]));part.GetFaceVertexCountsAttr().Set(counts[fs].tolist());part.GetFaceVertexIndicesAttr().Set(list(range(len(data))));part.GetExtentAttr().Set([Gf.Vec3f(*data.min(0)),Gf.Vec3f(*data.max(0))])
    if len(normals):part.GetNormalsAttr().Set(Vt.Vec3fArray([Gf.Vec3f(*v) for v in normals[corners if ni=='faceVarying' else verts]]));part.SetNormalsInterpolation('faceVarying')
-   if len(uvs):pv=UsdGeom.PrimvarsAPI(part).GetPrimvar('st');pv.Set(Vt.Vec2fArray([Gf.Vec2f(*v)for v in uvs[corners if ui=='faceVarying' else verts]]));pv.SetInterpolation('faceVarying');pv.SetIndices([])
+   if len(uvs):pv=UsdGeom.PrimvarsAPI(part).GetPrimvar('st');pv.Set(Vt.Vec2fArray([Gf.Vec2f(*v)for v in uvs[corners if ui=='faceVarying' else verts]]));pv.SetInterpolation('faceVarying');pv.BlockIndices()
    for child in part.GetPrim().GetChildren():
     if child.IsA(UsdGeom.Subset):
      attr=UsdGeom.Subset(child).GetIndicesAttr();wanted=set(attr.Get());attr.Set([i for i,f in enumerate(fs)if f in wanted])
