@@ -240,7 +240,10 @@ final class RealityProgressionVFXRenderer {
         } else if state == .approved && doorState != .approved && doorState != .open {
             animateDoorOpening(in: registry)
         }
+        let wasOpen = doorState == .open
         doorState = state
+        if state == .open && !wasOpen { beginPortalPulse() }
+        if state != .open { portalPulseTask?.cancel() }
 
         restore(.descentStele, in: registry)
         restore(.descentPedestal, in: registry)
