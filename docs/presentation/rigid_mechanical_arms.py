@@ -23,6 +23,18 @@ for name in names:
   bind=UsdSkel.BindingAPI(p);ids=bind.GetJointIndicesPrimvar()
   before=np.array(ids.ComputeFlattened(),int);after=mapping[before]
   changed+=int(np.count_nonzero(before!=after))
+  # This actor's long stamp extends below the generic arm domain (1.2 m).
+  # Keep the entire outboard stamp rigid and the central legs on their base.
+  if name == 'RejectionExecutionResidual':
+   points=np.array(UsdGeom.Mesh(p).GetPointsAttr().Get());n=ids.GetElementSize()
+   after=after.reshape(-1,n);weights=bind.GetJointWeightsPrimvar()
+   values=np.array(weights.ComputeFlattened(),float).reshape(-1,n)
+   arm=next(i for i,j in enumerate(joints) if j.endswith('/upper_arm_R'))
+   x,y,z=points.T
+   for mask,joint in [((x < -.68)&(z > .9)&(z < 2.2),arm), ((abs(x)<.68)&(z<1.65),0)]:
+    after[mask]=0;after[mask,0]=joint;values[mask]=0;values[mask,0]=1
+   weights.Set(Vt.FloatArray(values.reshape(-1).tolist()));weights.BlockIndices()
+   after=after.reshape(-1)
   ids.Set(Vt.IntArray(after.tolist()));ids.BlockIndices()
  stage.GetRootLayer().Save()
  report.append({'actor':name,'collapsedArmInfluences':changed,'bodyWeightsPreserved':True})
