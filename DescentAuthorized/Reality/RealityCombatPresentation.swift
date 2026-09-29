@@ -1076,6 +1076,11 @@ final class RealityActorMotionPlayer {
                         }
                     }
                 }
+                let deltaRotation = transform.rotation * self.baseTransform.rotation.inverse
+                let lowest = self.groundedCorners.map {
+                    (transform.translation + deltaRotation.act($0 - self.baseTransform.translation)).z
+                }.min() ?? self.footPivot.z
+                transform.translation.z += max(0, self.footPivot.z - lowest)
                 root.transform = transform
             }
         }
