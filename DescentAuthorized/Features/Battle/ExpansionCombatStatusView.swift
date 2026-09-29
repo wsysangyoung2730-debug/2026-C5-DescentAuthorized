@@ -4,6 +4,11 @@ import UIKit
 /// Uses the same dark/gold treatment as the existing battle panels.
 struct ExpansionCombatStatusView: View {
     let battle: BattleState
+    var feedbackText: String? = nil
+    var feedbackColor: Color = .white
+    var feedbackIsEnemy = false
+    var enemyActionText: String? = nil
+    var enemyActionArtwork = "direct-attack"
     @State private var showsThreats = false
     @State private var expandedSide: CombatStatusItem.Side?
 
@@ -51,26 +56,48 @@ struct ExpansionCombatStatusView: View {
         let items = battle.statusItems(for: side)
         let showsThreatButton = side == .enemy && isLowerFloorEnemy
             && battle.phase != .victory && battle.phase != .defeat
-        return VStack(alignment: side == .player ? .leading : .trailing, spacing: 4) {
+        return VStack(alignment: side == .player ? .leading : .trailing, spacing: 6) {
             if !items.isEmpty || showsThreatButton {
-                Label(title, systemImage: symbol)
-                    .font(.caption2.weight(.bold)).foregroundStyle(color)
-                    .padding(.horizontal, 8)
-                    .background(.black.opacity(0.65), in: Capsule())
+                HStack(spacing: 8) {
+                    Label(title, systemImage: symbol)
+                        .font(.system(size: 11, weight: .bold)).foregroundStyle(color)
+                    Spacer(minLength: 0)
+                    if items.count > 2 || showsThreatButton {
+                        Button { expandedSide = side } label: {
+                            Text(items.count > 2 ? "+\(items.count - 2) · 전체 상태" : "위협 상세")
+                                .font(.system(size: 11, weight: .semibold)).foregroundStyle(color)
+                        }.buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 10).padding(.vertical, 5)
+                .background(.black.opacity(0.78), in: Capsule())
                 ForEach(Array(items.prefix(2))) { item in
                     statusRow(item, side: side, color: color)
                 }
-                if items.count > 2 || showsThreatButton {
-                    Button { expandedSide = side } label: {
-                        Text(items.count > 2 ? "+\(items.count - 2) · 전체 상태" : "위협 상세")
-                            .font(.caption2.weight(.semibold)).foregroundStyle(color)
-                            .padding(.horizontal, 10).padding(.vertical, 4)
-                            .background(.black.opacity(0.7), in: Capsule())
-                    }.buttonStyle(.plain)
+            }
+            if side == .enemy, let enemyActionText {
+                HStack(spacing: 8) {
+                    CombatStatusArtwork.image(enemyActionArtwork)
+                        .resizable().scaledToFit().frame(width: 28, height: 28)
+                    Text(enemyActionText).font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(DAColor.gold).fixedSize(horizontal: false, vertical: true)
                 }
+                .padding(.horizontal, 14).padding(.vertical, 10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background { CombatStatusArtwork.panel("enemy-action-plate") }
+                .allowsHitTesting(false)
+            }
+            if let feedbackText, (side == .enemy) == feedbackIsEnemy {
+                Text(feedbackText)
+                    .font(.system(size: feedbackText.hasPrefix("피격") ? 24 : 15, weight: .bold))
+                    .foregroundStyle(feedbackColor)
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: side == .player ? .leading : .trailing)
+                    .background(.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 8))
+                    .allowsHitTesting(false)
             }
         }
-        .frame(width: 244, alignment: side == .player ? .topLeading : .topTrailing)
+        .frame(width: 256, alignment: side == .player ? .topLeading : .topTrailing)
         .popover(isPresented: Binding(get: { expandedSide == side }, set: { if !$0 { expandedSide = nil } })) {
             ScrollView {
                 VStack(spacing: 10) {
@@ -90,17 +117,16 @@ struct ExpansionCombatStatusView: View {
                 .resizable().scaledToFit().frame(width: 32, height: 32)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
-                Text(item.title).font(.caption.weight(.semibold)).foregroundStyle(item.isUrgent ? .orange : color)
-                Text(item.detail).font(.system(size: 10)).foregroundStyle(DAColor.body).fixedSize(horizontal: false, vertical: true)
+                Text(item.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(item.isUrgent ? .orange : color)
+                Text(item.detail).font(.system(size: 12)).foregroundStyle(DAColor.body).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
             if item.isUrgent { Text("임박").font(.system(size: 9, weight: .bold)).foregroundStyle(.orange) }
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
-        .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
         .background {
-            CombatStatusArtwork.image(item.isUrgent ? "urgent-threat-row" : (side == .player ? "player-status-row" : "enemy-status-row"))
-                .resizable()
+            CombatStatusArtwork.panel(item.isUrgent ? "urgent-threat-row" : (side == .player ? "player-status-row" : "enemy-status-row"))
         }
         .accessibilityElement(children: .combine)
     }
@@ -267,20 +293,24 @@ enum CombatStatusArtwork {
         "causal-cushion": CGRect(x: 97, y: 21, width: 1103, height: 1193),
         "lingering-barrier": CGRect(x: 89, y: 21, width: 1119, height: 1193),
         "chain-empowerment": CGRect(x: 43, y: 19, width: 1147, height: 1235),
-        "player-status-row": CGRect(x: 0, y: 146, width: 1744, height: 685),
-        "enemy-status-row": CGRect(x: 64, y: 52, width: 2045, height: 608),
-        "urgent-threat-row": CGRect(x: 25, y: 37, width: 2139, height: 649),
-        "enemy-action-plate": CGRect(x: 27, y: 35, width: 2119, height: 631),
+        "player-status-row": CGRect(x: 28, y: 316, width: 1712, height: 256),
+        "enemy-status-row": CGRect(x: 64, y: 223, width: 2045, height: 262),
+        "urgent-threat-row": CGRect(x: 31, y: 203, width: 2111, height: 318),
+        "enemy-action-plate": CGRect(x: 27, y: 243, width: 2119, height: 230),
         "status-effect-chip": CGRect(x: 49, y: 102, width: 1942, height: 620),
         "player-damage-glow": CGRect(x: 33, y: 111, width: 1556, height: 699),
     ]
+    /// Preserve corners at the final panel scale; only the center stretches.
+    static func panel(_ id: String) -> some View {
+        image(id).resizable(capInsets: EdgeInsets(top: 14, leading: 22, bottom: 14, trailing: 22), resizingMode: .stretch)
+    }
     private static var cache: [String: UIImage] = [:]
     static func image(_ id: String) -> Image {
         if let cached = cache[id] { return Image(uiImage: cached) }
         guard let original = UIImage(named: "CombatStatus_" + id) else { return Image(systemName: "sparkle") }
         let cropped: UIImage
         if let rect = bounds[id], let cg = original.cgImage?.cropping(to: rect) {
-            cropped = UIImage(cgImage: cg, scale: original.scale, orientation: original.imageOrientation)
+            cropped = UIImage(cgImage: cg, scale: id.hasSuffix("-row") || id == "enemy-action-plate" ? CGFloat(cg.height) / 64 : original.scale, orientation: original.imageOrientation)
         } else { cropped = original }
         cache[id] = cropped
         return Image(uiImage: cropped)

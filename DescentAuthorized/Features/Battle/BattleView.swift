@@ -260,8 +260,8 @@ struct BattleView: View {
                 battleContent(presentation(for: battle))
                     .disabled(gameSession.isCombatPresentationActive)
                     .overlay(alignment: .top) {
-                        if battle.showsCombatStatus {
-                            ExpansionCombatStatusView(battle: battle)
+                        if battle.showsCombatStatus || feedbackText != nil || enemyActionText != nil {
+                            ExpansionCombatStatusView(battle: battle, feedbackText: feedbackText, feedbackColor: feedbackColor, feedbackIsEnemy: feedbackIsEnemy, enemyActionText: enemyActionText, enemyActionArtwork: enemyActionArtwork)
                         }
                     }
                     .overlay(alignment: .bottomTrailing) {
@@ -284,27 +284,6 @@ struct BattleView: View {
                             lineWidth: strongAttackFlash ? 5 : 2)
                     .padding(12)
                     .allowsHitTesting(false)
-            }
-
-            if let feedbackText {
-                castFeedback(text: feedbackText, color: feedbackColor)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: feedbackIsEnemy ? .topTrailing : .topLeading)
-                    .padding(.horizontal, 18).padding(.top, 174)
-                    .transition(.opacity)
-                    .allowsHitTesting(false)
-            }
-
-            if let enemyActionText {
-                HStack(spacing: 7) {
-                    CombatStatusArtwork.image(enemyActionArtwork)
-                        .resizable().scaledToFit().frame(width: 28, height: 28)
-                    Text(enemyActionText).font(.callout.weight(.semibold)).foregroundStyle(DAColor.gold)
-                }
-                .padding(.horizontal, 18).padding(.vertical, 12)
-                .background { CombatStatusArtwork.image("enemy-action-plate").resizable() }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                .padding(.trailing, 18).padding(.top, 236)
-                .allowsHitTesting(false)
             }
 
             if let detailedSpell {
@@ -1365,17 +1344,6 @@ struct BattleView: View {
             context.stroke(path, with: .color(.white.opacity(0.035)), lineWidth: 1)
         }
         .background(Color.black.opacity(0.28))
-    }
-
-    private func castFeedback(text: String, color: Color) -> some View {
-        Text(text)
-            .font(.system(size: text.hasPrefix("피격") ? 25 : 16, weight: .bold, design: .serif))
-            .foregroundStyle(color)
-            .padding(.horizontal, 24).padding(.vertical, 13)
-            .background {
-                CombatStatusArtwork.image(text.hasPrefix("피격") ? "player-damage-glow" : "status-effect-chip").resizable()
-            }
-            .accessibilityLabel(text)
     }
 
     private func showEnemyAction(_ text: String) {
