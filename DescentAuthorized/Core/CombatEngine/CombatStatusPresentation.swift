@@ -74,3 +74,35 @@ extension BattleState {
         return items.filter(\.isUrgent) + items.filter { !$0.isUrgent }
     }
 }
+
+extension EnemyAction {
+    var statusArtworkID: String {
+        switch self {
+        case let .attack(_, _, strong): strong ? "heavy-ray" : "direct-attack"
+        case .grantNormalBarrier: "normal-barrier"
+        case .grantAbsoluteBarrier: "absolute-barrier"
+        case .telegraph: "focus"
+        case let .expansion(_, action): action.statusArtworkID
+        }
+    }
+}
+
+extension ExpansionEnemyAction {
+    var statusArtworkID: String {
+        switch self {
+        case .correctionBarrier: "correction-barrier"
+        case .correctionStrike, .barrierStrike: "heavy-ray"
+        case .amplify, .flatAmplify: "amplification"
+        case .schedule: "scheduled-damage"
+        case .recordLastSpell: "spell-record"
+        case .copyReaction: "copy-reaction"
+        case .lockAndSchedule, .preparedLockAndSchedule, .lockCards, .preparedCardSeal: "spell-seal"
+        case let .sequence(actions): actions.first?.statusArtworkID ?? "focus"
+        case let .directHits(hits): hits.count > 1 ? "multi-hit" : "direct-attack"
+        case .timedBarrier: "normal-barrier"
+        case .counterPrepare, .counterExecute: "counterattack"
+        case .absoluteSeal: "absolute-barrier"
+        case .wait: "wait-opening"
+        }
+    }
+}

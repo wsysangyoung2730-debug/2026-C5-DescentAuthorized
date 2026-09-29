@@ -207,6 +207,7 @@ struct BattleView: View {
     @State private var feedbackColor = Color.white
     @State private var feedbackIsEnemy = false
     @State private var enemyActionText: String?
+    @State private var enemyActionArtwork = "focus"
     @State private var enemyActionTask: Task<Void, Never>?
     @State private var showsFirstTurnBriefing = false
     @State private var didExperienceAbsoluteBarrier = false
@@ -295,7 +296,7 @@ struct BattleView: View {
 
             if let enemyActionText {
                 HStack(spacing: 7) {
-                    CombatStatusArtwork.image(enemyAttackIsStrong ? "heavy-ray" : "direct-attack")
+                    CombatStatusArtwork.image(enemyActionArtwork)
                         .resizable().scaledToFit().frame(width: 28, height: 28)
                     Text(enemyActionText).font(.callout.weight(.semibold)).foregroundStyle(DAColor.gold)
                 }
@@ -1498,6 +1499,7 @@ struct BattleView: View {
                 strongAttack = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
                     .contains(.enemyAttack(strong: true))
                 enemyAttackIsStrong = strongAttack
+                enemyActionArtwork = action.statusArtworkID
                 showEnemyAction(action.name)
             default:
                 break
@@ -1856,6 +1858,8 @@ struct BattleView: View {
         playerPulseTask?.cancel()
         feedbackTask?.cancel()
         detailPressTask?.cancel()
+        enemyActionTask?.cancel()
+        enemyActionText = nil
         clearTransientBattleEffects()
         detailedSpell = nil
         feedbackText = nil
