@@ -27,6 +27,15 @@
     "missingTextures": []
   },
   {
+    "actor": "CausalityAdministrator",
+    "file": "articulated.usdc",
+    "skeletalRoots": 1,
+    "joints": 19,
+    "animationSamples": 488,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
     "actor": "QuarantineEnforcerResidual",
     "file": "quarantine_enforcer_residual.usdc",
     "skeletalRoots": 1,
@@ -54,6 +63,15 @@
     "missingTextures": []
   },
   {
+    "actor": "QuarantineEnforcerResidual",
+    "file": "articulated.usdc",
+    "skeletalRoots": 1,
+    "joints": 19,
+    "animationSamples": 467,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
     "actor": "SealMaintenanceAdministrator",
     "file": "seal_maintenance_administrator_low.usdc",
     "skeletalRoots": 1,
@@ -65,6 +83,15 @@
   {
     "actor": "SealMaintenanceAdministrator",
     "file": "seal_maintenance_administrator.usdc",
+    "skeletalRoots": 1,
+    "joints": 20,
+    "animationSamples": 494,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
+    "actor": "SealMaintenanceAdministrator",
+    "file": "articulated.usdc",
     "skeletalRoots": 1,
     "joints": 20,
     "animationSamples": 494,
@@ -92,6 +119,15 @@
   {
     "actor": "ResponsibilityAuditAdministrator",
     "file": "responsibility_audit_administrator.usdc",
+    "skeletalRoots": 1,
+    "joints": 20,
+    "animationSamples": 500,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
+    "actor": "ResponsibilityAuditAdministrator",
+    "file": "articulated.usdc",
     "skeletalRoots": 1,
     "joints": 20,
     "animationSamples": 500,
@@ -135,6 +171,15 @@
     "missingTextures": []
   },
   {
+    "actor": "FinalAuthorizationAdministrator",
+    "file": "articulated.usdc",
+    "skeletalRoots": 1,
+    "joints": 19,
+    "animationSamples": 507,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
     "actor": "ObservationResidue",
     "file": "observation_residue_medium.usdc",
     "skeletalRoots": 1,
@@ -146,6 +191,15 @@
   {
     "actor": "ObservationResidue",
     "file": "observation_residue.usdc",
+    "skeletalRoots": 1,
+    "joints": 5,
+    "animationSamples": 391,
+    "clips": 8,
+    "missingTextures": []
+  },
+  {
+    "actor": "ObservationResidue",
+    "file": "articulated.usdc",
     "skeletalRoots": 1,
     "joints": 5,
     "animationSamples": 391,
@@ -189,6 +243,15 @@
     "missingTextures": []
   },
   {
+    "actor": "RejectionExecutionResidual",
+    "file": "articulated.usdc",
+    "skeletalRoots": 1,
+    "joints": 19,
+    "animationSamples": 459,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
     "actor": "RecordAdministrator",
     "file": "record_administrator_low.usdc",
     "skeletalRoots": 1,
@@ -200,6 +263,15 @@
   {
     "actor": "RecordAdministrator",
     "file": "record_administrator_medium.usdc",
+    "skeletalRoots": 1,
+    "joints": 5,
+    "animationSamples": 391,
+    "clips": 8,
+    "missingTextures": []
+  },
+  {
+    "actor": "RecordAdministrator",
+    "file": "articulated.usdc",
     "skeletalRoots": 1,
     "joints": 5,
     "animationSamples": 391,
@@ -235,6 +307,15 @@
   },
   {
     "actor": "MemoryOmissionResidue",
+    "file": "articulated.usdc",
+    "skeletalRoots": 1,
+    "joints": 18,
+    "animationSamples": 456,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
+    "actor": "MemoryOmissionResidue",
     "file": "memory_omission_residue_medium.usdc",
     "skeletalRoots": 1,
     "joints": 18,
@@ -262,6 +343,15 @@
   },
   {
     "actor": "BackflowBlockerResidual",
+    "file": "articulated.usdc",
+    "skeletalRoots": 1,
+    "joints": 20,
+    "animationSamples": 473,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
+    "actor": "BackflowBlockerResidual",
     "file": "backflow_blocker_residual_low.usdc",
     "skeletalRoots": 1,
     "joints": 20,
@@ -272,6 +362,15 @@
   {
     "actor": "SignatureMimicResidual",
     "file": "signature_mimic_residual_low.usdc",
+    "skeletalRoots": 1,
+    "joints": 19,
+    "animationSamples": 474,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
+    "actor": "SignatureMimicResidual",
+    "file": "articulated.usdc",
     "skeletalRoots": 1,
     "joints": 19,
     "animationSamples": 474,
@@ -324,6 +423,15 @@
     "missingTextures": []
   },
   {
+    "actor": "ObservationAdministrator",
+    "file": "articulated.usdc",
+    "skeletalRoots": 1,
+    "joints": 5,
+    "animationSamples": 379,
+    "clips": 8,
+    "missingTextures": []
+  },
+  {
     "actor": "OverloadResidual",
     "file": "overload_residual.usdc",
     "skeletalRoots": 1,
@@ -351,6 +459,15 @@
     "missingTextures": []
   },
   {
+    "actor": "OverloadResidual",
+    "file": "articulated.usdc",
+    "skeletalRoots": 1,
+    "joints": 19,
+    "animationSamples": 455,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
     "actor": "ExitReviewResidual",
     "file": "exit_review_residual.usdc",
     "skeletalRoots": 1,
@@ -362,6 +479,15 @@
   {
     "actor": "ExitReviewResidual",
     "file": "exit_review_residual_medium.usdc",
+    "skeletalRoots": 1,
+    "joints": 19,
+    "animationSamples": 477,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
+    "actor": "ExitReviewResidual",
+    "file": "articulated.usdc",
     "skeletalRoots": 1,
     "joints": 19,
     "animationSamples": 477,
@@ -397,6 +523,15 @@
   },
   {
     "actor": "OriginalMemoryAdministrator",
+    "file": "articulated.usdc",
+    "skeletalRoots": 1,
+    "joints": 19,
+    "animationSamples": 506,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
+    "actor": "OriginalMemoryAdministrator",
     "file": "original_memory_administrator_low.usdc",
     "skeletalRoots": 1,
     "joints": 19,
@@ -416,6 +551,15 @@
   {
     "actor": "VoluntaryQuarantineAdministrator",
     "file": "voluntary_quarantine_administrator_low.usdc",
+    "skeletalRoots": 1,
+    "joints": 56,
+    "animationSamples": 506,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
+    "actor": "VoluntaryQuarantineAdministrator",
+    "file": "articulated.usdc",
     "skeletalRoots": 1,
     "joints": 56,
     "animationSamples": 506,
@@ -459,6 +603,15 @@
     "missingTextures": []
   },
   {
+    "actor": "ConsentCustodianResidual",
+    "file": "articulated.usdc",
+    "skeletalRoots": 1,
+    "joints": 19,
+    "animationSamples": 492,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
     "actor": "CoordinateResidue",
     "file": "coordinate_residue.usdc",
     "skeletalRoots": 1,
@@ -470,6 +623,15 @@
   {
     "actor": "CoordinateResidue",
     "file": "coordinate_residue_medium.usdc",
+    "skeletalRoots": 1,
+    "joints": 18,
+    "animationSamples": 465,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
+    "actor": "CoordinateResidue",
+    "file": "articulated.usdc",
     "skeletalRoots": 1,
     "joints": 18,
     "animationSamples": 465,
@@ -513,6 +675,15 @@
     "missingTextures": []
   },
   {
+    "actor": "CoordinateAdministrator",
+    "file": "articulated.usdc",
+    "skeletalRoots": 1,
+    "joints": 20,
+    "animationSamples": 494,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
     "actor": "CausalityResidue",
     "file": "causality_residue_low.usdc",
     "skeletalRoots": 1,
@@ -524,6 +695,15 @@
   {
     "actor": "CausalityResidue",
     "file": "causality_residue_medium.usdc",
+    "skeletalRoots": 1,
+    "joints": 18,
+    "animationSamples": 495,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
+    "actor": "CausalityResidue",
+    "file": "articulated.usdc",
     "skeletalRoots": 1,
     "joints": 18,
     "animationSamples": 495,
@@ -560,6 +740,15 @@
   {
     "actor": "IdentityComparisonResidual",
     "file": "identity_comparison_residual.usdc",
+    "skeletalRoots": 1,
+    "joints": 19,
+    "animationSamples": 480,
+    "clips": 9,
+    "missingTextures": []
+  },
+  {
+    "actor": "IdentityComparisonResidual",
+    "file": "articulated.usdc",
     "skeletalRoots": 1,
     "joints": 19,
     "animationSamples": 480,
