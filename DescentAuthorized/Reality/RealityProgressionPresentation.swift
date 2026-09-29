@@ -58,6 +58,9 @@ final class RealityProgressionVFXRenderer {
     private var doorPortal: Entity?
     private var doorPortalClosed: Transform?
     private var doorReducedMotion = false
+    private var irisLens: Entity?
+    private var irisLensClosed = Transform.identity
+    private var irisBlades: [(entity: Entity, closed: Transform, angle: Float)] = []
     private var transitionGeneration = 0
     private var rewardAppearanceTask: Task<Void, Never>?
     private var rewardIdleTask: Task<Void, Never>?
@@ -71,6 +74,8 @@ final class RealityProgressionVFXRenderer {
         doorOpeningTask = nil
         doorState = .inactive
         doorPanels.removeAll()
+        irisLens = nil
+        irisBlades.removeAll()
         doorPortal = nil
         doorPortalClosed = nil
         authoredRewardPlayer?.cancel()
@@ -98,6 +103,15 @@ final class RealityProgressionVFXRenderer {
             }
             doorPortal = registry.entity(named: doorAnimation.portalSurfaceName)
             doorPortalClosed = doorPortal?.transform
+            if let lens = registry.entity(named: "FINAL_F02C_IrisLens") {
+                irisLens = lens
+                irisLensClosed = lens.transform
+                for index in 0..<8 {
+                    if let blade = registry.entity(named: "FINAL_F02C_IrisBlade_\(index)") {
+                        irisBlades.append((blade, blade.transform, (Float(index) + 0.5) * .pi / 4))
+                    }
+                }
+            }
             let openingWidth = doorPortal?.visualBounds(relativeTo: doorPortal?.parent).extents.x ?? 0
             let travel = max(doorAnimation.panelTravelDistance, openingWidth * 0.52)
             for (name, direction): (String, Float) in [(doorAnimation.leftPanelName, -1), (doorAnimation.rightPanelName, 1)] {
@@ -268,6 +282,8 @@ final class RealityProgressionVFXRenderer {
         doorOpeningTask = nil
         doorState = .inactive
         doorPanels.removeAll()
+        irisLens = nil
+        irisBlades.removeAll()
         doorPortal = nil
         doorPortalClosed = nil
         authoredRewardPlayer?.cancel()
@@ -352,6 +368,8 @@ final class RealityProgressionVFXRenderer {
     }
 
     private func restoreDoorControllers(in registry: RealityEntityRegistry) {
+        irisLens?.transform = irisLensClosed
+        for blade in irisBlades { blade.entity.transform = blade.closed }
         for (name, transform) in doorControllerBaseTransforms {
             guard let entity = registry.entity(named: name) else { continue }
             entity.stopAllAnimations(recursive: false)
@@ -397,10 +415,26 @@ final class RealityProgressionVFXRenderer {
         let t = max(0, min(1, (progress - 0.12) / 0.88))
         let eased = t * t * (3 - 2 * t)
         // Entities and bounds are resolved once at attachment, not every frame.
-        for panel in doorPanels {
-            var target = panel.closed
-            target.translation.x += panel.travel * eased
-            panel.entity.transform = target
+        if let lens = irisLens {
+            let extensionPhase = min(1, progress / 0.32)
+            var lensTransform = irisLensClosed
+            lensTransform.translation.y -= 0.075 * extensionPhase * extensionPhase * (3 - 2 * extensionPhase)
+            lens.transform = lensTransform
+            let aperture = max(0, min(1, (progress - 0.26) / 0.74))
+            let opening = aperture * aperture * (3 - 2 * aperture)
+            for blade in irisBlades {
+                var target = blade.closed
+                target.rotation *= simd_quatf(angle: -opening * 1.1, axis: [0, 1, 0])
+                target.translation.x += cos(blade.angle) * 0.12 * opening
+                target.translation.z += sin(blade.angle) * 0.12 * opening
+                blade.entity.transform = target
+            }
+        } else {
+            for panel in doorPanels {
+                var target = panel.closed
+                target.translation.x += panel.travel * eased
+                panel.entity.transform = target
+            }
         }
         if let portal = doorPortal, var target = doorPortalClosed {
             // Authored closed state compresses the portal vertically; reveal it in place.
