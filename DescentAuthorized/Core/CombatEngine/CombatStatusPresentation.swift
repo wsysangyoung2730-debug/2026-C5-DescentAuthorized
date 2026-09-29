@@ -6,6 +6,20 @@ struct CombatStatusItem: Identifiable, Equatable, Sendable {
     let id: String
     let title: String
     let detail: String
+    var isUrgent: Bool = false
+
+    var artworkID: String {
+        if id.hasPrefix("lock-") { return "spell-seal" }
+        if id.hasPrefix("scheduled-") { return detail.contains("지연됨") ? "execution-delay" : "scheduled-damage" }
+        return ["normal": "normal-barrier", "absolute": "absolute-barrier", "limit": "limit-barrier",
+            "direct": "direct-hit-block", "isolation": "isolation-barrier", "handoff": "handoff-barrier",
+            "reactive": "reaction-protection", "weakening": "attack-reduction", "guard": "anchor-guard",
+            "scheduledGuard": "causal-cushion", "nextBarrier": "lingering-barrier", "chain": "chain-empowerment",
+            "phase": "phase-change", "flatAmplification": "amplification", "counter": "counterattack",
+            "barrier": "normal-barrier", "amplification": "amplification", "preservation": "preservation",
+            "output": "attack-reduction", "record": "spell-record", "mimic": "mimic-prohibition",
+            "erasure": "erasure-zone"][id] ?? "focus"
+    }
 }
 
 extension BattleState {
@@ -18,9 +32,13 @@ extension BattleState {
     func statusItems(for side: CombatStatusItem.Side) -> [CombatStatusItem] {
         guard phase != .victory, phase != .defeat, phase != .preparing else { return [] }
         var items: [CombatStatusItem] = []
-        func add(_ id: String, _ title: String, _ detail: String) {
-            items.append(.init(id: id, title: title, detail: detail))
+        func add(_ id: String, _ title: String, _ detail: String, urgent: Bool = false) {
+            items.append(.init(id: id, title: title, detail: detail, isUrgent: urgent))
         }
+        let combatant = side == .player ? player : enemy
+        if combatant.normalBarrier > 0 { add("normal", "일반 방벽", "남은 방벽 \(combatant.normalBarrier)") }
+        if combatant.absoluteBarrierCharges > 0 { add("absolute", "절대 방벽", "\(combatant.absoluteBarrierCharges)회 무효화") }
+        if side == .player, !activeErasureZones.isEmpty { add("erasure", "말소 구역", "입력 패드에 \(activeErasureZones.count)개 적용") }
         let e = expansion
         switch side {
         case .player:
@@ -50,9 +68,9 @@ extension BattleState {
             if let record = e.copyRecord { add("record", "기록: \(SpellCatalog.spell(record.spell).name)", record.reused ? "재사용 감지 · 다음 행동에서 모사" : "재사용하면 추가 반응") }
             if let through = e.mimicProhibitionThroughEnemyTurn { add("mimic", "모사 금지", "\(through)턴까지 적 기록·반응 차단") }
             for pending in e.scheduledDamage {
-                add("scheduled-\(pending.id)", pending.name, "\(pending.dueEnemyTurn == turnNumber ? "이번" : "\(pending.dueEnemyTurn)번") 적 턴 · \(pending.damage) 피해\(pending.wasDelayed ? " · 지연됨" : "")")
+                add("scheduled-\(pending.id)", pending.name, "\(pending.dueEnemyTurn == turnNumber ? "이번" : "\(pending.dueEnemyTurn)번") 적 턴 · \(pending.damage) 피해\(pending.wasDelayed ? " · 지연됨" : "")", urgent: pending.dueEnemyTurn <= turnNumber)
             }
         }
-        return items
+        return items.filter(\.isUrgent) + items.filter { !$0.isUrgent }
     }
 }
