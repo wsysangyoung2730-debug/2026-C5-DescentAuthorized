@@ -1200,6 +1200,10 @@ final class RealitySceneController: ObservableObject {
         )
     }
 
+    func prepareMiddleDoorPreview(floorNumber: Int) {
+        progressionVFXRenderer.prepareMiddleDoorPreview(floorNumber: floorNumber)
+    }
+
     func waitForDescentDoorOpening() async -> Bool {
         await progressionVFXRenderer.waitForDoorOpening()
     }

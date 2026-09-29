@@ -1,5 +1,6 @@
 import Foundation
 import RealityKit
+import UIKit
 
 enum RealityDescentPresentationState: Equatable, Sendable {
     case inactive
@@ -105,6 +106,23 @@ final class RealityProgressionVFXRenderer {
                 }
             }
         }
+    }
+
+    func prepareMiddleDoorPreview(floorNumber: Int) {
+        guard let portal = doorPortal,
+              let image = UIImage(named: String(format: "LoadingFloor%02d", floorNumber))?.cgImage,
+              let texture = try? TextureResource.generate(from: image, options: .init(semantic: .color)) else { return }
+        var material = UnlitMaterial()
+        material.color = .init(tint: .white, texture: .init(texture))
+        material.faceCulling = .none
+        func apply(_ entity: Entity) {
+            if var model = entity.components[ModelComponent.self] {
+                model.materials = [material]
+                entity.components.set(model)
+            }
+            entity.children.forEach(apply)
+        }
+        apply(portal)
     }
 
     func presentDescent(
