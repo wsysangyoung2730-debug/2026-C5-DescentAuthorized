@@ -210,6 +210,17 @@ struct ExpansionBattleState: Equatable, Sendable {
 }
 
 extension BattleState {
+    /// The expiration includes its player turn and ends after that enemy action.
+    /// After player input closes, count from the upcoming player turn.
+    func remainingSealTurns(for spell: SpellID) -> Int? {
+        guard phase != .victory, phase != .defeat,
+              let expiresAfterTurn = expansion.lockedSpells[spell] else { return nil }
+        let includesCurrentTurn = phase == .playerTurn || phase == .resolvingPlayerSpell
+        let firstTurn = turnNumber + (includesCurrentTurn ? 0 : 1)
+        let remaining = expiresAfterTurn - firstTurn + 1
+        return remaining > 0 ? remaining : nil
+    }
+
     func availableEffectTargets(for spell: SpellDefinition) -> [ExpansionTargetOption] {
         guard case let .expansion(effect) = spell.effect else { return [] }
         var options: [ExpansionTargetOption] = []

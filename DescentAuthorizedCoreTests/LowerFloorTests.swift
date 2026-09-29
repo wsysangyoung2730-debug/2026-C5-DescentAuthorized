@@ -191,6 +191,46 @@ final class LowerFloorTests: XCTestCase {
         XCTAssertEqual(Set(engine.state.expansion.lockedSpells.keys), [.executionDelay])
     }
 
+    func testSealCountdownAcrossChoiceAutomaticAndScheduledLocks() throws {
+        let cases: [(ExpansionEnemyAction, Int)] = [
+            (.lockCards(count: 2, duration: 1, chooseOne: true), 1),
+            (.lockCards(count: 2, duration: 3, chooseOne: true), 3),
+            (.lockCards(count: 2, duration: 3, chooseOne: false), 3),
+            (.lockAndSchedule(count: 1, damage: 0), 1)
+        ]
+        for (action, duration) in cases {
+            let cards: [SpellID] = [.riftSeverance, .basicBarrier, .sealRelease, .chainInscription, .executionDelay]
+            var engine = CombatEngine(enemy: LowerFloorEnemyCatalog.all[.consentCustodianResidual]!,
+                equippedSpells: cards, protectedSpells: [.riftSeverance, .basicBarrier, .sealRelease])
+            _ = try engine.beginPlayerTurn(intent: .expansion(name: "봉인", action: action))
+            if engine.state.expansion.needsSealChoice {
+                try engine.chooseCardSeal(.executionDelay)
+            }
+            try resolve(&engine)
+            let sealed = try XCTUnwrap(engine.state.expansion.lockedSpells.keys.first)
+            XCTAssertEqual(engine.state.remainingSealTurns(for: sealed), duration)
+            var impact = engine.state
+            impact.phase = .resolvingEnemyAction
+            XCTAssertEqual(impact.remainingSealTurns(for: sealed), duration)
+            impact.phase = .victory
+            XCTAssertNil(impact.remainingSealTurns(for: sealed))
+            impact.phase = .defeat
+            XCTAssertNil(impact.remainingSealTurns(for: sealed))
+            impact = engine.state
+            impact.expansion.lockedSpells[sealed] = nil
+            XCTAssertNil(impact.remainingSealTurns(for: sealed))
+            XCTAssertNil(engine.state.remainingSealTurns(for: .basicBarrier))
+            for remaining in stride(from: duration, through: 1, by: -1) {
+                _ = try engine.beginPlayerTurn(intent: idle)
+                XCTAssertEqual(engine.state.remainingSealTurns(for: sealed), remaining)
+                XCTAssertNotNil(engine.state.spellUnavailabilityReason(for: SpellCatalog.spell(sealed)))
+                try resolve(&engine)
+            }
+            XCTAssertNil(engine.state.expansion.lockedSpells[sealed])
+            XCTAssertNil(engine.state.remainingSealTurns(for: sealed))
+        }
+    }
+
     func testCounterIsSingleConditionalAndMimicProhibitionCancelsIt() throws {
         var engine = makeEngine()
         _ = try engine.beginPlayerTurn(intent: .expansion(name: "준비", action: .counterPrepare(damage: 24)))

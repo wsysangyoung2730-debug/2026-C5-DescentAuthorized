@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Uses the same dark/gold treatment as the existing battle panels.
 struct ExpansionCombatStatusView: View {
@@ -137,23 +138,65 @@ struct ExpansionPlayerStatusAuraView: View {
     }
 }
 
+/// Confined to the glyph area so the spell name and effect remain readable.
 struct SpellSealVisualOverlay: View {
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
-                Path { path in
-                    path.move(to: CGPoint(x: 10,y: 30))
-                    path.addLine(to: CGPoint(x: geometry.size.width-10,y: geometry.size.height-30))
-                    path.move(to: CGPoint(x: geometry.size.width-10,y: 30))
-                    path.addLine(to: CGPoint(x: 10,y: geometry.size.height-30))
-                }
-                .stroke(.purple.opacity(0.65), style: StrokeStyle(lineWidth: 3, lineCap: .round, dash: [5,4]))
-                Image(systemName: "lock.fill")
-                    .font(.title3).foregroundStyle(.purple)
-                    .padding(10).background(.black.opacity(0.8), in: Circle())
+            ZStack(alignment: .bottom) {
+                SealedCardArtwork.chains.image
+                    .resizable().scaledToFit()
+                    .frame(width: geometry.size.width, height: 65)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                SealedCardArtwork.emblem.image
+                    .resizable().scaledToFit()
+                    .frame(width: 38, height: 38)
+                    .position(x: geometry.size.width / 2, y: 32)
+                Text("시전 불가")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.84, green: 0.74, blue: 0.91))
+                    .padding(.horizontal, 7).padding(.vertical, 1)
+                    .background(.black.opacity(0.8), in: Capsule())
             }
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
+}
+
+struct SpellSealTurnBadge: View {
+    let turns: Int
+
+    var body: some View {
+        Text("봉인 · \(turns)턴")
+            .font(.system(size: 10, weight: .semibold).monospacedDigit())
+            .foregroundStyle(Color(red: 0.94, green: 0.86, blue: 1))
+            .lineLimit(1).minimumScaleFactor(0.7)
+            .padding(.horizontal, 8)
+            .frame(maxWidth: .infinity, minHeight: 23, maxHeight: 23)
+            .background { SealedCardArtwork.badge.image.resizable() }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+}
+
+/// Preserve the supplied PNGs; remove only their transparent export margins at display time.
+@MainActor
+private enum SealedCardArtwork: String, CaseIterable {
+    case chains = "SealedCardChains", emblem = "SealedCardEmblem", badge = "SealedCardTurnBadge"
+
+    var image: Image { Image(uiImage: Self.images[self] ?? UIImage()) }
+
+    private var crop: CGRect {
+        switch self {
+        case .chains: CGRect(x: 26, y: 37, width: 1376, height: 1036)
+        case .emblem: CGRect(x: 207, y: 194, width: 844, height: 867)
+        case .badge: CGRect(x: 223, y: 142, width: 1733, height: 422)
+        }
+    }
+
+    private static let images: [Self: UIImage] = Dictionary(uniqueKeysWithValues: allCases.map { artwork in
+        let original = UIImage(named: artwork.rawValue) ?? UIImage()
+        guard let cropped = original.cgImage?.cropping(to: artwork.crop) else { return (artwork, original) }
+        return (artwork, UIImage(cgImage: cropped, scale: 3, orientation: .up))
+    })
 }

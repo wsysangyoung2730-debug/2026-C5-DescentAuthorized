@@ -937,11 +937,13 @@ struct BattleView: View {
 
     private func spellCard(_ state: BattleUISpellState, width: CGFloat) -> some View {
         let spell = state.spell
+        let sealedTurns = gameSession.battleState?.remainingSealTurns(for: spell.id)
 
         return ZStack {
             Image(spell.battleCardFrameAssetName)
                 .resizable()
                 .scaledToFill()
+                .saturation(sealedTurns == nil ? 1 : 0.35)
 
             if let overlayAssetName = state.visualState.overlayAssetName {
                 Image(overlayAssetName)
@@ -952,8 +954,16 @@ struct BattleView: View {
             VStack(spacing: 5) {
                 Spacer(minLength: 30)
 
-                SpellGlyphPreview(spell: spell)
-                    .frame(width: min(76, width - 24), height: 76)
+                ZStack {
+                    SpellGlyphPreview(spell: spell)
+                        .frame(width: min(76, width - 24), height: 76)
+                        .opacity(sealedTurns == nil ? 1 : 0.38)
+                    if sealedTurns != nil {
+                        SpellSealVisualOverlay()
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 76)
 
                 Spacer(minLength: 2)
 
@@ -977,7 +987,7 @@ struct BattleView: View {
                     Image(spell.battleScrollBadgeAssetName)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: 34, height: 34)
+                        .frame(width: sealedTurns == nil ? 34 : 22, height: sealedTurns == nil ? 34 : 22)
                         .clipShape(Circle())
                         .overlay {
                             Circle()
@@ -987,26 +997,25 @@ struct BattleView: View {
                 }
                 Spacer()
             }
-            .padding(10)
+            .padding(sealedTurns == nil ? 10 : 6)
         }
         .frame(width: width, height: 176)
         .overlay {
             if let battle = gameSession.battleState, battle.phase != .victory, battle.phase != .defeat {
-                if battle.expansion.lockedSpells[spell.id] != nil {
-                    SpellSealVisualOverlay()
-                } else if spell.category == .attack, battle.expansion.playerAttackWeakening != nil {
+                if sealedTurns == nil, spell.category == .attack, battle.expansion.playerAttackWeakening != nil {
                     RoundedRectangle(cornerRadius: 8).stroke(.purple.opacity(0.65), style: StrokeStyle(lineWidth: 2, dash: [6,4]))
                         .allowsHitTesting(false)
-                } else if spell.category == .attack, battle.expansion.chainAttackBonus > 0 {
+                } else if sealedTurns == nil, spell.category == .attack, battle.expansion.chainAttackBonus > 0 {
                     RoundedRectangle(cornerRadius: 8).stroke(.orange.opacity(0.65), lineWidth: 2)
                         .allowsHitTesting(false)
                 }
             }
         }
         .overlay(alignment: .topLeading) {
-            if gameSession.battleState?.expansion.lockedSpells[spell.id] != nil {
-                Text("봉인").font(.caption2.bold()).foregroundStyle(.white)
-                    .padding(5).background(.red.opacity(0.86)).padding(5)
+            if let sealedTurns {
+                SpellSealTurnBadge(turns: sealedTurns)
+                    .frame(width: max(44, width - 38))
+                    .padding(.leading, 6).padding(.top, 8)
             }
         }
         .clipped()
@@ -1024,6 +1033,7 @@ struct BattleView: View {
             "\(spell.name), \(spell.battleScrollTierTitle), "
                 + "\(spell.battleEffectRangeTitle), \(spell.requiredStrokes)획"
         )
+        .accessibilityValue(sealedTurns.map { "봉인 \($0)턴 남음, 시전 불가" } ?? "")
         .accessibilityHint("길게 누르면 주문 상세 정보를 표시합니다")
         .accessibilityAddTraits(.isButton)
         .accessibilityAction {

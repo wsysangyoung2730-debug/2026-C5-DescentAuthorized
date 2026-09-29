@@ -91,6 +91,13 @@ struct HomeView: View {
                 // In-memory preview only: use the real preparation/encounter transitions.
                 gameSession.send(.beginPreparedLowerBattle)
                 gameSession.send(.advanceExpansion)
+                if ProcessInfo.processInfo.arguments.contains("--preview-sealed-card"),
+                   let battle = gameSession.battleState, battle.expansion.needsSealChoice,
+                   let candidate = battle.expansion.pendingSealChoices.first {
+                    // Resolve an actual choice and enemy action in the isolated preview save.
+                    gameSession.send(.chooseCardSeal(candidate))
+                    gameSession.send(.finishTurn)
+                }
             } else if ExpansionPreviewSupport.floor != nil && ExpansionPreviewSupport.isBattle {
                 gameSession.send(.advanceExpansion)
             }
