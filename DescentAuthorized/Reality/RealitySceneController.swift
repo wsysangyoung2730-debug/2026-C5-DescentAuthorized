@@ -2746,6 +2746,8 @@ extension RealitySceneController {
         try? await Task.sleep(for: .milliseconds(350))
         let actor = registry.entity(for: .enemyActor)
         let before = joints(actor)
+        // Gate diagnostics represent the post-victory flow; the defeated actor is absent.
+        if preset == .descentInput { actor?.isEnabled = false }
         await capture("ready")
         var animated: [[Float]] = []
         var lifecycle: [String: Any] = [:]
