@@ -166,7 +166,8 @@ struct Floor8ExplorationView: View {
             inputPreference: appSettings.inputPreference,
             availableMana: 100,
             availableStrokes: 2,
-            presentation: GateSealGlyphPresentation()
+            presentation: GateSealGlyphPresentation(),
+                sceneController: sceneController, floorNumber: 8, destinationTitle: "관측 본실로"
         ) { submission in
             guard submission.evaluation.succeeded else { return }
             gameSession.send(.releaseObservationDoor)

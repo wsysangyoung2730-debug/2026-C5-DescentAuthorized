@@ -56,7 +56,8 @@ struct LowerFloorFlowView: View {
                 GateSealInteractionView(title: current.stage == .residualGate ? "잔류체 B 구역 · 중앙문 봉인 해제" : "관리자 구역 · 중간문 봉인 해제",
                     instruction: "핵심점을 한 번의 획으로 이어 중앙문을 해제하십시오.",
                     spell: SpellCatalog.middleDoor(floor: current.floorNumber, residualTransfer: current.stage == .residualGate), inputPreference: appSettings.inputPreference,
-                    availableMana: 100, availableStrokes: 2, presentation: GateSealGlyphPresentation()) { submission in
+                    availableMana: 100, availableStrokes: 2, presentation: GateSealGlyphPresentation(), sceneController: sceneController, floorNumber: current.floorNumber,
+                    destinationTitle: current.stage == .residualGate ? "잔류체 B 구역으로" : "관리자 구역으로") { submission in
                         guard submission.evaluation.succeeded else { return }
                         gameSession.send(.releaseExpansionSeal(submission.evaluation.grade))
                     }

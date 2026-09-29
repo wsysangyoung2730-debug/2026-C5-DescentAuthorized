@@ -170,7 +170,8 @@ struct ExpansionFlowView: View {
                 inputPreference: appSettings.inputPreference,
                 availableMana: 100,
                 availableStrokes: 2,
-                presentation: GateSealGlyphPresentation()
+                presentation: GateSealGlyphPresentation(),
+                sceneController: sceneController, floorNumber: current.floorNumber, destinationTitle: "관리자 구역으로"
             ) { submission in
                 guard submission.evaluation.succeeded else { return }
                 gameSession.send(.releaseExpansionSeal(submission.evaluation.grade))

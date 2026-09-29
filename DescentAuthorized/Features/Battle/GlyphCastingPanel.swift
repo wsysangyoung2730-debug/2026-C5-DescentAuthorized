@@ -36,7 +36,15 @@ struct GateSealInteractionView: View {
     let availableMana: Double
     let availableStrokes: Int
     let presentation: GateSealGlyphPresentation
+    var sceneController: RealitySceneController? = nil
+    var floorNumber: Int = 8
+    var destinationTitle: String = "다음 구역"
     let onCast: (GlyphCastSubmission) -> Void
+    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    @State private var isOpening = false
+    @State private var isLoading = false
+    @State private var pendingSubmission: GlyphCastSubmission?
 
     var body: some View {
         GeometryReader { proxy in
@@ -51,7 +59,7 @@ struct GateSealInteractionView: View {
             )
 
             ZStack {
-                Color.black.opacity(0.34)
+                Color.black.opacity(isOpening ? 0 : 0.12)
                     .ignoresSafeArea()
 
                 RadialGradient(
@@ -84,16 +92,45 @@ struct GateSealInteractionView: View {
                         erasureZones: [],
                         showsResourceHeader: false,
                         gateSealPresentation: presentation,
-                        onCast: onCast
+                        onCast: { submission in
+                            guard submission.evaluation.succeeded else { onCast(submission); return }
+                            guard !isOpening else { return }
+                            pendingSubmission = submission
+                            withAnimation(.easeOut(duration: 0.28)) { isOpening = true }
+                        }
                     )
                     .frame(width: contentWidth)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.horizontal, 28)
                 .padding(.vertical, 20)
+                .opacity(isOpening ? 0 : 1)
+                .allowsHitTesting(!isOpening)
+                if isOpening && !isLoading {
+                    VStack { Spacer(); Text(destinationTitle).font(.title3.weight(.semibold)).foregroundStyle(DAColor.gold)
+                        .padding(14).background(.black.opacity(0.7), in: Capsule()).padding(.bottom, 30) }
+                }
+                if isLoading {
+                    LoadingScreenView(context: floorNumber == 8 ? .floor8 : .expansion(floorNumber), progress: 0.1, tip: "봉인이 해제되었습니다. 다음 구역으로 이동합니다.")
+                }
             }
         }
         .accessibilityElement(children: .contain)
+        .task(id: isOpening) {
+            guard isOpening, let submission = pendingSubmission else { return }
+            do { try await Task.sleep(for: .milliseconds(300)) } catch { return }
+            let reduced = appSettings.reducedMotion || systemReduceMotion
+            if let sceneController {
+                sceneController.prepareMiddleDoorPreview(floorNumber: floorNumber)
+                sceneController.setDescentPresentation(.approved, reducedMotion: reduced)
+                guard await sceneController.waitForDescentDoorOpening(), !Task.isCancelled else { return }
+                sceneController.setDescentPresentation(.open, reducedMotion: reduced)
+            }
+            do { try await Task.sleep(for: .milliseconds(reduced ? 450 : 1400)) } catch { return }
+            isLoading = true
+            do { try await Task.sleep(for: .milliseconds(250)) } catch { return }
+            onCast(submission)
+        }
     }
 }
 
@@ -476,7 +513,7 @@ struct GlyphCastingPanel: View {
         ZStack {
             ZStack {
                 Color(red: 0.018, green: 0.02, blue: 0.026)
-                    .opacity(0.72)
+                    .opacity(0.28)
 
                 gateSealMechanism
                     .padding(8)
