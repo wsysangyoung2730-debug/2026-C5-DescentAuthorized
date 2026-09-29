@@ -205,6 +205,9 @@ struct BattleView: View {
     @State private var enemyAttackIsStrong = false
     @State private var feedbackText: String?
     @State private var feedbackColor = Color.white
+    @State private var feedbackIsEnemy = false
+    @State private var enemyActionText: String?
+    @State private var enemyActionTask: Task<Void, Never>?
     @State private var showsFirstTurnBriefing = false
     @State private var didExperienceAbsoluteBarrier = false
     @State private var enemyPulseTask: Task<Void, Never>?
@@ -284,8 +287,23 @@ struct BattleView: View {
 
             if let feedbackText {
                 castFeedback(text: feedbackText, color: feedbackColor)
-                    .transition(.scale.combined(with: .opacity))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: feedbackIsEnemy ? .topTrailing : .topLeading)
+                    .padding(.horizontal, 18).padding(.top, 174)
+                    .transition(.opacity)
                     .allowsHitTesting(false)
+            }
+
+            if let enemyActionText {
+                HStack(spacing: 7) {
+                    CombatStatusArtwork.image(enemyAttackIsStrong ? "heavy-ray" : "direct-attack")
+                        .resizable().scaledToFit().frame(width: 28, height: 28)
+                    Text(enemyActionText).font(.callout.weight(.semibold)).foregroundStyle(DAColor.gold)
+                }
+                .padding(.horizontal, 18).padding(.vertical, 12)
+                .background { CombatStatusArtwork.image("enemy-action-plate").resizable() }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .padding(.trailing, 18).padding(.top, 236)
+                .allowsHitTesting(false)
             }
 
             if let detailedSpell {
@@ -379,6 +397,8 @@ struct BattleView: View {
             enemyPulseTask?.cancel()
             playerPulseTask?.cancel()
             feedbackTask?.cancel()
+            enemyActionTask?.cancel()
+            enemyActionText = nil
             detailPressTask?.cancel()
             defeatPresentationTask?.cancel()
             defeatPresentationTask = nil
@@ -1347,17 +1367,24 @@ struct BattleView: View {
     }
 
     private func castFeedback(text: String, color: Color) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: "seal.fill")
-                .font(.title)
-            Text(text)
-                .font(.title3.weight(.bold))
+        Text(text)
+            .font(.system(size: text.hasPrefix("피격") ? 25 : 16, weight: .bold, design: .serif))
+            .foregroundStyle(color)
+            .padding(.horizontal, 24).padding(.vertical, 13)
+            .background {
+                CombatStatusArtwork.image(text.hasPrefix("피격") ? "player-damage-glow" : "status-effect-chip").resizable()
+            }
+            .accessibilityLabel(text)
+    }
+
+    private func showEnemyAction(_ text: String) {
+        enemyActionTask?.cancel()
+        enemyActionText = text
+        enemyActionTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.8))
+            guard !Task.isCancelled else { return }
+            animate(.easeOut(duration: 0.2)) { enemyActionText = nil }
         }
-        .foregroundStyle(color)
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
-        .background(.black.opacity(0.84))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 
     private func startEncounterIfNeeded() {
@@ -1430,6 +1457,7 @@ struct BattleView: View {
         var absoluteGuard = false
         var receivedDamage = 0
         var banner: (String, Color)?
+        var bannerIsEnemy = false
 
         for event in events {
             guard case let .combat(battleEvent) = event else { continue }
@@ -1452,6 +1480,7 @@ struct BattleView: View {
                     banner = ("절대 방벽으로 무효화", .yellow)
                 } else {
                     banner = ("관리자의 절대 방벽", .yellow)
+                    bannerIsEnemy = true
                     didExperienceAbsoluteBarrier = true
                 }
             case let .normalBarrierChanged(target, amount):
@@ -1461,6 +1490,7 @@ struct BattleView: View {
                     banner = (amount > 0 ? "방벽 방어" : "방벽 파괴", .cyan)
                 } else if case .enemy = target, amount > 0 {
                     banner = (isExpansionBattle ? "교정 방벽 전개" : "문서 방벽 전개", .cyan)
+                    bannerIsEnemy = true
                 }
             case .erasureZoneAdded:
                 banner = ("말소 구역 발생", .red)
@@ -1468,7 +1498,7 @@ struct BattleView: View {
                 strongAttack = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
                     .contains(.enemyAttack(strong: true))
                 enemyAttackIsStrong = strongAttack
-                banner = (action.name, strongAttack ? .orange : .purple)
+                showEnemyAction(action.name)
             default:
                 break
             }
@@ -1478,6 +1508,7 @@ struct BattleView: View {
         if playerWasHit {
             pulsePlayer(strong: strongAttack)
             banner = ("피격 −\(receivedDamage)", .red)
+            bannerIsEnemy = false
         } else if absoluteGuard || playerBarrierWasHit {
             pulsePlayerGuard(absolute: absoluteGuard)
         }
@@ -1488,7 +1519,7 @@ struct BattleView: View {
                 strong: strongAttack
             )
         }
-        if let banner { showFeedback(banner.0, color: banner.1) }
+        if let banner { feedbackIsEnemy = bannerIsEnemy; showFeedback(banner.0, color: banner.1) }
     }
 
     private func pulseEnemy() {
