@@ -16,10 +16,10 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     let maximumFieldOfViewScale: Float
 
     static let standard = BattleCameraInteractionConfiguration(
-        maximumYaw: .pi * 12 / 180,
+        maximumYaw: .pi * 28 / 180,
         maximumUpwardPitch: .pi * 6 / 180,
         maximumDownwardPitch: .pi * 3 / 180,
-        yawRadiansPerViewport: .pi * 36 / 180,
+        yawRadiansPerViewport: .pi * 48 / 180,
         pitchRadiansPerViewport: .pi * 18 / 180,
         minimumFieldOfViewScale: 0.95,
         maximumFieldOfViewScale: 1.10
@@ -953,7 +953,7 @@ final class RealitySceneController: ObservableObject {
         let pitchRotation = simd_quatf(angle: battleCameraPitch, axis: pitchAxis)
         let lookRotation = pitchRotation * yawRotation
 
-        // Blender가 저장한 카메라 위치는 유지하고 시선 축만 회전한다.
+        // Keep the resolved battle viewpoint fixed and rotate only the viewing axes.
         var adjustedMatrix = baseMatrix
         for columnIndex in 0..<3 {
             let column = baseMatrix[columnIndex]
