@@ -5,14 +5,16 @@ import UIKit
 struct ExpansionCombatStatusView: View {
     let battle: BattleState
     @State private var showsThreats = false
+    @State private var expandedSide: CombatStatusItem.Side?
 
     var body: some View {
         HStack(alignment: .top, spacing: 24) {
             statusLane(.player, title: "내 상태", symbol: "person.fill", color: .cyan)
+            Spacer(minLength: 32)
             statusLane(.enemy, title: "적 상태 · 위협", symbol: "exclamationmark.shield.fill", color: .orange)
         }
         .padding(.horizontal, 16)
-        .frame(height: 76, alignment: .top)
+        .frame(maxWidth: .infinity, alignment: .top)
         .sheet(isPresented: $showsThreats) {
             NavigationStack {
                 ScrollView {
@@ -55,35 +57,51 @@ struct ExpansionCombatStatusView: View {
                     .font(.caption2.weight(.bold)).foregroundStyle(color)
                     .padding(.horizontal, 8)
                     .background(.black.opacity(0.65), in: Capsule())
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        if showsThreatButton {
-                            Button { showsThreats = true } label: {
-                                chip("위협 순서 확인", detail: "직접 → 예약 → 모사·반격", color: color)
-                            }.buttonStyle(.plain)
-                        }
-                        ForEach(items) { item in
-                            chip(item.title, detail: item.detail, color: color)
-                        }
-                    }
+                ForEach(Array(items.prefix(2))) { item in
+                    statusRow(item, side: side, color: color)
                 }
-                .defaultScrollAnchor(side == .player ? .leading : .trailing)
+                if items.count > 2 || showsThreatButton {
+                    Button { expandedSide = side } label: {
+                        Text(items.count > 2 ? "+\(items.count - 2) · 전체 상태" : "위협 상세")
+                            .font(.caption2.weight(.semibold)).foregroundStyle(color)
+                            .padding(.horizontal, 10).padding(.vertical, 4)
+                            .background(.black.opacity(0.7), in: Capsule())
+                    }.buttonStyle(.plain)
+                }
             }
         }
-        .frame(maxWidth: .infinity, alignment: side == .player ? .topLeading : .topTrailing)
+        .frame(width: 244, alignment: side == .player ? .topLeading : .topTrailing)
+        .popover(isPresented: Binding(get: { expandedSide == side }, set: { if !$0 { expandedSide = nil } })) {
+            ScrollView {
+                VStack(spacing: 10) {
+                    Text(title).font(.headline).foregroundStyle(color)
+                    ForEach(items) { item in statusRow(item, side: side, color: color) }
+                    if showsThreatButton { Button("피해 처리 순서") { expandedSide = nil; showsThreats = true } }
+                }.padding(18)
+            }.frame(width: 320, height: 360).background(DAColor.background)
+        }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(title)
     }
 
-    private func chip(_ title: String, detail: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(title).font(.caption.weight(.semibold)).foregroundStyle(color)
-            Text(detail).font(.caption2).foregroundStyle(DAColor.body)
+    private func statusRow(_ item: CombatStatusItem, side: CombatStatusItem.Side, color: Color) -> some View {
+        HStack(spacing: 8) {
+            CombatStatusArtwork.image(item.artworkID)
+                .resizable().scaledToFit().frame(width: 32, height: 32)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.title).font(.caption.weight(.semibold)).foregroundStyle(item.isUrgent ? .orange : color)
+                Text(item.detail).font(.system(size: 10)).foregroundStyle(DAColor.body).fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+            if item.isUrgent { Text("임박").font(.system(size: 9, weight: .bold)).foregroundStyle(.orange) }
         }
-        .padding(.horizontal, 10).padding(.vertical, 6)
-        .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
-        .background(.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 6))
-        .overlay(RoundedRectangle(cornerRadius: 6).stroke(color.opacity(0.65)))
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
+        .background {
+            CombatStatusArtwork.image(item.isUrgent ? "urgent-threat-row" : (side == .player ? "player-status-row" : "enemy-status-row"))
+                .resizable()
+        }
         .accessibilityElement(children: .combine)
     }
 
@@ -210,4 +228,61 @@ private enum SealedCardArtwork: String, CaseIterable {
         guard let cropped = original.cgImage?.cropping(to: artwork.crop) else { return (artwork, original) }
         return (artwork, UIImage(cgImage: cropped, scale: 3, orientation: .up))
     })
+}
+
+/// Crop transparent export margins in memory; original artwork remains intact.
+@MainActor
+enum CombatStatusArtwork {
+    private static let bounds: [String: CGRect] = [
+        "direct-attack": CGRect(x: 73, y: 18, width: 1137, height: 1196),
+        "heavy-ray": CGRect(x: 49, y: 21, width: 1173, height: 1209),
+        "multi-hit": CGRect(x: 21, y: 17, width: 1205, height: 1205),
+        "focus": CGRect(x: 39, y: 47, width: 1195, height: 1207),
+        "normal-barrier": CGRect(x: 41, y: 21, width: 1157, height: 1169),
+        "absolute-barrier": CGRect(x: 69, y: 19, width: 1145, height: 1235),
+        "correction-barrier": CGRect(x: 0, y: 21, width: 1232, height: 1225),
+        "barrier-break": CGRect(x: 63, y: 21, width: 1161, height: 1233),
+        "spell-seal": CGRect(x: 0, y: 7, width: 1210, height: 1247),
+        "amplification": CGRect(x: 41, y: 21, width: 1169, height: 1217),
+        "scheduled-damage": CGRect(x: 19, y: 9, width: 1191, height: 1211),
+        "execution-delay": CGRect(x: 17, y: 19, width: 1223, height: 1211),
+        "spell-record": CGRect(x: 89, y: 21, width: 1121, height: 1193),
+        "copy-reaction": CGRect(x: 97, y: 53, width: 1101, height: 1161),
+        "counterattack": CGRect(x: 69, y: 47, width: 1141, height: 1159),
+        "attack-reduction": CGRect(x: 97, y: 21, width: 1113, height: 1201),
+        "preservation": CGRect(x: 0, y: 21, width: 1214, height: 1233),
+        "mimic-prohibition": CGRect(x: 0, y: 19, width: 1208, height: 1195),
+        "phase-change": CGRect(x: 33, y: 21, width: 1165, height: 1205),
+        "wait-opening": CGRect(x: 89, y: 9, width: 1045, height: 1203),
+        "erasure-zone": CGRect(x: 0, y: 21, width: 1228, height: 1167),
+        "purification": CGRect(x: 21, y: 17, width: 1203, height: 1204),
+        "execution-nullification": CGRect(x: 33, y: 17, width: 1167, height: 1213),
+        "healing": CGRect(x: 0, y: 21, width: 1210, height: 1199),
+        "limit-barrier": CGRect(x: 0, y: 23, width: 1234, height: 1231),
+        "direct-hit-block": CGRect(x: 97, y: 39, width: 1127, height: 1215),
+        "isolation-barrier": CGRect(x: 33, y: 21, width: 1173, height: 1205),
+        "handoff-barrier": CGRect(x: 0, y: 21, width: 1210, height: 1225),
+        "reaction-protection": CGRect(x: 0, y: 9, width: 1240, height: 1245),
+        "anchor-guard": CGRect(x: 81, y: 30, width: 1129, height: 1182),
+        "causal-cushion": CGRect(x: 97, y: 21, width: 1103, height: 1193),
+        "lingering-barrier": CGRect(x: 89, y: 21, width: 1119, height: 1193),
+        "chain-empowerment": CGRect(x: 43, y: 19, width: 1147, height: 1235),
+        "player-status-row": CGRect(x: 0, y: 146, width: 1744, height: 685),
+        "enemy-status-row": CGRect(x: 64, y: 52, width: 2045, height: 608),
+        "urgent-threat-row": CGRect(x: 25, y: 37, width: 2139, height: 649),
+        "enemy-action-plate": CGRect(x: 27, y: 35, width: 2119, height: 631),
+        "status-effect-chip": CGRect(x: 49, y: 102, width: 1942, height: 620),
+        "player-damage-glow": CGRect(x: 33, y: 111, width: 1556, height: 699),
+    ]
+    private static var cache: [String: UIImage] = [:]
+    static func image(_ id: String) -> Image {
+        if let cached = cache[id] { return Image(uiImage: cached) }
+        guard let original = UIImage(named: "CombatStatus_" + id) else { return Image(systemName: "sparkle") }
+        let cropped: UIImage
+        if let rect = bounds[id], let cg = original.cgImage?.cropping(to: rect) {
+            cropped = UIImage(cgImage: cg, scale: original.scale, orientation: original.imageOrientation)
+        } else { cropped = original }
+        cache[id] = cropped
+        return Image(uiImage: cropped)
+    }
 }
