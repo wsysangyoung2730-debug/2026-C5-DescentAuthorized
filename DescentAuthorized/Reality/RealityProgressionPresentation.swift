@@ -455,8 +455,10 @@ final class RealityProgressionVFXRenderer {
             for blade in irisBlades {
                 var target = blade.closed
                 target.rotation *= simd_quatf(angle: -opening * 1.1, axis: [0, 1, 0])
-                target.translation.x += cos(blade.angle) * 0.12 * opening
-                target.translation.z += sin(blade.angle) * 0.12 * opening
+                // Retract into the barrel instead of ejecting oversized leaf fragments beyond the rim.
+                target.scale *= 1 - 0.995 * opening
+                target.translation.x += cos(blade.angle) * 0.015 * opening
+                target.translation.z += sin(blade.angle) * 0.015 * opening
                 blade.entity.transform = target
             }
         } else {
