@@ -151,6 +151,10 @@ final class RealityProgressionVFXRenderer {
             while !Task.isCancelled {
                 do { try await Task.sleep(for: .milliseconds(50)) } catch { return }
                 guard let self, self.doorState == .open else { return }
+                if self.doorReducedMotion {
+                    self.doorPortal?.components.set(OpacityComponent(opacity: 1))
+                    return
+                }
                 time += 0.05
                 self.doorPortal?.components.set(OpacityComponent(opacity: Float(0.88 + 0.12 * sin(time * 1.7))))
             }
