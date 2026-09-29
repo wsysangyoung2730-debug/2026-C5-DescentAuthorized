@@ -81,6 +81,10 @@ struct SpellGlyphPreview: View {
     }
 
     private var assetName: String? {
+        // Acquisition art is separate from the battle ink and tracing geometry.
+        if artwork == .scroll {
+            return "AcquisitionGlyph_\(spell.id.rawValue)"
+        }
         guard artwork != .path, spell.category != .attack else { return nil }
         let suffix: String
         switch spell.id {
