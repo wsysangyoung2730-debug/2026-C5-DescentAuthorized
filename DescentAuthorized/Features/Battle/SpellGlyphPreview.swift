@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Attack glyphs use their casting paths so every attack shares the same red ink.
 /// Other categories retain their finished artwork where available.
@@ -83,7 +84,8 @@ struct SpellGlyphPreview: View {
     private var assetName: String? {
         // Acquisition art is separate from the battle ink and tracing geometry.
         if artwork == .scroll {
-            return "AcquisitionGlyph_\(spell.id.rawValue)"
+            let name = "AcquisitionGlyph_\(spell.id.rawValue)"
+            if UIImage(named: name) != nil { return name }
         }
         guard artwork != .path, spell.category != .attack else { return nil }
         let suffix: String

@@ -1,0 +1,1570 @@
+[
+  {
+    "id": "afterglowErasure",
+    "name": "잔광 말소",
+    "category": "attack",
+    "paths": [
+      [
+        [
+          20,
+          55
+        ],
+        [
+          37,
+          72
+        ],
+        [
+          67,
+          28
+        ],
+        [
+          78,
+          43
+        ],
+        [
+          66,
+          51
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-3c311a70-af3d-499c-bb75-da4161224fcd.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color crimson red, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[20,55],[37,72],[67,28],[78,43],[66,51]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 잔광 말소, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      9,
+      19,
+      1232,
+      1230
+    ]
+  },
+  {
+    "id": "riftSeverance",
+    "name": "균열 절단",
+    "category": "attack",
+    "paths": [
+      [
+        [
+          18,
+          68
+        ],
+        [
+          39,
+          25
+        ],
+        [
+          34,
+          56
+        ],
+        [
+          68,
+          35
+        ],
+        [
+          55,
+          75
+        ],
+        [
+          82,
+          58
+        ],
+        [
+          72,
+          48
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-235a97c6-0fb2-492e-92f7-71459a366510.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color crimson red, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[18,68],[39,25],[34,56],[68,35],[55,75],[82,58],[72,48]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 균열 절단, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      19,
+      1234,
+      1254
+    ]
+  },
+  {
+    "id": "barrierPiercing",
+    "name": "방벽 관통",
+    "category": "attack",
+    "paths": [
+      [
+        [
+          24,
+          72
+        ],
+        [
+          30,
+          63
+        ],
+        [
+          37,
+          54
+        ],
+        [
+          44,
+          45
+        ],
+        [
+          50,
+          34
+        ],
+        [
+          55,
+          23
+        ],
+        [
+          59,
+          14
+        ],
+        [
+          57,
+          8
+        ],
+        [
+          51,
+          6
+        ],
+        [
+          44,
+          10
+        ],
+        [
+          40,
+          18
+        ],
+        [
+          37,
+          30
+        ],
+        [
+          36,
+          43
+        ],
+        [
+          37,
+          54
+        ],
+        [
+          40,
+          63
+        ],
+        [
+          43,
+          69
+        ],
+        [
+          49,
+          74
+        ],
+        [
+          56,
+          78
+        ],
+        [
+          62,
+          79
+        ],
+        [
+          69,
+          77
+        ],
+        [
+          76,
+          72
+        ]
+      ],
+      [
+        [
+          76,
+          8
+        ],
+        [
+          72,
+          20
+        ],
+        [
+          70,
+          32
+        ],
+        [
+          67,
+          45
+        ],
+        [
+          65,
+          58
+        ],
+        [
+          62,
+          70
+        ],
+        [
+          60,
+          79
+        ],
+        [
+          56,
+          87
+        ],
+        [
+          51,
+          92
+        ],
+        [
+          46,
+          94
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-a4413e7d-0c75-42ed-9bef-8d010fd6e3ce.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color crimson red, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[24,72],[30,63],[37,54],[44,45],[50,34],[55,23],[59,14],[57,8],[51,6],[44,10],[40,18],[37,30],[36,43],[37,54],[40,63],[43,69],[49,74],[56,78],[62,79],[69,77],[76,72]],[[76,8],[72,20],[70,32],[67,45],[65,58],[62,70],[60,79],[56,87],[51,92],[46,94]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 방벽 관통, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      9,
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "basicBarrier",
+    "name": "초급 방벽",
+    "category": "defense",
+    "paths": [
+      [
+        [
+          22,
+          68
+        ],
+        [
+          25,
+          42
+        ],
+        [
+          43,
+          24
+        ],
+        [
+          62,
+          28
+        ],
+        [
+          78,
+          50
+        ],
+        [
+          69,
+          72
+        ],
+        [
+          50,
+          78
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-431d34f4-8df5-468e-91fd-0b5b8f07fcfa.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color ice cyan blue, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[22,68],[25,42],[43,24],[62,28],[78,50],[69,72],[50,78]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 초급 방벽, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      17,
+      1243,
+      1254
+    ]
+  },
+  {
+    "id": "sealRelease",
+    "name": "봉인 해제",
+    "category": "dispel",
+    "paths": [
+      [
+        [
+          25,
+          72
+        ],
+        [
+          42,
+          57
+        ],
+        [
+          51,
+          48
+        ],
+        [
+          70,
+          27
+        ],
+        [
+          62,
+          55
+        ],
+        [
+          81,
+          68
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-fcd4371e-3363-4050-9fe9-97243ac338c5.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color warm golden yellow, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[25,72],[42,57],[51,48],[70,27],[62,55],[81,68]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 봉인 해제, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      19,
+      1236,
+      1254
+    ]
+  },
+  {
+    "id": "chainInscription",
+    "name": "연쇄 각인",
+    "category": "attack",
+    "paths": [
+      [
+        [
+          16,
+          68
+        ],
+        [
+          31,
+          37
+        ],
+        [
+          48,
+          62
+        ],
+        [
+          64,
+          30
+        ],
+        [
+          83,
+          49
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-6adf8f8c-b6cc-4e8f-8e83-975b1c7c23a0.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color crimson red, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[16,68],[31,37],[48,62],[64,30],[83,49]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 연쇄 각인, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      43,
+      21,
+      1220,
+      1254
+    ]
+  },
+  {
+    "id": "condensedBarrier",
+    "name": "응축 방벽",
+    "category": "defense",
+    "paths": [
+      [
+        [
+          18,
+          30
+        ],
+        [
+          50,
+          18
+        ],
+        [
+          82,
+          30
+        ],
+        [
+          75,
+          65
+        ],
+        [
+          50,
+          85
+        ],
+        [
+          25,
+          65
+        ],
+        [
+          30,
+          40
+        ],
+        [
+          50,
+          32
+        ],
+        [
+          70,
+          40
+        ],
+        [
+          64,
+          61
+        ],
+        [
+          50,
+          71
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-94564fa7-efbd-4361-b7e1-a1460ad8d47a.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color ice cyan blue, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[18,30],[50,18],[82,30],[75,65],[50,85],[25,65],[30,40],[50,32],[70,40],[64,61],[50,71]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 응축 방벽, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      17,
+      1244,
+      1254
+    ]
+  },
+  {
+    "id": "purificationGlyph",
+    "name": "정화 각인",
+    "category": "dispel",
+    "paths": [
+      [
+        [
+          23,
+          72
+        ],
+        [
+          49,
+          22
+        ],
+        [
+          77,
+          72
+        ],
+        [
+          50,
+          56
+        ],
+        [
+          34,
+          77
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-9ea3a4fd-14f9-496d-9799-fd19f5914e31.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color warm golden yellow, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[23,72],[49,22],[77,72],[50,56],[34,77]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 정화 각인, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      18,
+      1246,
+      1254
+    ]
+  },
+  {
+    "id": "lingeringBarrier",
+    "name": "잔류 방벽",
+    "category": "defense",
+    "paths": [
+      [
+        [
+          20,
+          70
+        ],
+        [
+          22,
+          39
+        ],
+        [
+          47,
+          20
+        ],
+        [
+          78,
+          39
+        ],
+        [
+          76,
+          70
+        ],
+        [
+          49,
+          83
+        ],
+        [
+          37,
+          62
+        ],
+        [
+          51,
+          44
+        ],
+        [
+          65,
+          58
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-e51974f4-8f11-47ee-a8dc-e72ee03e755e.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color ice cyan blue, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[20,70],[22,39],[47,20],[78,39],[76,70],[49,83],[37,62],[51,44],[65,58]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 잔류 방벽, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      19,
+      1244,
+      1254
+    ]
+  },
+  {
+    "id": "focusedRupture",
+    "name": "집속 파열",
+    "category": "attack",
+    "paths": [
+      [
+        [
+          50,
+          14
+        ],
+        [
+          81,
+          50
+        ],
+        [
+          50,
+          86
+        ],
+        [
+          19,
+          50
+        ],
+        [
+          50,
+          14
+        ]
+      ],
+      [
+        [
+          12,
+          50
+        ],
+        [
+          50,
+          50
+        ],
+        [
+          88,
+          50
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-1b24e496-0771-4ebe-95f0-f839093d1e3f.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color crimson red, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[50,14],[81,50],[50,86],[19,50],[50,14]],[[12,50],[50,50],[88,50]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 집속 파열, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      17,
+      5,
+      1222,
+      1254
+    ]
+  },
+  {
+    "id": "axisSeverance",
+    "name": "축선 절단",
+    "category": "attack",
+    "paths": [
+      [
+        [
+          19,
+          74
+        ],
+        [
+          42,
+          50
+        ],
+        [
+          29,
+          25
+        ],
+        [
+          68,
+          25
+        ],
+        [
+          55,
+          50
+        ],
+        [
+          82,
+          74
+        ],
+        [
+          63,
+          80
+        ],
+        [
+          45,
+          62
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-af8ae3da-0e86-4dd2-8819-fcff4514e63a.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color crimson red, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[19,74],[42,50],[29,25],[68,25],[55,50],[82,74],[63,80],[45,62]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 축선 절단, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      9,
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "anchorGuard",
+    "name": "기준점 수호",
+    "category": "defense",
+    "paths": [
+      [
+        [
+          50,
+          16
+        ],
+        [
+          50,
+          69
+        ],
+        [
+          24,
+          49
+        ],
+        [
+          21,
+          71
+        ],
+        [
+          50,
+          85
+        ],
+        [
+          79,
+          71
+        ],
+        [
+          76,
+          49
+        ],
+        [
+          61,
+          61
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-87ae04ac-dad6-4f2f-95dd-21af9bcf3d57.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color ice cyan blue, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[50,16],[50,69],[24,49],[21,71],[50,85],[79,71],[76,49],[61,61]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 기준점 수호, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      19,
+      1244,
+      1254
+    ]
+  },
+  {
+    "id": "consequenceErasure",
+    "name": "결과 말소",
+    "category": "dispel",
+    "paths": [
+      [
+        [
+          18,
+          24
+        ],
+        [
+          72,
+          24
+        ],
+        [
+          82,
+          40
+        ],
+        [
+          70,
+          56
+        ],
+        [
+          36,
+          56
+        ],
+        [
+          20,
+          76
+        ],
+        [
+          76,
+          76
+        ]
+      ],
+      [
+        [
+          77,
+          16
+        ],
+        [
+          58,
+          45
+        ],
+        [
+          42,
+          68
+        ],
+        [
+          26,
+          88
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-069205d4-bf11-4c6d-83fa-0a6c77c47c1a.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color warm golden yellow, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[18,24],[72,24],[82,40],[70,56],[36,56],[20,76],[76,76]],[[77,16],[58,45],[42,68],[26,88]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 결과 말소, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      8,
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "outputReduction",
+    "name": "출력 저하",
+    "category": "debuff",
+    "paths": [
+      [
+        [
+          25,
+          24
+        ],
+        [
+          50,
+          52
+        ],
+        [
+          75,
+          24
+        ],
+        [
+          75,
+          54
+        ],
+        [
+          50,
+          80
+        ],
+        [
+          25,
+          54
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-34c68e82-1461-4524-9d2d-c88b6d1c262d.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color violet purple, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[25,24],[50,52],[75,24],[75,54],[50,80],[25,54]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 출력 저하, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      19,
+      1236,
+      1254
+    ]
+  },
+  {
+    "id": "executionDelay",
+    "name": "집행 지연",
+    "category": "debuff",
+    "paths": [
+      [
+        [
+          77,
+          27
+        ],
+        [
+          31,
+          27
+        ],
+        [
+          20,
+          50
+        ],
+        [
+          35,
+          74
+        ],
+        [
+          77,
+          74
+        ],
+        [
+          61,
+          56
+        ],
+        [
+          45,
+          72
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-8ba2f82d-100c-45b1-9fe3-b38719a8e61f.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color violet purple, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[77,27],[31,27],[20,50],[35,74],[77,74],[61,56],[45,72]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 집행 지연, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      9,
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "advanceVerdict",
+    "name": "선행 판결",
+    "category": "attack",
+    "paths": [
+      [
+        [
+          18,
+          76
+        ],
+        [
+          52,
+          21
+        ],
+        [
+          85,
+          76
+        ],
+        [
+          61,
+          58
+        ],
+        [
+          39,
+          58
+        ],
+        [
+          30,
+          40
+        ],
+        [
+          72,
+          40
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-3034ef89-88ca-4c11-a204-d1842b88606a.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color crimson red, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[18,76],[52,21],[85,76],[61,58],[39,58],[30,40],[72,40]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 선행 판결, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      23,
+      19,
+      1236,
+      1254
+    ]
+  },
+  {
+    "id": "causalCushion",
+    "name": "인과 완충",
+    "category": "defense",
+    "paths": [
+      [
+        [
+          19,
+          29
+        ],
+        [
+          21,
+          62
+        ],
+        [
+          41,
+          81
+        ],
+        [
+          66,
+          76
+        ],
+        [
+          81,
+          54
+        ],
+        [
+          74,
+          26
+        ],
+        [
+          60,
+          43
+        ],
+        [
+          61,
+          63
+        ],
+        [
+          43,
+          61
+        ],
+        [
+          37,
+          42
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-b9ebcd01-e83b-41f6-a596-71b8c57c7b74.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color ice cyan blue, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[19,29],[21,62],[41,81],[66,76],[81,54],[74,26],[60,43],[61,63],[43,61],[37,42]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 인과 완충, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      18,
+      1244,
+      1254
+    ]
+  },
+  {
+    "id": "memorySeverance",
+    "name": "기억 절단",
+    "category": "attack",
+    "paths": [
+      [
+        [
+          20,
+          22
+        ],
+        [
+          41,
+          41
+        ],
+        [
+          29,
+          61
+        ],
+        [
+          48,
+          79
+        ],
+        [
+          67,
+          58
+        ],
+        [
+          55,
+          38
+        ],
+        [
+          79,
+          19
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-7e164dbf-2ec3-4050-85d4-56a1f54978dd.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color crimson red, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[20,22],[41,41],[29,61],[48,79],[67,58],[55,38],[79,19]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 기억 절단, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      19,
+      23,
+      1238,
+      1254
+    ]
+  },
+  {
+    "id": "memorySuture",
+    "name": "기억 봉합",
+    "category": "defense",
+    "paths": [
+      [
+        [
+          21,
+          29
+        ],
+        [
+          76,
+          45
+        ],
+        [
+          25,
+          60
+        ],
+        [
+          76,
+          78
+        ],
+        [
+          59,
+          83
+        ],
+        [
+          44,
+          67
+        ],
+        [
+          60,
+          51
+        ],
+        [
+          45,
+          34
+        ],
+        [
+          58,
+          18
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-e2f79bba-8145-4e94-a0ac-631bf28d2fd0.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color ice cyan blue, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[21,29],[76,45],[25,60],[76,78],[59,83],[44,67],[60,51],[45,34],[58,18]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 기억 봉합, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      17,
+      1244,
+      1254
+    ]
+  },
+  {
+    "id": "mimicProhibition",
+    "name": "모사 금지",
+    "category": "debuff",
+    "paths": [
+      [
+        [
+          20,
+          75
+        ],
+        [
+          22,
+          31
+        ],
+        [
+          43,
+          21
+        ],
+        [
+          49,
+          45
+        ],
+        [
+          57,
+          21
+        ],
+        [
+          78,
+          31
+        ],
+        [
+          80,
+          75
+        ],
+        [
+          51,
+          58
+        ],
+        [
+          33,
+          81
+        ],
+        [
+          71,
+          18
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-d558b69f-79f7-4fb5-a873-6c860230b1bb.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color violet purple, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[20,75],[22,31],[43,21],[49,45],[57,21],[78,31],[80,75],[51,58],[33,81],[71,18]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 모사 금지, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      7,
+      1251,
+      1254
+    ]
+  },
+  {
+    "id": "bloodSealPiercing",
+    "name": "혈인 관통",
+    "category": "attack",
+    "paths": [
+      [
+        [
+          25,
+          77
+        ],
+        [
+          50,
+          23
+        ],
+        [
+          72,
+          44
+        ],
+        [
+          42,
+          55
+        ],
+        [
+          76,
+          77
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-3be82eea-32f7-42a2-bcab-45f6e4d8d73f.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color crimson red, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[25,77],[50,23],[72,44],[42,55],[76,77]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 혈인 관통, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      19,
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "limitBarrier",
+    "name": "한계 방벽",
+    "category": "defense",
+    "paths": [
+      [
+        [
+          25,
+          78
+        ],
+        [
+          25,
+          28
+        ],
+        [
+          50,
+          16
+        ],
+        [
+          75,
+          28
+        ],
+        [
+          75,
+          78
+        ],
+        [
+          50,
+          62
+        ],
+        [
+          25,
+          78
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-3fe12d65-e77e-4763-a99d-78244efa5905.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color ice cyan blue, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[25,78],[25,28],[50,16],[75,28],[75,78],[50,62],[25,78]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 한계 방벽, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      19,
+      1240,
+      1254
+    ]
+  },
+  {
+    "id": "executionNullification",
+    "name": "집행 무효",
+    "category": "dispel",
+    "paths": [
+      [
+        [
+          24,
+          30
+        ],
+        [
+          76,
+          30
+        ],
+        [
+          76,
+          70
+        ],
+        [
+          24,
+          70
+        ],
+        [
+          24,
+          30
+        ]
+      ],
+      [
+        [
+          34,
+          80
+        ],
+        [
+          66,
+          20
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-0a2f5934-7ab0-43cd-943f-d7215a3c8ee2.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color warm golden yellow, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[24,30],[76,30],[76,70],[24,70],[24,30]],[[34,80],[66,20]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 집행 무효, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      0,
+      1240,
+      1254
+    ]
+  },
+  {
+    "id": "directHitProhibition",
+    "name": "직격 금지",
+    "category": "debuff",
+    "paths": [
+      [
+        [
+          24,
+          70
+        ],
+        [
+          24,
+          28
+        ],
+        [
+          76,
+          28
+        ],
+        [
+          76,
+          70
+        ],
+        [
+          50,
+          50
+        ],
+        [
+          24,
+          70
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-c8ed4942-46e8-4e9b-b45c-14e69b00e3fd.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color violet purple, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[24,70],[24,28],[76,28],[76,70],[50,50],[24,70]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 직격 금지, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      11,
+      1244,
+      1254
+    ]
+  },
+  {
+    "id": "responsibilitySeverance",
+    "name": "책임 절단",
+    "category": "attack",
+    "paths": [
+      [
+        [
+          20,
+          66
+        ],
+        [
+          35,
+          30
+        ],
+        [
+          50,
+          50
+        ],
+        [
+          65,
+          30
+        ],
+        [
+          80,
+          66
+        ]
+      ],
+      [
+        [
+          50,
+          18
+        ],
+        [
+          50,
+          82
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-32e84732-2cf0-41ec-9a42-f45a86788214.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color crimson red, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[20,66],[35,30],[50,50],[65,30],[80,66]],[[50,18],[50,82]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 책임 절단, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      9,
+      1246,
+      1254
+    ]
+  },
+  {
+    "id": "isolationBarrier",
+    "name": "격리 방벽",
+    "category": "defense",
+    "paths": [
+      [
+        [
+          35,
+          78
+        ],
+        [
+          22,
+          65
+        ],
+        [
+          22,
+          25
+        ],
+        [
+          78,
+          25
+        ],
+        [
+          78,
+          65
+        ],
+        [
+          65,
+          78
+        ]
+      ],
+      [
+        [
+          35,
+          78
+        ],
+        [
+          35,
+          48
+        ],
+        [
+          65,
+          48
+        ],
+        [
+          65,
+          78
+        ],
+        [
+          35,
+          78
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-5365ab86-48b3-4097-8f79-7f7bd83ac33d.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color ice cyan blue, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[35,78],[22,65],[22,25],[78,25],[78,65],[65,78]],[[35,78],[35,48],[65,48],[65,78],[35,78]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 격리 방벽, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      9,
+      1244,
+      1254
+    ]
+  },
+  {
+    "id": "pressureRelease",
+    "name": "축압 방출",
+    "category": "attack",
+    "paths": [
+      [
+        [
+          20,
+          24
+        ],
+        [
+          35,
+          45
+        ],
+        [
+          50,
+          55
+        ],
+        [
+          65,
+          45
+        ],
+        [
+          80,
+          24
+        ]
+      ],
+      [
+        [
+          50,
+          55
+        ],
+        [
+          50,
+          80
+        ],
+        [
+          72,
+          65
+        ],
+        [
+          50,
+          80
+        ],
+        [
+          28,
+          65
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-bee4f641-faa4-4f00-af98-b2378127a8a0.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color crimson red, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[20,24],[35,45],[50,55],[65,45],[80,24]],[[50,55],[50,80],[72,65],[50,80],[28,65]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 축압 방출, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      21,
+      23,
+      1234,
+      1254
+    ]
+  },
+  {
+    "id": "handoffBarrier",
+    "name": "인계 방벽",
+    "category": "defense",
+    "paths": [
+      [
+        [
+          20,
+          70
+        ],
+        [
+          20,
+          25
+        ],
+        [
+          50,
+          25
+        ],
+        [
+          50,
+          70
+        ],
+        [
+          20,
+          70
+        ]
+      ],
+      [
+        [
+          50,
+          48
+        ],
+        [
+          65,
+          35
+        ],
+        [
+          80,
+          48
+        ],
+        [
+          80,
+          80
+        ],
+        [
+          50,
+          80
+        ],
+        [
+          50,
+          48
+        ]
+      ]
+    ],
+    "source": "/Users/sangyoung/.codex/generated_images/01a0a110-cde1-7291-b56e-581a0b0fdbc1/exec-cada2040-bac6-408f-b223-45a2baf774de.png",
+    "prompt": "Create one isolated sparkling spell acquisition glyph PNG. Reference image is STYLE ONLY: luminous glass-like thick strokes with fine golden inlay and sparkling highlights. Do NOT copy its shape or checkerboard. Genuine transparent RGBA background. Flat front view, square canvas. No text, letters, digits, frame, circle, card, scroll or extra symbols. Main glow color ice cyan blue, white hot narrow core, thin gold rim, subtle violet outer aura. Exact required glyph topology is defined by these polylines, normalized coordinates 0..100, x rightwards and y downwards: [[[20,70],[20,25],[50,25],[50,70],[20,70]],[[50,48],[65,35],[80,48],[80,80],[50,80],[50,48]]]. Draw each polyline in that order without adding connections; preserve every turn, open end and intersection. Keep all of it inside canvas with margins; uniform thick rounded luminous tube following the path. This is 인계 방벽, a game tracing symbol, accuracy of shape matters. Use faint tiny sparkle glints on the strokes, no detached ornaments.",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaBounds": [
+      0,
+      17,
+      1254,
+      1254
+    ]
+  }
+]
