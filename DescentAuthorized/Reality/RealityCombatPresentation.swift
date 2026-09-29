@@ -978,7 +978,7 @@ final class RealityActorMotionPlayer {
         reduced = value
         if value { visualRoot?.transform = baseTransform; restoreFragments() }
         if terminal { return } // Keep death progress; do not restart its fade.
-        if value { stop() } else { play("idle") }
+        if value { stop(); playJoints("idle", paused: true) } else { play("idle") }
     }
 
     func setSuspended(_ value: Bool) {
@@ -1055,7 +1055,7 @@ final class RealityActorMotionPlayer {
                 let duration = MotionProfile.duration(for: name)
                 if name == "death" {
                     self.applyFracture(elapsed: self.elapsed, root: root)
-                    if self.elapsed >= CombatPresentationTimeline.deathDuration { root.isEnabled = false; return }
+                    if self.elapsed >= CombatPresentationTimeline.deathDuration { root.components.set(OpacityComponent(opacity: 0)); root.isEnabled = false; return }
                     continue
                 }
                 var transform = self.baseTransform

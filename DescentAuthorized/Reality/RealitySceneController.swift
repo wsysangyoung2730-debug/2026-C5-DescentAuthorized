@@ -2758,7 +2758,8 @@ extension RealitySceneController {
             await capture("reduced-motion")
             actorMotion.setReducedMotion(false)
             actorMotion.play("death")
-            try? await Task.sleep(for: .milliseconds(1950))
+            try? await Task.sleep(for: .milliseconds(350))
+            await capture("fracture")
             actorMotion.setSuspended(true)
             let pausedOpacity = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 1
             try? await Task.sleep(for: .milliseconds(200))
@@ -2766,6 +2767,7 @@ extension RealitySceneController {
             actorMotion.setSuspended(false)
             try? await Task.sleep(for: .milliseconds(900))
             lifecycle["deathOpacity"] = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 1
+            lifecycle["deathDisabled"] = actor?.children.first?.isEnabled == false
             await capture("death")
             actorMotion.prepareEncounter()
             lifecycle["restartOpacity"] = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 0
