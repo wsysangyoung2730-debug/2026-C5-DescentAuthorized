@@ -1,22 +1,27 @@
 [
   {
     "actor": "RejectionExecutionResidual",
-    "rigidArmVertices": 8982
+    "collapsedArmInfluences": 14049,
+    "bodyWeightsPreserved": true
   },
   {
     "actor": "QuarantineEnforcerResidual",
-    "rigidArmVertices": 4636
+    "collapsedArmInfluences": 11065,
+    "bodyWeightsPreserved": true
   },
   {
     "actor": "OverloadResidual",
-    "rigidArmVertices": 12927
+    "collapsedArmInfluences": 21549,
+    "bodyWeightsPreserved": true
   },
   {
     "actor": "BackflowBlockerResidual",
-    "rigidArmVertices": 8945
+    "collapsedArmInfluences": 14312,
+    "bodyWeightsPreserved": true
   },
   {
     "actor": "ExitReviewResidual",
-    "rigidArmVertices": 11734
+    "collapsedArmInfluences": 16423,
+    "bodyWeightsPreserved": true
   }
 ]
