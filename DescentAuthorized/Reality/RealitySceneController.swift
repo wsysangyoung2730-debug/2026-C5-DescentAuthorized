@@ -1705,8 +1705,8 @@ final class RealitySceneController: ObservableObject {
         for child in entity.children { restoreDarkSubjectDetail(child) }
     }
 
-    /// Frame the loaded actor, including its crown, while reserving space above for intent.
-    /// Move only down the authored sight line so the camera stays inside the room.
+    /// Use a lower viewer height and mid-body aim for a grounded face-to-face view.
+    /// Keep horizontal retreat within the authored camera distance for each room.
     private func frameBattleSubject(descriptor: RealitySceneDescriptor) {
         guard let actor = registry.entity(for: .enemyActor),
               let name = descriptor.cameraName(for: .battle),
@@ -1726,13 +1726,15 @@ final class RealitySceneController: ObservableObject {
         let oldDistance = simd_length(towardViewer)
         guard oldDistance > 0.1 else { return }
         towardViewer /= oldDistance
-        // Add a little breathing room while staying within the authored room camera.
-        let distance = min(oldDistance, height * 2.65)
-        let target = SIMD3<Float>(center.x, bounds.min.y + height * 0.70, center.z)
+        // Retreat about 9% from the previous 2.65-height framing without crossing
+        // the authored horizontal distance. Height and aim are independent so
+        // lowering the viewer also reduces the excess ceiling above the enemy.
+        let distance = min(oldDistance, height * 2.90)
+        let target = SIMD3<Float>(center.x, bounds.min.y + height * 0.48, center.z)
+        let viewer = SIMD3<Float>(center.x, bounds.min.y + height * 0.50, center.z)
         let lateral = SIMD3<Float>(towardViewer.z, 0, -towardViewer.x)
         // A slight off-axis viewpoint separates crowns/halos from the central door machinery.
-        let position = target + towardViewer * distance + lateral * height * 0.18
-            + SIMD3<Float>(0, height * 0.06, 0)
+        let position = viewer + towardViewer * distance + lateral * height * 0.18
         let framing = PerspectiveCamera()
         framing.look(at: target, from: position, relativeTo: nil)
         var optics = snapshot.camera
