@@ -106,7 +106,7 @@ final class RealityProgressionVFXRenderer {
             doorPortal = registry.entity(named: doorAnimation.portalSurfaceName)
             doorPortalClosed = doorPortal?.transform
             isMiddleDoor = doorAnimation.portalSurfaceName.hasPrefix("MID_")
-            if !isMiddleDoor { installVortexMaterial() }
+            if !isMiddleDoor { installVeilMaterial() }
             if let lens = registry.entity(named: "FINAL_F02C_IrisLens") {
                 irisLens = lens
                 irisLensClosed = lens.transform
@@ -131,7 +131,7 @@ final class RealityProgressionVFXRenderer {
         return CustomMaterial.SurfaceShader(named: "descentVeil", in: library)
     }()
 
-    private func installVortexMaterial() {
+    private func installVeilMaterial() {
         guard let portal = doorPortal else { return }
         let material: any Material
         if let shader = Self.veilShader, var veil = try? CustomMaterial(surfaceShader: shader, lightingModel: .unlit) {
@@ -175,7 +175,7 @@ final class RealityProgressionVFXRenderer {
     ) {
         guard registry.root != nil else { return }
         doorReducedMotion = reducedMotion
-        if !isMiddleDoor { installVortexMaterial() }
+        if !isMiddleDoor { installVeilMaterial() }
         transitionGeneration += 1
         let generation = transitionGeneration
 

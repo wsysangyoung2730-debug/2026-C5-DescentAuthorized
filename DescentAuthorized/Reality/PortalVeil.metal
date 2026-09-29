@@ -38,5 +38,5 @@ static float veilMist(float2 p) {
     float3 color = charcoal + mix(indigo, patina, cloud) * (cloud*.9 + ribbon*.20) * depth * edge;
     // A restrained antique-gold glint, never a rainbow/starfield.
     color += float3(.18,.125,.055) * pow(cloud, 7.0) * depth * edge;
-    params.surface().set_base_color(half3(color));
+    params.surface().set_emissive_color(half3(color));
 }

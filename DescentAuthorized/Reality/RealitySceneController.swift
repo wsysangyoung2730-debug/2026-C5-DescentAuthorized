@@ -2779,6 +2779,8 @@ extension RealitySceneController {
             setDescentPresentation(.open, reducedMotion: false)
             try? await Task.sleep(for: .milliseconds(100))
             await capture("door-open")
+            try? await Task.sleep(for: .seconds(2))
+            await capture("door-open-later")
         }
         if preset == .rewardSelection {
             let lidNames = ["Left", "Center", "Right"].map { "F08B_RewardSlot_\($0)Lid" }
