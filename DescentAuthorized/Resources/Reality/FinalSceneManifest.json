@@ -49,11 +49,14 @@
     },
     "anchors": {
       "enemySpawn": "FINAL_F07A_EnemySpawn",
-      "magicInputBoard": "FINAL_F07A_MagicInputBoard"
+      "magicInputBoard": "FINAL_F07A_MagicInputBoard",
+      "descentDoor": "F07A_BossAccessDoor"
     },
     "targetHeight": 2.8,
     "cameraPitchDegrees": {},
-    "cameraFOVScale": {}
+    "cameraFOVScale": {},
+    "doorAnimationPrefix": "MID_floor07_coordinate_residue",
+    "doorTravel": 1.0822801781898033
   },
   {
     "floor": 6,
@@ -105,11 +108,14 @@
     },
     "anchors": {
       "enemySpawn": "FINAL_F06A_EnemySpawn",
-      "magicInputBoard": "FINAL_F06A_MagicInputBoard"
+      "magicInputBoard": "FINAL_F06A_MagicInputBoard",
+      "descentDoor": "F06A_BossAccessDoor"
     },
     "targetHeight": 2.8,
     "cameraPitchDegrees": {},
-    "cameraFOVScale": {}
+    "cameraFOVScale": {},
+    "doorAnimationPrefix": "MID_floor06_causality_residue",
+    "doorTravel": 1.0822801781898033
   },
   {
     "floor": 5,
@@ -161,11 +167,14 @@
     },
     "anchors": {
       "enemySpawn": "FINAL_F05A_EnemySpawn",
-      "magicInputBoard": "FINAL_F05A_MagicInputBoard"
+      "magicInputBoard": "FINAL_F05A_MagicInputBoard",
+      "descentDoor": "F05A_DecorativeMiddleDoor"
     },
     "targetHeight": 2.8,
     "cameraPitchDegrees": {},
-    "cameraFOVScale": {}
+    "cameraFOVScale": {},
+    "doorAnimationPrefix": "MID_floor05_memory_omission_residue",
+    "doorTravel": 0.29093558155721994
   },
   {
     "floor": 4,
@@ -217,11 +226,14 @@
     },
     "anchors": {
       "enemySpawn": "FINAL_F04A_EnemySpawn",
-      "magicInputBoard": "FINAL_F04A_MagicInputBoard"
+      "magicInputBoard": "FINAL_F04A_MagicInputBoard",
+      "descentDoor": "F04A_MiddleDoor"
     },
     "targetHeight": 2.8,
     "cameraPitchDegrees": {},
-    "cameraFOVScale": {}
+    "cameraFOVScale": {},
+    "doorAnimationPrefix": "MID_floor04_signature_mimic_residual",
+    "doorTravel": 0.32816820430755617
   },
   {
     "floor": 4,
@@ -240,11 +252,14 @@
     },
     "anchors": {
       "enemySpawn": "FINAL_F04B_EnemySpawn",
-      "magicInputBoard": "FINAL_F04B_MagicInputBoard"
+      "magicInputBoard": "FINAL_F04B_MagicInputBoard",
+      "descentDoor": "F04B_MiddleDoor"
     },
     "targetHeight": 2.8,
     "cameraPitchDegrees": {},
-    "cameraFOVScale": {}
+    "cameraFOVScale": {},
+    "doorAnimationPrefix": "MID_floor04_rejection_execution_residual",
+    "doorTravel": 0.32816820430755617
   },
   {
     "floor": 3,
@@ -300,11 +315,14 @@
     },
     "anchors": {
       "enemySpawn": "FINAL_F03A_EnemySpawn",
-      "magicInputBoard": "FINAL_F03A_MagicInputBoard"
+      "magicInputBoard": "FINAL_F03A_MagicInputBoard",
+      "descentDoor": "F03A_CentralDoor_To_F03B"
     },
     "targetHeight": 2.8,
     "cameraPitchDegrees": {},
-    "cameraFOVScale": {}
+    "cameraFOVScale": {},
+    "doorAnimationPrefix": "MID_floor03_consent_custodian_residual",
+    "doorTravel": 0.32273371854618116
   },
   {
     "floor": 3,
@@ -323,11 +341,14 @@
     },
     "anchors": {
       "enemySpawn": "FINAL_F03B_EnemySpawn",
-      "magicInputBoard": "FINAL_F03B_MagicInputBoard"
+      "magicInputBoard": "FINAL_F03B_MagicInputBoard",
+      "descentDoor": "F03B_CentralDoor_To_F03C"
     },
     "targetHeight": 2.8,
     "cameraPitchDegrees": {},
-    "cameraFOVScale": {}
+    "cameraFOVScale": {},
+    "doorAnimationPrefix": "MID_floor03_quarantine_enforcer_residual",
+    "doorTravel": 0.3227337954919049
   },
   {
     "floor": 2,
@@ -381,13 +402,16 @@
     },
     "anchors": {
       "enemySpawn": "FINAL_F02A_EnemySpawn",
-      "magicInputBoard": "FINAL_F02A_MagicInputBoard"
+      "magicInputBoard": "FINAL_F02A_MagicInputBoard",
+      "descentDoor": "F02A_CentralDoor_To_F02B"
     },
     "targetHeight": 2.8,
     "cameraPitchDegrees": {
       "F02A_MainCamera": -6.008731688424321
     },
-    "cameraFOVScale": {}
+    "cameraFOVScale": {},
+    "doorAnimationPrefix": "MID_floor02_overload_residual",
+    "doorTravel": 0.3062725982666016
   },
   {
     "floor": 2,
@@ -406,13 +430,16 @@
     },
     "anchors": {
       "enemySpawn": "FINAL_F02B_EnemySpawn",
-      "magicInputBoard": "FINAL_F02B_MagicInputBoard"
+      "magicInputBoard": "FINAL_F02B_MagicInputBoard",
+      "descentDoor": "F02B_CentralDoor_To_Boss"
     },
     "targetHeight": 2.8,
     "cameraPitchDegrees": {
       "F02B_MainCamera": -7.647118752848988
     },
-    "cameraFOVScale": {}
+    "cameraFOVScale": {},
+    "doorAnimationPrefix": "MID_floor02_backflow_blocker_residual",
+    "doorTravel": 0.3062725982666016
   },
   {
     "floor": 1,
@@ -468,11 +495,14 @@
     },
     "anchors": {
       "enemySpawn": "FINAL_F01A_EnemySpawn",
-      "magicInputBoard": "FINAL_F01A_MagicInputBoard"
+      "magicInputBoard": "FINAL_F01A_MagicInputBoard",
+      "descentDoor": "MID_floor01_identity_comparison_residual_Gate"
     },
     "targetHeight": 2.8,
     "cameraPitchDegrees": {},
-    "cameraFOVScale": {}
+    "cameraFOVScale": {},
+    "doorAnimationPrefix": "MID_floor01_identity_comparison_residual",
+    "doorTravel": 2.403000025749207
   },
   {
     "floor": 1,
@@ -491,10 +521,13 @@
     },
     "anchors": {
       "enemySpawn": "FINAL_F01B_EnemySpawn",
-      "magicInputBoard": "FINAL_F01B_MagicInputBoard"
+      "magicInputBoard": "FINAL_F01B_MagicInputBoard",
+      "descentDoor": "MID_floor01_exit_review_residual_Gate"
     },
     "targetHeight": 2.8,
     "cameraPitchDegrees": {},
-    "cameraFOVScale": {}
+    "cameraFOVScale": {},
+    "doorAnimationPrefix": "MID_floor01_exit_review_residual",
+    "doorTravel": 2.5650000000000004
   }
 ]

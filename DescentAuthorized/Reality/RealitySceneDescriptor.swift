@@ -237,8 +237,10 @@ struct RealitySceneDescriptor: Sendable {
             ],
             entityNames: [
                 .magicInputBoard: "F08A_MagicInputBoard",
-                .enemySpawn: "SPAWN_ObservationResidue"
+                .enemySpawn: "SPAWN_ObservationResidue",
+                .descentDoor: "F08A_BossAccessDoor"
             ],
+            descentDoorAnimation: .init(prefix: "MID_floor08_residue_isolation", panelTravelDistance: 0.30),
             actor: .init(
                 assetID: .observationResidue,
                 expectedEntityName: "ACTOR_ObservationResidue",
