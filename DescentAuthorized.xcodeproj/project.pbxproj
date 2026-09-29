@@ -106,6 +106,7 @@
 		F0ED0993C01A519FB92D34CE /* ExpansionCombatGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CC104F7F1D8E1F17AA010EC /* ExpansionCombatGuideView.swift */; };
 		EEE88AD52DDCC2CC7918BE6D /* ExpansionPreviewSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40995EAF59B8A2F114F385D6 /* ExpansionPreviewSupport.swift */; };
 		131000000000000000000001 /* ExpansionNarrativeCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 131000000000000000000002 /* ExpansionNarrativeCatalog.swift */; };
+		188000000000000000000001 /* BattleSealChoiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 188000000000000000000002 /* BattleSealChoiceView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -210,6 +211,7 @@
 		1CC104F7F1D8E1F17AA010EC /* ExpansionCombatGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Battle/ExpansionCombatGuideView.swift"; sourceTree = SOURCE_ROOT; };
 		40995EAF59B8A2F114F385D6 /* ExpansionPreviewSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/App/ExpansionPreviewSupport.swift"; sourceTree = SOURCE_ROOT; };
 		131000000000000000000002 /* ExpansionNarrativeCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/ExpansionNarrativeCatalog.swift"; sourceTree = SOURCE_ROOT; };
+		188000000000000000000002 /* BattleSealChoiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleSealChoiceView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -353,6 +355,7 @@
 			isa = PBXGroup;
 			children = (
 				200000000000000000000003 /* BattleView.swift */,
+				188000000000000000000002 /* BattleSealChoiceView.swift */,
 				200000000000000000000061 /* BattlePresentationStyle.swift */,
 				200000000000000000000033 /* GlyphCastingPanel.swift */,
 				400000000000000000000011 /* Input */,
@@ -614,6 +617,7 @@
 				100000000000000000000065 /* RealityProgressionPresentation.swift in Sources */,
 				100000000000000000000002 /* HomeView.swift in Sources */,
 				100000000000000000000003 /* BattleView.swift in Sources */,
+				188000000000000000000001 /* BattleSealChoiceView.swift in Sources */,
 				100000000000000000000061 /* BattlePresentationStyle.swift in Sources */,
 				100000000000000000000004 /* GamePhase.swift in Sources */,
 				100000000000000000000010 /* DomainModels.swift in Sources */,

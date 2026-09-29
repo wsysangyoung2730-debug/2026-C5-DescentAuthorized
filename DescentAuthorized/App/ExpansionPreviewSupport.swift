@@ -16,6 +16,12 @@ enum ExpansionPreviewSupport {
         return floor
     }
 
+    static var sealChoice: SpellID? {
+        let args = ProcessInfo.processInfo.arguments
+        guard let index = args.firstIndex(of: "--preview-seal-choice"), args.indices.contains(index + 1) else { return nil }
+        return SpellID(rawValue: args[index + 1])
+    }
+
     static var isBattle: Bool { ProcessInfo.processInfo.arguments.contains("--preview-battle") }
     static var isBoss: Bool { ProcessInfo.processInfo.arguments.contains("--preview-boss") }
     static func makeStore() -> (any GameSaveStore)? {

@@ -1350,30 +1350,11 @@ struct BattleView: View {
     }
 
     private func sealChoiceOverlay(_ battle: BattleState) -> some View {
-        ZStack {
-            Color.black.opacity(0.88).ignoresSafeArea()
-            VStack(spacing: 22) {
-                Text("봉인할 주문을 선택하십시오").font(.title2.weight(.semibold)).foregroundStyle(DAColor.gold)
-                Text("표시된 후보 중 1개가 적 행동 시 봉인됩니다.\n보호한 공격·방어 주문과 봉인 해제는 후보에서 제외됩니다.")
-                    .multilineTextAlignment(.center).foregroundStyle(DAColor.body)
-                HStack(spacing: 20) {
-                    ForEach(battle.expansion.pendingSealChoices, id: \.self) { id in
-                        Button {
-                            gameSession.send(.chooseCardSeal(id))
-                            selectAvailableSpell()
-                        } label: {
-                            VStack(spacing: 14) {
-                                SpellGlyphPreview(spell: SpellCatalog.spell(id)).frame(width: 90, height: 90)
-                                Text(SpellCatalog.spell(id).name).font(.headline)
-                                Text("이 주문 봉인").font(.caption)
-                            }.foregroundStyle(DAColor.gold).padding(24)
-                                .background(DAColor.panel).overlay(Rectangle().stroke(DAColor.gold))
-                        }.buttonStyle(.plain)
-                    }
-                }
-            }.padding(30)
+        BattleSealChoiceView(battle: battle) { id in
+            gameSession.send(.chooseCardSeal(id))
+            selectAvailableSpell()
         }
-        .accessibilityAddTraits(.isModal)
+        .id("\(encounterIdentity)-seal-\(battle.turnNumber)")
     }
 
     private func selectAvailableSpell() {
