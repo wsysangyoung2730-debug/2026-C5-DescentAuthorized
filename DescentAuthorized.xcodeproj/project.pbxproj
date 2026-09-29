@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AB1950000000000000000001 /* PortalVeil.metal in Sources */ = {isa = PBXBuildFile; fileRef = AB1950000000000000000002 /* PortalVeil.metal */; };
 		A18000000000000000000001 /* CombatStatusPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18000000000000000000002 /* CombatStatusPresentation.swift */; };
 		C54100000000000000000001 /* LowerFloorContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000001 /* LowerFloorContracts.swift */; };
 		C54100000000000000000002 /* LowerFloorSpellCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000002 /* LowerFloorSpellCatalog.swift */; };
@@ -110,6 +111,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AB1950000000000000000002 /* PortalVeil.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = PortalVeil.metal; sourceTree = "<group>"; };
 		A18000000000000000000002 /* CombatStatusPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/CombatEngine/CombatStatusPresentation.swift"; sourceTree = SOURCE_ROOT; };
 		C54200000000000000000001 /* LowerFloorContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorContracts.swift"; sourceTree = SOURCE_ROOT; };
 		C54200000000000000000002 /* LowerFloorSpellCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorSpellCatalog.swift"; sourceTree = SOURCE_ROOT; };
@@ -484,6 +486,7 @@
 				200000000000000000000062 /* RealityBoardProjection.swift */,
 				200000000000000000000064 /* RealityCombatPresentation.swift */,
 				200000000000000000000065 /* RealityProgressionPresentation.swift */,
+				AB1950000000000000000002 /* PortalVeil.metal */,
 				200000000000000000000058 /* RealityEntityRegistry.swift */,
 				200000000000000000000063 /* RealityErasureZoneRenderer.swift */,
 				200000000000000000000059 /* RealitySceneController.swift */,
@@ -615,6 +618,7 @@
 				100000000000000000000063 /* RealityErasureZoneRenderer.swift in Sources */,
 				100000000000000000000064 /* RealityCombatPresentation.swift in Sources */,
 				100000000000000000000065 /* RealityProgressionPresentation.swift in Sources */,
+				AB1950000000000000000001 /* PortalVeil.metal in Sources */,
 				100000000000000000000002 /* HomeView.swift in Sources */,
 				100000000000000000000003 /* BattleView.swift in Sources */,
 				188000000000000000000001 /* BattleSealChoiceView.swift in Sources */,

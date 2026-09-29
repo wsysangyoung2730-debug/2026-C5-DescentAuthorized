@@ -1,5 +1,6 @@
 import Foundation
 import RealityKit
+import Metal
 import UIKit
 
 enum RealityDescentPresentationState: Equatable, Sendable {
@@ -58,7 +59,6 @@ final class RealityProgressionVFXRenderer {
     private var doorPortal: Entity?
     private var doorPortalClosed: Transform?
     private var doorReducedMotion = false
-    private var portalPulseTask: Task<Void, Never>?
     private var isMiddleDoor = false
     private var irisLens: Entity?
     private var irisLensClosed = Transform.identity
@@ -75,8 +75,6 @@ final class RealityProgressionVFXRenderer {
         doorOpeningTask?.cancel()
         doorOpeningTask = nil
         doorState = .inactive
-        portalPulseTask?.cancel()
-        portalPulseTask = nil
         doorPanels.removeAll()
         irisLens = nil
         irisBlades.removeAll()
@@ -128,11 +126,21 @@ final class RealityProgressionVFXRenderer {
         }
     }
 
+    private static let veilShader: CustomMaterial.SurfaceShader? = {
+        guard let device = MTLCreateSystemDefaultDevice(), let library = device.makeDefaultLibrary() else { return nil }
+        return CustomMaterial.SurfaceShader(named: "descentVeil", in: library)
+    }()
+
     private func installVortexMaterial() {
-        guard let texture = Self.vortexTexture, let portal = doorPortal else { return }
-        var material = UnlitMaterial()
-        material.color = .init(tint: .white, texture: .init(texture))
-        material.faceCulling = .none
+        guard let portal = doorPortal else { return }
+        let material: any Material
+        if let shader = Self.veilShader, var veil = try? CustomMaterial(surfaceShader: shader, lightingModel: .unlit) {
+            veil.faceCulling = .none
+            veil.custom.value = SIMD4<Float>(doorReducedMotion ? 0 : 1, 0, 0, 0)
+            material = veil
+        } else {
+            material = UnlitMaterial(color: UIColor(red: 0.065, green: 0.08, blue: 0.11, alpha: 1))
+        }
         func apply(_ entity: Entity) {
             if var model = entity.components[ModelComponent.self] {
                 model.materials = [material]
@@ -142,62 +150,6 @@ final class RealityProgressionVFXRenderer {
         }
         apply(portal)
     }
-
-    private func beginPortalPulse() {
-        portalPulseTask?.cancel()
-        guard !isMiddleDoor, !doorReducedMotion else { return }
-        portalPulseTask = Task { @MainActor [weak self] in
-            var time = 0.0
-            while !Task.isCancelled {
-                do { try await Task.sleep(for: .milliseconds(50)) } catch { return }
-                guard let self, self.doorState == .open else { return }
-                if self.doorReducedMotion {
-                    self.doorPortal?.components.set(OpacityComponent(opacity: 1))
-                    return
-                }
-                time += 0.05
-                self.doorPortal?.components.set(OpacityComponent(opacity: Float(0.88 + 0.12 * sin(time * 1.7))))
-            }
-        }
-    }
-
-    // A colorful depth tunnel, generated once and reused across floor portals.
-    private static let vortexTexture: TextureResource? = {
-        let format = UIGraphicsImageRendererFormat(); format.scale = 1; format.opaque = true
-        let image = UIGraphicsImageRenderer(size: CGSize(width: 512, height: 768), format: format).image { renderer in
-            let c = renderer.cgContext
-            UIColor(red: 0.012, green: 0.009, blue: 0.08, alpha: 1).setFill(); c.fill(CGRect(x: 0, y: 0, width: 512, height: 768))
-            let center = CGPoint(x: 256, y: 384)
-            let colors = [UIColor(red: 0.7, green: 0.93, blue: 1, alpha: 1).cgColor,
-                          UIColor(red: 0.13, green: 0.35, blue: 0.75, alpha: 1).cgColor,
-                          UIColor(red: 0.26, green: 0.03, blue: 0.43, alpha: 1).cgColor,
-                          UIColor(red: 0.02, green: 0.01, blue: 0.06, alpha: 1).cgColor] as CFArray
-            if let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors, locations: [0, 0.18, 0.58, 1]) {
-                c.drawRadialGradient(gradient, startCenter: center, startRadius: 0, endCenter: center, endRadius: 390, options: [.drawsAfterEndLocation])
-            }
-            for arm in 0..<7 {
-                let path = UIBezierPath()
-                for step in 0...150 {
-                    let t = Double(step) / 150
-                    let angle = t * .pi * 3.7 + Double(arm) * .pi * 2 / 7
-                    let radius = 12 + t * 350
-                    let point = CGPoint(x: 256 + cos(angle) * radius, y: 384 + sin(angle) * radius * 1.4)
-                    if step == 0 { path.move(to: point) } else { path.addLine(to: point) }
-                }
-                let color = UIColor(hue: CGFloat(arm) / 9 + 0.25, saturation: 0.68, brightness: 1, alpha: 0.6)
-                c.setShadow(offset: .zero, blur: 18, color: color.cgColor)
-                color.setStroke(); path.lineWidth = 2.5; path.stroke()
-            }
-            c.setShadow(offset: .zero, blur: 0)
-            for i in 0..<130 {
-                let x = CGFloat((i * 193 + 23) % 512), y = CGFloat((i * 277 + 41) % 768)
-                UIColor.white.withAlphaComponent(CGFloat(i % 4 + 1) * 0.18).setFill()
-                c.fillEllipse(in: CGRect(x: x, y: y, width: i % 7 == 0 ? 3 : 1, height: i % 7 == 0 ? 3 : 1))
-            }
-        }
-        guard let cg = image.cgImage else { return nil }
-        return try? TextureResource.generate(from: cg, options: .init(semantic: .color))
-    }()
 
     func prepareMiddleDoorPreview(sceneID: FloorSceneID) {
         guard isMiddleDoor, let portal = doorPortal,
@@ -223,6 +175,7 @@ final class RealityProgressionVFXRenderer {
     ) {
         guard registry.root != nil else { return }
         doorReducedMotion = reducedMotion
+        if !isMiddleDoor { installVortexMaterial() }
         transitionGeneration += 1
         let generation = transitionGeneration
 
@@ -244,10 +197,7 @@ final class RealityProgressionVFXRenderer {
         } else if state == .approved && doorState != .approved && doorState != .open {
             animateDoorOpening(in: registry)
         }
-        let wasOpen = doorState == .open
         doorState = state
-        if state == .open && !wasOpen { beginPortalPulse() }
-        if state != .open { portalPulseTask?.cancel() }
 
         restore(.descentStele, in: registry)
         restore(.descentPedestal, in: registry)
@@ -361,8 +311,6 @@ final class RealityProgressionVFXRenderer {
         doorOpeningTask?.cancel()
         doorOpeningTask = nil
         doorState = .inactive
-        portalPulseTask?.cancel()
-        portalPulseTask = nil
         doorPanels.removeAll()
         irisLens = nil
         irisBlades.removeAll()
