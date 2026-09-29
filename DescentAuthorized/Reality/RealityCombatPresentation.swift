@@ -899,6 +899,15 @@ final class RealityActorMotionPlayer {
             return Float(pow(sin(.pi * min(1, max(0, phase))), 2))
         }
     }
+    private struct JointManifest: Decodable {
+        struct Clip: Decodable { let start: Double; let end: Double }
+        let clips: [String: Clip]
+    }
+    private var jointManifest: JointManifest?
+    private weak var articulated: Entity?
+    private weak var animatedEntity: Entity?
+    private var jointSource: AnimationResource?
+    private var jointPlayback: AnimationPlaybackController?
     private weak var visualRoot: Entity?
     private var baseTransform = Transform.identity
     private var modelHeight: Float = 3
@@ -918,6 +927,21 @@ final class RealityActorMotionPlayer {
     func install(root: Entity, descriptor: RealityActorDescriptor, bundle: Bundle) throws {
         reset()
         visualRoot = root
+        articulated = root.findEntity(named: "DA_Articulated")
+        func findAnimated(_ entity: Entity) -> Entity? {
+            if !entity.availableAnimations.isEmpty { return entity }
+            return entity.children.lazy.compactMap { findAnimated($0) }.first
+        }
+        if let articulated {
+            animatedEntity = findAnimated(articulated)
+            jointSource = animatedEntity?.availableAnimations.first
+        }
+        if let url = bundle.url(forResource: "motion", withExtension: "json", subdirectory: descriptor.resourceSubdirectory) {
+            jointManifest = try JSONDecoder().decode(JointManifest.self, from: Data(contentsOf: url))
+        }
+        guard articulated != nil, jointSource != nil else {
+            throw NSError(domain: "ActorMotion", code: 3, userInfo: [NSLocalizedDescriptionKey: "관절 공격 모션을 불러오지 못했습니다: \(descriptor.resourceName)"])
+        }
         baseTransform = root.transform
         let bounds = root.visualBounds(relativeTo: root.parent)
         modelHeight = max(bounds.extents.z, 0.01)
@@ -934,6 +958,7 @@ final class RealityActorMotionPlayer {
             } else { entity.children.forEach(collect) }
         }
         collect(root)
+        restoreFragments()
         root.stopAllAnimations(recursive: true)
         root.components.set(OpacityComponent(opacity: 1))
         play("idle")
@@ -956,7 +981,10 @@ final class RealityActorMotionPlayer {
         if value { stop() } else { play("idle") }
     }
 
-    func setSuspended(_ value: Bool) { suspended = value }
+    func setSuspended(_ value: Bool) {
+        suspended = value
+        if value { jointPlayback?.pause() } else { jointPlayback?.resume() }
+    }
 
     func present(_ events: [DemoSessionEvent], state: BattleState?) {
         if state?.phase == .victory { play("death"); return }
@@ -1009,6 +1037,9 @@ final class RealityActorMotionPlayer {
         elapsed = 0
         guard let root = visualRoot else { return }
         root.transform = baseTransform
+        articulated?.isEnabled = name != "death"
+        for piece in fragments { piece.entity.isEnabled = name == "death" }
+        if name != "death" { playJoints(reduced ? "idle" : name, paused: reduced) }
         if reduced && name != "death" { return }
         let token = generation
         motionTask = Task { @MainActor [weak self] in
@@ -1090,7 +1121,21 @@ final class RealityActorMotionPlayer {
         for piece in fragments {
             piece.entity.transform = piece.closed
             piece.entity.components.set(OpacityComponent(opacity: 1))
-            piece.entity.isEnabled = true
+            piece.entity.isEnabled = false
+        }
+    }
+
+    private func playJoints(_ name: String, paused: Bool = false) {
+        guard let source = jointSource, let entity = animatedEntity,
+              let clip = jointManifest?.clips[name] ?? jointManifest?.clips["idle"] else { return }
+        do {
+            let view = AnimationView(source: source.definition, name: name,
+                                     trimStart: clip.start, trimEnd: clip.end)
+            let animation = try AnimationResource.generate(with: view)
+            jointPlayback = entity.playAnimation(name == "idle" ? animation.repeat() : animation,
+                                                 transitionDuration: 0.06, startsPaused: paused || suspended)
+        } catch {
+            assertionFailure("Articulated animation failed: \(error)")
         }
     }
 
@@ -1104,8 +1149,8 @@ final class RealityActorMotionPlayer {
         }
         root.components.set(OpacityComponent(opacity: 1))
         for (index, piece) in fragments.enumerated() {
-            let delay = 0.10 + Double(index % 5) * 0.045
-            let t = Float(max(0, elapsed - delay))
+            let delay = 0.025 + Double(index % 5) * 0.018
+            let t = Float(max(0, elapsed - delay)) * 1.8
             let angle = Float(index) * 2.399963
             let velocity = modelHeight * (0.10 + Float(index % 3) * 0.025)
             let lift = modelHeight * (0.12 + Float(index % 4) * 0.025)
@@ -1115,13 +1160,15 @@ final class RealityActorMotionPlayer {
             piece.entity.transform = piece.closed
             piece.entity.setPosition(position, relativeTo: root.parent)
             piece.entity.orientation *= simd_quatf(angle: t * (index.isMultiple(of: 2) ? 1.1 : -0.8), axis: simd_normalize(SIMD3<Float>(1, Float(index % 3 + 1), 0.4)))
-            let fade = Float(max(0, min(1, (end - elapsed) / 1.1)))
+            let fade = Float(max(0, min(1, (end - elapsed) / 0.42)))
             piece.entity.components.set(OpacityComponent(opacity: fade))
         }
     }
 
     private func stop() {
         generation += 1
+        jointPlayback?.stop()
+        jointPlayback = nil
         motionTask?.cancel()
         motionTask = nil
     }
@@ -1130,6 +1177,7 @@ final class RealityActorMotionPlayer {
         stop()
         restoreFragments()
         fragments.removeAll()
+        articulated = nil; animatedEntity = nil; jointSource = nil; jointManifest = nil
         attackOrdinal = 0
         visualRoot?.transform = baseTransform
         visualRoot?.components.set(OpacityComponent(opacity: 1))

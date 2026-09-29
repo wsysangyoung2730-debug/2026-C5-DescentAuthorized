@@ -4,8 +4,8 @@ import Foundation
 struct CombatPresentationTimeline {
     static let playerImpactDelay: TimeInterval = 0.20
     static let playerToEnemyDelay: TimeInterval = 0.38
-    static let deathPoseDuration: TimeInterval = 1.80
-    static let dissolveDuration: TimeInterval = 0.65
+    static let deathPoseDuration: TimeInterval = 0.65
+    static let dissolveDuration: TimeInterval = 0.40
     static let deathDuration: TimeInterval = deathPoseDuration + dissolveDuration
 
     static func enemyImpactDelay(strong: Bool) -> TimeInterval { strong ? 0.62 : 0.46 }
