@@ -449,8 +449,8 @@ struct DemoScenePresentation: Equatable, Sendable {
         case .floor8AdministratorPreparation:
             .init(
                 progressSceneID: sceneID,
-                floorSceneID: .floor08ResidueIsolation,
-                cameraPreset: .descentInput,
+                floorSceneID: .floor08AdministratorObservatory,
+                cameraPreset: .main,
                 experience: .floor8Exploration
             )
         case .floor8AdministratorEncounter:
