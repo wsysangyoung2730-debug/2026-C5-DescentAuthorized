@@ -199,9 +199,9 @@ final class RealityProgressionVFXRenderer {
         return try? TextureResource.generate(from: cg, options: .init(semantic: .color))
     }()
 
-    func prepareMiddleDoorPreview(floorNumber: Int) {
-        guard let portal = doorPortal,
-              let image = UIImage(named: String(format: "LoadingFloor%02d", floorNumber))?.cgImage,
+    func prepareMiddleDoorPreview(sceneID: FloorSceneID) {
+        guard isMiddleDoor, let portal = doorPortal,
+              let image = UIImage(named: "GatePreview_" + sceneID.rawValue)?.cgImage,
               let texture = try? TextureResource.generate(from: image, options: .init(semantic: .color)) else { return }
         var material = UnlitMaterial()
         material.color = .init(tint: .white, texture: .init(texture))

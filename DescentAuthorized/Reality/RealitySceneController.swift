@@ -1201,7 +1201,8 @@ final class RealitySceneController: ObservableObject {
     }
 
     func prepareMiddleDoorPreview(floorNumber: Int) {
-        progressionVFXRenderer.prepareMiddleDoorPreview(floorNumber: floorNumber)
+        guard let sceneID = requestedSceneID else { return }
+        progressionVFXRenderer.prepareMiddleDoorPreview(sceneID: sceneID)
     }
 
     func waitForDescentDoorOpening() async -> Bool {
@@ -2772,6 +2773,7 @@ extension RealitySceneController {
             actorMotion.prepareEncounter()
             lifecycle["restartOpacity"] = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 0
         } else if preset == .descentInput {
+            progressionVFXRenderer.prepareMiddleDoorPreview(sceneID: id)
             setDescentPresentation(.approved, reducedMotion: false)
             lifecycle["doorOpeningCompleted"] = await waitForDescentDoorOpening()
             setDescentPresentation(.open, reducedMotion: false)
