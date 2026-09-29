@@ -14,6 +14,9 @@ for folder in root.iterdir():
    binding=UsdSkel.BindingAPI(mesh)
    assert binding.GetInheritedSkeleton(),(file,mesh.GetPath(),'missing skin binding')
    assert binding.GetGeomBindTransformAttr().HasValue(),(file,'missing bind matrix')
+   joint_count=len(binding.GetInheritedSkeleton().GetJointsAttr().Get())
+   indices=binding.GetJointIndicesPrimvar().ComputeFlattened()
+   assert all(0 <= i < joint_count for i in indices),(file,'skin index outside skeleton')
   assert all(x in meta['clips']for x in ['idle','attack','heavyAttack','death']),file
   unresolved=[]
   for p in prims:

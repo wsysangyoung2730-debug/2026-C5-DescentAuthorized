@@ -15,10 +15,10 @@ final class CombatPresentationTimelineTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(pose.forwardTilt, previous)
             XCTAssertLessThanOrEqual(pose.forwardTilt, 1.401)
             XCTAssertTrue((0...1).contains(pose.opacity))
-            if step <= 180 { XCTAssertEqual(pose.opacity, 1) }
+            if step <= 65 { XCTAssertEqual(pose.opacity, 1) }
             previous = pose.forwardTilt
         }
-        XCTAssertEqual(GroundedDeathPose.sample(elapsed: 2.45, reducedMotion: false).opacity, 0, accuracy: 0.001)
+        XCTAssertEqual(GroundedDeathPose.sample(elapsed: 1.05, reducedMotion: false).opacity, 0, accuracy: 0.001)
         let reduced = GroundedDeathPose.sample(elapsed: 0.2, reducedMotion: true)
         XCTAssertEqual(reduced.forwardTilt, 0)
         XCTAssertEqual(reduced.sideTilt, 0)
@@ -85,7 +85,7 @@ final class CombatPresentationTimelineTests: XCTestCase {
         XCTAssertEqual(steps.flatMap(\.events), events)
         XCTAssertEqual(steps[1].events, [.combat(.victory(.recordsAdministrator))])
         XCTAssertEqual(steps[1].delay, 0.20, accuracy: 0.001)
-        XCTAssertEqual(steps[2].delay, 2.45, accuracy: 0.001)
+        XCTAssertEqual(steps[2].delay, 1.05, accuracy: 0.001)
         XCTAssertEqual(steps[2].events, [.encounterWon(.recordsAdministrator),
                                         .progression(.sceneChanged(.floor9RecordsDefeated))])
 
