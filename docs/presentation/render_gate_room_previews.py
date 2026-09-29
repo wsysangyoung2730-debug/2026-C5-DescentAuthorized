@@ -8,7 +8,8 @@ for r in rows:
  dest=next(x for x in rows if x['floor']==r['floor'] and x['role']==role)
  plans.append((r['resource'],dest['scene'],dest['cameras']['battle']))
 plans.append(('floor08_residue_isolation','DA_F08B_AdministratorObservatory',''))
-report=[]
+report=json.loads((out/"manifest.json").read_text()) if (out/"manifest.json").exists() else []
+if "--floor8-only" in sys.argv: plans=[p for p in plans if p[0].startswith("floor08")]
 for source,name,cam in plans:
  scene=bpy.data.scenes.get(name)
  if scene is None:

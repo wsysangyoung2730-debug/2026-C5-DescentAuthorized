@@ -1,0 +1,74 @@
+[
+  {
+    "sourceRoom": "floor07_coordinate_residue",
+    "destinationScene": "DA_F07_CoordinateAdministrator",
+    "camera": "F07_iPad_MainCamera",
+    "file": "floor07_coordinate_residue.png"
+  },
+  {
+    "sourceRoom": "floor06_causality_residue",
+    "destinationScene": "DA_F06B_CausalityAdministrator",
+    "camera": "F06_iPad_MainCamera",
+    "file": "floor06_causality_residue.png"
+  },
+  {
+    "sourceRoom": "floor05_memory_omission_residue",
+    "destinationScene": "DA_F05B_OriginalMemoryAdministrator",
+    "camera": "F05_iPad_MainCamera",
+    "file": "floor05_memory_omission_residue.png"
+  },
+  {
+    "sourceRoom": "floor04_signature_mimic_residual",
+    "destinationScene": "DA_F04B_RejectionExecutionWorkshop",
+    "camera": "F04B_iPad_MainCamera",
+    "file": "floor04_signature_mimic_residual.png"
+  },
+  {
+    "sourceRoom": "floor04_rejection_execution_residual",
+    "destinationScene": "DA_F04_ResponsibilityAdministrator",
+    "camera": "F04_iPad_MainCamera",
+    "file": "floor04_rejection_execution_residual.png"
+  },
+  {
+    "sourceRoom": "floor03_consent_custodian_residual",
+    "destinationScene": "DA_F03B_IsolationExecution",
+    "camera": "F03B_MainCamera",
+    "file": "floor03_consent_custodian_residual.png"
+  },
+  {
+    "sourceRoom": "floor03_quarantine_enforcer_residual",
+    "destinationScene": "DA_F03_VoluntaryIsolationAdministrator",
+    "camera": "F03C_MainCamera",
+    "file": "floor03_quarantine_enforcer_residual.png"
+  },
+  {
+    "sourceRoom": "floor02_overload_residual",
+    "destinationScene": "DA_F02B_CoolingBackflow",
+    "camera": "F02B_MainCamera",
+    "file": "floor02_overload_residual.png"
+  },
+  {
+    "sourceRoom": "floor02_backflow_blocker_residual",
+    "destinationScene": "DA_F02_SealHeartAdministrator",
+    "camera": "F02C_MainCamera",
+    "file": "floor02_backflow_blocker_residual.png"
+  },
+  {
+    "sourceRoom": "floor01_identity_comparison_residual",
+    "destinationScene": "DA_F01B_ExitHandover",
+    "camera": "F01B_MainCamera",
+    "file": "floor01_identity_comparison_residual.png"
+  },
+  {
+    "sourceRoom": "floor01_exit_review_residual",
+    "destinationScene": "DA_F01_FinalApproval",
+    "camera": "F01C_MainCamera",
+    "file": "floor01_exit_review_residual.png"
+  },
+  {
+    "sourceRoom": "floor08_residue_isolation",
+    "destinationScene": "DA_F08_AdministratorObservatory",
+    "camera": "F08_iPad_MainCamera",
+    "file": "floor08_residue_isolation.png"
+  }
+]
