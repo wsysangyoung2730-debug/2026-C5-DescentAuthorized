@@ -2716,6 +2716,117 @@ extension RealitySceneController {
         print("C5_CAMERA_RESET \(report)")
     }
 
+    /// Captures the full attack arc through the same event entry point used by battle.
+    /// Kept separate from the quick asset check: one impact frame cannot reveal a bad return pose.
+    func runAttackMotionDiagnostics() async {
+        guard let id = requestedSceneID, let arView,
+              let actor = registry.entity(for: .enemyActor) else { return }
+        await environmentTask?.value
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("AttackMotionDiagnostics/\(id.rawValue)/\(graphicsQuality.rawValue)")
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        func joints(_ entity: Entity) -> [[Float]] {
+            var result: [[Float]] = []
+            if let model = entity as? ModelEntity {
+                result = model.jointTransforms.map {
+                    [$0.rotation.vector.x, $0.rotation.vector.y, $0.rotation.vector.z, $0.rotation.vector.w,
+                     $0.translation.x, $0.translation.y, $0.translation.z]
+                }
+            }
+            return result + entity.children.flatMap { joints($0) }
+        }
+        func startAttack(strong: Bool) {
+            presentCombat(events: [.combat(.enemyActionStarted(.attack(
+                name: strong ? "강공격 검증" : "공격 검증", damage: 12, isStrong: strong)))],
+                battleState: nil, reducedMotion: false)
+        }
+        func capture(_ name: String) async -> Bool {
+            await withCheckedContinuation { continuation in
+                arView.snapshot(saveToHDR: false) { image in
+                    guard let data = image?.jpegData(compressionQuality: 0.86) else {
+                        continuation.resume(returning: false); return
+                    }
+                    do {
+                        try data.write(to: directory.appendingPathComponent(name + ".jpg"), options: .atomic)
+                        continuation.resume(returning: true)
+                    } catch { continuation.resume(returning: false) }
+                }
+            }
+        }
+        actorMotion.prepareEncounter()
+        setDescentPresentation(.inactive, reducedMotion: false)
+        setRewardPresentation(.inactive, reducedMotion: false)
+        try? await Task.sleep(for: .milliseconds(500))
+        let initialRoot = actor.transform.matrix
+        var runs: [[String: Any]] = []
+        for strong in [false, true] {
+            guard !Task.isCancelled else { return }
+            actorMotion.prepareEncounter()
+            try? await Task.sleep(for: .milliseconds(180))
+            let baseline = joints(actor)
+            let name = strong ? "heavy" : "normal"
+            var frames: [[String: Any]] = []
+            let ready = await capture(name + "-00-ready")
+            frames.append(["phase": "ready", "file": name + "-00-ready.jpg", "snapshot": ready,
+                           "motion": actorMotion.attackDiagnostics, "joints": baseline])
+            let beginning = Date()
+            startAttack(strong: strong)
+            let samples: [(String, Double)] = strong
+                ? [("anticipation", 0.18), ("windup", 0.38), ("release", 0.54), ("impact", 0.62),
+                   ("followthrough", 0.78), ("recovery", 1.04), ("settled", 1.28), ("idle", 1.50)]
+                : [("anticipation", 0.12), ("windup", 0.28), ("release", 0.40), ("impact", 0.46),
+                   ("followthrough", 0.59), ("recovery", 0.78), ("settled", 0.96), ("idle", 1.20)]
+            for (index, sample) in samples.enumerated() {
+                let wait = sample.1 - Date().timeIntervalSince(beginning)
+                if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
+                guard !Task.isCancelled else { return }
+                let sampleTime = Date().timeIntervalSince(beginning)
+                let currentJoints = joints(actor)
+                let state = actorMotion.attackDiagnostics
+                let file = "\(name)-\(String(format: "%02d", index + 1))-\(sample.0)"
+                let available = await capture(file)
+                frames.append(["phase": sample.0, "targetSeconds": sample.1,
+                               "sampleSeconds": sampleTime, "snapshot": available, "file": file + ".jpg",
+                               "motion": state, "projectile": combatVFXRenderer.attackDiagnostics,
+                               "joints": currentJoints,
+                               "jointMotionObserved": currentJoints != baseline,
+                               "finiteJoints": currentJoints.flatMap { $0 }.allSatisfy(\.isFinite)])
+            }
+            runs.append(["attack": name, "frames": frames, "rootUnchanged": actor.transform.matrix == initialRoot])
+            try? await Task.sleep(for: .milliseconds(250))
+        }
+        // Uninterrupted playback is also recorded externally with simctl recordVideo.
+        // No snapshot work competes with animation during this second pass.
+        let playbackStart = Date().timeIntervalSince1970
+        for strong in [false, true, false, true] {
+            startAttack(strong: strong)
+            try? await Task.sleep(for: .seconds(strong ? 1.65 : 1.35))
+        }
+        startAttack(strong: false)
+        try? await Task.sleep(for: .milliseconds(220))
+        setActorMotionSuspended(true)
+        let paused = joints(actor)
+        try? await Task.sleep(for: .milliseconds(250))
+        let pauseHeld = paused == joints(actor)
+        setActorMotionSuspended(false)
+        try? await Task.sleep(for: .seconds(1.2))
+        actorMotion.setReducedMotion(true)
+        let reduced = joints(actor)
+        try? await Task.sleep(for: .milliseconds(250))
+        let reducedHeld = reduced == joints(actor)
+        actorMotion.setReducedMotion(false)
+        actorMotion.prepareEncounter()
+        let report: [String: Any] = ["scene": id.rawValue, "quality": graphicsQuality.rawValue,
+            "camera": activeCameraName ?? "", "jointCount": joints(actor).count,
+            "missingRoles": missingEntityRoles.map(\.rawValue), "runs": runs,
+            "continuousPlaybackStartEpoch": playbackStart, "continuousPlaybackCount": 4,
+            "pauseHeld": pauseHeld, "reducedMotionHeld": reducedHeld,
+            "restoredVisibility": actor.isEnabled, "complete": true]
+        try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+            .write(to: directory.appendingPathComponent("report.json"), options: .atomic)
+        print("C5_ATTACK_MOTION_DIAGNOSTICS \(id.rawValue) \(graphicsQuality.rawValue) complete")
+    }
+
     func runExpansionDiagnostics() async {
         guard let id = requestedSceneID, let arView else { return }
         let preset = requestedCameraPreset

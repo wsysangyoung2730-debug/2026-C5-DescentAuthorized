@@ -407,6 +407,10 @@ struct Floor9MotionPreview: View {
                     await controller.runFinalTourDiagnostics()
                     return
                 }
+                if ProcessInfo.processInfo.arguments.contains("--attack-motion-diagnostics") {
+                    await controller.runAttackMotionDiagnostics()
+                    return
+                }
                 if ProcessInfo.processInfo.arguments.contains("--ambient-diagnostics") {
                     await controller.runObservatoryAmbientDiagnostics()
                     return
