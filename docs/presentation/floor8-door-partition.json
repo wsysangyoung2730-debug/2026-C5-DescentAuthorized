@@ -1,0 +1,17 @@
+{
+  "gate": "F08B_DescentDoor",
+  "opening": {
+    "halfWidth": 0.1870946,
+    "bottom": 0.05500057,
+    "top": 0.73500764
+  },
+  "faces": {
+    "left": 131,
+    "right": 141,
+    "fixed": 1273
+  },
+  "surfaceAreaBefore": 0.9614298182292865,
+  "surfaceAreaAfter": 0.9614298182292862,
+  "closedSurfacePreserved": true,
+  "materialBindingsResolved": true
+}
