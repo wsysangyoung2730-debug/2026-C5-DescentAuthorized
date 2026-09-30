@@ -456,7 +456,52 @@ final class RealityCombatVFXRenderer {
         }
     }
 
+    private func makeLegacyGoldShieldAura(
+        for state: RealityShieldState,
+        registry: RealityEntityRegistry
+    ) -> Entity? {
+        guard let enemyAnchor,
+              let actorBounds = enemyBounds(relativeTo: enemyAnchor) else { return nil }
+
+        let tint: UIColor
+        let materialOpacity: Float
+        switch state {
+        case .general:
+            tint = UIColor(red: 0.2, green: 0.72, blue: 1, alpha: 1)
+            materialOpacity = 0.06
+        case .absolute:
+            tint = UIColor(red: 1, green: 0.7, blue: 0.16, alpha: 1)
+            materialOpacity = 0.075
+        case .none:
+            return nil
+        }
+        let actorSize = actorBounds.max - actorBounds.min
+        let horizontalDiameter = max(max(actorSize.x, actorSize.y) * 1.25, actorSize.z * 0.75)
+        let verticalDiameter = actorSize.z + 0.4
+
+        var material = UnlitMaterial(color: tint)
+        material.blending = .transparent(opacity: .init(scale: materialOpacity))
+        material.triangleFillMode = .lines
+        material.faceCulling = .back
+        material.writesDepth = false
+        material.readsDepth = true
+
+        let aura = ModelEntity(
+            mesh: .generateSphere(radius: 0.5),
+            materials: [material]
+        )
+        aura.name = "DA_RUNTIME_GOLD_ABSOLUTE_SHIELD"
+        aura.scale = SIMD3(horizontalDiameter, horizontalDiameter, verticalDiameter)
+        aura.position = SIMD3(
+            (actorBounds.min.x + actorBounds.max.x) * 0.5,
+            (actorBounds.min.y + actorBounds.max.y) * 0.5,
+            actorBounds.min.z + verticalDiameter * 0.44
+        )
+        return aura
+    }
+
     private func makeShieldAura(for state: RealityShieldState, registry: RealityEntityRegistry) -> Entity? {
+        if state == .absolute { return makeLegacyGoldShieldAura(for: state, registry: registry) }
         guard state != .none, let enemyAnchor,
               let bounds = enemyBounds(relativeTo: enemyAnchor) else { return nil }
         let id = CombatEffectCatalog.barrier(floor: effects.floor, absolute: state == .absolute)
