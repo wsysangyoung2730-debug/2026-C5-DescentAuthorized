@@ -210,6 +210,7 @@ final class RealitySceneController: ObservableObject {
         let auxiliaryURLs = auxiliaryAssetURLs(descriptor: descriptor, quality: graphicsQuality, bundle: bundle)
         prepared.prepareAuxiliary(urls: auxiliaryURLs)
         let rewards = rewardAssetURLs(descriptor: descriptor, quality: graphicsQuality, bundle: bundle)
+            + Array(RealityCombatEffectLibrary.resources(for: descriptor, bundle: bundle).values)
         let rewardResources: AnyPublisher<[URL: Entity], Error>
         if rewards.isEmpty {
             // Residual rooms have no reward device. Zip still needs one value
@@ -1349,6 +1350,8 @@ final class RealitySceneController: ObservableObject {
         cameraEntity = camera
         combatVFXRenderer.cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
+        combatVFXRenderer.effects.install(descriptor: descriptor, resources: rewards, bundle: bundle)
+        combatStatusRenderer.effects = combatVFXRenderer.effects
         if descriptor.sceneID.isExpansion, descriptor.entityNames[.rewardStand] != nil {
             do { try installExpansionRewards(bundle: bundle, resources: rewards) }
             catch { fail(sceneID: descriptor.sceneID, message: error.localizedDescription); return }
@@ -2211,6 +2214,7 @@ extension RealitySceneController {
 
     private func auxiliaryAssetURLs(descriptor: RealitySceneDescriptor, quality: GraphicsQuality, bundle: Bundle) -> [URL] {
         var urls = rewardAssetURLs(descriptor: descriptor, quality: quality, bundle: bundle)
+            + Array(RealityCombatEffectLibrary.resources(for: descriptor, bundle: bundle).values)
         if let actor = descriptor.actor,
            let url = bundle.url(forResource: actor.resourceName + (quality == .high ? "" : "_\(quality.rawValue)"),
                                 withExtension: "usdc", subdirectory: actor.resourceSubdirectory) {

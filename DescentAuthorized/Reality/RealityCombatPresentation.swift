@@ -176,6 +176,7 @@ struct RealityCombatPresentationMapper {
 
 @MainActor
 final class RealityCombatVFXRenderer {
+    let effects = RealityCombatEffectLibrary()
     private let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier ?? "DescentAuthorized",
         category: "RealityCombatVFX"
@@ -344,6 +345,7 @@ final class RealityCombatVFXRenderer {
         attackSocketJointIndices = []
         attackSocketOffset = .zero
         effectCache = [:]
+        effects.reset()
         preloadedHitEffects = false
         hitGeneration += 1
         hitTasks.values.forEach { $0.cancel() }
@@ -383,153 +385,70 @@ final class RealityCombatVFXRenderer {
         registry: RealityEntityRegistry,
         reducedMotion: Bool
     ) {
-        guard state != currentShieldState else {
-            if reducedMotion {
-                shieldTransitionTask?.cancel()
-                shieldTransitionTask = nil
-                if state == .none {
-                    shieldAuraEntity?.removeFromParent()
-                    shieldAuraEntity = nil
-                    repositionCurrentIntent()
-                } else {
-                    shieldAuraEntity?.components.set(OpacityComponent(opacity: 1))
-                }
-            }
-            return
-        }
-
+        guard state != currentShieldState else { return }
         shieldTransitionTask?.cancel()
-        shieldTransitionTask = nil
         shieldTransitionGeneration += 1
         let generation = shieldTransitionGeneration
         let previousAura = shieldAuraEntity
         currentShieldState = state
-
-        guard state != .none else {
-            guard let previousAura else { return }
+        if state == .none {
+            guard let aura = previousAura else { return }
             if reducedMotion {
-                previousAura.removeFromParent()
-                shieldAuraEntity = nil
-                repositionCurrentIntent()
+                aura.removeFromParent(); shieldAuraEntity = nil; repositionCurrentIntent()
                 return
             }
-
-            var dismissalTransform = previousAura.transform
-            dismissalTransform.scale *= 1.04
-            previousAura.move(
-                to: dismissalTransform,
-                relativeTo: previousAura.parent,
-                duration: 0.24,
-                timingFunction: .easeIn
-            )
-            shieldTransitionTask = Task { @MainActor [weak self, weak previousAura] in
-                guard let self, let previousAura else { return }
-                let steps = 6
-                for step in 1...steps {
-                    do {
-                        try await Task.sleep(for: .milliseconds(40))
-                    } catch {
-                        return
+            let scale = aura.scale
+            shieldTransitionTask = Task { @MainActor [weak self, weak aura] in
+                guard let self, let aura else { return }
+                do {
+                    try await self.animateEffect(duration: 0.24) { t in
+                        aura.scale = scale * (1 + t * 0.07)
+                        aura.components.set(OpacityComponent(opacity: 1 - t))
                     }
-                    guard generation == self.shieldTransitionGeneration else { return }
-                    previousAura.components.set(
-                        OpacityComponent(opacity: Float(steps - step) / Float(steps))
-                    )
-                }
-                previousAura.removeFromParent()
-                if self.shieldAuraEntity === previousAura {
-                    self.shieldAuraEntity = nil
-                }
+                } catch { return }
+                guard generation == self.shieldTransitionGeneration else { return }
+                aura.removeFromParent(); self.shieldAuraEntity = nil
                 self.repositionCurrentIntent()
-                self.shieldTransitionTask = nil
             }
             return
         }
-
         previousAura?.removeFromParent()
-        guard let aura = makeShieldAura(for: state, registry: registry),
-              let enemyAnchor else {
-            currentShieldState = .none
-            shieldAuraEntity = nil
+        guard let aura = makeShieldAura(for: state, registry: registry), let enemyAnchor else {
+            currentShieldState = .none; shieldAuraEntity = nil
             return
         }
-
         shieldAuraEntity = aura
         enemyAnchor.addChild(aura)
         repositionCurrentIntent()
-        guard !reducedMotion else {
-            aura.components.set(OpacityComponent(opacity: 1))
-            return
-        }
-
-        let finalTransform = aura.transform
-        var appearanceTransform = finalTransform
-        appearanceTransform.scale *= 0.9
-        aura.transform = appearanceTransform
-        aura.components.set(OpacityComponent(opacity: 0))
-        aura.move(
-            to: finalTransform,
-            relativeTo: enemyAnchor,
-            duration: 0.32,
-            timingFunction: .easeOut
-        )
+        guard !reducedMotion else { return }
+        let scale = aura.scale
         shieldTransitionTask = Task { @MainActor [weak self, weak aura] in
             guard let self, let aura else { return }
-            let steps = 8
-            for step in 1...steps {
-                do {
-                    try await Task.sleep(for: .milliseconds(40))
-                } catch {
-                    return
-                }
-                guard generation == self.shieldTransitionGeneration else { return }
-                aura.components.set(OpacityComponent(opacity: Float(step) / Float(steps)))
+            try? await self.animateEffect(duration: 0.32) { t in
+                let eased = 1 - pow(1 - t, 3)
+                aura.scale = scale * (0.88 + eased * 0.12)
+                aura.components.set(OpacityComponent(opacity: t))
             }
-            self.shieldTransitionTask = nil
         }
     }
 
-    private func makeShieldAura(
-        for state: RealityShieldState,
-        registry: RealityEntityRegistry
-    ) -> Entity? {
-        guard let enemyAnchor,
-              let actorBounds = enemyBounds(relativeTo: enemyAnchor) else { return nil }
-
-        let tint: UIColor
-        let materialOpacity: Float
-        switch state {
-        case .general:
-            tint = UIColor(red: 0.2, green: 0.72, blue: 1, alpha: 1)
-            materialOpacity = 0.06
-        case .absolute:
-            tint = UIColor(red: 1, green: 0.7, blue: 0.16, alpha: 1)
-            materialOpacity = 0.075
-        case .none:
-            return nil
+    private func makeShieldAura(for state: RealityShieldState, registry: RealityEntityRegistry) -> Entity? {
+        guard state != .none, let enemyAnchor,
+              let bounds = enemyBounds(relativeTo: enemyAnchor) else { return nil }
+        let id = CombatEffectCatalog.barrier(floor: effects.floor, absolute: state == .absolute)
+        guard let aura = effects.make(id, size: 1) else { return nil }
+        let native = aura.visualBounds(relativeTo: aura).extents
+        let diameter = max(max(bounds.extents.x, bounds.extents.y) * 1.20, bounds.extents.z * 0.82)
+        let height = bounds.extents.z * 0.87
+        aura.scale = SIMD3(diameter / max(0.01, native.x), diameter / max(0.01, native.y), height / max(0.01, native.z))
+        aura.position = bounds.center
+        aura.position.z = bounds.min.z + height * 0.51
+        // The gap between the physical panels faces the battle camera.
+        if let cameraEntity {
+            let camera = enemyAnchor.convert(position: .zero, from: cameraEntity)
+            let delta = camera - bounds.center
+            aura.orientation = simd_quatf(angle: atan2(delta.x, -delta.y), axis: [0, 0, 1])
         }
-        let actorSize = actorBounds.max - actorBounds.min
-        let horizontalDiameter = max(max(actorSize.x, actorSize.y) * 1.25, actorSize.z * 0.75)
-        let verticalDiameter = actorSize.z + 0.4
-
-        var material = UnlitMaterial(color: tint)
-        material.blending = .transparent(opacity: .init(scale: materialOpacity))
-        material.triangleFillMode = .lines
-        material.faceCulling = .back
-        material.writesDepth = false
-        material.readsDepth = true
-
-        let aura = ModelEntity(
-            mesh: .generateSphere(radius: 0.5),
-            materials: [material]
-        )
-        aura.name = "DA_RUNTIME_SHIELD_AURA"
-        aura.scale = SIMD3(horizontalDiameter, horizontalDiameter, verticalDiameter)
-        aura.position = SIMD3(
-            (actorBounds.min.x + actorBounds.max.x) * 0.5,
-            (actorBounds.min.y + actorBounds.max.y) * 0.5,
-            actorBounds.min.z + verticalDiameter * 0.44
-        )
         return aura
     }
 
@@ -1273,27 +1192,19 @@ extension RealityCombatVFXRenderer {
         guard !reducedMotion, let root, let cameraEntity,
               let bounds = enemyBounds(relativeTo: root) else { return }
 
-        let color: UIColor
-        if scheduled { color = UIColor(red: 1, green: 0.52, blue: 0.12, alpha: 1) }
-        else if strong { color = UIColor(red: 1, green: 0.24, blue: 0.18, alpha: 1) }
-        else { color = UIColor(red: 0.70, green: 0.42, blue: 1, alpha: 1) }
-        var material = UnlitMaterial(color: color)
-        material.blending = .transparent(opacity: .init(scale: 0.85))
+        let selected = CombatEffectCatalog.projectile(floor: effects.floor, action: action,
+            executionOnly: scheduled && effects.floor == 1)
+        let effectID: CombatEffectID = effects.floor == 2 && CombatEffectCatalog.isVerdict(action) ? .verdictStamp : selected
+        let size = min(1.15, max(0.48, bounds.extents.z * (strong ? 0.27 : 0.21)))
+        let payload = effects.observationResidual
+            ? effects.make("glass", size: size * 0.65) : effects.make(effectID, size: size)
+        guard let core = payload else { return }
         let strike = Entity()
         strike.name = "DA_ENEMY_STRIKE"
-        let core = ModelEntity(mesh: .generateSphere(radius: 1), materials: [material])
-        core.scale = SIMD3(repeating: 0.035)
         strike.addChild(core)
-        var trail: [ModelEntity] = []
-        for index in 0..<4 {
-            let spark = ModelEntity(mesh: .generateSphere(radius: 1), materials: [material])
-            let radius: Float = 0.045 - Float(index) * 0.007
-            spark.scale = SIMD3(radius, radius, 0.10)
-            spark.components.set(OpacityComponent(opacity: 0.40 - Float(index) * 0.07))
-            strike.addChild(spark)
-            spark.isEnabled = false
-            trail.append(spark)
-        }
+        let alignment = simd_quatf(from: simd_normalize(RealityCombatEffectLibrary.forward(effectID)), to: [0, 0, 1])
+        core.orientation = alignment
+        core.scale = SIMD3(repeating: 0.35)
         let fallbackStart = SIMD3<Float>(
             bounds.center.x + bounds.extents.x * 0.20,
             bounds.min.y - 0.12,
@@ -1336,8 +1247,10 @@ extension RealityCombatVFXRenderer {
                 if elapsed < launch {
                     strike.position = self.attackOrigin(relativeTo: root, fallback: start)
                     let charge = Float(elapsed / launch)
-                    core.scale = SIMD3(repeating: 0.035 + charge * 0.065)
-                    trail.forEach { $0.isEnabled = false }
+                    let eased = charge * charge * (3 - 2 * charge)
+                    core.scale = SIMD3(repeating: 0.35 + eased * 0.65)
+                    core.orientation = simd_quatf(angle: (1 - eased) * -0.35, axis: [0, 0, 1]) * alignment
+                    strike.components.set(OpacityComponent(opacity: min(1, charge * 4)))
                 } else {
                     if releasedFrom == nil {
                         let origin = self.attackOrigin(relativeTo: root, fallback: strike.position)
@@ -1350,11 +1263,10 @@ extension RealityCombatVFXRenderer {
                     let t = Float(min(1, (elapsed - launch) / flight))
                     let origin = releasedFrom ?? start
                     strike.position = origin + (releasedToward - origin) * t
-                    core.scale = SIMD3(0.055, 0.055, strong ? 0.24 : 0.17)
-                    for (index, spark) in trail.enumerated() {
-                        spark.isEnabled = true
-                        spark.position.z = -Float(index + 1) * 0.15
-                    }
+                    let spin: Float = effectID == .signatureStroke ? 1.15 : (effectID == .isolationRing ? 0.65 : 0.16)
+                    core.orientation = simd_quatf(angle: t * spin, axis: [0, 0, 1]) * alignment
+                    let contraction: Float = effectID == .memoryCompression || effectID == .isolationRing ? 1 - 0.25 * t : 1
+                    core.scale = SIMD3(repeating: contraction)
                     // Disappear just in front of the camera instead of clipping through it.
                     strike.components.set(OpacityComponent(opacity: min(1, (1 - t) * 7)))
                 }
@@ -1366,6 +1278,7 @@ extension RealityCombatVFXRenderer {
     var attackDiagnostics: [String: Any] {
         ["elapsed": enemyAttackElapsed, "released": enemyAttackReleased,
          "hasStrike": enemyAttackEntity != nil,
+         "effect": enemyAttackEntity?.children.first?.name ?? "none",
          "socketModel": attackSocketModel?.name ?? "missing",
          "socketEntity": attackSocketEntity?.name ?? "none",
          "socketJoints": attackSocketJointIndices.compactMap { index -> String? in
@@ -1538,6 +1451,7 @@ extension RealityCombatVFXRenderer {
 /// Persistent status visuals are reconstructed from BattleState, including checkpoint restores.
 @MainActor
 final class RealityCombatStatusRenderer {
+    var effects: RealityCombatEffectLibrary?
     private static let segmentMesh = MeshResource.generateBox(size: 1)
     private static var ringMeshes: [Float: MeshResource] = [:]
     private struct Entry {
@@ -1554,6 +1468,7 @@ final class RealityCombatStatusRenderer {
     private var tickerGeneration: UInt64 = 0
     private var reduced = false
     private var suspended = false
+    private var effectTime = 0.0
 
     func reset() {
         tickerGeneration &+= 1
@@ -1570,8 +1485,7 @@ final class RealityCombatStatusRenderer {
 
     func present(_ state: BattleState?, registry: RealityEntityRegistry, reducedMotion: Bool) {
         reduced = reducedMotion
-        guard registry.descriptor?.sceneID.isExpansion == true,
-              let state, state.phase != .victory, state.phase != .defeat,
+        guard let state, state.phase != .victory, state.phase != .defeat,
               state.phase != .preparing,
               let anchor = registry.entity(for: .enemySpawn),
               let actor = registry.entity(for: .enemyActor) else { reset(); return }
@@ -1587,9 +1501,9 @@ final class RealityCombatStatusRenderer {
         let side = min(1.65, max(0.7, (b.max.x - b.min.x) * 0.55))
         let back = SIMD3<Float>(center.x, b.max.y + 0.12, center.z + height * 0.08)
         let front = SIMD3<Float>(center.x, b.min.y - 0.16, center.z)
-        let now = ProcessInfo.processInfo.systemUptime
+        let now = effectTime
         var wanted: Set<String> = []
-        func add(_ key: String, position: SIMD3<Float>, color: UIColor, urgent: Bool = false, make: () -> Entity) {
+        func add(_ key: String, position: SIMD3<Float>, color: UIColor, urgent: Bool = false, make: () -> Entity?) {
             wanted.insert(key)
             if var existing = entries[key] {
                 existing.retiringAt = nil
@@ -1599,87 +1513,83 @@ final class RealityCombatStatusRenderer {
                 entries[key] = existing
                 return
             }
-            let node = make(); node.position = position; node.name = "DA_STATUS_" + key
+            guard let node = make() else { return }
+            node.position = position; node.name = "DA_STATUS_" + key
             root.addChild(node)
-            node.components.set(OpacityComponent(opacity: reduced ? 0.55 : 0))
+            node.components.set(OpacityComponent(opacity: reduced ? 0.85 : 0))
             entries[key] = Entry(entity: node, base: position, born: now, urgent: urgent)
         }
         let e = state.expansion
-        if e.enemyAmplification != nil {
-            add("amplify", position: back, color: .orange) {
-                let node = Entity()
-                self.ring(on: node, radius: 0.56, color: .orange)
-                self.ring(on: node, radius: 0.7, color: .orange)
-                for x: Float in [-0.3, 0, 0.3] {
-                    self.line(on: node, from: [x,0,-0.3], to: [x,0,0.3], color: .orange)
-                    self.line(on: node, from: [x-0.08,0,0.18], to: [x,0,0.3], color: .orange)
+        let deviceSize = min(0.9, max(0.5, height * 0.22))
+        if effects?.floor == 8, let intent = state.currentEnemyIntent {
+            let focused: Bool
+            switch intent {
+            case .telegraph, .attack(_, _, true): focused = true
+            default: focused = false
+            }
+            if focused {
+                add("focus", position: front + [side * 0.7, -0.05, height * 0.25], color: .cyan) {
+                    self.effects?.make(.focusLens, size: deviceSize)
                 }
-                return node
+            }
+        }
+        if e.enemyAmplification != nil || e.flatAmplification > 0 {
+            add("amplify", position: back + [side, 0, height * 0.15], color: .orange) {
+                self.effects?.make("amplify", size: deviceSize)
             }
         }
         if e.retainsCorrectionBarrier && state.enemy.normalBarrier > 0 {
-            add("correction", position: front, color: .cyan) {
-                let node = Entity()
-                for i in 0..<4 {
-                    let a = Float(i) * .pi / 2
-                    let v = SIMD3<Float>(cos(a),0,sin(a))
-                    self.line(on: node, from: v * 0.65, to: v * 0.18, color: .cyan)
-                }
-                return node
+            add("correction", position: front + [side, 0, height * 0.12], color: .cyan) {
+                self.effects?.make(.axisAnchors, size: deviceSize)
             }
         }
         if let value = e.enemyPreservation, value.expiresAfterTurn >= state.turnNumber {
-            add("preservation", position: front, color: .purple) {
-                let node = Entity()
-                for i in 0..<8 {
-                    let a = Float(i) * .pi / 4
-                    let piece = self.segment(from: [0,0,-0.08], to: [0,0,0.08], color: .init(red: 0.8, green: 0.7, blue: 0.95, alpha: 1), thickness: 0.055)
-                    piece.position = [cos(a)*0.52,0,sin(a)*0.7]
-                    piece.orientation = simd_quatf(angle: -a, axis: [0,1,0])
-                    node.addChild(piece)
-                }
-                return node
+            add("preservation", position: center + [0, 0, -height * 0.12], color: .purple) {
+                self.effects?.make(.preservationBand, size: max(height * 0.85, side * 2))
             }
         }
         if let value = e.outputReduction, value.expiresAfterTurn >= state.turnNumber {
-            add("outputReduction", position: front + [0,0,0.25], color: .cyan) {
-                let node = Entity()
-                self.ring(on: node, radius: 0.3, color: .cyan)
-                self.line(on: node, from: [-0.24,0,0.24], to: [0.24,0,-0.24], color: .cyan)
-                return node
+            add("outputReduction", position: front + [-side, 0, -height * 0.18], color: .purple) {
+                self.effects?.make(.suppressionBand, size: deviceSize)
             }
         }
         if let record = e.copyRecord {
-            add("record-\(record.spell.rawValue)-\(record.reused)", position: front + [-side,0,height*0.22], color: .purple, urgent: record.reused) {
+            add("record-\(record.spell.rawValue)-\(record.reused)", position: front + [-side, 0, height * 0.22], color: .purple, urgent: record.reused) {
                 let node = Entity()
-                self.ring(on: node, radius: 0.33, color: .purple)
+                let frame = self.effects?.floor == 1
+                    ? self.effects?.make(.identityScanner, size: deviceSize)
+                    : self.effects?.make("record", size: deviceSize)
+                guard let frame else { return nil }
+                node.addChild(frame)
                 for stroke in SpellCatalog.spell(record.spell).glyph.strokes {
                     let points = stroke.referencePath
                     for i in 1..<points.count {
-                        self.line(on: node, from: [Float(points[i-1].x-0.5)*0.45,0,Float(0.5-points[i-1].y)*0.45], to: [Float(points[i].x-0.5)*0.45,0,Float(0.5-points[i].y)*0.45], color: .purple)
+                        self.line(on: node,
+                            from: [Float(points[i-1].x-0.5)*deviceSize*0.48, -0.14, Float(0.5-points[i-1].y)*deviceSize*0.48],
+                            to: [Float(points[i].x-0.5)*deviceSize*0.48, -0.14, Float(0.5-points[i].y)*deviceSize*0.48], color: .purple)
                     }
                 }
                 return node
             }
         }
         if let through = e.mimicProhibitionThroughEnemyTurn, through >= state.turnNumber {
-            add("mimicProhibition", position: front + [-side,0,height*0.22], color: .systemPurple) {
-                let node = Entity()
-                self.ring(on: node, radius: 0.3, color: .systemPurple)
-                self.line(on: node, from: [-0.23,0,-0.23], to: [0.23,0,0.23], color: .systemPurple)
-                self.line(on: node, from: [-0.23,0,0.23], to: [0.23,0,-0.23], color: .systemPurple)
-                return node
+            add("mimicProhibition", position: front + [-side, 0, -height * 0.05], color: .systemPurple) {
+                self.effects?.make(.suppressionBand, size: deviceSize)
+            }
+        }
+        if e.lockedSpells.values.contains(where: { $0 >= state.turnNumber }) {
+            add("cardSeal", position: front + [side, 0, -height * 0.23], color: .purple) {
+                self.effects?.make("seal", size: deviceSize * 0.8)
             }
         }
         let reservations = e.scheduledDamage.sorted { ($0.dueEnemyTurn, $0.id) < ($1.dueEnemyTurn, $1.id) }
         for (index, reservation) in reservations.prefix(3).enumerated() {
             let urgent = reservation.dueEnemyTurn <= state.turnNumber
             let color: UIColor = urgent ? .systemRed : (reservation.wasDelayed ? .cyan : .orange)
-            add("reservation-\(reservation.id)-\(reservation.dueEnemyTurn)-\(urgent)", position: front + [side,0,height*0.25-Float(index)*0.48], color: color, urgent: urgent) {
-                let node = Entity()
-                let points: [SIMD3<Float>] = [[-0.17,0,0.2],[0.17,0,0.2],[-0.17,0,-0.2],[0.17,0,-0.2],[-0.17,0,0.2]]
-                for i in 1..<points.count { self.line(on: node, from: points[i-1], to: points[i], color: color) }
-                if reservation.wasDelayed { self.ring(on: node, radius: 0.25, color: color) }
+            add("reservation-\(reservation.id)-\(reservation.dueEnemyTurn)-\(urgent)",
+                position: front + [side, 0, height * 0.3 - Float(index) * deviceSize * 0.72], color: color, urgent: urgent) {
+                guard let node = self.effects?.make(urgent ? "execution" : "reservation", size: deviceSize * 0.65) else { return nil }
+                if reservation.wasDelayed { self.ring(on: node, radius: deviceSize * 0.38, color: color) }
                 return node
             }
         }
@@ -1696,13 +1606,17 @@ final class RealityCombatStatusRenderer {
     }
 
     private func updateTicker() {
-        if reduced || suspended || entries.isEmpty {
+        if suspended {
+            tickerGeneration &+= 1; ticker?.cancel(); ticker = nil
+            return
+        }
+        if reduced || entries.isEmpty {
             tickerGeneration &+= 1
             ticker?.cancel(); ticker = nil
             for key in Array(entries.keys) {
                 guard let entry = entries[key] else { continue }
                 if entry.retiringAt != nil { entry.entity.removeFromParent(); entries[key] = nil }
-                else { entry.entity.components.set(OpacityComponent(opacity: entry.urgent ? 0.7 : 0.5)) }
+                else { entry.entity.components.set(OpacityComponent(opacity: entry.urgent ? 1 : 0.85)) }
             }
             return
         }
@@ -1712,21 +1626,28 @@ final class RealityCombatStatusRenderer {
             defer {
                 if self?.tickerGeneration == generation { self?.ticker = nil }
             }
+            var previous = ProcessInfo.processInfo.systemUptime
             while !Task.isCancelled {
                 guard let self else { return }
-                let now = ProcessInfo.processInfo.systemUptime
+                let clock = ProcessInfo.processInfo.systemUptime
+                self.effectTime += max(0, clock - previous)
+                previous = clock
+                let now = self.effectTime
                 for key in Array(self.entries.keys) {
                     guard let e = self.entries[key] else { continue }
                     if let retired = e.retiringAt {
                         let t = min(1, Float((now-retired)/0.3))
-                        e.entity.components.set(OpacityComponent(opacity: (1-t)*0.5))
+                        e.entity.components.set(OpacityComponent(opacity: (1-t)*0.85))
                         e.entity.scale = SIMD3(repeating: 1-t*0.4)
                         e.entity.position = e.base + ((e.destination ?? (e.base + SIMD3(0,0,-0.1)))-e.base)*t
                         if t == 1 { e.entity.removeFromParent(); self.entries[key] = nil }
                     } else {
                         let fade = min(1, Float((now-e.born)/0.25))
                         let pulse = Float(sin((now-e.born)*(e.urgent ? 3 : 1.5)))
-                        e.entity.components.set(OpacityComponent(opacity: fade * ((e.urgent ? 0.65 : 0.42) + pulse*0.08)))
+                        if key == "correction" || key == "preservation" {
+                            e.entity.orientation = simd_quatf(angle: Float(now - e.born) * 0.12, axis: [0, 0, 1])
+                        }
+                        e.entity.components.set(OpacityComponent(opacity: fade * ((e.urgent ? 0.93 : 0.85) + pulse*0.06)))
                     }
                 }
                 if self.entries.isEmpty { return }
