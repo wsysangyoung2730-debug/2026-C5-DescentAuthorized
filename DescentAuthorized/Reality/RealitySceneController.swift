@@ -3254,10 +3254,21 @@ extension RealitySceneController {
             progressionVFXRenderer.prepareMiddleDoorPreview(sceneID: id)
             let doorFrame = registry.entity(named: "F08B_Door_Frame")
             let frameClosed = doorFrame?.transform.matrix
+            let platformRoles: [RealityEntityRole] = [.descentStele, .descentPedestal]
+            let platforms = platformRoles.compactMap { registry.entity(for: $0) }
+            let platformBase = platforms.map { $0.transform.matrix }
+            var stable = true
+            for state: RealityDescentPresentationState in [.ready, .drawing, .failed] {
+                setDescentPresentation(state, reducedMotion: false)
+                try? await Task.sleep(for: .milliseconds(250))
+                stable = stable && platformBase == platforms.map { $0.transform.matrix }
+            }
+            lifecycle["fixedInputPlatforms"] = stable
             setDescentPresentation(.approved, reducedMotion: false)
             try? await Task.sleep(for: .milliseconds(800))
             await capture("door-opening")
             lifecycle["doorOpeningCompleted"] = await waitForDescentDoorOpening()
+            lifecycle["fixedPlatformsAfterApproval"] = platformBase == platforms.map { $0.transform.matrix }
             setDescentPresentation(.open, reducedMotion: false)
             try? await Task.sleep(for: .milliseconds(100))
             await capture("door-open")

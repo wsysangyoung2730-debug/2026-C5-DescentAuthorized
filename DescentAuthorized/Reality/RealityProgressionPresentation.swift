@@ -57,6 +57,7 @@ final class RealityProgressionVFXRenderer {
     private var doorState: RealityDescentPresentationState = .inactive
     private var doorPanels: [(entity: Entity, closed: Transform, travel: Float)] = []
     private var doorPortal: Entity?
+    private var rectangularPortalMeshes = Set<ObjectIdentifier>()
     private var doorPortalClosed: Transform?
     private var doorReducedMotion = false
     private var isMiddleDoor = false
@@ -79,6 +80,7 @@ final class RealityProgressionVFXRenderer {
         irisLens = nil
         irisBlades.removeAll()
         doorPortal = nil
+        rectangularPortalMeshes.removeAll()
         doorPortalClosed = nil
         authoredRewardPlayer?.cancel()
         authoredRewardPlayer = nil
@@ -143,6 +145,26 @@ final class RealityProgressionVFXRenderer {
         }
         func apply(_ entity: Entity) {
             if var model = entity.components[ModelComponent.self] {
+                if !rectangularPortalMeshes.contains(ObjectIdentifier(entity)) {
+                    let bounds = model.mesh.bounds
+                    let axes = [0, 1, 2].sorted { bounds.extents[$0] > bounds.extents[$1] }
+                    let u = axes[0], v = axes[1]
+                    var vertices = [SIMD3<Float>]()
+                    for corner: SIMD2<Float> in [[0, 0], [1, 0], [1, 1], [0, 1]] {
+                        var point = bounds.center
+                        point[u] = bounds.min[u] + corner.x * bounds.extents[u]
+                        point[v] = bounds.min[v] + corner.y * bounds.extents[v]
+                        vertices.append(point)
+                    }
+                    var mesh = MeshDescriptor(name: "RectangularDescentVeil")
+                    mesh.positions = MeshBuffers.Positions(vertices)
+                    mesh.textureCoordinates = MeshBuffers.TextureCoordinates([[0, 0], [1, 0], [1, 1], [0, 1]])
+                    mesh.primitives = .triangles([0, 1, 2, 0, 2, 3])
+                    if let rectangle = try? MeshResource.generate(from: [mesh]) {
+                        model.mesh = rectangle
+                        rectangularPortalMeshes.insert(ObjectIdentifier(entity))
+                    }
+                }
                 model.materials = [material]
                 entity.components.set(model)
             }
@@ -202,21 +224,7 @@ final class RealityProgressionVFXRenderer {
         restore(.descentStele, in: registry)
         restore(.descentPedestal, in: registry)
 
-        // The 5F stele and input plate are fixed architecture. Only the door
-        // leaves open; input/approval feedback must not resize or shake the props.
-        guard registry.descriptor?.sceneID != .floor05OriginalMemoryAdministrator,
-              !reducedMotion else { return }
-        switch state {
-        case .drawing:
-            pulse(.descentPedestal, scale: 1.025, duration: 0.18, registry: registry)
-        case .failed:
-            shake(.descentPedestal, registry: registry, generation: generation)
-        case .approved:
-            pulse(.descentPedestal, scale: 1.07, duration: 0.28, registry: registry)
-            pulse(.descentStele, scale: 1.025, duration: 0.28, registry: registry)
-        case .inactive, .ready, .open:
-            break
-        }
+        // Input feedback belongs to the glyph UI; architecture stays at its authored pose.
     }
 
     func presentReward(
@@ -330,6 +338,7 @@ final class RealityProgressionVFXRenderer {
         irisLens = nil
         irisBlades.removeAll()
         doorPortal = nil
+        rectangularPortalMeshes.removeAll()
         doorPortalClosed = nil
         authoredRewardPlayer?.cancel()
         authoredRewardPlayer = nil

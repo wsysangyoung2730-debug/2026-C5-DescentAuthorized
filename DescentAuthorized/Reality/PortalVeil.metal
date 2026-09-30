@@ -30,7 +30,7 @@ static float veilMist(float2 p) {
                          veilMist(p*1.8 + float2(-time*.35, time*.6)));
     float cloud = veilMist(p*2.2 + warp*2.4 + float2(0, -time));
     float ribbon = pow(1.0 - abs(sin(p.y*4.0 + warp.x*5.0 + time)), 5.0);
-    float depth = exp(-dot(p*float2(1.0,.65), p*float2(1.0,.65))*1.1);
+    float depth = 0.8 + 0.2 * cloud; // Fill the rectangular aperture without an elliptical vignette.
     float edge = smoothstep(0.0, .14, min(min(uv.x, 1.0-uv.x), min(uv.y, 1.0-uv.y)));
     float3 charcoal = float3(.009, .012, .018);
     float3 indigo = float3(.105, .080, .155);
