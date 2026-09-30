@@ -2826,12 +2826,16 @@ extension RealitySceneController {
         startAttack(strong: false)
         try? await Task.sleep(for: .milliseconds(220))
         setActorMotionSuspended(true)
+        try? await Task.sleep(for: .milliseconds(100))
         let paused = joints(actor)
         try? await Task.sleep(for: .milliseconds(250))
         let pauseHeld = paused == joints(actor)
         setActorMotionSuspended(false)
         try? await Task.sleep(for: .seconds(1.2))
         actorMotion.setReducedMotion(true)
+        // The renderer applies the new frozen idle pose on the next frame.
+        // Compare two settled poses, not the outgoing animated pose.
+        try? await Task.sleep(for: .milliseconds(100))
         let reduced = joints(actor)
         try? await Task.sleep(for: .milliseconds(250))
         let reducedHeld = reduced == joints(actor)
