@@ -1,5 +1,20 @@
 import Foundation
 
+/// Shared by authored poses, the released projectile, and damage presentation.
+struct EnemyAttackTiming: Equatable, Sendable {
+    let release: TimeInterval
+    let impact: TimeInterval
+    let settled: TimeInterval
+    let duration: TimeInterval
+
+    static let normal = Self(release: 0.40, impact: 0.46, settled: 0.96, duration: 1.0)
+    static let heavy = Self(release: 0.54, impact: 0.62, settled: 1.28, duration: 1.3)
+
+    static func forAttack(strong: Bool) -> Self { strong ? .heavy : .normal }
+    var flightDuration: TimeInterval { impact - release }
+    var recoveryDuration: TimeInterval { duration - impact }
+}
+
 /// Timing belongs to presentation; combat and saving still resolve synchronously.
 struct CombatPresentationTimeline {
     static let playerImpactDelay: TimeInterval = 0.20
@@ -8,8 +23,8 @@ struct CombatPresentationTimeline {
     static let dissolveDuration: TimeInterval = 0.40
     static let deathDuration: TimeInterval = deathPoseDuration + dissolveDuration
 
-    static func enemyImpactDelay(strong: Bool) -> TimeInterval { strong ? 0.62 : 0.46 }
-    static func enemyRecovery(strong: Bool) -> TimeInterval { strong ? 0.68 : 0.54 }
+    static func enemyImpactDelay(strong: Bool) -> TimeInterval { EnemyAttackTiming.forAttack(strong: strong).impact }
+    static func enemyRecovery(strong: Bool) -> TimeInterval { EnemyAttackTiming.forAttack(strong: strong).recoveryDuration }
 
     static func enemyActionDuration(_ action: EnemyAction) -> TimeInterval {
         let cues = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])

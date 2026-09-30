@@ -2,6 +2,38 @@ import XCTest
 @testable import DescentAuthorizedCore
 
 final class CombatPresentationTimelineTests: XCTestCase {
+    func testAuthoredAttackReleaseImpactAndRecoveryMatchEveryRuntimeActor() throws {
+        let repository = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        let actors = repository.appendingPathComponent("DescentAuthorized/Resources/Reality/Actors")
+        let manifests = try FileManager.default.contentsOfDirectory(at: actors, includingPropertiesForKeys: nil)
+            .map { $0.appendingPathComponent("motion.json") }
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
+        XCTAssertEqual(manifests.count, EnemyID.allCases.count)
+        for url in manifests {
+            let json = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+            let clips = try XCTUnwrap(json["clips"] as? [String: [String: Any]])
+            for (name, timing) in [("attack", EnemyAttackTiming.normal), ("heavyAttack", .heavy)] {
+                let clip = try XCTUnwrap(clips[name], "\(url.path): \(name)")
+                let release = try XCTUnwrap(clip["release"] as? Double)
+                let impact = try XCTUnwrap(clip["impact"] as? Double)
+                let settled = try XCTUnwrap(clip["settledAt"] as? Double)
+                let duration = try XCTUnwrap(clip["duration"] as? Double)
+                let start = try XCTUnwrap(clip["start"] as? Double)
+                let end = try XCTUnwrap(clip["end"] as? Double)
+                let label = "\(url.deletingLastPathComponent().lastPathComponent) \(name)"
+                XCTAssertEqual(release, timing.release, accuracy: 0.001, label)
+                XCTAssertEqual(impact, timing.impact, accuracy: 0.001, label)
+                XCTAssertEqual(settled, timing.settled, accuracy: 0.001, label)
+                XCTAssertEqual(duration, timing.duration, accuracy: 0.001, label)
+                XCTAssertEqual(end - start, duration, accuracy: 0.001, label)
+                XCTAssertGreaterThan(release, 0, label)
+                XCTAssertLessThan(release, impact, label)
+                XCTAssertLessThan(impact, settled, label)
+                XCTAssertLessThan(settled, duration, label)
+            }
+        }
+    }
+
     func testDeathDroopsThenFallsBeforeDissolvingWithoutUnboundedAngles() {
         let start = GroundedDeathPose.sample(elapsed: 0, reducedMotion: false)
         XCTAssertEqual(start.forwardTilt, 0)
