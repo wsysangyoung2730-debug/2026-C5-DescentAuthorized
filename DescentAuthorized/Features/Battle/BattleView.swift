@@ -1315,6 +1315,8 @@ struct BattleView: View {
             return "관리자 행동 · \(action.name)"
         case .enemyActionCancelled:
             return "관리자 행동 취소"
+        case .scheduledDamageExecuted:
+            return nil // The accompanying expansion message already describes execution.
         case .battleStarted:
             return "전투 개시"
         case .victory:
@@ -1410,6 +1412,7 @@ struct BattleView: View {
                 events: events,
                 battleState: gameSession.battleState,
                 reducedMotion: appSettings.reducedMotion,
+                enemyActionPresentation: gameSession.currentEnemyActionPresentation,
                 onProjectileLaunch: {
                     gameFeedback.playProjectileLaunch(settings: appSettings.settings)
                 },
@@ -1464,8 +1467,8 @@ struct BattleView: View {
             case .erasureZoneAdded:
                 banner = ("말소 구역 발생", .red)
             case let .enemyActionStarted(action):
-                strongAttack = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
-                    .contains(.enemyAttack(strong: true))
+                strongAttack = (gameSession.currentEnemyActionPresentation
+                    ?? EnemyActionPresentation(action: action, state: gameSession.battleState)).attackStrength ?? false
                 enemyAttackIsStrong = strongAttack
                 enemyActionArtwork = action.statusArtworkID
                 showEnemyAction(action.name)

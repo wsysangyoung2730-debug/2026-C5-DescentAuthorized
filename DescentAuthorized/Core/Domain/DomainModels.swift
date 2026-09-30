@@ -398,6 +398,8 @@ enum BattleEvent: Equatable, Sendable {
     case erasureZoneAdded(ErasureZone)
     case enemyActionStarted(EnemyAction)
     case enemyActionCancelled
+    /// Execution is distinct from registration, cancellation, and delayed reservations.
+    case scheduledDamageExecuted(name: String, damage: Int)
     case expansionChanged(message: String)
     case healingApplied(amount: Int, remainingHP: Int)
     case victory(EnemyID)

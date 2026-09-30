@@ -1136,6 +1136,7 @@ final class RealitySceneController: ObservableObject {
         events: [DemoSessionEvent],
         battleState: BattleState?,
         reducedMotion: Bool,
+        enemyActionPresentation: EnemyActionPresentation? = nil,
         onProjectileLaunch: (() -> Void)? = nil,
         onProjectileImpact: (() -> Void)? = nil
     ) {
@@ -1152,7 +1153,7 @@ final class RealitySceneController: ObservableObject {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
         actorMotion.setReducedMotion(reducedMotion)
-        actorMotion.present(events, state: battleState)
+        actorMotion.present(events, state: battleState, enemyActionPresentation: enemyActionPresentation)
         observatoryAmbientMotion.setReducedMotion(reducedMotion)
         let cues = RealityCombatPresentationMapper.cues(for: events, battleState: battleState)
         guard registry.root != nil else {
@@ -1165,7 +1166,8 @@ final class RealitySceneController: ObservableObject {
             registry: registry,
             reducedMotion: reducedMotion
         )
-        combatVFXRenderer.presentEnemyAction(events, state: battleState, reducedMotion: reducedMotion)
+        combatVFXRenderer.presentEnemyAction(events, state: battleState, reducedMotion: reducedMotion,
+                                            enemyActionPresentation: enemyActionPresentation)
     }
 
     func synchronizeCombatState(_ battleState: BattleState?, reducedMotion: Bool) {
@@ -2798,10 +2800,29 @@ extension RealitySceneController {
         // Uninterrupted playback is also recorded externally with simctl recordVideo.
         // No snapshot work competes with animation during this second pass.
         let playbackStart = Date().timeIntervalSince1970
+        var continuousSamples: [[String: Any]] = []
         for strong in [false, true, false, true] {
             startAttack(strong: strong)
-            try? await Task.sleep(for: .seconds(strong ? 1.65 : 1.35))
+            let start = Date()
+            while Date().timeIntervalSince(start) < (strong ? 1.65 : 1.35) {
+                try? await Task.sleep(for: .milliseconds(40))
+                continuousSamples.append(["strong": strong,
+                    "sincePlaybackStart": Date().timeIntervalSince1970 - playbackStart,
+                    "motion": actorMotion.attackDiagnostics,
+                    "projectile": combatVFXRenderer.attackDiagnostics])
+            }
         }
+        let wait = EnemyAction.expansion(name: "예약 집행 검증", action: .wait)
+        let execution = EnemyActionPresentation(action: wait, resolvedEvents: [
+            .combat(.scheduledDamageExecuted(name: "예약 집행 검증", damage: 32))])
+        presentCombat(events: [.combat(.enemyActionStarted(wait))], battleState: nil,
+                      reducedMotion: false, enemyActionPresentation: execution)
+        try? await Task.sleep(for: .milliseconds(350))
+        let scheduledMotion = actorMotion.attackDiagnostics["currentMotion"] as? String ?? "missing"
+        let scheduledWindup = await capture("scheduled-windup")
+        try? await Task.sleep(for: .milliseconds(200))
+        let scheduledImpact = await capture("scheduled-impact")
+        try? await Task.sleep(for: .seconds(1))
         startAttack(strong: false)
         try? await Task.sleep(for: .milliseconds(220))
         setActorMotionSuspended(true)
@@ -2820,6 +2841,10 @@ extension RealitySceneController {
             "camera": activeCameraName ?? "", "jointCount": joints(actor).count,
             "missingRoles": missingEntityRoles.map(\.rawValue), "runs": runs,
             "continuousPlaybackStartEpoch": playbackStart, "continuousPlaybackCount": 4,
+            "continuousSamples": continuousSamples,
+            "scheduledExecution": ["motion": scheduledMotion,
+                "expectedHeavyAttack": scheduledMotion == "heavyAttack",
+                "windupSnapshot": scheduledWindup, "impactSnapshot": scheduledImpact],
             "pauseHeld": pauseHeld, "reducedMotionHeld": reducedHeld,
             "restoredVisibility": actor.isEnabled, "complete": true]
         try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])

@@ -249,14 +249,15 @@ final class GameFeedbackManager: ObservableObject {
         stopGlyphCheckpointSounds()
     }
 
-    func consume(_ events: [DemoSessionEvent], settings: GameSettings) {
+    func consume(_ events: [DemoSessionEvent], settings: GameSettings,
+                 enemyActionPresentation: EnemyActionPresentation? = nil) {
         currentSettings = settings
         let beginsAction = events.contains { if case .combat(.enemyActionStarted) = $0 { true } else { false } }
         let beginsSpell = events.contains { if case .combat(.spellResolved) = $0 { true } else { false } }
         // Windup and impact are delivered separately; retain only the mapper context.
         let context = (!beginsAction && !beginsSpell) ? presentingEnemyAction : nil
         let mappedEvents = context.map { [.combat(.enemyActionStarted($0))] + events } ?? events
-        let cues = mapper.cues(for: mappedEvents).filter {
+        let cues = mapper.cues(for: mappedEvents, enemyActionPresentation: enemyActionPresentation).filter {
             if context != nil, case .enemyAttack = $0 { return false }
             return true
         }

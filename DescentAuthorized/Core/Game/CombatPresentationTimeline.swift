@@ -1,5 +1,54 @@
 import Foundation
 
+/// A resolved action keeps its gesture even after the staged state removes due reservations.
+struct EnemyActionPresentation: Equatable, Sendable {
+    let attackStrength: Bool?
+    let includesScheduledDamage: Bool
+
+    init(action: EnemyAction, resolvedEvents: [DemoSessionEvent]? = nil, state: BattleState? = nil) {
+        let direct: Bool?
+        switch action {
+        case let .attack(_, _, strong): direct = strong
+        case let .expansion(_, action): direct = Self.expansionStrength(action)
+        default: direct = nil
+        }
+        let scheduled: [Int]
+        if let resolvedEvents {
+            scheduled = resolvedEvents.compactMap {
+                if case let .combat(.scheduledDamageExecuted(_, damage)) = $0 { return damage }
+                return nil
+            }
+        } else if let state {
+            scheduled = state.expansion.scheduledDamage
+                .filter { $0.dueEnemyTurn <= state.turnNumber }.map(\.damage)
+        } else {
+            scheduled = []
+        }
+        includesScheduledDamage = !scheduled.isEmpty
+        let actualDamage = resolvedEvents?.compactMap { event -> Int? in
+            if case let .combat(.damageApplied(.player, amount, _)) = event, amount > 0 { return amount }
+            return nil
+        } ?? []
+        if direct != nil || !scheduled.isEmpty || !actualDamage.isEmpty {
+            attackStrength = direct == true || scheduled.contains { $0 >= 30 } || actualDamage.contains { $0 >= 30 }
+        } else {
+            attackStrength = nil
+        }
+    }
+
+    private static func expansionStrength(_ action: ExpansionEnemyAction) -> Bool? {
+        switch action {
+        case .correctionStrike, .barrierStrike: return true
+        case .copyReaction, .counterExecute: return false
+        case let .directHits(hits): return hits.contains { $0 >= 30 }
+        case let .sequence(actions):
+            let strengths = actions.compactMap(expansionStrength)
+            return strengths.isEmpty ? nil : strengths.contains(true)
+        default: return nil
+        }
+    }
+}
+
 /// Shared by authored poses, the released projectile, and damage presentation.
 struct EnemyAttackTiming: Equatable, Sendable {
     let release: TimeInterval
@@ -26,15 +75,11 @@ struct CombatPresentationTimeline {
     static func enemyImpactDelay(strong: Bool) -> TimeInterval { EnemyAttackTiming.forAttack(strong: strong).impact }
     static func enemyRecovery(strong: Bool) -> TimeInterval { EnemyAttackTiming.forAttack(strong: strong).recoveryDuration }
 
-    static func enemyActionDuration(_ action: EnemyAction) -> TimeInterval {
-        let cues = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
-        for cue in cues {
-            if case let .enemyAttack(strong) = cue {
-                return enemyImpactDelay(strong: strong) + enemyRecovery(strong: strong)
-            }
+    static func enemyActionDuration(_ action: EnemyAction, presentation: EnemyActionPresentation? = nil) -> TimeInterval {
+        if let strong = (presentation ?? EnemyActionPresentation(action: action)).attackStrength {
+            return EnemyAttackTiming.forAttack(strong: strong).duration
         }
         if case .telegraph = action { return 1.20 }
-        // Reservations can strike during a wait while its special gesture continues.
         return 2.00
     }
 
@@ -49,13 +94,15 @@ struct CombatPresentationTimeline {
         let events: [DemoSessionEvent]
         /// Projectile events launch immediately, but their HP changes wait for impact.
         let stateEvents: [DemoSessionEvent]
+        let enemyAction: EnemyActionPresentation?
 
         init(_ kind: Kind, after delay: TimeInterval, events: [DemoSessionEvent],
-             stateEvents: [DemoSessionEvent]? = nil) {
+             stateEvents: [DemoSessionEvent]? = nil, enemyAction: EnemyActionPresentation? = nil) {
             self.kind = kind
             self.delay = delay
             self.events = events
             self.stateEvents = stateEvents ?? events
+            self.enemyAction = enemyAction
         }
     }
 
@@ -105,20 +152,17 @@ struct CombatPresentationTimeline {
                 if case .combat(.turnStarted) = $0 { true } else { false }
             } ?? enemyEvents.count
             let actionEvents = Array(enemyEvents.prefix(nextTurn))
-            let strong = isStrongEnemyAction(in: actionEvents)
+            guard case let .combat(.enemyActionStarted(action)) = enemyEvents[0] else { return result }
+            let presentation = EnemyActionPresentation(action: action, resolvedEvents: actionEvents)
+            let strong = presentation.attackStrength ?? false
             let impactDelay = enemyImpactDelay(strong: strong)
-            let actionDuration: TimeInterval
-            if case let .combat(.enemyActionStarted(action)) = enemyEvents[0] {
-                actionDuration = enemyActionDuration(action)
-            } else {
-                actionDuration = impactDelay + enemyRecovery(strong: strong)
-            }
+            let actionDuration = enemyActionDuration(action, presentation: presentation)
             let windupEvents = (hasPlayerCast ? [] : playerEvents) + [enemyEvents[0]]
             result.append(Step(.enemyWindup,
                                after: hasPlayerCast ? playerToEnemyDelay - playerImpactDelay : 0,
-                               events: windupEvents))
+                               events: windupEvents, enemyAction: presentation))
             result.append(Step(.enemyImpact, after: impactDelay,
-                               events: Array(actionEvents.dropFirst())))
+                               events: Array(actionEvents.dropFirst()), enemyAction: presentation))
             result.append(Step(.recovery, after: max(0, actionDuration - impactDelay),
                                events: Array(enemyEvents.suffix(from: nextTurn)) + completion))
         } else {

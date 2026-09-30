@@ -9,6 +9,7 @@ final class GameSessionStore: ObservableObject {
     @Published private(set) var latestCommandEvents: [DemoSessionEvent] = []
     @Published private(set) var eventSequence: UInt64 = 0
     @Published private(set) var isCombatPresentationActive = false
+    @Published private(set) var currentEnemyActionPresentation: EnemyActionPresentation?
     @Published var presentedError: PresentedGameError?
 
     private struct CombatSnapshot {
@@ -178,6 +179,7 @@ final class GameSessionStore: ObservableObject {
         combatSnapshot = nil
         nextCombatStepDelay = 0
         isCombatPresentationActive = false
+        currentEnemyActionPresentation = nil
     }
 
     private func beginCombatPresentation(
@@ -219,6 +221,7 @@ final class GameSessionStore: ObservableObject {
 
     private func presentCombatStep(_ step: CombatPresentationTimeline.Step) {
         guard var snapshot = combatSnapshot, let finalCombatState else { return }
+        currentEnemyActionPresentation = step.enemyAction
         snapshot.battle = CombatPresentationTimeline.applying(
             step, to: snapshot.battle, finalState: finalCombatState
         )

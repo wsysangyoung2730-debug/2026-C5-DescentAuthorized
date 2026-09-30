@@ -1006,7 +1006,8 @@ final class RealityActorMotionPlayer {
         if value { visualRoot?.transform = baseTransform; restoreFragments() }
         if terminal { return } // Keep death progress; do not restart its fade.
         if value {
-            jointPlayback?.stop()
+            animatedEntity?.stopAllAnimations(recursive: false)
+            jointPlayback = nil
             playJoints("idle", paused: true)
         } else {
             playJoints(currentMotion, elapsed: elapsed)
@@ -1016,10 +1017,12 @@ final class RealityActorMotionPlayer {
     func setSuspended(_ value: Bool) {
         guard suspended != value else { return }
         suspended = value
-        if value { jointPlayback?.pause() } else if !reduced { jointPlayback?.resume() }
+        if value { jointPlayback?.pause() }
+        else if !reduced, currentMotion == "idle" || currentMotion == "idleVariant" { jointPlayback?.resume() }
     }
 
-    func present(_ events: [DemoSessionEvent], state: BattleState?) {
+    func present(_ events: [DemoSessionEvent], state: BattleState?,
+                 enemyActionPresentation: EnemyActionPresentation? = nil) {
         if state?.phase == .victory { play("death"); return }
         var motion: String?
         for event in events {
@@ -1027,9 +1030,8 @@ final class RealityActorMotionPlayer {
             switch event {
             case .victory: motion = "death"
             case let .enemyActionStarted(action):
-                let cues = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
-                if let attack = cues.first(where: { if case .enemyAttack = $0 { return true }; return false }),
-                   case let .enemyAttack(strong) = attack {
+                if let strong = (enemyActionPresentation
+                    ?? EnemyActionPresentation(action: action, state: state)).attackStrength {
                     motion = strong ? "heavyAttack" : "attack"
                 } else if case .telegraph = action {
                     motion = "telegraph"
@@ -1066,7 +1068,9 @@ final class RealityActorMotionPlayer {
         root.transform = baseTransform
         articulated?.isEnabled = name != "death"
         for piece in fragments { piece.entity.isEnabled = name == "death" }
-        if name != "death" { playJoints(reduced ? "idle" : name, paused: reduced) }
+        if name != "death", !reduced || jointPlayback == nil {
+            playJoints(reduced ? "idle" : name, paused: reduced)
+        }
         let token = generation
         motionTask = Task { @MainActor [weak self] in
             var previous = ProcessInfo.processInfo.systemUptime
@@ -1087,6 +1091,11 @@ final class RealityActorMotionPlayer {
                 // A second rigid lunge over the skeletal arm/torso arc made every
                 // cast slide and snap. Preserve the installed transform throughout.
                 root.transform = self.baseTransform
+                if !self.reduced, name != "idle", name != "idleVariant" {
+                    // RealityKit's independent clock can lag while a frame is loaded.
+                    // Sample the authored clip from the action clock, including its recovery.
+                    self.jointPlayback?.time = min(self.elapsed, duration)
+                }
                 if name != "idle", name != "idleVariant", self.elapsed >= duration {
                     self.play("idle")
                     return
@@ -1124,10 +1133,11 @@ final class RealityActorMotionPlayer {
             let animation = try AnimationResource.generate(with: view)
             let loops = name == "idle" || name == "idleVariant"
             jointPlayback = entity.playAnimation(loops ? animation.repeat() : animation,
-                                                 transitionDuration: 0.08, startsPaused: paused || suspended)
-            if elapsed > 0 {
-                jointPlayback?.time = elapsed.truncatingRemainder(dividingBy: duration(for: name))
-            }
+                                                 transitionDuration: paused || !loops ? 0 : 0.08,
+                                                 startsPaused: paused || suspended || !loops)
+            jointPlayback?.time = loops
+                ? elapsed.truncatingRemainder(dividingBy: duration(for: name))
+                : min(elapsed, duration(for: name))
         } catch {
             assertionFailure("Articulated animation failed: \(error)")
         }
@@ -1249,26 +1259,20 @@ extension RealityCombatVFXRenderer {
         return fallback
     }
 
-    func presentEnemyAction(_ events: [DemoSessionEvent], state: BattleState?, reducedMotion: Bool) {
+    func presentEnemyAction(_ events: [DemoSessionEvent], state: BattleState?, reducedMotion: Bool,
+                           enemyActionPresentation: EnemyActionPresentation? = nil) {
         guard let action = events.compactMap({ event -> EnemyAction? in
             if case let .combat(.enemyActionStarted(action)) = event { return action }
             return nil
         }).first else { return }
-        let attack = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
-            .compactMap { cue -> Bool? in
-                if case let .enemyAttack(strong) = cue { return strong }
-                return nil
-            }.first
-        let scheduled = state?.expansion.scheduledDamage.contains {
-            $0.dueEnemyTurn <= (state?.turnNumber ?? 0)
-        } ?? false
-        guard attack != nil || scheduled else { return }
+        let presentation = enemyActionPresentation ?? EnemyActionPresentation(action: action, state: state)
+        guard let strong = presentation.attackStrength else { return }
+        let scheduled = presentation.includesScheduledDamage
         enemyAttackTask?.cancel()
         enemyAttackEntity?.removeFromParent()
         guard !reducedMotion, let root, let cameraEntity,
               let bounds = enemyBounds(relativeTo: root) else { return }
 
-        let strong = attack ?? false
         let color: UIColor
         if scheduled { color = UIColor(red: 1, green: 0.52, blue: 0.12, alpha: 1) }
         else if strong { color = UIColor(red: 1, green: 0.24, blue: 0.18, alpha: 1) }

@@ -847,6 +847,7 @@ extension CombatEngine {
         state.expansion.scheduledDamage.removeAll { $0.dueEnemyTurn <= state.turnNumber }
         var events: [BattleEvent] = []
         for reservation in due where !state.player.isDefeated {
+            events.append(.scheduledDamageExecuted(name: reservation.name, damage: reservation.damage))
             events.append(.expansionChanged(message: "\(reservation.name) · 예약 피해 \(reservation.damage) 집행"))
             events.append(contentsOf: damagePlayer(reservation.damage, origin: .reservation(reservation.id)))
         }

@@ -101,7 +101,8 @@ struct DescentAuthorizedApp: App {
                 .onChange(of: gameSession.eventSequence) { _, _ in
                     gameFeedback.consume(
                         gameSession.latestEvents,
-                        settings: appSettings.settings
+                        settings: appSettings.settings,
+                        enemyActionPresentation: gameSession.currentEnemyActionPresentation
                     )
                 }
                 .onChange(of: appSettings.settings) { _, settings in
