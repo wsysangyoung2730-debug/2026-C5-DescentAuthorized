@@ -403,6 +403,10 @@ struct Floor9MotionPreview: View {
                     if case .failed = controller.loadState { return }
                     do { try await Task.sleep(for: .milliseconds(30)) } catch { return }
                 }
+                if ProcessInfo.processInfo.arguments.contains("--room-warmup-diagnostics") {
+                    await controller.runRoomWarmupDiagnostics()
+                    return
+                }
                 if ProcessInfo.processInfo.arguments.contains("--final-tour") {
                     await controller.runFinalTourDiagnostics()
                     return

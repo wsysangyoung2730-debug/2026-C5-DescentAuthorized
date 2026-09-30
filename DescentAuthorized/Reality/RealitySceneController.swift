@@ -122,6 +122,30 @@ final class RealitySceneController: ObservableObject {
     private var floor10OpeningCameraGeneration: UInt64 = 0
     private var enemyPreviewRevealGeneration: UInt64 = 0
     private var requestedSceneID: FloorSceneID?
+    private var prefetchCombatBusy = false
+    private var prefetchEncounterActive = false
+    private var prefetchFrameSubscription: (any Cancellable)?
+    private var lastFrameStall = Date.distantPast
+    private var lastInteractiveWork = Date.distantPast
+
+    func setPrefetchCombatBusy(_ busy: Bool) {
+        prefetchCombatBusy = busy
+        if busy { noteInteractiveWork() }
+    }
+
+    func noteInteractiveWork() { lastInteractiveWork = Date() }
+
+    private var canStartSpeculativeResource: Bool {
+        guard case .ready = loadState else { return false }
+        return !prefetchCombatBusy && !isCameraTransitioning
+            && Date().timeIntervalSince(lastInteractiveWork) > 1.2
+            && Date().timeIntervalSince(lastFrameStall) > 2
+            && UIApplication.shared.applicationState == .active
+            && ProcessInfo.processInfo.thermalState != .serious
+            && ProcessInfo.processInfo.thermalState != .critical
+            && (os_proc_available_memory() == 0 || os_proc_available_memory() > 256 * 1024 * 1024)
+    }
+
     private var requestedCameraPreset: RealityCameraPreset = .main
     private var activeCameraName: String?
     private var pendingCameraName: String?
@@ -168,6 +192,11 @@ final class RealitySceneController: ObservableObject {
             arView.scene.addAnchor(sceneAnchor)
         }
         self.arView = arView
+        prefetchFrameSubscription?.cancel()
+        prefetchFrameSubscription = arView.scene.subscribe(to: SceneEvents.Update.self) { [weak self] event in
+            guard event.deltaTime > 0.04 else { return }
+            Task { @MainActor [weak self] in self?.lastFrameStall = Date() }
+        }
         scheduleBoardProjectionRefresh()
     }
 
@@ -485,6 +514,7 @@ final class RealitySceneController: ObservableObject {
 
     func beginBattleCameraLook() {
         guard canAdjustBattleCamera else { return }
+        noteInteractiveWork()
         cancelBattleCameraImpact(restoreCamera: true)
         battleCameraLookStartYaw = battleCameraYaw
         battleCameraLookStartPitch = battleCameraPitch
@@ -499,6 +529,7 @@ final class RealitySceneController: ObservableObject {
               viewportSize.width > 0,
               viewportSize.height > 0 else { return }
 
+        noteInteractiveWork()
         let horizontalProgress = Float(translation.width / viewportSize.width)
         let verticalProgress = Float(translation.height / viewportSize.height)
         let horizontalSweep = configuration.yawRadiansPerViewport
@@ -520,6 +551,7 @@ final class RealitySceneController: ObservableObject {
 
     func beginBattleCameraZoom() {
         guard canAdjustBattleCamera else { return }
+        noteInteractiveWork()
         cancelBattleCameraImpact(restoreCamera: true)
         battleCameraZoomStartFieldOfViewScale = battleCameraFieldOfViewScale
     }
@@ -529,6 +561,7 @@ final class RealitySceneController: ObservableObject {
         configuration: BattleCameraInteractionConfiguration = .standard
     ) {
         guard canAdjustBattleCamera, magnification > 0 else { return }
+        noteInteractiveWork()
         battleCameraFieldOfViewScale = clamp(
             battleCameraZoomStartFieldOfViewScale / Float(magnification),
             minimum: configuration.minimumFieldOfViewScale,
@@ -1172,6 +1205,7 @@ final class RealitySceneController: ObservableObject {
     }
 
     func synchronizeCombatState(_ battleState: BattleState?, reducedMotion: Bool) {
+        prefetchEncounterActive = battleState.map { $0.phase != .victory && $0.phase != .defeat } ?? false
         actorMotion.setReducedMotion(reducedMotion)
         if battleState?.phase == .victory {
             actorMotion.play("death")
@@ -1265,6 +1299,7 @@ final class RealitySceneController: ObservableObject {
     }
 
     func unload() {
+        PreparedRealityAssets.shared.stopSpeculativeWork()
         actorMotion.reset()
         finalRewardTemplates.removeAll()
         finalRewardModelTransforms.removeAll()
@@ -2218,7 +2253,7 @@ extension RealitySceneController {
         if let actor = descriptor.actor,
            let url = bundle.url(forResource: actor.resourceName + (quality == .high ? "" : "_\(quality.rawValue)"),
                                 withExtension: "usdc", subdirectory: actor.resourceSubdirectory) {
-            urls.append(url)
+            urls.insert(url, at: 0)
         }
         return urls
     }
@@ -2234,13 +2269,17 @@ extension RealitySceneController {
             withExtension: "usdc",
             subdirectory: descriptor.resourceSubdirectory
         ) else { return }
-        PreparedRealityAssets.shared.preloadRoom(url: url)
-        PreparedRealityAssets.shared.prepareAuxiliary(urls: auxiliaryAssetURLs(descriptor: descriptor, quality: quality, bundle: bundle))
+        guard sceneID != requestedSceneID else { return }
+        PreparedRealityAssets.shared.prefetchSequentially(
+            roomURL: url, auxiliaryURLs: auxiliaryAssetURLs(descriptor: descriptor, quality: quality, bundle: bundle),
+            sceneID: sceneID, bundle: bundle,
+            canStart: { [weak self] in self?.canStartSpeculativeResource == true },
+            canDecode: { [weak self] in self?.prefetchEncounterActive == false }
+        )
     }
 
     func prefetchFloor9(quality: GraphicsQuality, bundle: Bundle = .main) {
         prefetchRoom(sceneID: .floor09ArchiveRedesign, quality: quality, bundle: bundle)
-        PreparedRealityAssets.shared.prepareEnvironment(bundle: bundle)
     }
 
     func waitForEnemyReady() async -> Bool {
@@ -2275,7 +2314,7 @@ extension RealitySceneController {
 @MainActor
 private final class PreparedRealityAssets {
     static let shared = PreparedRealityAssets()
-    private final class Entry {
+    @MainActor private final class Entry {
         let url: URL
         let result = CurrentValueSubject<Entity?, Error>(nil)
         var request: AnyCancellable?
@@ -2292,6 +2331,90 @@ private final class PreparedRealityAssets {
         }
     }
     private var room: Entry?
+    private var speculativeTask: Task<Void, Never>?
+    private var speculativeURL: URL?
+    private var filesWarmed = false
+    private var memoryCooldownUntil = Date.distantPast
+
+    func stopSpeculativeWork() {
+        speculativeTask?.cancel()
+        speculativeTask = nil
+        speculativeURL = nil
+        filesWarmed = false
+    }
+
+    /// Battle: stream resource bytes on a utility executor with bounded memory.
+    /// After battle: decode one RealityKit entity at a time during dialogue/rewards.
+    /// RealityKit requires its loader on the main queue and may stall on large USDs,
+    /// so idle input alone is NOT sufficient permission to decode during combat.
+    func prefetchSequentially(roomURL: URL, auxiliaryURLs: [URL], sceneID: FloorSceneID,
+                              bundle: Bundle, canStart: @escaping @MainActor () -> Bool,
+                              canDecode: @escaping @MainActor () -> Bool) {
+        guard speculativeURL != roomURL else { return }
+        stopSpeculativeWork()
+        speculativeURL = roomURL
+        speculativeTask = Task(priority: .background) { @MainActor [weak self] in
+            guard let self else { return }
+            @MainActor func waitForQuiet() async throws {
+                try Task.checkCancellation()
+                while !canStart() || Date() < self.memoryCooldownUntil {
+                    try await Task.sleep(for: .milliseconds(200))
+                }
+            }
+            @MainActor func awaitDecode(_ entry: Entry) async throws {
+                while entry.result.value == nil && !entry.failed {
+                    try await Task.sleep(for: .milliseconds(80))
+                }
+                try Task.checkCancellation()
+            }
+            do {
+                let directories = Set(([roomURL] + auxiliaryURLs).map { $0.deletingLastPathComponent() })
+                let files = await Task.detached(priority: .utility) {
+                    directories.flatMap { directory -> [URL] in
+                        guard let enumerator = FileManager.default.enumerator(at: directory,
+                            includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles]) else { return [] }
+                        return enumerator.compactMap { $0 as? URL }.filter {
+                            ["usdc", "usdz", "png", "jpg", "jpeg", "hdr"].contains($0.pathExtension.lowercased())
+                        }
+                    }
+                }.value
+                for file in files {
+                    try await waitForQuiet()
+                    // Chunk reads never retain an entire model/texture or construct GPU resources.
+                    var offset: UInt64 = 0
+                    while true {
+                        try await waitForQuiet()
+                        let chunkOffset = offset
+                        let count = await Task.detached(priority: .utility) { () -> Int in
+                            guard let handle = try? FileHandle(forReadingFrom: file) else { return 0 }
+                            defer { try? handle.close() }
+                            try? handle.seek(toOffset: chunkOffset)
+                            return (try? handle.read(upToCount: 1024 * 1024))?.count ?? 0
+                        }.value
+                        if count == 0 { break }
+                        offset += UInt64(count)
+                        try await Task.sleep(for: .milliseconds(8))
+                    }
+                }
+                self.filesWarmed = true
+                while !canDecode() { try await Task.sleep(for: .milliseconds(200)) }
+                try await waitForQuiet()
+                self.preloadRoom(url: roomURL)
+                if let entry = self.room { try await awaitDecode(entry) }
+                for url in auxiliaryURLs {
+                    while !canDecode() { try await Task.sleep(for: .milliseconds(200)) }
+                    try await waitForQuiet()
+                    if self.auxiliary[url] == nil || self.auxiliary[url]?.failed == true {
+                        self.auxiliary[url] = Entry(url: url)
+                    }
+                    if let entry = self.auxiliary[url] { try await awaitDecode(entry) }
+                }
+                try await waitForQuiet()
+                self.prepareEnvironment(bundle: bundle, sceneID: sceneID)
+            } catch { /* Foreground loading or navigation owns the next request. */ }
+        }
+    }
+
     // Only the selected scene's actor and two shared reward templates are retained.
     // In-flight subscribers own their entry even when another scene replaces the cache.
     private var auxiliary: [URL: Entry] = [:]
@@ -2301,6 +2424,8 @@ private final class PreparedRealityAssets {
     private init() {
         memoryWarning = NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)
             .receive(on: DispatchQueue.main).sink { [weak self] _ in
+                self?.stopSpeculativeWork()
+                self?.memoryCooldownUntil = Date().addingTimeInterval(30)
                 self?.room = nil
                 self?.auxiliary.removeAll()
                 self?.environmentTasks.values.forEach { $0.cancel() }
@@ -2309,6 +2434,11 @@ private final class PreparedRealityAssets {
             }
     }
     #if DEBUG
+    var warmupFilesReady: Bool { filesWarmed }
+    var warmupDecoded: Bool {
+        room?.result.value != nil && !auxiliary.values.contains { $0.result.value == nil || $0.failed }
+    }
+    var hasSpeculativeRoom: Bool { room != nil }
     var cacheCounts: [String: Int] { ["rooms": room == nil ? 0 : 1, "auxiliary": auxiliary.count, "environments": environmentTasks.count] }
     #endif
     func prepareAuxiliary(urls: [URL]) {
@@ -2569,6 +2699,67 @@ extension RealitySceneController {
             .write(to: directory.appendingPathComponent("report.json"))
         setBattleCameraInteractionEnabled(enabledOnEntry)
         print("C5_EXPLORATION_DIAGNOSTICS \(id.rawValue) \(mode) complete")
+    }
+
+    func runRoomWarmupDiagnostics() async {
+        guard let arView else { return }
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("RoomWarmupDiagnostics")
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        var rows: [[String: Any]] = []
+        for floor in [4, 3, 2, 1] {
+            guard let source = FinalSceneContract.room(forWarmup: .init(floor: floor, role: "residualA")),
+                  let target = FinalSceneContract.room(forWarmup: .init(floor: floor, role: "residualB")) else { continue }
+            setPrefetchCombatBusy(false)
+            load(sceneID: source, cameraPreset: .battle)
+            let start = Date()
+            while !isReady(sceneID: source, cameraPreset: .battle), Date().timeIntervalSince(start) < 60 {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+            let cold = Date().timeIntervalSince(start)
+            prefetchEncounterActive = true
+            setPrefetchCombatBusy(true)
+            prefetchRoom(sceneID: target, quality: graphicsQuality)
+            try? await Task.sleep(for: .milliseconds(500))
+            let deferred = !PreparedRealityAssets.shared.hasSpeculativeRoom
+            setPrefetchCombatBusy(false)
+            var frames: [Double] = []
+            let subscription = arView.scene.subscribe(to: SceneEvents.Update.self) { frames.append($0.deltaTime * 1000) }
+            let warmStart = Date()
+            while !PreparedRealityAssets.shared.warmupFilesReady, Date().timeIntervalSince(warmStart) < 60 {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+            subscription.cancel()
+            let filesReady = PreparedRealityAssets.shared.warmupFilesReady
+            let noDecodeDuringBattle = !PreparedRealityAssets.shared.hasSpeculativeRoom
+            let fileDuration = Date().timeIntervalSince(warmStart)
+            prefetchEncounterActive = false
+            let decodeStart = Date()
+            while !PreparedRealityAssets.shared.warmupDecoded, Date().timeIntervalSince(decodeStart) < 60 {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+            let decoded = PreparedRealityAssets.shared.warmupDecoded
+            let duration = Date().timeIntervalSince(decodeStart)
+            let transition = Date()
+            load(sceneID: target, cameraPreset: .battle)
+            while !isReady(sceneID: target, cameraPreset: .battle), Date().timeIntervalSince(transition) < 60 {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+            let warm = Date().timeIntervalSince(transition)
+            let png: Data? = await withCheckedContinuation { continuation in
+                arView.snapshot(saveToHDR: false) { continuation.resume(returning: $0?.pngData()) }
+            }
+            try? png?.write(to: directory.appendingPathComponent("floor-\(floor).png"))
+            frames.sort()
+            rows.append(["floor": floor, "sourceColdReadySeconds": cold, "targetWarmReadySeconds": warm,
+                         "deferredWhileBusy": deferred, "filesReadyDuringBattle": filesReady,
+                         "noEntityDecodeDuringBattle": noDecodeDuringBattle,
+                         "fileWarmupSeconds": fileDuration, "decoded": decoded, "postBattleDecodeSeconds": duration,
+                         "updateP95MS": frames.isEmpty ? 0 : frames[min(frames.count-1, Int(Double(frames.count)*0.95))],
+                         "updateMaxMS": frames.max() ?? 0, "ready": isReady(sceneID: target, cameraPreset: .battle)])
+            try? JSONSerialization.data(withJSONObject: ["complete": floor == 1, "runs": rows], options: [.prettyPrinted, .sortedKeys])
+                .write(to: directory.appendingPathComponent("report.json"))
+        }
     }
 
     func runFinalTourDiagnostics() async {

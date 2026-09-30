@@ -641,6 +641,7 @@ struct BattleView: View {
                 usesBattleArtwork: true,
                 inputFeedbackMode: .battle,
                 onResourcePreviewChanged: { mana, strokes in
+                    realityController.noteInteractiveWork()
                     previewMana = mana
                     previewStrokes = strokes
                 },

@@ -83,7 +83,7 @@ struct ExpansionFlowView: View {
         }
     }
 
-    // Prepare during reading/selection, never begin speculative work during combat.
+    // Requests share the quiet-time scheduler with the persistent progression host.
     private func prefetchNextScene(_ current: ExpansionProgress) {
         if let installed = FinalSceneContract.nextRoom(for: current) {
             sceneController.prefetchRoom(sceneID: installed, quality: appSettings.graphicsQuality)

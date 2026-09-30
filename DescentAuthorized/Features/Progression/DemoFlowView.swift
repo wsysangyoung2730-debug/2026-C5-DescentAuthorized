@@ -157,6 +157,13 @@ struct DemoFlowView: View {
             reportSystemOverlayVisibility()
             synchronizeFloorMusic()
             synchronizeRecordsBattleTutorial()
+            scheduleWarmup()
+        }
+        .onChange(of: warmupScene) { _, _ in scheduleWarmup() }
+        .onChange(of: appSettings.graphicsQuality) { _, _ in scheduleWarmup() }
+        .onChange(of: gameSession.isCombatPresentationActive) { _, busy in
+            sceneController.setPrefetchCombatBusy(busy)
+            if !busy { scheduleWarmup() }
         }
         .onDisappear {
             checkpointTravelTask?.cancel()
@@ -177,6 +184,7 @@ struct DemoFlowView: View {
             synchronizeFloorMusic()
         }
         .onChange(of: sceneController.loadState) { _, _ in
+            scheduleWarmup()
             synchronizeFloorMusic()
         }
         .onChange(of: gameSession.progress.currentFloor) { _, _ in
@@ -198,6 +206,17 @@ struct DemoFlowView: View {
                 gameFeedback.suspendMusicForLoading()
             }
         }
+    }
+
+    private var warmupScene: FloorSceneID? {
+        RoomWarmupDestination.next(scene: gameSession.progress.currentScene, expansion: gameSession.progress.expansion)
+            .flatMap { FinalSceneContract.room(forWarmup: $0) }
+    }
+
+    private func scheduleWarmup() {
+        sceneController.setPrefetchCombatBusy(gameSession.isCombatPresentationActive)
+        guard isPresentationReady, let next = warmupScene else { return }
+        sceneController.prefetchRoom(sceneID: next, quality: appSettings.graphicsQuality)
     }
 
     private func reportSystemOverlayVisibility() {
