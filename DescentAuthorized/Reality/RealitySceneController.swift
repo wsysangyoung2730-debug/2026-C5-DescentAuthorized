@@ -3291,6 +3291,25 @@ extension RealitySceneController {
             lifecycle["movingLidCount"] = zip(closedLids, openLids).filter { $0 != $1 }.count
             lifecycle["liftMoved"] = closedLift != lift?.transform.matrix
             await capture("reward-open")
+            setRewardPresentation(.resolving(selectedIndex: 1), reducedMotion: false)
+            try? await Task.sleep(for: .milliseconds(500))
+            let selected = registry.entity(for: .rewardScrollCenter)
+            let acquired = selected?.transform.matrix
+            func poseDelta() -> Float {
+                guard let acquired, let actual = selected?.transform.matrix else { return .infinity }
+                return (0..<4).flatMap { column in (0..<4).map { row in abs(acquired[column][row] - actual[column][row]) } }.max() ?? 0
+            }
+            await capture("reward-acquired")
+            setRewardPresentation(.resolved(selectedIndex: 1), reducedMotion: false)
+            lifecycle["completionPoseMaxDelta"] = poseDelta()
+            lifecycle["completionKeepsSelectedPose"] = poseDelta() < 0.0001
+            try? await Task.sleep(for: .milliseconds(500))
+            lifecycle["completionDoesNotReplay"] = poseDelta() < 0.0001
+            setRewardPresentation(.resolved(selectedIndex: 1), reducedMotion: false)
+            lifecycle["restorationDoesNotReplay"] = poseDelta() < 0.0001
+            lifecycle["discardedRewardsHidden"] = registry.entity(for: .rewardScrollLeft)?.isEnabled == false
+                && registry.entity(for: .rewardScrollRight)?.isEnabled == false
+            await capture("reward-complete")
             setRewardPresentation(.inactive, reducedMotion: true)
             lifecycle["closedPoseRestored"] = closedLids == lidNames.compactMap { registry.entity(named: $0)?.transform.matrix }
                 && closedLift == lift?.transform.matrix

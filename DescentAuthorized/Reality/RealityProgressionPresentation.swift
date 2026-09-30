@@ -233,6 +233,21 @@ final class RealityProgressionVFXRenderer {
         let generation = transitionGeneration
         let roles = rewardRoles
 
+        // Completion and view restoration apply the final pose without replaying acquisition.
+        if case let .resolved(selectedIndex) = state {
+            for (index, role) in roles.enumerated() {
+                guard let entity = registry.entity(for: role), var target = baseTransforms[role] else { continue }
+                entity.stopAllAnimations(recursive: false)
+                entity.isEnabled = index == selectedIndex
+                if index == selectedIndex {
+                    target.translation.z += reducedMotion ? 0 : 0.14
+                    target.scale *= reducedMotion ? 1 : 1.08
+                    entity.transform = target
+                }
+            }
+            return
+        }
+
         if registry.descriptor?.rewardMotionAsset != nil {
             presentAuthoredReward(state, registry: registry, reducedMotion: reducedMotion, generation: generation)
             return
