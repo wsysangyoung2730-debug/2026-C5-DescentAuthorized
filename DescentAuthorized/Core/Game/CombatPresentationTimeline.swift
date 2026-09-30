@@ -71,6 +71,7 @@ struct CombatPresentationTimeline {
     static let deathPoseDuration: TimeInterval = 0.65
     static let dissolveDuration: TimeInterval = 0.40
     static let deathDuration: TimeInterval = deathPoseDuration + dissolveDuration
+    static let defeatSettleDuration: TimeInterval = 0.35
 
     static func enemyImpactDelay(strong: Bool) -> TimeInterval { EnemyAttackTiming.forAttack(strong: strong).impact }
     static func enemyRecovery(strong: Bool) -> TimeInterval { EnemyAttackTiming.forAttack(strong: strong).recoveryDuration }
@@ -145,7 +146,7 @@ struct CombatPresentationTimeline {
         }
 
         if hasVictory {
-            result.append(Step(.victoryRelease, after: deathDuration, events: completion))
+            result.append(Step(.victoryRelease, after: deathDuration + defeatSettleDuration, events: completion))
         } else if let enemyIndex {
             let enemyEvents = Array(combat.suffix(from: enemyIndex))
             let nextTurn = enemyEvents.firstIndex {

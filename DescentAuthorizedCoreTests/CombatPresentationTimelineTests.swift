@@ -117,7 +117,8 @@ final class CombatPresentationTimelineTests: XCTestCase {
         XCTAssertEqual(steps.flatMap(\.events), events)
         XCTAssertEqual(steps[1].events, [.combat(.victory(.recordsAdministrator))])
         XCTAssertEqual(steps[1].delay, 0.20, accuracy: 0.001)
-        XCTAssertEqual(steps[2].delay, 1.05, accuracy: 0.001)
+        XCTAssertEqual(steps[2].delay, 1.40, accuracy: 0.001)
+        XCTAssertGreaterThan(steps[2].delay, CombatPresentationTimeline.deathDuration)
         XCTAssertEqual(steps[2].events, [.encounterWon(.recordsAdministrator),
                                         .progression(.sceneChanged(.floor9RecordsDefeated))])
 
