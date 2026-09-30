@@ -66,7 +66,8 @@ struct DescentAuthorizedApp: App {
 
     @ViewBuilder private var initialView: some View {
         #if DEBUG
-        if isFloor9Preview { Floor9MotionPreview() } else { HomeView() }
+        if ProcessInfo.processInfo.arguments.contains("--glyph-fidelity") { GlyphFidelityPreview() }
+        else if isFloor9Preview { Floor9MotionPreview() } else { HomeView() }
         #else
         HomeView()
         #endif
