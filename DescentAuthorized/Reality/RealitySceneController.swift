@@ -2776,13 +2776,25 @@ extension RealitySceneController {
             lifecycle["restartOpacity"] = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 0
         } else if preset == .descentInput {
             progressionVFXRenderer.prepareMiddleDoorPreview(sceneID: id)
+            let doorFrame = registry.entity(named: "F08B_Door_Frame")
+            let frameClosed = doorFrame?.transform.matrix
             setDescentPresentation(.approved, reducedMotion: false)
+            try? await Task.sleep(for: .milliseconds(800))
+            await capture("door-opening")
             lifecycle["doorOpeningCompleted"] = await waitForDescentDoorOpening()
             setDescentPresentation(.open, reducedMotion: false)
             try? await Task.sleep(for: .milliseconds(100))
             await capture("door-open")
             try? await Task.sleep(for: .seconds(2))
             await capture("door-open-later")
+            if let frameClosed {
+                lifecycle["fixedFrameUnchanged"] = frameClosed == doorFrame?.transform.matrix
+                setDescentPresentation(.ready, reducedMotion: false)
+                try? await Task.sleep(for: .milliseconds(100))
+                await capture("door-reset")
+                setDescentPresentation(.approved, reducedMotion: true)
+                await capture("door-reduced-motion")
+            }
         }
         if preset == .rewardSelection {
             let lidNames = ["Left", "Center", "Right"].map { "F08B_RewardSlot_\($0)Lid" }
