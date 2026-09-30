@@ -108,6 +108,7 @@ struct RealityCombatPresentationMapper {
     }
 
     static func shieldState(for battleState: BattleState) -> RealityShieldState {
+        if battleState.phase == .victory || battleState.phase == .defeat { return .none }
         if battleState.enemy.absoluteBarrierCharges > 0 { return .absolute }
         if battleState.enemy.normalBarrier > 0 { return .general }
         return .none
@@ -218,6 +219,7 @@ final class RealityCombatVFXRenderer {
     private var intentShieldClearance: Float?
     private var currentShieldState: RealityShieldState = .none
     private var shieldAuraEntity: Entity?
+    private var shieldRestingScale = SIMD3<Float>(repeating: 1)
     private var shieldTransitionTask: Task<Void, Never>?
     private var shieldTransitionGeneration = 0
     var onIntentLayoutChanged: (() -> Void)?
@@ -310,6 +312,10 @@ final class RealityCombatVFXRenderer {
     ) {
         attach(to: registry)
         intentReducedMotion = reducedMotion
+        if reducedMotion {
+            enemyAttackTask?.cancel(); enemyAttackTask = nil
+            enemyAttackEntity?.removeFromParent(); enemyAttackEntity = nil
+        }
         updateIntentSmokeState()
         var synchronizedShieldState: RealityShieldState?
         for cue in cues {
@@ -385,7 +391,18 @@ final class RealityCombatVFXRenderer {
         registry: RealityEntityRegistry,
         reducedMotion: Bool
     ) {
-        guard state != currentShieldState else { return }
+        guard state != currentShieldState else {
+            if reducedMotion {
+                shieldTransitionTask?.cancel(); shieldTransitionTask = nil
+                if state == .none { shieldAuraEntity?.removeFromParent(); shieldAuraEntity = nil }
+                else {
+                    shieldAuraEntity?.scale = shieldRestingScale
+                    shieldAuraEntity?.components.set(OpacityComponent(opacity: 1))
+                }
+                repositionCurrentIntent()
+            }
+            return
+        }
         shieldTransitionTask?.cancel()
         shieldTransitionGeneration += 1
         let generation = shieldTransitionGeneration
@@ -418,6 +435,7 @@ final class RealityCombatVFXRenderer {
             return
         }
         shieldAuraEntity = aura
+        shieldRestingScale = aura.scale
         enemyAnchor.addChild(aura)
         repositionCurrentIntent()
         guard !reducedMotion else { return }
@@ -447,7 +465,8 @@ final class RealityCombatVFXRenderer {
         if let cameraEntity {
             let camera = enemyAnchor.convert(position: .zero, from: cameraEntity)
             let delta = camera - bounds.center
-            aura.orientation = simd_quatf(angle: atan2(delta.x, -delta.y), axis: [0, 0, 1])
+            let opening: Float = id == .generalBarrier ? .pi : (id == .observationBarrier ? .pi / 4 : 0)
+            aura.orientation = simd_quatf(angle: atan2(delta.x, -delta.y) + opening, axis: [0, 0, 1])
         }
         return aura
     }
@@ -1192,10 +1211,9 @@ extension RealityCombatVFXRenderer {
         guard !reducedMotion, let root, let cameraEntity,
               let bounds = enemyBounds(relativeTo: root) else { return }
 
-        let selected = CombatEffectCatalog.projectile(floor: effects.floor, action: action,
+        let effectID = CombatEffectCatalog.projectile(floor: effects.floor, action: action,
             executionOnly: scheduled && effects.floor == 1)
-        let effectID: CombatEffectID = effects.floor == 2 && CombatEffectCatalog.isVerdict(action) ? .verdictStamp : selected
-        let size = min(1.15, max(0.48, bounds.extents.z * (strong ? 0.27 : 0.21)))
+        let size = min(1.45, max(0.6, bounds.extents.z * (strong ? 0.33 : 0.27)))
         let payload = effects.observationResidual
             ? effects.make("glass", size: size * 0.65) : effects.make(effectID, size: size)
         guard let core = payload else { return }
@@ -1249,7 +1267,9 @@ extension RealityCombatVFXRenderer {
                     let charge = Float(elapsed / launch)
                     let eased = charge * charge * (3 - 2 * charge)
                     core.scale = SIMD3(repeating: 0.35 + eased * 0.65)
-                    core.orientation = simd_quatf(angle: (1 - eased) * -0.35, axis: [0, 0, 1]) * alignment
+                    // Hold the silhouette obliquely while gathering, then aim the tip at release.
+                    let aim = max(0, (charge - 0.76) / 0.24)
+                    core.orientation = simd_quatf(angle: (1 - aim) * 0.95, axis: [0, 1, 0]) * alignment
                     strike.components.set(OpacityComponent(opacity: min(1, charge * 4)))
                 } else {
                     if releasedFrom == nil {

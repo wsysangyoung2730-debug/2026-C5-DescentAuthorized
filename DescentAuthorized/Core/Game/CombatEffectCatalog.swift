@@ -23,6 +23,7 @@ struct CombatEffectCatalog {
         case 5: .memoryCompression
         case 4, 1: isVerdict(action) || executionOnly ? .verdictStamp : .signatureStroke
         case 3: .isolationRing
+        case 2: isVerdict(action) ? .verdictStamp : .sealEnergyCore
         default: .sealEnergyCore
         }
     }
