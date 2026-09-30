@@ -1,0 +1,313 @@
+{
+  "date": "2026-09-30",
+  "branch": "feat/#199-authored-combat-effects-3d",
+  "baseBranch": "fix/#198-all-floor-natural-attack-motion",
+  "baseCommit": "55cef5f",
+  "simulator": "iPad Pro 13 M5 / iOS 26.5",
+  "rooms": 21,
+  "assetsLoaded": [
+    "01-record-lance",
+    "02-focus-lens",
+    "03-rift-ray",
+    "04-coordinate-wedge",
+    "05-axis-anchors",
+    "06-causality-bolt",
+    "07-memory-compression",
+    "08-signature-stroke",
+    "09-verdict-stamp",
+    "10-isolation-ring",
+    "11-seal-energy-core",
+    "12-identity-scanner",
+    "13-suppression-band",
+    "14-preservation-band",
+    "15-document-barrier",
+    "16-observation-barrier",
+    "17-correction-barrier",
+    "18-general-barrier"
+  ],
+  "attackChecks": 63,
+  "attackChecksPassed": 63,
+  "pauseChecksPassed": 63,
+  "cleanupChecksPassed": 21,
+  "unitTestsPassed": 11,
+  "build": "passed",
+  "roomResults": [
+    {
+      "scene": "floor01_exit_review_residual",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_08-signature-stroke",
+        "DA_EFFECT_08-signature-stroke",
+        "DA_EFFECT_09-verdict-stamp"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor01_final_authorization_administrator",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_08-signature-stroke",
+        "DA_EFFECT_08-signature-stroke",
+        "DA_EFFECT_09-verdict-stamp"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor01_identity_comparison_residual",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_08-signature-stroke",
+        "DA_EFFECT_08-signature-stroke",
+        "DA_EFFECT_09-verdict-stamp"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor02_backflow_blocker_residual",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_11-seal-energy-core",
+        "DA_EFFECT_11-seal-energy-core",
+        "DA_EFFECT_09-verdict-stamp"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor02_overload_residual",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_11-seal-energy-core",
+        "DA_EFFECT_11-seal-energy-core",
+        "DA_EFFECT_09-verdict-stamp"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor02_seal_maintenance_administrator",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_11-seal-energy-core",
+        "DA_EFFECT_11-seal-energy-core",
+        "DA_EFFECT_09-verdict-stamp"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor03_consent_custodian_residual",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_10-isolation-ring",
+        "DA_EFFECT_10-isolation-ring",
+        "DA_EFFECT_10-isolation-ring"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor03_quarantine_enforcer_residual",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_10-isolation-ring",
+        "DA_EFFECT_10-isolation-ring",
+        "DA_EFFECT_10-isolation-ring"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor03_voluntary_quarantine_administrator",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_10-isolation-ring",
+        "DA_EFFECT_10-isolation-ring",
+        "DA_EFFECT_10-isolation-ring"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor04_rejection_execution_residual",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_08-signature-stroke",
+        "DA_EFFECT_08-signature-stroke",
+        "DA_EFFECT_09-verdict-stamp"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor04_responsibility_audit_administrator",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_08-signature-stroke",
+        "DA_EFFECT_08-signature-stroke",
+        "DA_EFFECT_09-verdict-stamp"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor04_signature_mimic_residual",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_08-signature-stroke",
+        "DA_EFFECT_08-signature-stroke",
+        "DA_EFFECT_09-verdict-stamp"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor05_memory_omission_residue",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_07-memory-compression",
+        "DA_EFFECT_07-memory-compression",
+        "DA_EFFECT_07-memory-compression"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor05_original_memory_administrator",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_07-memory-compression",
+        "DA_EFFECT_07-memory-compression",
+        "DA_EFFECT_07-memory-compression"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor06_causality_administrator",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_06-causality-bolt",
+        "DA_EFFECT_06-causality-bolt",
+        "DA_EFFECT_06-causality-bolt"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor06_causality_residue",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_06-causality-bolt",
+        "DA_EFFECT_06-causality-bolt",
+        "DA_EFFECT_06-causality-bolt"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor07_coordinate_administrator",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_04-coordinate-wedge",
+        "DA_EFFECT_04-coordinate-wedge",
+        "DA_EFFECT_04-coordinate-wedge"
+      ],
+      "lifecycle": {
+        "reducedRemovedStrike": true,
+        "shieldPauseHeld": true,
+        "shieldReducedSettled": true,
+        "terminalRemovedShield": true
+      }
+    },
+    {
+      "scene": "floor07_coordinate_residue",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_04-coordinate-wedge",
+        "DA_EFFECT_04-coordinate-wedge",
+        "DA_EFFECT_04-coordinate-wedge"
+      ],
+      "lifecycle": {
+        "reducedRemovedStrike": true,
+        "shieldPauseHeld": true,
+        "shieldReducedSettled": true,
+        "terminalRemovedShield": true
+      }
+    },
+    {
+      "scene": "floor08_administrator_observatory",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_03-rift-ray",
+        "DA_EFFECT_03-rift-ray",
+        "DA_EFFECT_03-rift-ray"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor08_residue_isolation",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_glass",
+        "DA_EFFECT_glass",
+        "DA_EFFECT_glass"
+      ],
+      "lifecycle": null
+    },
+    {
+      "scene": "floor09_archive_redesign",
+      "complete": true,
+      "effects": [
+        "DA_EFFECT_01-record-lance",
+        "DA_EFFECT_01-record-lance",
+        "DA_EFFECT_01-record-lance"
+      ],
+      "lifecycle": {
+        "reducedRemovedStrike": true,
+        "shieldPauseHeld": true,
+        "shieldReducedSettled": true,
+        "terminalRemovedShield": true
+      }
+    }
+  ],
+  "videoLifecycleResults": [
+    {
+      "scene": "floor01_final_authorization_administrator",
+      "checks": {
+        "reducedRemovedStrike": true,
+        "shieldPauseHeld": true,
+        "shieldReducedSettled": true,
+        "terminalRemovedShield": true
+      },
+      "releasedSamples": 9
+    },
+    {
+      "scene": "floor03_voluntary_quarantine_administrator",
+      "checks": {
+        "reducedRemovedStrike": true,
+        "shieldPauseHeld": true,
+        "shieldReducedSettled": true,
+        "terminalRemovedShield": true
+      },
+      "releasedSamples": 10
+    },
+    {
+      "scene": "floor05_original_memory_administrator",
+      "checks": {
+        "reducedRemovedStrike": true,
+        "shieldPauseHeld": true,
+        "shieldReducedSettled": true,
+        "terminalRemovedShield": true
+      },
+      "releasedSamples": 9
+    },
+    {
+      "scene": "floor08_administrator_observatory",
+      "checks": {
+        "reducedRemovedStrike": true,
+        "shieldPauseHeld": true,
+        "shieldReducedSettled": true,
+        "terminalRemovedShield": true
+      },
+      "releasedSamples": 9
+    },
+    {
+      "scene": "floor09_archive_redesign",
+      "checks": {
+        "reducedRemovedStrike": true,
+        "shieldPauseHeld": true,
+        "shieldReducedSettled": true,
+        "terminalRemovedShield": true
+      },
+      "releasedSamples": 9
+    }
+  ]
+}
