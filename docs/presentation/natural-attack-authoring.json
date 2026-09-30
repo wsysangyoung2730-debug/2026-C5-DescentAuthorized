@@ -136,6 +136,7 @@
         }
       },
       "movingJoints": [
+        "root/pelvis/spine",
         "root/pelvis/spine/chest",
         "root/pelvis/spine/chest/neck/head"
       ],

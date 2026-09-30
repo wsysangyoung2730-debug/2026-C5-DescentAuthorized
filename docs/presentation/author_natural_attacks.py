@@ -105,7 +105,7 @@ PROFILES = {
         "side": "R", "socket": "hand_R",
         "joints": {
             "upper_arm_R": track([-7, -9, -11], [-20, 5, 13], [-12, 10, 24]),
-            "forearm_R": track([7, 0, -5], [-9, 0, 7], [-5, 0, 12]),
+            "forearm_R": track([-7, 0, -5], [20, 0, 7], [16, 0, 12]),
             "hand_R": track([0, -4, -5], [0, 6, 7], [0, 2, 11]),
             "head": track([3, 0, -3], [-1, 0, 2], [0, 0, 2]),
         },
@@ -131,7 +131,8 @@ PROFILES = {
         "action": "present the held book with both hands together, recoil its weight, lower together",
         "side": "R", "socket": "equipment_book",
         "joints": {
-            "chest": track([-3.8, 0, 0], [5.8, 0, 0], [4.0, 0, 0]),
+            "spine": track([-4, 0, 0], [6, 0, 0], [4, 0, 0]),
+            "chest": track([-3, 0, 0], [3, 0, 0], [2, 0, 0]),
             "head": track([5, 0, 0], [-3, 0, 0], [-1, 0, 0]),
         },
     },
@@ -182,8 +183,8 @@ PROFILES = {
         "action": "keep the identity ledger supported, trace a short scan with the raised pointer and point outward",
         "side": "R", "socket": "hand_R",
         "joints": {
-            "upper_arm_R": track([-5, -8, -9], [-19, 7, 12], [-14, 11, 19]),
-            "forearm_R": track([6, 0, -4], [-8, 0, 5], [-4, 0, 8]),
+            "upper_arm_R": track([-6, -8, -9], [14, 7, 12], [17, 11, 19]),
+            "forearm_R": track([-6, 0, -4], [12, 0, 5], [9, 0, 8]),
             "hand_R": track([0, -3, -3], [0, 4, 4], [0, 2, 6]),
             "head": track([1, 0, -4], [-1, 0, 3], [0, 0, 2]),
         },
@@ -324,5 +325,9 @@ if __name__ == "__main__":
     for name in names:
         rows.append(write_actor(name))
         print(name, flush=True)
-    (ROOT / "docs/presentation/natural-attack-authoring.json").write_text(
-        json.dumps({"version": 2, "actors": rows}, ensure_ascii=False, indent=2) + "\n")
+    report_path = ROOT / "docs/presentation/natural-attack-authoring.json"
+    if args.only and report_path.exists():
+        previous = {row["actor"]: row for row in json.loads(report_path.read_text())["actors"]}
+        previous.update({row["actor"]: row for row in rows})
+        rows = [previous[name] for name in sorted(previous)]
+    report_path.write_text(json.dumps({"version": 2, "actors": rows}, ensure_ascii=False, indent=2) + "\n")
