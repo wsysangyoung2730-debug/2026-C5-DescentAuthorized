@@ -177,6 +177,40 @@ final class LowerFloorTests: XCTestCase {
         XCTAssertEqual(engine.state.expansion.executionNullificationUses, 1)
     }
 
+    func testCancellationAutomaticallyChoosesEarliestDueGroup() throws {
+        for spell: SpellID in [.consequenceErasure, .executionNullification] {
+            var engine = makeEngine()
+            _ = try engine.beginPlayerTurn(intent: .expansion(name: "등록", action: .schedule([
+                .init(name: "나중", damage: 20, turnsFromNow: 3),
+                .init(name: "먼저 A", damage: 12, turnsFromNow: 1),
+                .init(name: "먼저 B", damage: 14, turnsFromNow: 1)])))
+            try resolve(&engine)
+            _ = try engine.beginPlayerTurn(intent: idle)
+            _ = try cast(spell, &engine)
+            XCTAssertEqual(engine.state.expansion.scheduledDamage.map(\.name),
+                           spell == .consequenceErasure ? ["나중", "먼저 B"] : ["나중"])
+        }
+    }
+
+    func testSealReleaseRequiresAnAbsoluteBarrier() {
+        var battle = makeEngine().state
+        battle.enemy.absoluteBarrierCharges = 0
+        XCTAssertNotNil(battle.spellUnavailabilityReason(for: SpellCatalog.sealRelease))
+        battle.enemy.normalBarrier = 40
+        XCTAssertNotNil(battle.spellUnavailabilityReason(for: SpellCatalog.sealRelease))
+        battle.enemy.absoluteBarrierCharges = 1
+        XCTAssertNil(battle.spellUnavailabilityReason(for: SpellCatalog.sealRelease))
+    }
+
+    func testConsequenceErasureFallsBackToNormalBarrierOnlyWithoutReservations() {
+        var battle = makeEngine().state
+        battle.enemy.absoluteBarrierCharges = 0
+        battle.enemy.normalBarrier = 40
+        XCTAssertEqual(battle.availableEffectTargets(for: SpellCatalog.consequenceErasure).map(\.id), [.enemyNormalBarrier])
+        battle.expansion.scheduledDamage = [.init(id: "first", name: "예약", damage: 12, dueEnemyTurn: 2)]
+        XCTAssertEqual(battle.availableEffectTargets(for: SpellCatalog.consequenceErasure).map(\.id), [.scheduledDamage("first")])
+    }
+
     func testSealChoiceBlocksInputAndProtectsCoreCards() throws {
         let cards: [SpellID] = [.riftSeverance, .basicBarrier, .sealRelease, .chainInscription, .executionDelay]
         var engine = CombatEngine(enemy: LowerFloorEnemyCatalog.all[.consentCustodianResidual]!,

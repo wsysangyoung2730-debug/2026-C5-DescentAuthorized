@@ -72,7 +72,11 @@ final class ExpansionIntegrationTests: XCTestCase {
         _ = try cast(.chainInscription, engine: &engine)
         try resolve(&engine)
         XCTAssertEqual(Set(engine.state.expansion.lockedSpells.keys), [.chainInscription, .purificationGlyph])
-        XCTAssertTrue(protected.allSatisfy { engine.state.spellUnavailabilityReason(for: SpellCatalog.spell($0)) == nil })
+        XCTAssertTrue(protected.allSatisfy { engine.state.expansion.lockedSpells[$0] == nil })
+        XCTAssertTrue(protected.subtracting([.sealRelease]).allSatisfy {
+            engine.state.spellUnavailabilityReason(for: SpellCatalog.spell($0)) == nil
+        })
+        XCTAssertEqual(engine.state.spellUnavailabilityReason(for: SpellCatalog.sealRelease), "해제할 절대 방벽이 없습니다.")
         _ = try engine.beginPlayerTurn(intent: idle)
         let reservation = try XCTUnwrap(engine.state.expansion.scheduledDamage.first)
         _ = try cast(.executionDelay, engine: &engine, target: .scheduledDamage(reservation.id))

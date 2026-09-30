@@ -252,15 +252,15 @@ extension BattleState {
                 let extra = effect == .executionDelay ? " → \(reservation.dueEnemyTurn + 1)턴에 집행" : " 취소"
                 options.append(.init(id: .scheduledDamage(reservation.id), title: reservation.name, detail: "\(reservation.dueEnemyTurn)턴 · \(reservation.damage) 피해\(effect == .isolationBarrier ? " → 50% 감소" : extra)"))
             }
+            if effect == .consequenceErasure, options.isEmpty, enemy.normalBarrier > 0 {
+                options.append(.init(id: .enemyNormalBarrier, title: "일반 방벽", detail: "방벽 \(enemy.normalBarrier) 소멸"))
+            }
         case .executionNullification:
             guard enemy.absoluteBarrierCharges == 0 else { return [] }
             for turn in Set(expansion.scheduledDamage.map(\.dueEnemyTurn)).sorted() {
                 let group = Array(expansion.scheduledDamage.filter { $0.dueEnemyTurn == turn }.prefix(2))
                 options.append(.init(id: .scheduledDamageGroup(turn), title: "\(turn)턴 집행 묶음",
                     detail: group.map { "\($0.name) \($0.damage)" }.joined(separator: " + ") + " · 최대 2건 취소"))
-            }
-            if effect == .consequenceErasure, enemy.normalBarrier > 0 {
-                options.append(.init(id: .enemyNormalBarrier, title: "일반 방벽", detail: "방벽 \(enemy.normalBarrier) 소멸"))
             }
         default: break
         }
@@ -273,6 +273,9 @@ extension BattleState {
         if let equipped = expansion.equippedSpells, !equipped.contains(spell.id) { return "출전 가방에 없는 주문입니다." }
         if expansion.lockedSpells[spell.id] != nil { return "이번 턴 봉인된 주문입니다." }
         if spell.hpCost > 0 && player.hp <= spell.hpCost { return "HP가 \(spell.hpCost)보다 많아야 사용할 수 있습니다." }
+        if case .dispelAbsoluteBarrier = spell.effect, enemy.absoluteBarrierCharges <= 0 {
+            return "해제할 절대 방벽이 없습니다."
+        }
         guard case let .expansion(effect) = spell.effect else { return nil }
         switch effect {
         case .purificationGlyph, .consequenceErasure, .executionDelay, .executionNullification:
@@ -291,5 +294,14 @@ extension BattleState {
         default: break
         }
         return nil
+    }
+}
+
+
+extension SpellDefinition {
+    /// Cancellation always resolves the earliest due reservation; other dispels retain explicit choice.
+    var usesAutomaticEffectTarget: Bool {
+        guard case let .expansion(effect) = self.effect else { return false }
+        return effect == .consequenceErasure || effect == .executionNullification
     }
 }
