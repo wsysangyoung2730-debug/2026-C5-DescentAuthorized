@@ -397,8 +397,8 @@ final class RealitySceneController: ObservableObject {
 
     func setEnemyPreviewVisible(_ isVisible: Bool) {
         cancelEnemyPreviewReveal(restoreActor: true)
-        requestedEnemyPreviewVisibility = isVisible
-        registry.setEnabled(isVisible, for: .enemyActor)
+        requestedEnemyPreviewVisibility = isVisible && !actorMotion.isDefeated
+        registry.setEnabled(requestedEnemyPreviewVisibility, for: .enemyActor)
     }
 
     func revealEnemyPreview(reducedMotion: Bool) {
@@ -1209,7 +1209,7 @@ final class RealitySceneController: ObservableObject {
         actorMotion.setReducedMotion(reducedMotion)
         if battleState?.phase == .victory {
             actorMotion.play("death")
-        } else {
+        } else if battleState != nil {
             actorMotion.prepareEncounter()
         }
         requestedBattleState = battleState
@@ -3242,6 +3242,12 @@ extension RealitySceneController {
             lifecycle["deathOpacity"] = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 1
             lifecycle["deathDisabled"] = actor?.children.first?.isEnabled == false
             await capture("death")
+            synchronizeCombatState(nil, reducedMotion: false)
+            setEnemyPreviewVisible(true)
+            lifecycle["hiddenAfterDialogueReset"] = actor?.isEnabled == false
+            actorMotion.setReducedMotion(true)
+            lifecycle["hiddenAfterMotionSettingChange"] = actor?.children.first?.isEnabled == false
+            await capture("after-defeat-dialogue")
             actorMotion.prepareEncounter()
             lifecycle["restartOpacity"] = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 0
         } else if preset == .descentInput {

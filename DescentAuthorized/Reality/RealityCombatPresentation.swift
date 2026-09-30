@@ -900,6 +900,7 @@ final class RealityActorMotionPlayer {
     private var motionTask: Task<Void, Never>?
     private var generation = 0
     private var terminal = false
+    var isDefeated: Bool { terminal }
     private var reduced = false
     private var suspended = false
     private var currentMotion = "idle"
@@ -953,8 +954,8 @@ final class RealityActorMotionPlayer {
     func setReducedMotion(_ value: Bool) {
         guard reduced != value else { return }
         reduced = value
+        if terminal { return } // Keep death progress; do not restore the defeated mesh.
         if value { visualRoot?.transform = baseTransform; restoreFragments() }
-        if terminal { return } // Keep death progress; do not restart its fade.
         if value {
             animatedEntity?.stopAllAnimations(recursive: false)
             jointPlayback = nil

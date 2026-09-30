@@ -153,6 +153,7 @@ struct DemoFlowView: View {
         }
         .onAppear {
             queueEncounterPreparationIfNeeded()
+            synchronizeLegacyDefeatVisibility()
             synchronizeRewardLearningHUD()
             reportSystemOverlayVisibility()
             synchronizeFloorMusic()
@@ -185,6 +186,7 @@ struct DemoFlowView: View {
         }
         .onChange(of: sceneController.loadState) { _, _ in
             scheduleWarmup()
+            synchronizeLegacyDefeatVisibility()
             synchronizeFloorMusic()
         }
         .onChange(of: gameSession.progress.currentFloor) { _, _ in
@@ -192,6 +194,7 @@ struct DemoFlowView: View {
         }
         .onChange(of: gameSession.progress.currentScene) { _, _ in
             queueEncounterPreparationIfNeeded()
+            synchronizeLegacyDefeatVisibility()
             synchronizeRewardLearningHUD()
             synchronizeFloorMusic()
             synchronizeRecordsBattleTutorial()
@@ -205,6 +208,17 @@ struct DemoFlowView: View {
             } else {
                 gameFeedback.suspendMusicForLoading()
             }
+        }
+    }
+
+    private func synchronizeLegacyDefeatVisibility() {
+        guard gameSession.progress.expansion == nil else { return }
+        switch gameSession.progress.currentScene {
+        case .floor9RecordsDefeated, .floor9RewardVault, .floor9DescentDoor,
+             .floor8ResidualDefeated, .floor8SealedDoor,
+             .floor8AdministratorDefeated, .floor8Reward, .floor8DescentDoor:
+            sceneController.setEnemyPreviewVisible(false)
+        default: break
         }
     }
 
