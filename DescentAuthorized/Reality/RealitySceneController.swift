@@ -1890,6 +1890,12 @@ final class RealitySceneController: ObservableObject {
                     optics.fieldOfViewInDegrees = max(optics.fieldOfViewInDegrees, 55)
                 }
             }
+            if FinalSceneContract.contract(for: descriptor.sceneID)?.floor == 5,
+               FinalSceneContract.contract(for: descriptor.sceneID)?.role == "residualA",
+               cameraName == descriptor.cameraName(for: .descentInput) {
+                // Dolly along the authored view axis, preserving its aim and perspective.
+                transform.translation += transform.rotation.act(SIMD3<Float>(0, 0, -0.45))
+            }
             snapshots[cameraName] = AuthoredCameraSnapshot(transformMatrix: transform.matrix, camera: optics)
         }
         return snapshots

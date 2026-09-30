@@ -106,10 +106,6 @@ struct GateSealInteractionView: View {
                 .padding(.vertical, 20)
                 .opacity(isOpening ? 0 : 1)
                 .allowsHitTesting(!isOpening)
-                if isOpening && !isLoading {
-                    VStack { Spacer(); Text(destinationTitle).font(.title3.weight(.semibold)).foregroundStyle(DAColor.gold)
-                        .padding(14).background(.black.opacity(0.7), in: Capsule()).padding(.bottom, 30) }
-                }
                 if isLoading {
                     LoadingScreenView(context: floorNumber == 8 ? .floor8 : .expansion(floorNumber), progress: 0.1, tip: "봉인이 해제되었습니다. 다음 구역으로 이동합니다.")
                 }
