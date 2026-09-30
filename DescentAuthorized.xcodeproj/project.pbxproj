@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8BC69DD738E24D3313DA17C1 /* RealityCombatEffectLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0C3AF50C12E7950B80A4A27; };
+		4D90A4C073247C9BE134FFE2 /* CombatEffectCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A81633168A782A97F4545EA; };
 		AB1950000000000000000001 /* PortalVeil.metal in Sources */ = {isa = PBXBuildFile; fileRef = AB1950000000000000000002 /* PortalVeil.metal */; };
 		A18000000000000000000001 /* CombatStatusPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18000000000000000000002 /* CombatStatusPresentation.swift */; };
 		C54100000000000000000001 /* LowerFloorContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000001 /* LowerFloorContracts.swift */; };
@@ -111,6 +113,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B0C3AF50C12E7950B80A4A27 /* RealityCombatEffectLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DescentAuthorized/Reality/RealityCombatEffectLibrary.swift; sourceTree = SOURCE_ROOT; };
+		0A81633168A782A97F4545EA /* CombatEffectCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DescentAuthorized/Core/Game/CombatEffectCatalog.swift; sourceTree = SOURCE_ROOT; };
 		AB1950000000000000000002 /* PortalVeil.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = PortalVeil.metal; sourceTree = "<group>"; };
 		A18000000000000000000002 /* CombatStatusPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/CombatEngine/CombatStatusPresentation.swift"; sourceTree = SOURCE_ROOT; };
 		C54200000000000000000001 /* LowerFloorContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorContracts.swift"; sourceTree = SOURCE_ROOT; };
@@ -232,6 +236,8 @@
 		400000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
+				B0C3AF50C12E7950B80A4A27 /* RealityCombatEffectLibrary.swift */,
+				0A81633168A782A97F4545EA /* CombatEffectCatalog.swift */,
 				400000000000000000000002 /* DescentAuthorized */,
 				400000000000000000000014 /* Frameworks */,
 				400000000000000000000009 /* Products */,
@@ -584,6 +590,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8BC69DD738E24D3313DA17C1 /* RealityCombatEffectLibrary.swift in Sources */,
+				4D90A4C073247C9BE134FFE2 /* CombatEffectCatalog.swift in Sources */,
 				C54100000000000000000001 /* LowerFloorContracts.swift in Sources */,
 				C54100000000000000000002 /* LowerFloorSpellCatalog.swift in Sources */,
 				C54100000000000000000003 /* LowerFloorDescentGlyphs.swift in Sources */,
