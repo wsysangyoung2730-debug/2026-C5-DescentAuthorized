@@ -299,6 +299,10 @@ struct BattleView: View {
                     .zIndex(24)
             }
 
+            if let guide = absoluteBarrierGuide {
+                ExpansionCombatGuideView(guide: guide).zIndex(26)
+            }
+
             if showsFirstTurnBriefing {
                 battleBriefing
                     .transition(.opacity)
@@ -318,6 +322,8 @@ struct BattleView: View {
             }
 
         }
+        .environment(\.isGlyphInputSuspended, isInputSuspended || absoluteBarrierGuide != nil)
+        .onChange(of: absoluteBarrierGuide != nil) { _, _ in synchronizePresentationSuspension() }
         .task(id: encounterIdentity) {
             gameFeedback.synchronizesProjectileAudio = realitySceneID != nil
             battleLogEntries = []
@@ -359,6 +365,11 @@ struct BattleView: View {
             }
             #endif
             synchronizePresentationSuspension()
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--barrier-guide-diagnostics"), isObservationBattle {
+                await runBarrierGuideDiagnostics()
+            }
+            #endif
         }
         .onChange(of: realityController.loadState) { _, state in
             if case .ready = state { enableBattleCameraIfAvailable() }
@@ -1462,6 +1473,7 @@ struct BattleView: View {
                     enemyWasHit = amount > 0
                 }
             case let .spellResolved(_, grade):
+                if isObservationBattle { didExperienceAbsoluteBarrier = true }
                 banner = (gradeTitle(grade), gradeColor(grade))
             case let .spellRejected(_, reason):
                 banner = (failureTitle(reason), .red)
@@ -1563,8 +1575,8 @@ struct BattleView: View {
     }
 
     private func synchronizePresentationSuspension() {
-        gameSession.setCombatPresentationSuspended(isInputSuspended || showsDamageOrder)
-        realityController.setActorMotionSuspended(isInputSuspended || showsDamageOrder)
+        gameSession.setCombatPresentationSuspended(isInputSuspended || showsDamageOrder || absoluteBarrierGuide != nil)
+        realityController.setActorMotionSuspended(isInputSuspended || showsDamageOrder || absoluteBarrierGuide != nil)
     }
 
     private func showFeedback(_ text: String, color: Color) {
@@ -1950,11 +1962,22 @@ struct BattleView: View {
         }
     }
 
+    private var absoluteBarrierGuide: ExpansionCombatGuide? {
+        guard isObservationBattle, let battle = gameSession.battleState,
+              battle.phase == .playerTurn, !gameSession.isCombatPresentationActive,
+              battle.enemy.absoluteBarrierCharges > 0,
+              !gameSession.progress.loadoutTutorials.contains(.absoluteBarrierRelease),
+              didExperienceAbsoluteBarrier || battle.turnNumber > 1 || !battle.castsThisTurn.isEmpty else { return nil }
+        return .init(flag: .absoluteBarrierRelease, title: "절대 방벽을 해제할 수 있습니다",
+                     detail: "금빛 절대 방벽은 공격을 막습니다. 봉인 해제 마법을 사용해 방벽을 걷어낸 뒤 공격하세요.")
+    }
+
     private func isSpellPermitted(_ spell: SpellDefinition, battle: BattleState) -> Bool {
         guard battle.spellUnavailabilityReason(for: spell) == nil else { return false }
         if isObservationBattle, spell.id == .sealRelease {
             return battle.enemy.absoluteBarrierCharges > 0
-                && didExperienceAbsoluteBarrier
+                && (didExperienceAbsoluteBarrier || battle.turnNumber > 1 || !battle.castsThisTurn.isEmpty
+                    || gameSession.progress.loadoutTutorials.contains(.absoluteBarrierRelease))
         }
         return true
     }
@@ -2026,4 +2049,57 @@ struct BattleView: View {
         case .incompleteGlyph: "문양 불완전"
         }
     }
+    #if DEBUG
+    /// Uses the isolated preview save and real session commands; never alters a player's save.
+    @MainActor private func runBarrierGuideDiagnostics() async {
+        guard ExpansionPreviewSupport.loadoutFloor == 8 else { return }
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("BarrierGuideDiagnostics")
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        var rows: [[String: Any]] = []
+        func record(_ stage: String) {
+            let battle = gameSession.battleState
+            rows.append(["stage": stage, "guideVisible": absoluteBarrierGuide != nil,
+                "sealPermitted": battle.map { isSpellPermitted(SpellCatalog.sealRelease, battle: $0) } ?? false,
+                "charges": battle?.enemy.absoluteBarrierCharges ?? -1,
+                "tutorialRecorded": gameSession.progress.loadoutTutorials.contains(.absoluteBarrierRelease)])
+            try? JSONSerialization.data(withJSONObject: ["stage": stage, "rows": rows], options: [.prettyPrinted, .sortedKeys])
+                .write(to: directory.appendingPathComponent("report.json"), options: .atomic)
+        }
+        func cast(_ id: SpellID) {
+            let spell = SpellCatalog.spell(id)
+            gameSession.send(.castSpell(spell: id, strokes: spell.glyph.strokes.map {
+                DrawnStroke(points: $0.referencePath)
+            }, inputMethod: .pencil))
+        }
+        showsFirstTurnBriefing = false
+        let start = Date()
+        while !realityController.isReady(sceneID: .floor08AdministratorObservatory, cameraPreset: .battle),
+              Date().timeIntervalSince(start) < 40 {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        try? await Task.sleep(for: .seconds(2))
+        record("initial-disabled")
+        try? await Task.sleep(for: .seconds(3))
+        cast(.afterglowErasure)
+        let attack = Date()
+        while absoluteBarrierGuide == nil, Date().timeIntervalSince(attack) < 12 {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        record("after-first-action")
+        try? await Task.sleep(for: .seconds(3))
+        gameSession.send(.markLoadoutTutorial(.absoluteBarrierRelease))
+        selectAvailableSpell()
+        record("guide-confirmed")
+        try? await Task.sleep(for: .seconds(3))
+        cast(.sealRelease)
+        let release = Date()
+        while gameSession.isCombatPresentationActive, Date().timeIntervalSince(release) < 12 {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        try? await Task.sleep(for: .seconds(2))
+        record("released-disabled")
+    }
+    #endif
+
 }

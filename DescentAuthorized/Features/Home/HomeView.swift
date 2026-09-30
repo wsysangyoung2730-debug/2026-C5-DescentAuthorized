@@ -98,6 +98,10 @@ struct HomeView: View {
                     gameSession.send(.chooseCardSeal(candidate))
                     gameSession.send(.finishTurn)
                 }
+            } else if ExpansionPreviewSupport.loadoutFloor == 8, ExpansionPreviewSupport.isBoss,
+                      ProcessInfo.processInfo.arguments.contains("--barrier-guide-diagnostics") {
+                gameSession.send(.enterAdministratorEncounter)
+                gameSession.send(.beginAdministratorBattle)
             } else if ExpansionPreviewSupport.floor != nil && ExpansionPreviewSupport.isBattle {
                 gameSession.send(.advanceExpansion)
             }

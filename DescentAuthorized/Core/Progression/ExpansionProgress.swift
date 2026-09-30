@@ -69,6 +69,7 @@ struct ExpansionProgress: Codable, Equatable, Sendable {
 }
 
 enum LoadoutTutorialFlag: String, Codable, Hashable, Sendable {
+    case absoluteBarrierRelease
     case firstSixLoadout
     case firstOverflowLoadout
     case statusEffects
