@@ -210,6 +210,7 @@ struct BattleView: View {
     @State private var enemyActionArtwork = "focus"
     @State private var enemyActionTask: Task<Void, Never>?
     @State private var showsFirstTurnBriefing = false
+    @State private var showsDamageOrder = false
     @State private var didExperienceAbsoluteBarrier = false
     @State private var enemyPulseTask: Task<Void, Never>?
     @State private var playerPulseTask: Task<Void, Never>?
@@ -261,13 +262,14 @@ struct BattleView: View {
                     .disabled(gameSession.isCombatPresentationActive)
                     .overlay(alignment: .top) {
                         if battle.showsCombatStatus || feedbackText != nil || enemyActionText != nil {
-                            ExpansionCombatStatusView(battle: battle, feedbackText: feedbackText, feedbackColor: feedbackColor, feedbackIsEnemy: feedbackIsEnemy, enemyActionText: enemyActionText, enemyActionArtwork: enemyActionArtwork)
+                            ExpansionCombatStatusView(battle: battle, feedbackText: feedbackText, feedbackColor: feedbackColor, feedbackIsEnemy: feedbackIsEnemy, enemyActionText: enemyActionText, enemyActionArtwork: enemyActionArtwork, showsThreats: $showsDamageOrder)
                         }
                     }
                     .overlay(alignment: .bottomTrailing) {
                         ExpansionPlayerStatusAuraView(battle: battle)
                             .padding(.trailing, 32).padding(.bottom, 208)
                     }
+                    .accessibilityHidden(showsDamageOrder)
             } else {
                 encounterStandby
             }
@@ -290,6 +292,11 @@ struct BattleView: View {
                 spellDetailOverlay(detailedSpell)
                     .transition(.opacity.combined(with: .scale(scale: 0.97)))
                     .zIndex(20)
+            }
+
+            if showsDamageOrder, let battle = gameSession.battleState {
+                DamageResolutionOverlay(battle: battle) { showsDamageOrder = false }
+                    .zIndex(24)
             }
 
             if showsFirstTurnBriefing {
@@ -318,6 +325,7 @@ struct BattleView: View {
             previewMana = nil
             previewStrokes = nil
             detailedSpell = nil
+            showsDamageOrder = false
             selectedSpellID = nil
             selectedEffectTarget = nil
             showsFirstTurnBriefing = false
@@ -345,6 +353,11 @@ struct BattleView: View {
                 }
             }
             updateDefeatPresentation(for: gameSession.battleState?.phase)
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--preview-damage-order") {
+                showsDamageOrder = true
+            }
+            #endif
             synchronizePresentationSuspension()
         }
         .onChange(of: realityController.loadState) { _, state in
@@ -366,6 +379,11 @@ struct BattleView: View {
                 autoFinishPlayerTurnIfNeeded()
                 updateDefeatPresentation(for: gameSession.battleState?.phase)
             }
+        }
+        .onChange(of: showsDamageOrder) { _, _ in
+            isCameraLooking = false
+            isCameraZooming = false
+            synchronizePresentationSuspension()
         }
         .onChange(of: isInputSuspended) { _, _ in
             synchronizePresentationSuspension()
@@ -477,7 +495,7 @@ struct BattleView: View {
                         .frame(width: contentWidth, height: max(stageHeight, 1))
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                         .allowsHitTesting(!isInputSuspended && !gameSession.isCombatPresentationActive
-                                          && detailedSpell == nil && !showsFirstTurnBriefing)
+                                          && detailedSpell == nil && !showsFirstTurnBriefing && !showsDamageOrder)
                     }
                 }
             }
@@ -493,7 +511,7 @@ struct BattleView: View {
 
     private func enableBattleCameraIfAvailable() {
         guard isBattleScene, realitySceneID != nil, !isInputSuspended,
-              !isRestartLoading, !isDefeatPanelVisible,
+              !isRestartLoading, !isDefeatPanelVisible, !showsDamageOrder,
               gameSession.battleState?.phase != .defeat,
               gameSession.battleState?.phase != .victory else { return }
         // Loading/replacing a room clears controller state. Reassert the active
@@ -508,7 +526,7 @@ struct BattleView: View {
             .simultaneousGesture(
                 MagnifyGesture(minimumScaleDelta: 0.01)
                     .onChanged { value in
-                        guard !isInputSuspended, !gameSession.isCombatPresentationActive else { return }
+                        guard !isInputSuspended, !showsDamageOrder, !gameSession.isCombatPresentationActive else { return }
                         if !isCameraZooming {
                             isCameraZooming = true
                             isCameraLooking = false
@@ -532,7 +550,7 @@ struct BattleView: View {
             .onChanged { value in
                 guard isBattleScene, realitySceneID != nil,
                       !isInputSuspended, !gameSession.isCombatPresentationActive,
-                      detailedSpell == nil, !showsFirstTurnBriefing,
+                      detailedSpell == nil, !showsFirstTurnBriefing, !showsDamageOrder,
                       gameSession.battleState?.phase != .defeat,
                       !isCameraZooming,
                       CGRect(origin: .zero, size: viewportSize).contains(value.startLocation),
@@ -637,7 +655,7 @@ struct BattleView: View {
             )
             .disabled(
                 presentation.phase != .playerTurn
-                    || showsFirstTurnBriefing || detailedSpell != nil || isRestartLoading
+                    || showsFirstTurnBriefing || showsDamageOrder || detailedSpell != nil || isRestartLoading
                     || (!options.isEmpty && selectedOption == nil)
             )
             .tutorialTarget("battle.input")
@@ -1544,8 +1562,8 @@ struct BattleView: View {
     }
 
     private func synchronizePresentationSuspension() {
-        gameSession.setCombatPresentationSuspended(isInputSuspended)
-        realityController.setActorMotionSuspended(isInputSuspended)
+        gameSession.setCombatPresentationSuspended(isInputSuspended || showsDamageOrder)
+        realityController.setActorMotionSuspended(isInputSuspended || showsDamageOrder)
     }
 
     private func showFeedback(_ text: String, color: Color) {

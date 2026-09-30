@@ -9,7 +9,7 @@ struct ExpansionCombatStatusView: View {
     var feedbackIsEnemy = false
     var enemyActionText: String? = nil
     var enemyActionArtwork = "direct-attack"
-    @State private var showsThreats = false
+    @Binding var showsThreats: Bool
     @State private var expandedSide: CombatStatusItem.Side?
 
     var body: some View {
@@ -20,31 +20,6 @@ struct ExpansionCombatStatusView: View {
         }
         .padding(.horizontal, 16)
         .frame(maxWidth: .infinity, alignment: .top)
-        .sheet(isPresented: $showsThreats) {
-            NavigationStack {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 22) {
-                        Text("예고: \(battle.currentEnemyIntent?.name ?? "대기")").font(.title2)
-                        if case let .expansion(_, action) = battle.currentEnemyIntent {
-                            Text(action.detail).foregroundStyle(DAColor.gold)
-                        }
-                        Text("1 · 직접 공격\n예고된 분할 타격은 왼쪽부터 한 번씩 처리됩니다. 직격 금지는 첫 직접 피해만 무효화합니다.")
-                        Text("2 · 도래한 예약").font(.headline)
-                        let due = battle.expansion.scheduledDamage.filter { $0.dueEnemyTurn <= battle.turnNumber }
-                        if due.isEmpty { Text("이번 적 턴에 도착할 예약 없음").foregroundStyle(DAColor.secondary) }
-                        ForEach(due) { pending in
-                            Text("\(pending.name) · \(pending.damage) 피해\(pending.wasDelayed ? " · 지연됨" : "")")
-                        }
-                        Text("3 · 모사와 반격\n재사용 감지 또는 공격 성공 조건을 충족한 추가타만 처리합니다. 모사 금지로 반응을 막을 수 있습니다.")
-                        Text("예약 등록은 현재 직접 피해가 아닙니다. HP 대가는 보호·방벽과 별개이며 생존할 수 없는 금서는 시전할 수 없습니다.")
-                            .foregroundStyle(DAColor.secondary)
-                    }.padding(28)
-                }
-                .background(DAColor.background).foregroundStyle(DAColor.body)
-                .navigationTitle("피해 처리 순서")
-                .toolbar { Button("닫기") { showsThreats = false } }
-            }.preferredColorScheme(.dark)
-        }
     }
 
     private var isLowerFloorEnemy: Bool {
@@ -62,11 +37,21 @@ struct ExpansionCombatStatusView: View {
                     Label(title, systemImage: symbol)
                         .font(.system(size: 11, weight: .bold)).foregroundStyle(color)
                     Spacer(minLength: 0)
-                    if items.count > 2 || showsThreatButton {
+                    if items.count > 2 {
                         Button { expandedSide = side } label: {
-                            Text(items.count > 2 ? "+\(items.count - 2) · 전체 상태" : "위협 상세")
+                            Text("+\(items.count - 2)")
                                 .font(.system(size: 11, weight: .semibold)).foregroundStyle(color)
-                        }.buttonStyle(.plain)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(title) 전체 상태")
+                    }
+                    if showsThreatButton {
+                        Button { showsThreats = true } label: {
+                            Text("위협 상세")
+                                .font(.system(size: 11, weight: .semibold)).foregroundStyle(color)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("battle.threatDetails")
                     }
                 }
                 .padding(.horizontal, 10).padding(.vertical, 5)
@@ -103,7 +88,6 @@ struct ExpansionCombatStatusView: View {
                 VStack(spacing: 10) {
                     Text(title).font(.headline).foregroundStyle(color)
                     ForEach(items) { item in statusRow(item, side: side, color: color) }
-                    if showsThreatButton { Button("피해 처리 순서") { expandedSide = nil; showsThreats = true } }
                 }.padding(18)
             }.frame(width: 320, height: 360).background(DAColor.background)
         }
@@ -131,6 +115,185 @@ struct ExpansionCombatStatusView: View {
         .accessibilityElement(children: .combine)
     }
 
+}
+
+/// A compact in-game dialog; its typography remains live and accessible.
+struct DamageResolutionOverlay: View {
+    let battle: BattleState
+    let onClose: () -> Void
+
+    private var dueReservations: [ScheduledEnemyDamage] {
+        battle.expansion.scheduledDamage.filter { $0.dueEnemyTurn <= battle.turnNumber }
+    }
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                Color.black.opacity(0.46)
+                    .ignoresSafeArea()
+                    .onTapGesture(perform: onClose)
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 20) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("피해 처리 순서")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(Color(red: 0.84, green: 0.75, blue: 0.55))
+                            .accessibilityAddTraits(.isHeader)
+                        Spacer()
+                        Button(action: onClose) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 17, weight: .regular))
+                                .foregroundStyle(DAColor.secondary)
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("피해 처리 순서 닫기")
+                        .accessibilityIdentifier("battle.damageOrder.close")
+                    }
+
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 22) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(battle.currentEnemyIntent?.name ?? "대기")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundStyle(DAColor.gold)
+                                if case let .expansion(_, action) = battle.currentEnemyIntent {
+                                    Text(action.detail)
+                                        .font(.system(size: 14))
+                                        .foregroundStyle(DAColor.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                            divider(ornament: true)
+                            step("직접 공격", symbol: "bolt", detail: "왼쪽부터 순차 처리 · 직격 금지 시 첫 피해 무효")
+                            HStack(alignment: .top, spacing: 16) {
+                                icon("hourglass")
+                                VStack(alignment: .leading, spacing: 6) {
+                                    stepTitle("도래한 예약")
+                                    if dueReservations.isEmpty {
+                                        detailText("이번 적 턴에 도착할 예약 없음")
+                                    } else {
+                                        ForEach(dueReservations) { pending in
+                                            detailText("\(pending.name) · \(pending.damage) 피해\(pending.wasDelayed ? " · 지연됨" : "")")
+                                        }
+                                    }
+                                }
+                            }
+                            .accessibilityElement(children: .combine)
+                            step("모사와 반격", symbol: "arrow.triangle.branch", detail: "조건 충족 시 추가타 · 모사 금지 시 차단")
+                            divider(ornament: false)
+                            Text("예약 등록은 현재 피해가 아니며, HP 대가는 보호·방벽과 별개입니다.")
+                                .font(.system(size: 12))
+                                .foregroundStyle(DAColor.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.bottom, 2)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                }
+                .padding(.horizontal, 28)
+                .padding(.vertical, 20)
+                .frame(width: min(640, max(0, geometry.size.width - 40)),
+                       height: min(470, max(0, geometry.size.height - 32)), alignment: .topLeading)
+                .background {
+                    ZStack {
+                        Color(red: 0.045, green: 0.05, blue: 0.055)
+                        Image("Floor9PanelTexture")
+                            .resizable().scaledToFill().opacity(0.12)
+                    }
+                    .clipped()
+                    .accessibilityHidden(true)
+                }
+                .clipShape(DamageResolutionFrame(cut: 7))
+                .overlay {
+                    DamageResolutionFrame(cut: 7)
+                        .stroke(Color(red: 0.54, green: 0.43, blue: 0.25), lineWidth: 1)
+                        .padding(1)
+                        .allowsHitTesting(false)
+                    DamageResolutionCorners()
+                        .stroke(DAColor.gold.opacity(0.5), lineWidth: 0.8)
+                        .allowsHitTesting(false)
+                }
+                .accessibilityAddTraits(.isModal)
+                .accessibilityAction(.escape, onClose)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    private func icon(_ symbol: String) -> some View {
+        Image(systemName: symbol)
+            .font(.system(size: 17, weight: .regular))
+            .foregroundStyle(DAColor.body.opacity(0.7))
+            .frame(width: 20, height: 24)
+            .accessibilityHidden(true)
+    }
+
+    private func stepTitle(_ title: String) -> some View {
+        Text(title).font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(DAColor.body).accessibilityAddTraits(.isHeader)
+    }
+
+    private func detailText(_ detail: String) -> some View {
+        Text(detail).font(.system(size: 14)).foregroundStyle(DAColor.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func step(_ title: String, symbol: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 16) {
+            icon(symbol)
+            VStack(alignment: .leading, spacing: 6) {
+                stepTitle(title)
+                detailText(detail)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func divider(ornament: Bool) -> some View {
+        Rectangle().fill(DAColor.gold.opacity(0.26)).frame(height: 0.5)
+            .overlay {
+                if ornament {
+                    Rectangle().fill(DAColor.magic.opacity(0.75))
+                        .frame(width: 5, height: 5).rotationEffect(.degrees(45))
+                        .background { Color(red: 0.045, green: 0.05, blue: 0.055).frame(width: 13, height: 9) }
+                }
+            }
+            .accessibilityHidden(true)
+    }
+}
+
+private struct DamageResolutionFrame: Shape {
+    let cut: CGFloat
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.addLines([
+                CGPoint(x: rect.minX + cut, y: rect.minY), CGPoint(x: rect.maxX - cut, y: rect.minY),
+                CGPoint(x: rect.maxX, y: rect.minY + cut), CGPoint(x: rect.maxX, y: rect.maxY - cut),
+                CGPoint(x: rect.maxX - cut, y: rect.maxY), CGPoint(x: rect.minX + cut, y: rect.maxY),
+                CGPoint(x: rect.minX, y: rect.maxY - cut), CGPoint(x: rect.minX, y: rect.minY + cut)
+            ])
+            path.closeSubpath()
+        }
+    }
+}
+
+private struct DamageResolutionCorners: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            for corner in [CGPoint(x: 0, y: 0), CGPoint(x: rect.width, y: 0),
+                           CGPoint(x: 0, y: rect.height), CGPoint(x: rect.width, y: rect.height)] {
+                let dx: CGFloat = corner.x == 0 ? 1 : -1
+                let dy: CGFloat = corner.y == 0 ? 1 : -1
+                path.move(to: CGPoint(x: corner.x + dx * 5, y: corner.y + dy * 22))
+                path.addLine(to: CGPoint(x: corner.x + dx * 5, y: corner.y + dy * 10))
+                path.addLine(to: CGPoint(x: corner.x + dx * 10, y: corner.y + dy * 5))
+                path.addLine(to: CGPoint(x: corner.x + dx * 22, y: corner.y + dy * 5))
+            }
+        }
+    }
 }
 
 /// Player effects stay near the casting hand, separate from the enemy's status markers.
