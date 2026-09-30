@@ -274,6 +274,12 @@ final class RealityCombatVFXRenderer {
     }
 
     #if DEBUG
+    var shieldDiagnostics: [String: Any] {
+        ["visible": shieldAuraEntity != nil,
+         "settled": shieldAuraEntity?.scale == shieldRestingScale,
+         "scale": shieldAuraEntity.map { [$0.scale.x, $0.scale.y, $0.scale.z] } ?? [],
+         "effect": shieldAuraEntity?.name ?? "none"]
+    }
     func intentClearanceDiagnostics() -> [String: Any] {
         guard let anchor = enemyAnchor, let entity = currentIntentEntity,
               let bounds = enemyBounds(relativeTo: anchor) else { return ["loaded": false] }
@@ -455,8 +461,14 @@ final class RealityCombatVFXRenderer {
               let bounds = enemyBounds(relativeTo: enemyAnchor) else { return nil }
         let id = CombatEffectCatalog.barrier(floor: effects.floor, absolute: state == .absolute)
         guard let aura = effects.make(id, size: 1) else { return nil }
+        // The supplied correction cage has a solid crosspiece through its center.
+        // Keep it spectral so the caster remains readable behind that authored geometry.
+        if id == .correctionBarrier {
+            aura.children.first?.components.set(OpacityComponent(opacity: 0.38))
+        }
         let native = aura.visualBounds(relativeTo: aura).extents
-        let diameter = max(max(bounds.extents.x, bounds.extents.y) * 1.20, bounds.extents.z * 0.82)
+        let clearance: Float = id == .correctionBarrier ? 1.08 : 1
+        let diameter = max(max(bounds.extents.x, bounds.extents.y) * 1.20, bounds.extents.z * 0.82) * clearance
         let height = bounds.extents.z * 0.87
         aura.scale = SIMD3(diameter / max(0.01, native.x), diameter / max(0.01, native.y), height / max(0.01, native.z))
         aura.position = bounds.center
@@ -465,7 +477,7 @@ final class RealityCombatVFXRenderer {
         if let cameraEntity {
             let camera = enemyAnchor.convert(position: .zero, from: cameraEntity)
             let delta = camera - bounds.center
-            let opening: Float = id == .generalBarrier ? .pi : (id == .observationBarrier ? .pi / 4 : 0)
+            let opening: Float = id == .generalBarrier || id == .documentBarrier ? .pi : .pi / 4
             aura.orientation = simd_quatf(angle: atan2(delta.x, -delta.y) + opening, axis: [0, 0, 1])
         }
         return aura

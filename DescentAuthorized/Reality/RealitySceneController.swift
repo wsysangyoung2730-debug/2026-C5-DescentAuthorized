@@ -2722,6 +2722,141 @@ extension RealitySceneController {
         print("C5_CAMERA_RESET \(report)")
     }
 
+    /// Uses production loading, attack events and state reconciliation; isolated preview only.
+    func runCombatEffectDiagnostics() async {
+        guard let id = requestedSceneID, let arView,
+              let actor = registry.entity(for: .enemyActor), let anchor = registry.entity(for: .enemySpawn) else { return }
+        await environmentTask?.value
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CombatEffectDiagnostics/\(id.rawValue)")
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        var checks: [[String: Any]] = []
+        func capture(_ name: String) async {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                arView.snapshot(saveToHDR: false) { image in
+                    if let data = image?.jpegData(compressionQuality: 0.85) {
+                        try? data.write(to: directory.appendingPathComponent(name + ".jpg"))
+                    }
+                    continuation.resume()
+                }
+            }
+        }
+        actorMotion.prepareEncounter()
+        setDescentPresentation(.inactive, reducedMotion: false)
+        setRewardPresentation(.inactive, reducedMotion: false)
+        try? await Task.sleep(for: .milliseconds(500))
+        let floor = combatVFXRenderer.effects.floor
+        let bounds = actor.visualBounds(relativeTo: anchor)
+        for effect in CombatEffectCatalog.required(floor: floor).sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let model = combatVFXRenderer.effects.make(effect, size: min(1.5, bounds.extents.z * 0.45)) else {
+                checks.append(["asset": effect.rawValue, "loaded": false]); continue
+            }
+            model.position = bounds.center + [max(1.0, bounds.extents.x * 0.65), -0.35, 0]
+            anchor.addChild(model)
+            try? await Task.sleep(for: .milliseconds(130))
+            await capture("asset-" + effect.rawValue)
+            checks.append(["asset": effect.rawValue, "loaded": true, "width": model.visualBounds(relativeTo: anchor).extents.x])
+            model.removeFromParent()
+        }
+        var attackChecks: [[String: Any]] = []
+        let actions: [(String, EnemyAction)] = [
+            ("normal", .attack(name: "검증", damage: 12, isStrong: false)),
+            ("heavy", .attack(name: "검증", damage: 32, isStrong: true)),
+            ("counter", .expansion(name: "검증", action: .sequence([.directHits([24]), .counterExecute])))
+        ]
+        for (name, action) in actions {
+            presentCombat(events: [.combat(.enemyActionStarted(action))], battleState: nil, reducedMotion: false)
+            try? await Task.sleep(for: .milliseconds(300))
+            setActorMotionSuspended(true)
+            let before = combatVFXRenderer.attackDiagnostics
+            await capture("attack-" + name)
+            try? await Task.sleep(for: .milliseconds(150))
+            let after = combatVFXRenderer.attackDiagnostics
+            attackChecks.append(["name": name, "state": before,
+                "pauseHeld": before["elapsed"] as? Double == after["elapsed"] as? Double])
+            setActorMotionSuspended(false)
+            try? await Task.sleep(for: .milliseconds(1250))
+        }
+        var base = CombatEngine(enemy: EnemyCatalog.recordsAdministrator).state
+        base.phase = .playerTurn; base.turnNumber = 1
+        for (name, shield) in [("general", RealityShieldState.general), ("absolute", .absolute)] {
+            combatVFXRenderer.present([.shield(shield)], registry: registry, reducedMotion: false)
+            try? await Task.sleep(for: .milliseconds(380))
+            await capture("barrier-" + name)
+        }
+        combatVFXRenderer.present([.shield(.none)], registry: registry, reducedMotion: true)
+        var cases: [(String, BattleState)] = []
+        var state = base
+        state.expansion.outputReduction = .init(multiplier: 0.75, expiresAfterTurn: 2)
+        cases.append(("suppression", state))
+        state = base
+        state.expansion.flatAmplification = 8
+        state.expansion.scheduledDamage = [.init(id: "later", name: "예약", damage: 16, dueEnemyTurn: 3),
+            .init(id: "now", name: "집행", damage: 16, dueEnemyTurn: 1)]
+        state.expansion.lockedSpells[.basicBarrier] = 3
+        cases.append(("reused-status", state))
+        if floor == 8 {
+            state = base; state.currentEnemyIntent = .telegraph(name: "초점", upcomingActionName: "공격")
+            cases.append(("focus", state))
+        }
+        if floor == 7 {
+            state = base; state.enemy.normalBarrier = 20; state.expansion.retainsCorrectionBarrier = true
+            cases.append(("axis", state))
+        }
+        if floor == 5 {
+            state = base; state.expansion.enemyPreservation = .init(multiplier: 0.5, expiresAfterTurn: 2)
+            cases.append(("preservation", state))
+        }
+        if floor == 1 || floor == 4 || floor == 5 {
+            state = base; state.expansion.copyRecord = .init(spell: .basicBarrier, category: .defense)
+            cases.append(("record", state))
+        }
+        for (name, state) in cases {
+            combatStatusRenderer.present(state, registry: registry, reducedMotion: false)
+            try? await Task.sleep(for: .milliseconds(370))
+            await capture("status-" + name)
+        }
+        combatStatusRenderer.present(nil, registry: registry, reducedMotion: false)
+        checks.append(["cleanup": anchor.findEntity(named: "DA_PERSISTENT_COMBAT_STATUS") == nil])
+        // Pause midway through shield appearance, then settle immediately when motion is reduced.
+        combatVFXRenderer.present([.shield(.general)], registry: registry, reducedMotion: false)
+        try? await Task.sleep(for: .milliseconds(90))
+        setActorMotionSuspended(true)
+        let shieldBefore = combatVFXRenderer.shieldDiagnostics["scale"] as? [Float]
+        try? await Task.sleep(for: .milliseconds(180))
+        let shieldPauseHeld = shieldBefore == combatVFXRenderer.shieldDiagnostics["scale"] as? [Float]
+        setActorMotionSuspended(false)
+        combatVFXRenderer.present([.shield(.general)], registry: registry, reducedMotion: true)
+        let shieldReducedSettled = combatVFXRenderer.shieldDiagnostics["settled"] as? Bool ?? false
+        presentCombat(events: [.combat(.enemyActionStarted(.attack(name: "검증", damage: 12, isStrong: false)))],
+            battleState: nil, reducedMotion: false)
+        try? await Task.sleep(for: .milliseconds(200))
+        combatVFXRenderer.present([], registry: registry, reducedMotion: true)
+        let reducedRemovedStrike = combatVFXRenderer.attackDiagnostics["hasStrike"] as? Bool == false
+        var terminal = base; terminal.phase = .victory; terminal.enemy.normalBarrier = 20
+        let terminalCues = RealityCombatPresentationMapper.cues(for: [], battleState: terminal)
+        combatVFXRenderer.present(terminalCues, registry: registry, reducedMotion: true)
+        let terminalRemovedShield = combatVFXRenderer.shieldDiagnostics["visible"] as? Bool == false
+        let playbackStart = Date().timeIntervalSince1970
+        var flightSamples: [[String: Any]] = []
+        for (name, action) in actions {
+            presentCombat(events: [.combat(.enemyActionStarted(action))], battleState: nil, reducedMotion: false)
+            let start = Date()
+            while Date().timeIntervalSince(start) < 1.5 {
+                try? await Task.sleep(for: .milliseconds(20))
+                flightSamples.append(["action": name, "time": Date().timeIntervalSince(start),
+                    "projectile": combatVFXRenderer.attackDiagnostics])
+            }
+        }
+        let report: [String: Any] = ["scene": id.rawValue, "floor": floor, "complete": true,
+            "playbackStart": playbackStart, "flightSamples": flightSamples,
+            "assets": checks, "attacks": attackChecks,
+            "lifecycle": ["shieldPauseHeld": shieldPauseHeld, "shieldReducedSettled": shieldReducedSettled,
+                "reducedRemovedStrike": reducedRemovedStrike, "terminalRemovedShield": terminalRemovedShield]]
+        try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+            .write(to: directory.appendingPathComponent("report.json"))
+    }
+
     /// Captures the full attack arc through the same event entry point used by battle.
     /// Kept separate from the quick asset check: one impact frame cannot reveal a bad return pose.
     func runAttackMotionDiagnostics() async {

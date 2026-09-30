@@ -19,6 +19,7 @@ final class CombatEffectCatalogTests: XCTestCase {
             XCTAssertEqual(CombatEffectCatalog.projectile(floor: floor, action: copy), .signatureStroke)
             XCTAssertEqual(CombatEffectCatalog.projectile(floor: floor, action: counter), .verdictStamp)
         }
+        XCTAssertEqual(CombatEffectCatalog.projectile(floor: 2, action: counter), .verdictStamp)
         XCTAssertEqual(CombatEffectCatalog.projectile(floor: 1, action: .expansion(name: "wait", action: .wait), executionOnly: true), .verdictStamp)
     }
     func testAllAttacksAndBarriersArePreloadedForTheirFloor() {
