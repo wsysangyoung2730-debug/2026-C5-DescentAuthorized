@@ -186,7 +186,8 @@ final class LowerFloorTests: XCTestCase {
                 .init(name: "먼저 B", damage: 14, turnsFromNow: 1)])))
             try resolve(&engine)
             _ = try engine.beginPlayerTurn(intent: idle)
-            _ = try cast(spell, &engine)
+            // A stale manual selection must not redirect or reject an automatic cancellation.
+            _ = try cast(spell, &engine, target: .scheduledDamage("expired-selection"))
             XCTAssertEqual(engine.state.expansion.scheduledDamage.map(\.name),
                            spell == .consequenceErasure ? ["나중", "먼저 B"] : ["나중"])
         }

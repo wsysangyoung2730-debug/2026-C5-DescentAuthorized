@@ -618,7 +618,7 @@ struct BattleView: View {
     @ViewBuilder
     private func glyphInputPanel(_ presentation: BattleUIPresentation) -> some View {
         if let spell = presentation.selectedSpell {
-            let options = gameSession.battleState?.availableEffectTargets(for: spell) ?? []
+            let options = spell.usesAutomaticEffectTarget ? [] : (gameSession.battleState?.availableEffectTargets(for: spell) ?? [])
             let selectedOption = options.first { $0.id == selectedEffectTarget }
             VStack(spacing: 6) {
                 if !options.isEmpty {

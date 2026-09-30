@@ -136,7 +136,7 @@ struct CombatEngine: Sendable {
             throw CombatCommandError.spellUnavailable(reason)
         }
         let targets = state.availableEffectTargets(for: spell)
-        if let selectedTarget, !targets.contains(where: { $0.id == selectedTarget }) {
+        if !spell.usesAutomaticEffectTarget, let selectedTarget, !targets.contains(where: { $0.id == selectedTarget }) {
             throw CombatCommandError.invalidEffectTarget
         }
         guard strokes.count == spell.requiredStrokes else {
@@ -179,7 +179,7 @@ struct CombatEngine: Sendable {
                 spell.effect,
                 effectStrength: evaluation.effectStrength,
                 spellID: spell.id,
-                target: selectedTarget ?? targets.first?.id
+                target: spell.usesAutomaticEffectTarget ? targets.first?.id : (selectedTarget ?? targets.first?.id)
             ))
             recordSuccessfulSpell(spell)
             if previousStatus != state.expansion.statusSummary {
