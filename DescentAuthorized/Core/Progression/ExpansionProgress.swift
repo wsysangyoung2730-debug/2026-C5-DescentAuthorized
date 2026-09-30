@@ -357,3 +357,32 @@ extension GameProgress {
         if current.progressionIndex > furthestCheckpoint.progressionIndex { furthestCheckpoint = current }
     }
 }
+
+/// The next required room, independent of view mounting and dialogue routing.
+struct RoomWarmupDestination: Equatable, Sendable {
+    let floor: Int
+    let role: String
+
+    static func next(scene: SceneID, expansion: ExpansionProgress?) -> Self? {
+        if let progress = expansion {
+            switch progress.stage {
+            case .residualBattle, .residualDefeated, .residualGate, .recordReward, .sealedDoor:
+                return Self(floor: progress.floorNumber,
+                            role: progress.isLowerFloor && progress.residualIndex == 0 ? "residualB" : "administrator")
+            case .bossBattle, .bossDefeated, .reward, .descent:
+                return progress.floorNumber > 1 ? Self(floor: progress.floorNumber - 1, role: "residualA") : nil
+            default: return nil
+            }
+        }
+        switch scene {
+        case .floor10DescentDoor: return Self(floor: 9, role: "administrator")
+        case .floor9RecordsBattle, .floor9RecordsDefeated, .floor9RewardVault, .floor9DescentDoor:
+            return Self(floor: 8, role: "residualA")
+        case .floor8ResidualBattle, .floor8ResidualDefeated, .floor8SealedDoor:
+            return Self(floor: 8, role: "administrator")
+        case .floor8AdministratorBattle, .floor8AdministratorDefeated, .floor8Reward, .floor8DescentDoor:
+            return Self(floor: 7, role: "residualA")
+        default: return nil
+        }
+    }
+}

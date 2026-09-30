@@ -542,19 +542,16 @@ struct FinalSceneContract: Decodable {
     }
 
     static func nextRoom(for progress: ExpansionProgress) -> FloorSceneID? {
-        let destination: (Int, String)?
-        switch progress.stage {
-        case .recordReward, .residualDefeated:
-            destination = progress.isLowerFloor && progress.residualIndex == 0
-                ? (progress.floorNumber, "residualB") : (progress.floorNumber, "administrator")
-        case .sealedDoor:
-            destination = (progress.floorNumber, "administrator")
-        case .reward, .descent, .finalRecord:
-            destination = progress.floorNumber > 1 ? (progress.floorNumber - 1, "residualA") : nil
-        default: destination = nil
+        guard let destination = RoomWarmupDestination.next(scene: .demoComplete, expansion: progress) else { return nil }
+        return room(forWarmup: destination)
+    }
+
+    static func room(forWarmup destination: RoomWarmupDestination) -> FloorSceneID? {
+        if destination.floor == 9 { return .floor09ArchiveRedesign }
+        if destination.floor == 8 {
+            return destination.role == "administrator" ? .floor08AdministratorObservatory : .floor08ResidueIsolation
         }
-        guard let destination else { return nil }
-        return installed.first { $0.floor == destination.0 && $0.role == destination.1 }
+        return installed.first { $0.floor == destination.floor && $0.role == destination.role }
             .flatMap { FloorSceneID(rawValue: $0.resource) }
     }
 
