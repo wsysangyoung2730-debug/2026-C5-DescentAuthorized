@@ -69,3 +69,19 @@
 문 렌더는 `render_gate_room_previews.py`, 목적지 목록은 `gate-preview-manifest.json`에 있다. 1층 문을 다시 생성하면 `repair_first_floor_gate_depth.py`를 적용한다.
 
 포탈은 RealityKit의 unlit CustomMaterial에서 emissive 출력을 사용한다. [Apple 공식 설명](https://developer.apple.com/documentation/realitykit/custommaterial/lightingmodel-swift.enum/unlit)에 따라 base color만 설정하여 검게 나오던 문제를 수정했다.
+
+
+## 8층 → 7층 하강문 추가 수정
+
+브랜치 `fix/#197-floor8-descent-door`. 앞선 검증에서는 포탈 표시를 확인했으나 8층 문틀이 함께 이동하며 찢어지는 문제를 놓쳤다. 기존 8층 문짝에는 상단과 양쪽 문틀의 큰 삼각형이 포함되어 있었다. 닫힌 표면을 문 안쪽 경계에서 정확히 잘라 고정 문틀과 좌우 문짝으로 다시 분리했다. 위치·법선·UV·재질을 보존하며 표면 면적도 변경 전후 동일하다. 다른 층의 문과 공용 열림 동작은 수정하지 않았다.
+
+Xcode 빌드 성공. iPad 시뮬레이터에서 저·중·고 품질 모두 열림 완료, 고정 문틀의 변환 유지, 필수 노드 누락 없음 확인. 실제 렌더에서 개방 도중 및 완료 후 상단·기둥이 유지됨을 확인했다. 중간 품질에서 닫힘 복원과 움직임 줄이기 즉시 개방 화면도 확인했다. 검증은 문 연출 전용 실행 경로이며, 전체 8층 전투부터 7층 입장까지 플레이한 검증은 아니다.
+
+- [닫힌 상태](review-floor8-door/ready.jpg)
+- [열리는 도중](review-floor8-door/door-opening.jpg)
+- [열림 완료](review-floor8-door/door-open.jpg)
+- [닫힘 복원](review-floor8-door/door-reset.jpg)
+- [움직임 줄이기](review-floor8-door/door-reduced-motion.jpg)
+- [품질별 실행 결과](review-floor8-door/runtime-results.json)
+
+원본 USD로 되돌려 문을 재생성할 경우 `repair_floor8_descent.py`를 마지막에 한 번 실행한다. 중·저 품질 USD는 수정된 본체 USD를 참조하므로 동일한 구조를 사용한다.
