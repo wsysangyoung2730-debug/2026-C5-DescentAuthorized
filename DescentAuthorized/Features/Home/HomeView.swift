@@ -86,7 +86,16 @@ struct HomeView: View {
         #if DEBUG
         if ExpansionPreviewSupport.floor != nil || ExpansionPreviewSupport.loadoutFloor != nil {
             isPlaying = true
-            if let floor = ExpansionPreviewSupport.floor, floor <= 4,
+            if let floor = ExpansionPreviewSupport.bossEncounterFloor {
+                // The isolated preview follows the same prepared encounter commands as play.
+                // Do not start combat here: the dialogue and camera sweep must finish first.
+                switch floor {
+                case 9: gameSession.send(.enterRecordsEncounter)
+                case 8: gameSession.send(.enterAdministratorEncounter)
+                case 1...4: gameSession.send(.beginPreparedLowerBattle)
+                default: gameSession.send(.advanceExpansion)
+                }
+            } else if let floor = ExpansionPreviewSupport.floor, floor <= 4,
                ProcessInfo.processInfo.arguments.contains("--preview-direct-battle") {
                 // In-memory preview only: use the real preparation/encounter transitions.
                 gameSession.send(.beginPreparedLowerBattle)
