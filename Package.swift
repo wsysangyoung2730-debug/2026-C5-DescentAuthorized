@@ -17,7 +17,8 @@ let package = Package(
     targets: [
         .target(
             name: "DescentAuthorizedCore",
-            path: "DescentAuthorized/Core"
+            path: "DescentAuthorized/Core",
+            resources: [.process("Resources")]
         ),
         .testTarget(
             name: "DescentAuthorizedCoreTests",
