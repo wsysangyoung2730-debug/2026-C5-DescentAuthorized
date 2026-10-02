@@ -50,7 +50,12 @@ struct DemoFlowView: View {
             }
 
             if isPresentationReady && preparedBattle == nil {
-                if showsFloor10Opening {
+                if isEndingPresentation {
+                    // Ending owns the native navigation bar; do not overlay the hidden battle HUD.
+                    sceneView
+                        .id("ending-\(checkpointPresentationID)")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if showsFloor10Opening {
                     Floor10OpeningExperienceView(
                         sceneController: sceneController,
                         isSceneReady: isPresentationReady
