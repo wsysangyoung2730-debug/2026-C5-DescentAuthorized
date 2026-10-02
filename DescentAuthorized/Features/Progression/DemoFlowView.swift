@@ -135,7 +135,7 @@ struct DemoFlowView: View {
             onNext: advanceBattleTutorial,
             onSkip: skipBattleTutorial
         )
-        .ignoresSafeArea(edges: .top)
+        .ignoresSafeArea(edges: isEndingPresentation ? [] : .top)
         .environment(
             \.isGlyphInputSuspended,
             isShowingPauseMenu || isShowingSettings || retryLoadingPresentation != nil || scenePhase != .active
@@ -519,6 +519,11 @@ struct DemoFlowView: View {
         return false
     }
 
+    private var isEndingPresentation: Bool {
+        if case .narrative(.towerHandoff) = gameSession.presentation.experience { return true }
+        return false
+    }
+
     private var isNarrativePresentation: Bool {
         if let stage = gameSession.progress.expansion?.stage, [.reward, .recordReward].contains(stage) { return true }
         switch gameSession.presentation.experience {
@@ -846,6 +851,13 @@ struct DemoFlowView: View {
             )
         case .floor9Entrance:
             Floor9EntranceView(sceneController: sceneController, onPrepareEntry: { showPreparation(.records) })
+        case .narrative(.towerHandoff):
+            EndingSequenceView(
+                isAutoAdvanceEnabled: $isNarrativeAutoAdvanceEnabled,
+                onPause: presentPauseMenu,
+                onSettings: presentSettings,
+                onFinished: onExit
+            )
         case let .narrative(sequence):
             BossNarrativeView(
                 sequence: sequence,
@@ -945,6 +957,47 @@ private struct DescentTopHUDConfiguration {
         self.inspectionTitle = inspectionTitle
         self.sideGapAdjustment = sideGapAdjustment
         self.inspectionGapAdjustment = inspectionGapAdjustment
+    }
+}
+
+private struct EndingSequenceView: View {
+    @Binding var isAutoAdvanceEnabled: Bool
+    let onPause: () -> Void
+    let onSettings: () -> Void
+    let onFinished: () -> Void
+
+    @State private var hasFinishedHandoff = false
+
+    var body: some View {
+        Group {
+            if hasFinishedHandoff {
+                EndingCreditsView(onConfirm: onFinished)
+            } else {
+                BossNarrativeView(sequence: .towerHandoff, isAutoAdvanceEnabled: $isAutoAdvanceEnabled) {
+                    hasFinishedHandoff = true
+                }
+            }
+        }
+        .navigationTitle(hasFinishedHandoff ? EndingCreditsCatalog.title : "인계 기록")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.black, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: onPause) { Image(systemName: "pause.fill") }
+                    .help("일시정지")
+                    .accessibilityLabel("일시정지")
+                    .accessibilityIdentifier("ending.pause")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: onSettings) { Image(systemName: "gearshape") }
+                    .help("설정")
+                    .accessibilityLabel("설정")
+                    .accessibilityIdentifier("ending.settings")
+            }
+        }
+        .tint(DAColor.gold)
     }
 }
 
@@ -1322,7 +1375,7 @@ private extension BossNarrativeSequence {
 
     var finalAccessibilityHint: String {
         switch self {
-        case .towerHandoff: "타이틀로 이동"
+        case .towerHandoff: "하강 기록 크레딧으로 이동"
         case let .expansion(narrative): narrative.finalAccessibilityHint
         case .floor9Encounter, .floor8ResidualEncounter, .floor8AdministratorEncounter: "전투 시작"
         case .floor9Defeated: "두루마리 선택으로 이동"
