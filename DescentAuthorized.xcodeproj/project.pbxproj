@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C20900000000000000000001 /* EndingCreditsCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20900000000000000000002 /* EndingCreditsCatalog.swift */; };
 		8BC69DD738E24D3313DA17C1 /* RealityCombatEffectLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0C3AF50C12E7950B80A4A27; };
 		4D90A4C073247C9BE134FFE2 /* CombatEffectCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A81633168A782A97F4545EA; };
 		AB1950000000000000000001 /* PortalVeil.metal in Sources */ = {isa = PBXBuildFile; fileRef = AB1950000000000000000002 /* PortalVeil.metal */; };
@@ -113,6 +114,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C20900000000000000000002 /* EndingCreditsCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/EndingCreditsCatalog.swift"; sourceTree = SOURCE_ROOT; };
 		B0C3AF50C12E7950B80A4A27 /* RealityCombatEffectLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DescentAuthorized/Reality/RealityCombatEffectLibrary.swift; sourceTree = SOURCE_ROOT; };
 		0A81633168A782A97F4545EA /* CombatEffectCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DescentAuthorized/Core/Game/CombatEffectCatalog.swift; sourceTree = SOURCE_ROOT; };
 		AB1950000000000000000002 /* PortalVeil.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = PortalVeil.metal; sourceTree = "<group>"; };
@@ -251,6 +253,7 @@
 				C54200000000000000000002 /* LowerFloorSpellCatalog.swift */,
 				C54200000000000000000003 /* LowerFloorDescentGlyphs.swift */,
 				C54200000000000000000004 /* LowerFloorEnemyCatalog.swift */,
+				C20900000000000000000002 /* EndingCreditsCatalog.swift */,
 				C54200000000000000000005 /* LowerFloorNarrativeCatalog.swift */,
 				C54200000000000000000006 /* LowerFloorProgress.swift */,
 				C54200000000000000000007 /* LowerFloorFlowView.swift */,
@@ -596,6 +599,7 @@
 				C54100000000000000000002 /* LowerFloorSpellCatalog.swift in Sources */,
 				C54100000000000000000003 /* LowerFloorDescentGlyphs.swift in Sources */,
 				C54100000000000000000004 /* LowerFloorEnemyCatalog.swift in Sources */,
+				C20900000000000000000001 /* EndingCreditsCatalog.swift in Sources */,
 				C54100000000000000000005 /* LowerFloorNarrativeCatalog.swift in Sources */,
 				C54100000000000000000006 /* LowerFloorProgress.swift in Sources */,
 				C54100000000000000000007 /* LowerFloorFlowView.swift in Sources */,
