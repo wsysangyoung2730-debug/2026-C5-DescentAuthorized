@@ -1,0 +1,74 @@
+[
+  {
+    "floor": 9,
+    "phases": 5,
+    "elapsed": 12,
+    "battlePositionError": 0,
+    "battleFieldOfViewError": 0,
+    "maximumFrameDistance": 0.3878472149372101
+  },
+  {
+    "floor": 8,
+    "phases": 5,
+    "elapsed": 12,
+    "battlePositionError": 0,
+    "battleFieldOfViewError": 0,
+    "maximumFrameDistance": 0.9754349589347839
+  },
+  {
+    "floor": 7,
+    "phases": 5,
+    "elapsed": 12,
+    "battlePositionError": 0,
+    "battleFieldOfViewError": 0,
+    "maximumFrameDistance": 0.6779398322105408
+  },
+  {
+    "floor": 6,
+    "phases": 5,
+    "elapsed": 12,
+    "battlePositionError": 0,
+    "battleFieldOfViewError": 0,
+    "maximumFrameDistance": 0.6816616654396057
+  },
+  {
+    "floor": 5,
+    "phases": 5,
+    "elapsed": 12,
+    "battlePositionError": 0,
+    "battleFieldOfViewError": 0,
+    "maximumFrameDistance": 0.1329512745141983
+  },
+  {
+    "floor": 4,
+    "phases": 5,
+    "elapsed": 12,
+    "battlePositionError": 0,
+    "battleFieldOfViewError": 0,
+    "maximumFrameDistance": 0.8097735643386841
+  },
+  {
+    "floor": 3,
+    "phases": 5,
+    "elapsed": 12,
+    "battlePositionError": 0,
+    "battleFieldOfViewError": 0,
+    "maximumFrameDistance": 0.2664565443992615
+  },
+  {
+    "floor": 2,
+    "phases": 5,
+    "elapsed": 12,
+    "battlePositionError": 0,
+    "battleFieldOfViewError": 0,
+    "maximumFrameDistance": 0.3054969906806946
+  },
+  {
+    "floor": 1,
+    "phases": 5,
+    "elapsed": 12,
+    "battlePositionError": 0,
+    "battleFieldOfViewError": 0,
+    "maximumFrameDistance": 1.1692512035369873
+  }
+]
