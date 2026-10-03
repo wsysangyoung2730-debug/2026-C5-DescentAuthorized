@@ -941,6 +941,9 @@ struct DemoFlowView: View {
                 Text("제\(floor)층")
                     .font(.system(.callout, design: .serif))
                     .foregroundStyle(DAColor.gold)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(.black.opacity(0.72), in: Capsule())
                 Spacer()
                 Button(action: presentSettings) {
                     Image(systemName: "gearshape").frame(minWidth: 32, minHeight: 32)
@@ -949,16 +952,19 @@ struct DemoFlowView: View {
                     .accessibilityIdentifier("bossSweep.settings")
             }
             .font(.title3)
-            .buttonStyle(.bordered)
-            .tint(DAColor.gold)
+            .buttonStyle(.borderedProminent)
+            .tint(.black.opacity(0.72))
+            .foregroundStyle(DAColor.gold)
             Spacer()
             HStack {
                 Spacer()
                 Button("건너뛰기", systemImage: "forward.end") {
                     sceneController.skipBossRoomSweep()
                 }
-                .buttonStyle(.bordered)
-                .tint(DAColor.gold)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(.black.opacity(0.72))
+                .foregroundStyle(DAColor.gold)
                 .accessibilityHint("전투 화면으로 이동")
                 .accessibilityIdentifier("bossSweep.skip")
             }
@@ -968,7 +974,6 @@ struct DemoFlowView: View {
         .padding(.bottom, 22)
         .background(Color.clear.contentShape(Rectangle()).onTapGesture {})
         .disabled(isBossSweepSuspended)
-        .accessibilityIdentifier("bossSweep.controls")
     }
 
     @ViewBuilder
