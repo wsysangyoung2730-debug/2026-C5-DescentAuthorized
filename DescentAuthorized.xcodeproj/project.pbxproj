@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C21100000000000000000001 /* BossRoomSweep.swift in Sources */ = {isa = PBXBuildFile; fileRef = C21100000000000000000002 /* BossRoomSweep.swift */; };
+		C21100000000000000000003 /* BossRoomSweepTracks.json in Resources */ = {isa = PBXBuildFile; fileRef = C21100000000000000000004 /* BossRoomSweepTracks.json */; };
 		C20900000000000000000005 /* EndingCreditsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20900000000000000000006 /* EndingCreditsView.swift */; };
 		C20900000000000000000003 /* EndingCreditsPlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20900000000000000000004 /* EndingCreditsPlayback.swift */; };
 		C20900000000000000000001 /* EndingCreditsCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20900000000000000000002 /* EndingCreditsCatalog.swift */; };
@@ -116,6 +118,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C21100000000000000000002 /* BossRoomSweep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Progression/BossRoomSweep.swift"; sourceTree = SOURCE_ROOT; };
+		C21100000000000000000004 /* BossRoomSweepTracks.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "DescentAuthorized/Core/Resources/BossRoomSweepTracks.json"; sourceTree = SOURCE_ROOT; };
 		C20900000000000000000006 /* EndingCreditsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/EndingCreditsView.swift"; sourceTree = SOURCE_ROOT; };
 		C20900000000000000000004 /* EndingCreditsPlayback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Progression/EndingCreditsPlayback.swift"; sourceTree = SOURCE_ROOT; };
 		C20900000000000000000002 /* EndingCreditsCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/EndingCreditsCatalog.swift"; sourceTree = SOURCE_ROOT; };
@@ -253,6 +257,8 @@
 		400000000000000000000002 /* DescentAuthorized */ = {
 			isa = PBXGroup;
 			children = (
+				C21100000000000000000002 /* BossRoomSweep.swift */,
+				C21100000000000000000004 /* BossRoomSweepTracks.json */,
 				C54200000000000000000001 /* LowerFloorContracts.swift */,
 				C54200000000000000000002 /* LowerFloorSpellCatalog.swift */,
 				C54200000000000000000003 /* LowerFloorDescentGlyphs.swift */,
@@ -584,6 +590,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C21100000000000000000003 /* BossRoomSweepTracks.json in Resources */,
 				100000000000000000000067 /* Audio in Resources */,
 				100000000000000000000005 /* Assets.xcassets in Resources */,
 				100000000000000000000055 /* AssetManifest.json in Resources */,
@@ -599,6 +606,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C21100000000000000000001 /* BossRoomSweep.swift in Sources */,
 				8BC69DD738E24D3313DA17C1 /* RealityCombatEffectLibrary.swift in Sources */,
 				4D90A4C073247C9BE134FFE2 /* CombatEffectCatalog.swift in Sources */,
 				C54100000000000000000001 /* LowerFloorContracts.swift in Sources */,

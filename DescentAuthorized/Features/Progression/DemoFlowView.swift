@@ -19,6 +19,9 @@ struct DemoFlowView: View {
     @State private var battleTutorialStep: TutorialCoachStep?
     @State private var isNarrativeAutoAdvanceEnabled = true
     @State private var isRewardLearningInputActive = false
+    @State private var pendingBossSweep: BossNarrativeSequence?
+    @State private var bossSweepTask: Task<Void, Never>?
+    @State private var bossSweepID: UUID?
     @StateObject private var sceneController = RealitySceneController()
 
     private let topHUDRailSourceSize = CGSize(width: 1774, height: 887)
@@ -49,7 +52,9 @@ struct DemoFlowView: View {
                 Color.black.ignoresSafeArea()
             }
 
-            if isPresentationReady && preparedBattle == nil {
+            if let sequence = pendingBossSweep {
+                bossSweepControls(floor: sequence.bossRoomSweepFloor ?? gameSession.progress.displayedFloorNumber)
+            } else if isPresentationReady && preparedBattle == nil {
                 if isEndingPresentation {
                     // Ending owns the native navigation bar; do not overlay the hidden battle HUD.
                     sceneView
@@ -150,7 +155,10 @@ struct DemoFlowView: View {
                 onTravelToCheckpoint: { checkpoint in
                     beginCheckpointTravel(to: checkpoint)
                 },
-                onExitToTitle: onExit
+                onExitToTitle: {
+                    cancelBossSweep()
+                    onExit()
+                }
             )
         }
         .fullScreenCover(isPresented: $isShowingSettings) {
@@ -172,6 +180,9 @@ struct DemoFlowView: View {
             if !busy { scheduleWarmup() }
         }
         .onDisappear {
+            // A full-screen Settings cover can temporarily hide this host.
+            // It suspends playback; only leaving the game cancels it.
+            if !isShowingSettings && !isShowingPauseMenu { cancelBossSweep() }
             checkpointTravelTask?.cancel()
             checkpointTravelTask = nil
             onSystemOverlayVisibilityChange(false)
@@ -179,9 +190,23 @@ struct DemoFlowView: View {
         }
         .onChange(of: isShowingPauseMenu) { _, _ in
             reportSystemOverlayVisibility()
+            synchronizeBossSweepSuspension()
         }
         .onChange(of: isShowingSettings) { _, _ in
             reportSystemOverlayVisibility()
+            synchronizeBossSweepSuspension()
+        }
+        .onChange(of: scenePhase) { _, _ in synchronizeBossSweepSuspension() }
+        .onChange(of: appSettings.reducedMotion) { _, reduced in
+            if reduced { sceneController.skipBossRoomSweep() }
+        }
+        .onChange(of: systemReduceMotion) { _, reduced in
+            if reduced { sceneController.skipBossRoomSweep() }
+        }
+        .onChange(of: gameSession.presentation.experience) { _, experience in
+            if let pendingBossSweep, experience != .narrative(pendingBossSweep) {
+                cancelBossSweep()
+            }
         }
         .onChange(of: gameSession.presentation.floorSceneID) { _, floorSceneID in
             if floorSceneID == nil {
@@ -208,6 +233,7 @@ struct DemoFlowView: View {
             synchronizeRecordsBattleTutorial()
         }
         .onChange(of: retryLoadingPresentation) { _, loading in
+            synchronizeBossSweepSuspension()
             if loading == nil {
                 synchronizeFloorMusic()
             } else {
@@ -307,6 +333,7 @@ struct DemoFlowView: View {
     }
 
     private func beginCheckpointTravel(to checkpoint: CheckpointID) {
+        cancelBossSweep()
         checkpointTravelTask?.cancel()
         let context = checkpoint.loadingContext
         let tip = LoadingTipCatalog.randomTip(for: context)
@@ -846,6 +873,104 @@ struct DemoFlowView: View {
         isShowingSettings = true
     }
 
+    // Keep the encounter command pending until the room reveal has restored the
+    // actual battle camera. The token invalidates stale completions after travel/exit.
+    private func finishNarrative(_ sequence: BossNarrativeSequence) {
+        guard pendingBossSweep == nil,
+              gameSession.presentation.experience == .narrative(sequence) else { return }
+        guard let floor = sequence.bossRoomSweepFloor else {
+            advanceAfterNarrative(sequence)
+            return
+        }
+        let id = UUID()
+        bossSweepID = id
+        pendingBossSweep = sequence
+        synchronizeBossSweepSuspension()
+        bossSweepTask = Task { @MainActor in
+            let completed = await sceneController.playBossRoomSweep(
+                floor: floor,
+                reducedMotion: appSettings.reducedMotion || systemReduceMotion
+            )
+            guard !Task.isCancelled, bossSweepID == id else { return }
+            bossSweepTask = nil
+            bossSweepID = nil
+            pendingBossSweep = nil
+            guard completed, gameSession.presentation.experience == .narrative(sequence) else { return }
+            advanceAfterNarrative(sequence)
+        }
+    }
+
+    private func advanceAfterNarrative(_ sequence: BossNarrativeSequence) {
+        switch sequence {
+        case .towerHandoff: onExit()
+        case .expansion: gameSession.send(.advanceExpansion)
+        case .floor9Encounter: gameSession.send(.beginRecordsBattle)
+        case .floor9Defeated: gameSession.send(.continueAfterRecordsDefeat)
+        case .floor8ResidualEncounter: gameSession.send(.beginResidualBattle)
+        case .floor8ResidualDefeated: gameSession.send(.continueAfterResidualDefeat)
+        case .floor8AdministratorEncounter: gameSession.send(.beginAdministratorBattle)
+        case .floor8AdministratorDefeated: gameSession.send(.continueAfterAdministratorDefeat)
+        }
+    }
+
+    private func synchronizeBossSweepSuspension() {
+        sceneController.setBossRoomSweepSuspended(isBossSweepSuspended)
+    }
+
+    private var isBossSweepSuspended: Bool {
+        isShowingPauseMenu || isShowingSettings || retryLoadingPresentation != nil || scenePhase != .active
+    }
+
+    private func cancelBossSweep() {
+        bossSweepID = nil
+        bossSweepTask?.cancel()
+        bossSweepTask = nil
+        sceneController.cancelBossRoomSweep()
+        pendingBossSweep = nil
+    }
+
+    private func bossSweepControls(floor: Int) -> some View {
+        VStack {
+            HStack {
+                Button(action: presentPauseMenu) {
+                    Image(systemName: "pause.fill").frame(minWidth: 32, minHeight: 32)
+                }
+                    .accessibilityLabel("일시정지")
+                    .accessibilityIdentifier("bossSweep.pause")
+                Spacer()
+                Text("제\(floor)층")
+                    .font(.system(.callout, design: .serif))
+                    .foregroundStyle(DAColor.gold)
+                Spacer()
+                Button(action: presentSettings) {
+                    Image(systemName: "gearshape").frame(minWidth: 32, minHeight: 32)
+                }
+                    .accessibilityLabel("설정")
+                    .accessibilityIdentifier("bossSweep.settings")
+            }
+            .font(.title3)
+            .buttonStyle(.bordered)
+            .tint(DAColor.gold)
+            Spacer()
+            HStack {
+                Spacer()
+                Button("건너뛰기", systemImage: "forward.end") {
+                    sceneController.skipBossRoomSweep()
+                }
+                .buttonStyle(.bordered)
+                .tint(DAColor.gold)
+                .accessibilityHint("전투 화면으로 이동")
+                .accessibilityIdentifier("bossSweep.skip")
+            }
+        }
+        .padding(.horizontal, 28)
+        .padding(.top, 28)
+        .padding(.bottom, 22)
+        .background(Color.clear.contentShape(Rectangle()).onTapGesture {})
+        .disabled(isBossSweepSuspended)
+        .accessibilityIdentifier("bossSweep.controls")
+    }
+
     @ViewBuilder
     private var sceneView: some View {
         switch gameSession.presentation.experience {
@@ -868,24 +993,7 @@ struct DemoFlowView: View {
                 sequence: sequence,
                 isAutoAdvanceEnabled: $isNarrativeAutoAdvanceEnabled
             ) {
-                switch sequence {
-                case .towerHandoff:
-                    onExit()
-                case .expansion:
-                    gameSession.send(.advanceExpansion)
-                case .floor9Encounter:
-                    gameSession.send(.beginRecordsBattle)
-                case .floor9Defeated:
-                    gameSession.send(.continueAfterRecordsDefeat)
-                case .floor8ResidualEncounter:
-                    gameSession.send(.beginResidualBattle)
-                case .floor8ResidualDefeated:
-                    gameSession.send(.continueAfterResidualDefeat)
-                case .floor8AdministratorEncounter:
-                    gameSession.send(.beginAdministratorBattle)
-                case .floor8AdministratorDefeated:
-                    gameSession.send(.continueAfterAdministratorDefeat)
-                }
+                finishNarrative(sequence)
             }
             .id(sequence.backgroundAsset)
             .onAppear {
@@ -1356,6 +1464,16 @@ private struct AutoAdvanceSpinner: View {
 }
 
 private extension BossNarrativeSequence {
+    var bossRoomSweepFloor: Int? {
+        switch self {
+        case .floor9Encounter: 9
+        case .floor8AdministratorEncounter: 8
+        case let .expansion(narrative) where narrative.isBoss && !narrative.isDefeated:
+            narrative.floorNumber
+        default: nil
+        }
+    }
+
     var backgroundAsset: String {
         switch self {
         case .towerHandoff: "TowerHandoff"
@@ -1379,7 +1497,8 @@ private extension BossNarrativeSequence {
     }
 
     var finalAccessibilityHint: String {
-        switch self {
+        if bossRoomSweepFloor != nil { return "보스방 전경을 본 뒤 전투 시작" }
+        return switch self {
         case .towerHandoff: "하강 기록 크레딧으로 이동"
         case let .expansion(narrative): narrative.finalAccessibilityHint
         case .floor9Encounter, .floor8ResidualEncounter, .floor8AdministratorEncounter: "전투 시작"
