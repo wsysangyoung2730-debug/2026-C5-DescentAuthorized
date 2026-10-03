@@ -84,6 +84,7 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var projectedInvestigationAnchors: [String: RealityProjectedInvestigationAnchor] = [:]
     @Published private(set) var cameraFadeOpacity: Double = 0
     @Published private(set) var isCameraTransitioning = false
+    @Published private(set) var isBossRoomSweepActive = false
     @Published private(set) var isBattleCameraInteractionEnabled = false
     @Published private(set) var isBattleCameraAdjusted = false
     @Published private(set) var isDescentFailurePresentationActive = false
@@ -108,6 +109,9 @@ final class RealitySceneController: ObservableObject {
     private var actorStartedAt = Date()
     private static let loadLog = Logger(subsystem: "com.wsysangyoung.DescentAuthorized", category: "SceneLoading")
     private var cameraTransitionTask: Task<Void, Never>?
+    private var bossRoomSweepGeneration: UInt64 = 0
+    private var bossRoomSweepSuspended = false
+    private var bossRoomSweepSkipRequested = false
     private var battleCameraImpactTask: Task<Void, Never>?
     private let actorMotion = RealityActorMotionPlayer()
     private var enemyPreviewRevealTask: Task<Void, Never>?
@@ -580,7 +584,8 @@ final class RealitySceneController: ObservableObject {
         battleCameraZoomStartFieldOfViewScale = 1
         isBattleCameraAdjusted = false
 
-        guard [.main, .battle, .tutorial].contains(requestedCameraPreset),
+        guard !isBossRoomSweepActive,
+              [.main, .battle, .tutorial].contains(requestedCameraPreset),
               let activeCameraName,
               let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
@@ -868,6 +873,8 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func transitionCamera(to preset: RealityCameraPreset) {
+        // SwiftUI keeps synchronizing its scene preset while the cinematic owns the camera.
+        guard !isBossRoomSweepActive else { return }
         guard
             let descriptor = registry.descriptor,
             let cameraName = descriptor.cameraName(for: preset)
@@ -925,6 +932,7 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func applyCamera(named cameraName: String) {
+        guard !isBossRoomSweepActive else { return }
         guard
             let snapshot = resolvedCameraSnapshot(cameraName),
             let cameraEntity
@@ -1299,6 +1307,7 @@ final class RealitySceneController: ObservableObject {
     }
 
     func unload() {
+        cancelBossRoomSweep(restoreCamera: false)
         PreparedRealityAssets.shared.stopSpeculativeWork()
         actorMotion.reset()
         finalRewardTemplates.removeAll()
@@ -2094,6 +2103,281 @@ final class RealitySceneController: ObservableObject {
         actorLoadCancellable = nil
         loadingProgress = 0
         loadState = .failed(sceneID, message)
+    }
+}
+
+
+// MARK: - Authored boss-room reveal
+
+extension RealitySceneController {
+    /// Runs only after the encounter dialogue. The caller owns progression and awaits
+    /// this result before starting combat; this controller only owns the camera.
+    func playBossRoomSweep(floor: Int, reducedMotion: Bool) async -> Bool {
+        guard !isBossRoomSweepActive,
+              let sceneID = requestedSceneID,
+              bossRoomFloor(sceneID) == floor,
+              loadState == .ready(sceneID),
+              let root = registry.root, let cameraEntity,
+              let battle = bossRoomBattleCamera() else { return false }
+        guard let track = BossRoomSweepCatalog.track(for: floor) else {
+            Self.loadLog.error("sweep.missing floor=\(floor)")
+            finishBossRoomSweepCamera(named: battle.name, snapshot: battle.snapshot)
+            return true
+        }
+
+        cancelCameraTransition()
+        cancelBattleCameraImpact(restoreCamera: false)
+        cancelDescentCameraEffect(restoreCamera: false)
+        clearBattleCameraAdjustmentState()
+        cameraEntity.stopAllAnimations(recursive: false)
+        bossRoomSweepGeneration &+= 1
+        let generation = bossRoomSweepGeneration
+        isBossRoomSweepActive = true
+        isCameraTransitioning = true
+        bossRoomSweepSkipRequested = false
+        var completed = false
+        defer {
+            if generation == bossRoomSweepGeneration {
+                if !completed, let activeCameraName,
+                   let snapshot = resolvedCameraSnapshot(activeCameraName) {
+                    cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+                    cameraEntity.camera = snapshot.camera
+                }
+                isBossRoomSweepActive = false
+                isCameraTransitioning = false
+                cameraFadeOpacity = 0
+                bossRoomSweepSkipRequested = false
+                scheduleBoardProjectionRefresh()
+            }
+        }
+
+        // Fade conceals the intentional cut from the dialogue's still to the left
+        // object. Subsequent motion is the authored positional path, not a yaw pan.
+        if !reducedMotion {
+            cameraFadeOpacity = 1
+            guard await waitDuringBossRoomSweep(0.18, generation: generation) else { return false }
+        }
+        guard generation == bossRoomSweepGeneration, !Task.isCancelled else { return false }
+        if reducedMotion || requestedReducedMotion {
+            finishBossRoomSweepCamera(named: battle.name, snapshot: battle.snapshot)
+            completed = true
+            recordBossRoomSweepDiagnostic(floor: floor, label: "reduced-motion", elapsed: 0,
+                                         maximumStep: 0, target: battle.snapshot)
+            return true
+        }
+
+        let roomMatrix = root.transformMatrix(relativeTo: nil)
+        var clock = BossRoomSweepPlayback(duration: track.duration)
+        var previousTick = ProcessInfo.processInfo.systemUptime
+        var previousPosition: SIMD3<Float>?
+        var maximumStep: Float = 0
+        var diagnosticStep = 0
+        let milestones: [(TimeInterval, String)] = [(0, "left"), (3.4, "wide"), (7.2, "right"), (11.2, "return")]
+
+        Self.loadLog.notice("sweep.begin floor=\(floor) generation=\(generation)")
+        while !Task.isCancelled, generation == bossRoomSweepGeneration,
+              requestedSceneID == sceneID {
+            let now = ProcessInfo.processInfo.systemUptime
+            let delta = now - previousTick
+            previousTick = now
+            let suspended = bossRoomSweepSuspended || UIApplication.shared.applicationState != .active
+            if !suspended {
+                // Skip also handles enabling Reduce Motion while the tour is open.
+                // Conceal the cut rather than sweeping rapidly across the room.
+                if bossRoomSweepSkipRequested || requestedReducedMotion {
+                    cameraFadeOpacity = 1
+                    guard await waitDuringBossRoomSweep(0.18, generation: generation) else { return false }
+                    break
+                }
+                clock.advance(elapsed: delta, isSuspended: false)
+                let snapshot = bossRoomSweepCamera(track: track, elapsed: clock.elapsedTime,
+                    roomMatrix: roomMatrix, battle: bossRoomBattleCamera()?.snapshot ?? battle.snapshot)
+                cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+                cameraEntity.camera = snapshot.camera
+                cameraFadeOpacity = 0
+                let position = Transform(matrix: snapshot.transformMatrix).translation
+                if let previousPosition { maximumStep = max(maximumStep, simd_distance(previousPosition, position)) }
+                previousPosition = position
+                if diagnosticStep < milestones.count,
+                   clock.elapsedTime >= milestones[diagnosticStep].0 {
+                    recordBossRoomSweepDiagnostic(floor: floor, label: milestones[diagnosticStep].1,
+                        elapsed: clock.elapsedTime, maximumStep: maximumStep)
+                    diagnosticStep += 1
+                }
+                if clock.isFinished { break }
+            }
+            do { try await Task.sleep(for: .milliseconds(16)) } catch { return false }
+        }
+        guard !Task.isCancelled, generation == bossRoomSweepGeneration,
+              requestedSceneID == sceneID else { return false }
+        let target = bossRoomBattleCamera() ?? battle
+        finishBossRoomSweepCamera(named: target.name, snapshot: target.snapshot)
+        completed = true
+        recordBossRoomSweepDiagnostic(floor: floor,
+            label: bossRoomSweepSkipRequested ? "skipped" : "battle", elapsed: clock.elapsedTime,
+            maximumStep: maximumStep, target: target.snapshot)
+        Self.loadLog.notice("sweep.complete floor=\(floor) skipped=\(self.bossRoomSweepSkipRequested)")
+        return true
+    }
+
+    func setBossRoomSweepSuspended(_ suspended: Bool) {
+        guard bossRoomSweepSuspended != suspended else { return }
+        bossRoomSweepSuspended = suspended
+        if isBossRoomSweepActive, let sceneID = requestedSceneID, let floor = bossRoomFloor(sceneID) {
+            recordBossRoomSweepDiagnostic(floor: floor, label: suspended ? "paused" : "resumed",
+                                         elapsed: 0, maximumStep: 0)
+        }
+    }
+
+    func skipBossRoomSweep() {
+        guard isBossRoomSweepActive else { return }
+        bossRoomSweepSkipRequested = true
+    }
+
+    func cancelBossRoomSweep(restoreCamera: Bool = true) {
+        bossRoomSweepGeneration &+= 1
+        guard isBossRoomSweepActive else { return }
+        isBossRoomSweepActive = false
+        isCameraTransitioning = false
+        cameraFadeOpacity = 0
+        bossRoomSweepSkipRequested = false
+        if restoreCamera, let activeCameraName,
+           let snapshot = resolvedCameraSnapshot(activeCameraName), let cameraEntity {
+            cameraEntity.stopAllAnimations(recursive: false)
+            cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+            cameraEntity.camera = snapshot.camera
+            scheduleBoardProjectionRefresh()
+        }
+    }
+
+    private func waitDuringBossRoomSweep(_ duration: TimeInterval, generation: UInt64) async -> Bool {
+        var clock = BossRoomSweepPlayback(duration: duration)
+        var previous = ProcessInfo.processInfo.systemUptime
+        while !clock.isFinished {
+            guard !Task.isCancelled, generation == bossRoomSweepGeneration else { return false }
+            let now = ProcessInfo.processInfo.systemUptime
+            clock.advance(elapsed: now - previous,
+                          isSuspended: bossRoomSweepSuspended || UIApplication.shared.applicationState != .active)
+            previous = now
+            do { try await Task.sleep(for: .milliseconds(16)) } catch { return false }
+        }
+        return true
+    }
+
+    private func bossRoomBattleCamera() -> (name: String, snapshot: AuthoredCameraSnapshot)? {
+        guard let name = registry.descriptor?.cameraName(for: .battle) else { return nil }
+        // Dialogue may still request `.main`; use the actual actor-based battle
+        // framing explicitly, especially for the interior return poses on floors 1–3.
+        if let subject = battleSubjectSnapshot, subject.name == name { return (name, subject.snapshot) }
+        return authoredCameraSnapshots[name].map { (name, $0) }
+    }
+
+    private func finishBossRoomSweepCamera(named name: String, snapshot: AuthoredCameraSnapshot) {
+        guard let cameraEntity else { return }
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+        cameraEntity.camera = snapshot.camera
+        requestedCameraPreset = .battle
+        activeCameraName = name
+        activeUsesBattleFraming = true
+        clearBattleCameraAdjustmentState()
+    }
+
+    private func bossRoomSweepCamera(track: BossRoomSweepTrack, elapsed: TimeInterval,
+                                     roomMatrix: simd_float4x4,
+                                     battle: AuthoredCameraSnapshot) -> AuthoredCameraSnapshot {
+        let pose = track.pose(at: elapsed)
+        let aspect = arView.map { Float($0.bounds.width / max(1, $0.bounds.height)) }
+            ?? track.authoredAspectRatio
+        let optics = PerspectiveCameraComponent(near: track.nearClip, far: track.farClip,
+            fieldOfViewInDegrees: track.verticalFieldOfView(lensMillimeters: pose.lensMillimeters,
+                                                            aspectRatio: aspect),
+            fieldOfViewOrientation: .vertical)
+        let local = Transform(scale: .one, rotation: pose.orientation, translation: pose.position)
+        let authored = AuthoredCameraSnapshot(transformMatrix: roomMatrix * local.matrix, camera: optics)
+        // Keep the Blender room route, then land on the exact runtime camera so
+        // revealing the battle HUD cannot cause a second camera jump.
+        let blendDuration: TimeInterval = 1.2
+        let fraction = Float((elapsed - (track.duration - blendDuration)) / blendDuration)
+        return blendedSweepCamera(from: authored, to: battle, fraction: fraction)
+    }
+
+    private func blendedSweepCamera(from start: AuthoredCameraSnapshot, to end: AuthoredCameraSnapshot,
+                                    fraction: Float) -> AuthoredCameraSnapshot {
+        let t = min(1, max(0, fraction))
+        let eased = t * t * t * (t * (t * 6 - 15) + 10)
+        let a = Transform(matrix: start.transformMatrix)
+        let b = Transform(matrix: end.transformMatrix)
+        let transform = Transform(scale: .one,
+            rotation: simd_slerp(a.rotation, b.rotation, eased),
+            translation: simd_mix(a.translation, b.translation, SIMD3(repeating: eased)))
+        var optics = start.camera
+        let aspect = arView.map { Float($0.bounds.width / max(1, $0.bounds.height)) } ?? Float(4.0 / 3.0)
+        func verticalFOV(_ camera: PerspectiveCameraComponent) -> Float {
+            camera.fieldOfViewOrientation == .horizontal
+                ? 2 * atan(tan(camera.fieldOfViewInDegrees * .pi / 360) / max(0.1, aspect)) * 180 / .pi
+                : camera.fieldOfViewInDegrees
+        }
+        optics.fieldOfViewOrientation = .vertical
+        optics.fieldOfViewInDegrees = verticalFOV(start.camera)
+            + (verticalFOV(end.camera) - verticalFOV(start.camera)) * eased
+        if t >= 1 { optics = end.camera }
+        return AuthoredCameraSnapshot(transformMatrix: transform.matrix, camera: optics)
+    }
+
+    private func bossRoomFloor(_ scene: FloorSceneID) -> Int? {
+        switch scene {
+        case .floor09ArchiveRedesign: return 9
+        case .floor08AdministratorObservatory: return 8
+        case .floor07CoordinateAdministrator: return 7
+        case .floor06CausalityAdministrator: return 6
+        case .floor05OriginalMemoryAdministrator: return 5
+        case .floor04ResponsibilityAuditAdministrator: return 4
+        case .floor03VoluntaryQuarantineAdministrator: return 3
+        case .floor02SealMaintenanceAdministrator: return 2
+        case .floor01FinalAuthorizationAdministrator: return 1
+        default: return nil
+        }
+    }
+
+    private func recordBossRoomSweepDiagnostic(floor: Int, label: String, elapsed: TimeInterval,
+                                              maximumStep: Float, target: AuthoredCameraSnapshot? = nil) {
+        #if DEBUG
+        guard ProcessInfo.processInfo.arguments.contains("--boss-sweep-diagnostics"),
+              let cameraEntity, let arView else { return }
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("BossRoomSweepDiagnostics", isDirectory: true)
+        let prefix = String(format: "F%02d-%@", floor, label)
+        func values(_ matrix: simd_float4x4) -> [Float] {
+            (0..<4).flatMap { column in (0..<4).map { matrix[column][$0] } }
+        }
+        let matrix = cameraEntity.transformMatrix(relativeTo: nil)
+        var report: [String: Any] = ["floor": floor, "phase": label, "elapsed": elapsed,
+            "generation": bossRoomSweepGeneration, "scene": requestedSceneID?.rawValue ?? "",
+            "position": [matrix.columns.3.x, matrix.columns.3.y, matrix.columns.3.z],
+            "entityCamera": values(matrix), "renderedCamera": values(arView.cameraTransform.matrix),
+            "rootMatrix": values(registry.root?.transformMatrix(relativeTo: nil) ?? matrix_identity_float4x4),
+            "fieldOfView": cameraEntity.camera.fieldOfViewInDegrees, "maximumFrameDistance": maximumStep,
+            "viewport": [arView.bounds.width, arView.bounds.height], "paused": bossRoomSweepSuspended]
+        if let target {
+            let actual = Transform(matrix: matrix)
+            let desired = Transform(matrix: target.transformMatrix)
+            report["battlePositionError"] = simd_distance(actual.translation, desired.translation)
+            report["battleRotationDot"] = abs(simd_dot(actual.rotation.vector, desired.rotation.vector))
+            report["battleFieldOfViewError"] = abs(cameraEntity.camera.fieldOfViewInDegrees - target.camera.fieldOfViewInDegrees)
+        }
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+            try data.write(to: directory.appendingPathComponent(prefix + ".json"), options: .atomic)
+            arView.snapshot(saveToHDR: false) { image in
+                if let data = image?.pngData() {
+                    try? data.write(to: directory.appendingPathComponent(prefix + ".png"), options: .atomic)
+                }
+            }
+            print("C5_BOSS_SWEEP floor=\(floor) phase=\(label) time=\(elapsed) maxStep=\(maximumStep)")
+        } catch { print("C5_BOSS_SWEEP diagnostic error=\(error)") }
+        #endif
     }
 }
 
