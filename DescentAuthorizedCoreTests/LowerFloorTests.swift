@@ -25,6 +25,67 @@ final class LowerFloorTests: XCTestCase {
         }
     }
 
+    func testLowerDescentPatternsUseThreeDistinctSingleStrokeApprovals() {
+        var seen = Set<[Int]>()
+        for floor in 1...4 {
+            let patterns = LowerDescentApprovalPattern.patterns(floor: floor)
+            XCTAssertEqual(patterns.count, 3)
+            for pattern in patterns {
+                XCTAssertEqual(Set(pattern.sequence).count, pattern.sequence.count)
+                XCTAssertTrue(pattern.sequence.allSatisfy { LowerDescentApprovalPattern.nodes.indices.contains($0) })
+                XCTAssertTrue(seen.insert(pattern.sequence).inserted)
+            }
+        }
+    }
+
+    func testMiddleDoorPatternsAreDistinctAndSingleStroke() {
+        var paths = Set<String>()
+        for floor in 1...7 {
+            for transfer in (floor <= 4 ? [false, true] : [false]) {
+                let spell = SpellCatalog.middleDoor(floor: floor, residualTransfer: transfer)
+                XCTAssertEqual(spell.requiredStrokes, 1)
+                let result = GlyphEvaluator(maximumMana: 100).evaluate(spell: spell,
+                    strokes: strokes(spell), inputMethod: .pencil, erasureZones: [])
+                XCTAssertTrue(result.succeeded, "\(floor) transfer=\(transfer)")
+                let key = spell.glyph.strokes[0].referencePath.map { "\($0.x),\($0.y)" }.joined(separator: ";")
+                XCTAssertTrue(paths.insert(key).inserted)
+            }
+        }
+    }
+
+    func testPreparedLowerEntryRequiresInvestigationAndStopsAtDialogue() throws {
+        var controller = try lowerController()
+        for (checkpoint, stage, index, boss) in [
+            (CheckpointID.floor5Complete, ExpansionStage.entrance, 0, false),
+            (.floor4SecondEncounter, .residualInvestigation, 1, false),
+            (.floor4BossEncounter, .bossPreparation, 1, true)
+        ] {
+            _ = try controller.travel(to: checkpoint)
+            if stage == .entrance {
+                XCTAssertThrowsError(try controller.beginPreparedLowerBattle())
+                XCTAssertEqual(controller.progress.expansion?.stage, .entrance)
+                for record in ExpansionInvestigationCatalog.records(for: 4) { _ = controller.readRecord(id: record.id) }
+            }
+            _ = try controller.beginPreparedLowerBattle()
+            XCTAssertEqual(controller.progress.expansion?.stage, boss ? .bossEncounter : .residualEncounter)
+            XCTAssertThrowsError(try controller.beginPreparedLowerBattle())
+            _ = try controller.advanceExpansion()
+            XCTAssertEqual(controller.progress.expansion?.stage, boss ? .bossBattle : .residualBattle)
+            XCTAssertEqual(controller.progress.expansion?.residualIndex, index)
+            try GameProgressValidator().validate(controller.progress)
+            XCTAssertThrowsError(try controller.beginPreparedLowerBattle())
+        }
+    }
+
+    func testFourthFloorInvestigationRoutesToCorrectRoomAndCamera() {
+        XCTAssertEqual(ExpansionSceneRoute(.init(floorNumber: 4, stage: .entrance))?.camera, .tutorial)
+        let followup = ExpansionSceneRoute(.init(floorNumber: 4, stage: .residualInvestigation))
+        XCTAssertEqual(followup?.room, .residualB)
+        XCTAssertEqual(followup?.camera, .tutorial)
+        XCTAssertEqual(ExpansionSceneRoute(.init(floorNumber: 4, stage: .residualBattle, residualIndex: 1))?.camera, .battle)
+        XCTAssertEqual(ExpansionSceneRoute(.init(floorNumber: 5, stage: .entrance))?.camera, .battle)
+    }
+
     func testLowerResourcesDoNotChangeUpperFloors() throws {
         var lower = makeEngine()
         _ = try lower.beginPlayerTurn(intent: idle)
@@ -116,6 +177,41 @@ final class LowerFloorTests: XCTestCase {
         XCTAssertEqual(engine.state.expansion.executionNullificationUses, 1)
     }
 
+    func testCancellationAutomaticallyChoosesEarliestDueGroup() throws {
+        for spell: SpellID in [.consequenceErasure, .executionNullification] {
+            var engine = makeEngine()
+            _ = try engine.beginPlayerTurn(intent: .expansion(name: "등록", action: .schedule([
+                .init(name: "나중", damage: 20, turnsFromNow: 3),
+                .init(name: "먼저 A", damage: 12, turnsFromNow: 1),
+                .init(name: "먼저 B", damage: 14, turnsFromNow: 1)])))
+            try resolve(&engine)
+            _ = try engine.beginPlayerTurn(intent: idle)
+            // A stale manual selection must not redirect or reject an automatic cancellation.
+            _ = try cast(spell, &engine, target: .scheduledDamage("expired-selection"))
+            XCTAssertEqual(engine.state.expansion.scheduledDamage.map(\.name),
+                           spell == .consequenceErasure ? ["나중", "먼저 B"] : ["나중"])
+        }
+    }
+
+    func testSealReleaseRequiresAnAbsoluteBarrier() {
+        var battle = makeEngine().state
+        battle.enemy.absoluteBarrierCharges = 0
+        XCTAssertNotNil(battle.spellUnavailabilityReason(for: SpellCatalog.sealRelease))
+        battle.enemy.normalBarrier = 40
+        XCTAssertNotNil(battle.spellUnavailabilityReason(for: SpellCatalog.sealRelease))
+        battle.enemy.absoluteBarrierCharges = 1
+        XCTAssertNil(battle.spellUnavailabilityReason(for: SpellCatalog.sealRelease))
+    }
+
+    func testConsequenceErasureFallsBackToNormalBarrierOnlyWithoutReservations() {
+        var battle = makeEngine().state
+        battle.enemy.absoluteBarrierCharges = 0
+        battle.enemy.normalBarrier = 40
+        XCTAssertEqual(battle.availableEffectTargets(for: SpellCatalog.consequenceErasure).map(\.id), [.enemyNormalBarrier])
+        battle.expansion.scheduledDamage = [.init(id: "first", name: "예약", damage: 12, dueEnemyTurn: 2)]
+        XCTAssertEqual(battle.availableEffectTargets(for: SpellCatalog.consequenceErasure).map(\.id), [.scheduledDamage("first")])
+    }
+
     func testSealChoiceBlocksInputAndProtectsCoreCards() throws {
         let cards: [SpellID] = [.riftSeverance, .basicBarrier, .sealRelease, .chainInscription, .executionDelay]
         var engine = CombatEngine(enemy: LowerFloorEnemyCatalog.all[.consentCustodianResidual]!,
@@ -128,6 +224,46 @@ final class LowerFloorTests: XCTestCase {
         _ = try cast(.basicBarrier, &engine)
         try resolve(&engine)
         XCTAssertEqual(Set(engine.state.expansion.lockedSpells.keys), [.executionDelay])
+    }
+
+    func testSealCountdownAcrossChoiceAutomaticAndScheduledLocks() throws {
+        let cases: [(ExpansionEnemyAction, Int)] = [
+            (.lockCards(count: 2, duration: 1, chooseOne: true), 1),
+            (.lockCards(count: 2, duration: 3, chooseOne: true), 3),
+            (.lockCards(count: 2, duration: 3, chooseOne: false), 3),
+            (.lockAndSchedule(count: 1, damage: 0), 1)
+        ]
+        for (action, duration) in cases {
+            let cards: [SpellID] = [.riftSeverance, .basicBarrier, .sealRelease, .chainInscription, .executionDelay]
+            var engine = CombatEngine(enemy: LowerFloorEnemyCatalog.all[.consentCustodianResidual]!,
+                equippedSpells: cards, protectedSpells: [.riftSeverance, .basicBarrier, .sealRelease])
+            _ = try engine.beginPlayerTurn(intent: .expansion(name: "봉인", action: action))
+            if engine.state.expansion.needsSealChoice {
+                try engine.chooseCardSeal(.executionDelay)
+            }
+            try resolve(&engine)
+            let sealed = try XCTUnwrap(engine.state.expansion.lockedSpells.keys.first)
+            XCTAssertEqual(engine.state.remainingSealTurns(for: sealed), duration)
+            var impact = engine.state
+            impact.phase = .resolvingEnemyAction
+            XCTAssertEqual(impact.remainingSealTurns(for: sealed), duration)
+            impact.phase = .victory
+            XCTAssertNil(impact.remainingSealTurns(for: sealed))
+            impact.phase = .defeat
+            XCTAssertNil(impact.remainingSealTurns(for: sealed))
+            impact = engine.state
+            impact.expansion.lockedSpells[sealed] = nil
+            XCTAssertNil(impact.remainingSealTurns(for: sealed))
+            XCTAssertNil(engine.state.remainingSealTurns(for: .basicBarrier))
+            for remaining in stride(from: duration, through: 1, by: -1) {
+                _ = try engine.beginPlayerTurn(intent: idle)
+                XCTAssertEqual(engine.state.remainingSealTurns(for: sealed), remaining)
+                XCTAssertNotNil(engine.state.spellUnavailabilityReason(for: SpellCatalog.spell(sealed)))
+                try resolve(&engine)
+            }
+            XCTAssertNil(engine.state.expansion.lockedSpells[sealed])
+            XCTAssertNil(engine.state.remainingSealTurns(for: sealed))
+        }
     }
 
     func testCounterIsSingleConditionalAndMimicProhibitionCancelsIt() throws {
@@ -160,7 +296,13 @@ final class LowerFloorTests: XCTestCase {
                 _ = try controller.recordExpansionVictory(enemy: enemy.id, remainingPlayerHP: 30)
                 _ = try controller.advanceExpansion()
                 if residual == 0 {
+                    XCTAssertEqual(controller.progress.expansion?.stage, .residualGate)
+                    controller = try restored(controller)
+                    XCTAssertThrowsError(try controller.advanceExpansion())
+                    XCTAssertThrowsError(try controller.releaseExpansionSeal(grade: .rejected))
+                    _ = try controller.releaseExpansionSeal(grade: .approved)
                     XCTAssertEqual(controller.progress.expansion?.stage, .residualInvestigation)
+                    XCTAssertEqual(ExpansionSceneRoute(controller.progress.expansion!)?.room, .residualB)
                     _ = try controller.advanceExpansion()
                     controller = try restored(controller)
                     XCTAssertEqual(controller.progress.expansion?.residualIndex, 1)

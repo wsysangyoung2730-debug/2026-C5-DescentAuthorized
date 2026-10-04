@@ -1,0 +1,47 @@
+[
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor01/IdentityComparisonResidual/floor01_identity_comparison_residual.usdc",
+    "restoredCurveObjects": 274,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor01/IdentityComparisonResidual/floor01_identity_comparison_residual_low.usdc",
+    "restoredCurveObjects": 274,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor01/IdentityComparisonResidual/floor01_identity_comparison_residual_medium.usdc",
+    "restoredCurveObjects": 274,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor01/ExitReviewResidual/floor01_exit_review_residual.usdc",
+    "restoredCurveObjects": 400,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor01/ExitReviewResidual/floor01_exit_review_residual_low.usdc",
+    "restoredCurveObjects": 400,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor01/ExitReviewResidual/floor01_exit_review_residual_medium.usdc",
+    "restoredCurveObjects": 400,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor01/FinalAuthorizationAdministrator/floor01_final_authorization_administrator.usdc",
+    "restoredCurveObjects": 526,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor01/FinalAuthorizationAdministrator/floor01_final_authorization_administrator_low.usdc",
+    "restoredCurveObjects": 526,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor01/FinalAuthorizationAdministrator/floor01_final_authorization_administrator_medium.usdc",
+    "restoredCurveObjects": 526,
+    "remainingCurves": 0
+  }
+]

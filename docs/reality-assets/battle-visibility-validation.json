@@ -1,0 +1,3273 @@
+{
+  "scenes": 22,
+  "captureFailures": [],
+  "intentChecks": 315,
+  "failures": [],
+  "maximumResetMatrixError": 2.980232238769531e-07,
+  "maximumResetFOVError": 0,
+  "reports": [
+    {
+      "intents": [],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 1.1920928955078125e-07,
+      "scene": "floor10_closed_office"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0.5989999771118164
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0.5989999771118164
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor09_archive_redesign"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5850000381469727,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor08_residue_isolation"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019993782043457,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019993782043457,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor08_administrator_observatory"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5020003318786621,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5020003318786621,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor07_coordinate_administrator"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor07_coordinate_residue"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019998550415039,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019998550415039,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor06_causality_administrator"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor06_causality_residue"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019993782043457,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019993782043457,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor05_original_memory_administrator"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5580000877380371,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5580000877380371,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor05_memory_omission_residue"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019993782043457,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019993782043457,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor04_responsibility_audit_administrator"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor04_signature_mimic_residual"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor04_rejection_execution_residual"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019993782043457,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019993782043457,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor03_voluntary_quarantine_administrator"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor03_consent_custodian_residual"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor03_quarantine_enforcer_residual"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019998550415039,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019998550415039,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor02_seal_maintenance_administrator"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor02_overload_residual"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor02_backflow_blocker_residual"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019998550415039,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.5019998550415039,
+            "loaded": true,
+            "shieldGap": 0.37799978256225586
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.37799978256225586,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.980232238769531e-07,
+      "scene": "floor01_final_authorization_administrator"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor01_identity_comparison_residual"
+    },
+    {
+      "intents": [
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "attack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "heavyAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "generalShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "absoluteShield",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "memoryRecord",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "mimicAttack",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "openingWait",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "scheduledExecution",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "spellSeal",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "amplify",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "damageReservation",
+          "insideViewport": true,
+          "visible": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-general",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.557999849319458,
+            "loaded": true,
+            "shieldGap": 0.34999990463256836
+          },
+          "cue": "shield-absolute",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "left-down",
+          "insideViewport": true
+        },
+        {
+          "clearance": {
+            "actorGap": 0.34999990463256836,
+            "loaded": true,
+            "shieldGap": 0
+          },
+          "cue": "right-down",
+          "insideViewport": true
+        }
+      ],
+      "lookChanged": true,
+      "resetButtonHidden": true,
+      "resetFOVError": 0,
+      "resetMatrixError": 2.384185791015625e-07,
+      "scene": "floor01_exit_review_residual"
+    }
+  ]
+}

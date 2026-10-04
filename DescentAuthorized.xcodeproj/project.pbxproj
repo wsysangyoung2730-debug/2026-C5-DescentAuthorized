@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C21100000000000000000001 /* BossRoomSweep.swift in Sources */ = {isa = PBXBuildFile; fileRef = C21100000000000000000002 /* BossRoomSweep.swift */; };
+		C21100000000000000000003 /* BossRoomSweepTracks.json in Resources */ = {isa = PBXBuildFile; fileRef = C21100000000000000000004 /* BossRoomSweepTracks.json */; };
+		C20900000000000000000005 /* EndingCreditsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20900000000000000000006 /* EndingCreditsView.swift */; };
+		C20900000000000000000003 /* EndingCreditsPlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20900000000000000000004 /* EndingCreditsPlayback.swift */; };
+		C20900000000000000000001 /* EndingCreditsCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20900000000000000000002 /* EndingCreditsCatalog.swift */; };
+		8BC69DD738E24D3313DA17C1 /* RealityCombatEffectLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0C3AF50C12E7950B80A4A27; };
+		4D90A4C073247C9BE134FFE2 /* CombatEffectCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A81633168A782A97F4545EA; };
+		AB1950000000000000000001 /* PortalVeil.metal in Sources */ = {isa = PBXBuildFile; fileRef = AB1950000000000000000002 /* PortalVeil.metal */; };
+		A18000000000000000000001 /* CombatStatusPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18000000000000000000002 /* CombatStatusPresentation.swift */; };
 		C54100000000000000000001 /* LowerFloorContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000001 /* LowerFloorContracts.swift */; };
 		C54100000000000000000002 /* LowerFloorSpellCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000002 /* LowerFloorSpellCatalog.swift */; };
 		C54100000000000000000003 /* LowerFloorDescentGlyphs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54200000000000000000003 /* LowerFloorDescentGlyphs.swift */; };
@@ -105,9 +114,19 @@
 		F0ED0993C01A519FB92D34CE /* ExpansionCombatGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CC104F7F1D8E1F17AA010EC /* ExpansionCombatGuideView.swift */; };
 		EEE88AD52DDCC2CC7918BE6D /* ExpansionPreviewSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40995EAF59B8A2F114F385D6 /* ExpansionPreviewSupport.swift */; };
 		131000000000000000000001 /* ExpansionNarrativeCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 131000000000000000000002 /* ExpansionNarrativeCatalog.swift */; };
+		188000000000000000000001 /* BattleSealChoiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 188000000000000000000002 /* BattleSealChoiceView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C21100000000000000000002 /* BossRoomSweep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Progression/BossRoomSweep.swift"; sourceTree = SOURCE_ROOT; };
+		C21100000000000000000004 /* BossRoomSweepTracks.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "DescentAuthorized/Core/Resources/BossRoomSweepTracks.json"; sourceTree = SOURCE_ROOT; };
+		C20900000000000000000006 /* EndingCreditsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Progression/EndingCreditsView.swift"; sourceTree = SOURCE_ROOT; };
+		C20900000000000000000004 /* EndingCreditsPlayback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Progression/EndingCreditsPlayback.swift"; sourceTree = SOURCE_ROOT; };
+		C20900000000000000000002 /* EndingCreditsCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/EndingCreditsCatalog.swift"; sourceTree = SOURCE_ROOT; };
+		B0C3AF50C12E7950B80A4A27 /* RealityCombatEffectLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DescentAuthorized/Reality/RealityCombatEffectLibrary.swift; sourceTree = SOURCE_ROOT; };
+		0A81633168A782A97F4545EA /* CombatEffectCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DescentAuthorized/Core/Game/CombatEffectCatalog.swift; sourceTree = SOURCE_ROOT; };
+		AB1950000000000000000002 /* PortalVeil.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = PortalVeil.metal; sourceTree = "<group>"; };
+		A18000000000000000000002 /* CombatStatusPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/CombatEngine/CombatStatusPresentation.swift"; sourceTree = SOURCE_ROOT; };
 		C54200000000000000000001 /* LowerFloorContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorContracts.swift"; sourceTree = SOURCE_ROOT; };
 		C54200000000000000000002 /* LowerFloorSpellCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorSpellCatalog.swift"; sourceTree = SOURCE_ROOT; };
 		C54200000000000000000003 /* LowerFloorDescentGlyphs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/LowerFloorDescentGlyphs.swift"; sourceTree = SOURCE_ROOT; };
@@ -208,6 +227,7 @@
 		1CC104F7F1D8E1F17AA010EC /* ExpansionCombatGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Features/Battle/ExpansionCombatGuideView.swift"; sourceTree = SOURCE_ROOT; };
 		40995EAF59B8A2F114F385D6 /* ExpansionPreviewSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/App/ExpansionPreviewSupport.swift"; sourceTree = SOURCE_ROOT; };
 		131000000000000000000002 /* ExpansionNarrativeCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DescentAuthorized/Core/Content/ExpansionNarrativeCatalog.swift"; sourceTree = SOURCE_ROOT; };
+		188000000000000000000002 /* BattleSealChoiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleSealChoiceView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -226,6 +246,8 @@
 		400000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
+				B0C3AF50C12E7950B80A4A27 /* RealityCombatEffectLibrary.swift */,
+				0A81633168A782A97F4545EA /* CombatEffectCatalog.swift */,
 				400000000000000000000002 /* DescentAuthorized */,
 				400000000000000000000014 /* Frameworks */,
 				400000000000000000000009 /* Products */,
@@ -235,10 +257,15 @@
 		400000000000000000000002 /* DescentAuthorized */ = {
 			isa = PBXGroup;
 			children = (
+				C21100000000000000000002 /* BossRoomSweep.swift */,
+				C21100000000000000000004 /* BossRoomSweepTracks.json */,
 				C54200000000000000000001 /* LowerFloorContracts.swift */,
 				C54200000000000000000002 /* LowerFloorSpellCatalog.swift */,
 				C54200000000000000000003 /* LowerFloorDescentGlyphs.swift */,
 				C54200000000000000000004 /* LowerFloorEnemyCatalog.swift */,
+				C20900000000000000000002 /* EndingCreditsCatalog.swift */,
+				C20900000000000000000004 /* EndingCreditsPlayback.swift */,
+				C20900000000000000000006 /* EndingCreditsView.swift */,
 				C54200000000000000000005 /* LowerFloorNarrativeCatalog.swift */,
 				C54200000000000000000006 /* LowerFloorProgress.swift */,
 				C54200000000000000000007 /* LowerFloorFlowView.swift */,
@@ -254,6 +281,7 @@
 				236557319E433CE6FBF68FE0 /* RewardMigration.swift */,
 				2B26BCC5CC0FA38C5DED2DC9 /* ExpansionCombatStatusView.swift */,
 				8EE05552E0088B791F83B0EC /* ExpansionCombatModels.swift */,
+				A18000000000000000000002 /* CombatStatusPresentation.swift */,
 				9B4B466720AADD1752CF1C1F /* ExpansionBackdropView.swift */,
 				9E44F77750E0CB3904476235 /* ExpansionProgress.swift */,
 				131000000000000000000002 /* ExpansionNarrativeCatalog.swift */,
@@ -350,6 +378,7 @@
 			isa = PBXGroup;
 			children = (
 				200000000000000000000003 /* BattleView.swift */,
+				188000000000000000000002 /* BattleSealChoiceView.swift */,
 				200000000000000000000061 /* BattlePresentationStyle.swift */,
 				200000000000000000000033 /* GlyphCastingPanel.swift */,
 				400000000000000000000011 /* Input */,
@@ -478,6 +507,7 @@
 				200000000000000000000062 /* RealityBoardProjection.swift */,
 				200000000000000000000064 /* RealityCombatPresentation.swift */,
 				200000000000000000000065 /* RealityProgressionPresentation.swift */,
+				AB1950000000000000000002 /* PortalVeil.metal */,
 				200000000000000000000058 /* RealityEntityRegistry.swift */,
 				200000000000000000000063 /* RealityErasureZoneRenderer.swift */,
 				200000000000000000000059 /* RealitySceneController.swift */,
@@ -560,6 +590,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C21100000000000000000003 /* BossRoomSweepTracks.json in Resources */,
 				100000000000000000000067 /* Audio in Resources */,
 				100000000000000000000005 /* Assets.xcassets in Resources */,
 				100000000000000000000055 /* AssetManifest.json in Resources */,
@@ -575,10 +606,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C21100000000000000000001 /* BossRoomSweep.swift in Sources */,
+				8BC69DD738E24D3313DA17C1 /* RealityCombatEffectLibrary.swift in Sources */,
+				4D90A4C073247C9BE134FFE2 /* CombatEffectCatalog.swift in Sources */,
 				C54100000000000000000001 /* LowerFloorContracts.swift in Sources */,
 				C54100000000000000000002 /* LowerFloorSpellCatalog.swift in Sources */,
 				C54100000000000000000003 /* LowerFloorDescentGlyphs.swift in Sources */,
 				C54100000000000000000004 /* LowerFloorEnemyCatalog.swift in Sources */,
+				C20900000000000000000001 /* EndingCreditsCatalog.swift in Sources */,
+				C20900000000000000000003 /* EndingCreditsPlayback.swift in Sources */,
+				C20900000000000000000005 /* EndingCreditsView.swift in Sources */,
 				C54100000000000000000005 /* LowerFloorNarrativeCatalog.swift in Sources */,
 				C54100000000000000000006 /* LowerFloorProgress.swift in Sources */,
 				C54100000000000000000007 /* LowerFloorFlowView.swift in Sources */,
@@ -594,6 +631,7 @@
 				ACD1AF82D2B3105E7D0A843E /* RewardMigration.swift in Sources */,
 				A9D7E7DE37C6297EDA264C86 /* ExpansionCombatStatusView.swift in Sources */,
 				DEAAE5D0E8EC60E4E06D12AC /* ExpansionCombatModels.swift in Sources */,
+				A18000000000000000000001 /* CombatStatusPresentation.swift in Sources */,
 				B6DC40859EEA9499B5F3C8CE /* ExpansionBackdropView.swift in Sources */,
 				0E4EB4F5CDE8D923787595C0 /* ExpansionProgress.swift in Sources */,
 				131000000000000000000001 /* ExpansionNarrativeCatalog.swift in Sources */,
@@ -608,8 +646,10 @@
 				100000000000000000000063 /* RealityErasureZoneRenderer.swift in Sources */,
 				100000000000000000000064 /* RealityCombatPresentation.swift in Sources */,
 				100000000000000000000065 /* RealityProgressionPresentation.swift in Sources */,
+				AB1950000000000000000001 /* PortalVeil.metal in Sources */,
 				100000000000000000000002 /* HomeView.swift in Sources */,
 				100000000000000000000003 /* BattleView.swift in Sources */,
+				188000000000000000000001 /* BattleSealChoiceView.swift in Sources */,
 				100000000000000000000061 /* BattlePresentationStyle.swift in Sources */,
 				100000000000000000000004 /* GamePhase.swift in Sources */,
 				100000000000000000000010 /* DomainModels.swift in Sources */,

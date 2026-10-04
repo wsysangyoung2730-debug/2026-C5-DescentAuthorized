@@ -1,0 +1,16 @@
+[
+  {
+    "lookChanged": true,
+    "resetButtonHidden": true,
+    "resetFOVError": 0,
+    "resetMatrixError": 0,
+    "scene": "floor03_voluntary_quarantine_administrator"
+  },
+  {
+    "lookChanged": true,
+    "resetButtonHidden": true,
+    "resetFOVError": 0,
+    "resetMatrixError": 5.960464477539063e-08,
+    "scene": "floor04_signature_mimic_residual"
+  }
+]

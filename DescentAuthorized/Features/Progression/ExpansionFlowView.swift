@@ -83,7 +83,7 @@ struct ExpansionFlowView: View {
         }
     }
 
-    // Prepare during reading/selection, never begin speculative work during combat.
+    // Requests share the quiet-time scheduler with the persistent progression host.
     private func prefetchNextScene(_ current: ExpansionProgress) {
         if let installed = FinalSceneContract.nextRoom(for: current) {
             sceneController.prefetchRoom(sceneID: installed, quality: appSettings.graphicsQuality)
@@ -108,7 +108,7 @@ struct ExpansionFlowView: View {
     @ViewBuilder
     private func content(_ current: ExpansionProgress) -> some View {
         switch current.stage {
-        case .residualInvestigation, .recordReward, .finalRecord:
+        case .residualInvestigation, .residualGate, .recordReward, .finalRecord:
             EmptyView() // LowerFloorFlowView owns these durable stages.
         case .entrance, .preparation:
             InvestigationFlow(
@@ -166,11 +166,12 @@ struct ExpansionFlowView: View {
             GateSealInteractionView(
                 title: SpellCatalog.sealRelease.name,
                 instruction: "금색 핵심점을 따라 해제 문양을 완성하십시오.",
-                spell: SpellCatalog.sealRelease,
+                spell: SpellCatalog.middleDoor(floor: current.floorNumber),
                 inputPreference: appSettings.inputPreference,
                 availableMana: 100,
                 availableStrokes: 2,
-                presentation: GateSealGlyphPresentation()
+                presentation: GateSealGlyphPresentation(),
+                sceneController: sceneController, floorNumber: current.floorNumber, destinationTitle: "관리자 구역으로"
             ) { submission in
                 guard submission.evaluation.succeeded else { return }
                 gameSession.send(.releaseExpansionSeal(submission.evaluation.grade))

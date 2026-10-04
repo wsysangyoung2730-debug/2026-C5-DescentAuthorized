@@ -27,14 +27,16 @@
       "end": 9.9,
       "duration": 1.0,
       "impact": 0.46,
-      "settledAt": 0.96
+      "settledAt": 0.96,
+      "release": 0.4
     },
     "heavyAttack": {
       "start": 10.0,
       "end": 11.3,
       "duration": 1.3,
       "impact": 0.62,
-      "settledAt": 1.28
+      "settledAt": 1.28,
+      "release": 0.54
     },
     "special": {
       "start": 11.4,
@@ -80,5 +82,26 @@
   "rigidEquipment": [
     "equipment_shield",
     "equipment_back"
-  ]
+  ],
+  "runtimeMotion": "authoredArticulated",
+  "attackSocket": {
+    "joint": "root/pelvis/spine/chest/upper_arm_R",
+    "offset": [
+      0.05419,
+      0.872565,
+      -0.225817
+    ]
+  },
+  "attackMotion": {
+    "version": 2,
+    "action": "brace the round shield, swing the right hook from outside inward, let it follow through",
+    "groundedRoot": true,
+    "phases": [
+      "anticipation",
+      "aim-or-arc",
+      "release",
+      "followThrough",
+      "settle"
+    ]
+  }
 }

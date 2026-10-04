@@ -1,0 +1,27 @@
+[
+  {
+    "actor": "RejectionExecutionResidual",
+    "collapsedArmInfluences": 14049,
+    "bodyWeightsPreserved": false
+  },
+  {
+    "actor": "QuarantineEnforcerResidual",
+    "collapsedArmInfluences": 0,
+    "bodyWeightsPreserved": true
+  },
+  {
+    "actor": "OverloadResidual",
+    "collapsedArmInfluences": 0,
+    "bodyWeightsPreserved": true
+  },
+  {
+    "actor": "BackflowBlockerResidual",
+    "collapsedArmInfluences": 0,
+    "bodyWeightsPreserved": true
+  },
+  {
+    "actor": "ExitReviewResidual",
+    "collapsedArmInfluences": 0,
+    "bodyWeightsPreserved": true
+  }
+]

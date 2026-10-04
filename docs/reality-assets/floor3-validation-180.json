@@ -1,0 +1,26 @@
+[
+  {
+    "asset": "floor03_voluntary_quarantine_administrator.usdc",
+    "bevelMeshes": 365,
+    "roofPanels": 24,
+    "interiorCeilingPanels": 24,
+    "curves": 0,
+    "brokenTextures": 0
+  },
+  {
+    "asset": "floor03_voluntary_quarantine_administrator_low.usdc",
+    "bevelMeshes": 365,
+    "roofPanels": 24,
+    "interiorCeilingPanels": 24,
+    "curves": 0,
+    "brokenTextures": 0
+  },
+  {
+    "asset": "floor03_voluntary_quarantine_administrator_medium.usdc",
+    "bevelMeshes": 365,
+    "roofPanels": 24,
+    "interiorCeilingPanels": 24,
+    "curves": 0,
+    "brokenTextures": 0
+  }
+]

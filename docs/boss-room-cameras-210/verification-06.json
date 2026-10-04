@@ -1,0 +1,47 @@
+{
+  "floor": 6,
+  "cameras": 5,
+  "targets": 4,
+  "source_active_camera_unchanged": true,
+  "samples_checked": 361,
+  "path_crossings": [],
+  "near_surfaces": [],
+  "rendered_frames": [
+    1,
+    52,
+    103,
+    160,
+    217,
+    277,
+    337
+  ],
+  "sample_pose_max_error": 8.259061849445711e-07,
+  "sample_rotation_max_error_degrees": 9.69249328618154e-05,
+  "sample_lens_max_error_mm": 1.1853027359620683e-06,
+  "sample_shift_max_error": 0.0,
+  "source_render": {
+    "resolution_x": 1280,
+    "resolution_y": 800,
+    "resolution_percentage": 100,
+    "pixel_aspect_x": 1.0,
+    "pixel_aspect_y": 1.0,
+    "display_aspect": 1.6,
+    "fps": 30,
+    "fps_base": 1.0,
+    "effective_fps": 30.0
+  },
+  "verification_render": {
+    "resolution_x": 900,
+    "resolution_y": 562,
+    "resolution_percentage": 100,
+    "pixel_aspect_x": 1.0,
+    "pixel_aspect_y": 1.0,
+    "display_aspect": 1.601423487544484,
+    "fps": 30,
+    "fps_base": 1.0,
+    "effective_fps": 30.0
+  },
+  "render_skipped": false,
+  "animation_samples_passed": true,
+  "path_review_status": "no_hits_detected"
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "resource": "floor07_coordinate_residue",
+    "gate": "F07A_BossAccessDoor",
+    "prefix": "MID_floor07_coordinate_residue",
+    "travel": 1.0822801781898033
+  },
+  {
+    "resource": "floor06_causality_residue",
+    "gate": "F06A_BossAccessDoor",
+    "prefix": "MID_floor06_causality_residue",
+    "travel": 1.0822801781898033
+  },
+  {
+    "resource": "floor05_memory_omission_residue",
+    "gate": "F05A_DecorativeMiddleDoor",
+    "prefix": "MID_floor05_memory_omission_residue",
+    "travel": 0.29093558155721994
+  },
+  {
+    "resource": "floor04_signature_mimic_residual",
+    "gate": "F04A_MiddleDoor",
+    "prefix": "MID_floor04_signature_mimic_residual",
+    "travel": 0.32816820430755617
+  },
+  {
+    "resource": "floor04_rejection_execution_residual",
+    "gate": "F04B_MiddleDoor",
+    "prefix": "MID_floor04_rejection_execution_residual",
+    "travel": 0.32816820430755617
+  },
+  {
+    "resource": "floor03_consent_custodian_residual",
+    "gate": "F03A_CentralDoor_To_F03B",
+    "prefix": "MID_floor03_consent_custodian_residual",
+    "travel": 0.32273371854618116
+  },
+  {
+    "resource": "floor03_quarantine_enforcer_residual",
+    "gate": "F03B_CentralDoor_To_F03C",
+    "prefix": "MID_floor03_quarantine_enforcer_residual",
+    "travel": 0.3227337954919049
+  },
+  {
+    "resource": "floor02_overload_residual",
+    "gate": "F02A_CentralDoor_To_F02B",
+    "prefix": "MID_floor02_overload_residual",
+    "travel": 0.3062725982666016
+  },
+  {
+    "resource": "floor02_backflow_blocker_residual",
+    "gate": "F02B_CentralDoor_To_Boss",
+    "prefix": "MID_floor02_backflow_blocker_residual",
+    "travel": 0.3062725982666016
+  },
+  {
+    "resource": "floor01_identity_comparison_residual",
+    "gate": "MID_floor01_identity_comparison_residual_Gate",
+    "prefix": "MID_floor01_identity_comparison_residual",
+    "travel": 2.403000025749207
+  },
+  {
+    "resource": "floor01_exit_review_residual",
+    "gate": "MID_floor01_exit_review_residual_Gate",
+    "prefix": "MID_floor01_exit_review_residual",
+    "travel": 2.5650000000000004
+  },
+  {
+    "resource": "floor08_residue_isolation",
+    "gate": "F08A_BossAccessDoor",
+    "prefix": "MID_floor08_residue_isolation",
+    "travel": 0.29093552953389007
+  }
+]

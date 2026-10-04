@@ -107,7 +107,10 @@ struct RealitySceneDescriptor: Sendable {
     }
 
     var rewardMotionAsset: (directory: String, name: String)? {
-        if FinalSceneContract.contract(for: sceneID) != nil { return nil }
+        if FinalSceneContract.contract(for: sceneID) != nil {
+            return entityNames[.rewardStand] == nil ? nil
+                : ("Reality/Interactables/RewardDevice", "reward_device_motion")
+        }
         if sceneID.isExpansion, entityNames[.rewardStand] != nil {
             return ("Reality/Interactables/RewardDevice", "reward_device_motion")
         }
@@ -191,7 +194,7 @@ struct RealitySceneDescriptor: Sendable {
                 .descentStele: "F10_DescentStele",
                 .descentPedestal: "F10_DescentPedestal"
             ],
-            descentDoorAnimation: .init(prefix: "F10")
+            descentDoorAnimation: .init(prefix: "FINAL_F07C", panelTravelDistance: 0.2365)
         ),
         .floor09ArchiveRedesign: .init(
             sceneID: .floor09ArchiveRedesign,
@@ -215,13 +218,13 @@ struct RealitySceneDescriptor: Sendable {
                 .rewardScrollRight: "F09_RewardScroll_Right_Idle",
                 .generalShield: "F09_GeneralShield"
             ],
-            descentDoorAnimation: .init(prefix: "F09"),
+            descentDoorAnimation: .init(prefix: "FINAL_F07C", panelTravelDistance: 0.2365),
             actor: .init(
                 assetID: .recordAdministrator,
                 expectedEntityName: "ACTOR_RecordAdministrator",
                 resourceSubdirectory: "Reality/Actors/RecordAdministrator",
                 targetHeight: 6.5,
-                intentVerticalOffset: -0.8
+                intentVerticalOffset: 0.4
             )
         ),
         .floor08ResidueIsolation: .init(
@@ -234,8 +237,10 @@ struct RealitySceneDescriptor: Sendable {
             ],
             entityNames: [
                 .magicInputBoard: "F08A_MagicInputBoard",
-                .enemySpawn: "SPAWN_ObservationResidue"
+                .enemySpawn: "SPAWN_ObservationResidue",
+                .descentDoor: "F08A_BossAccessDoor"
             ],
+            descentDoorAnimation: .init(prefix: "MID_floor08_residue_isolation", panelTravelDistance: 0.30),
             actor: .init(
                 assetID: .observationResidue,
                 expectedEntityName: "ACTOR_ObservationResidue",
@@ -291,6 +296,7 @@ enum DemoSceneExperience: Equatable, Sendable {
 }
 
 enum BossNarrativeSequence: Equatable, Sendable {
+    case towerHandoff
     case expansion(ExpansionNarrative)
     case floor9Encounter
     case floor9Defeated
@@ -307,15 +313,22 @@ struct DemoScenePresentation: Equatable, Sendable {
     let experience: DemoSceneExperience
 
     static func presentation(for sceneID: SceneID, expansion: ExpansionProgress?) -> DemoScenePresentation {
+        if let expansion, expansion.isValid, expansion.isComplete {
+            return .init(progressSceneID: sceneID, floorSceneID: nil,
+                         cameraPreset: .battle, experience: .narrative(.towerHandoff))
+        }
         if let expansion, let route = ExpansionSceneRoute(expansion),
            let finalRoom = FinalSceneContract.room(for: route) {
             return .init(progressSceneID: sceneID, floorSceneID: finalRoom,
                 cameraPreset: RealityCameraPreset(rawValue: route.camera.rawValue) ?? .battle,
-                experience: .completion)
+                experience: expansion.isLowerFloor && expansion.stage.isBattle ? .battle
+                    : ExpansionNarrative(progress: expansion).map { .narrative(.expansion($0)) } ?? .completion)
         }
         if expansion?.isLowerFloor == true {
             return .init(progressSceneID: sceneID, floorSceneID: nil,
-                         cameraPreset: .battle, experience: .completion)
+                         cameraPreset: .battle,
+                         experience: expansion.flatMap(ExpansionNarrative.init(progress:))
+                            .map { .narrative(.expansion($0)) } ?? .completion)
         }
         guard let expansion, let route = ExpansionSceneRoute(expansion) else {
             return presentation(for: sceneID)
@@ -438,8 +451,8 @@ struct DemoScenePresentation: Equatable, Sendable {
         case .floor8AdministratorPreparation:
             .init(
                 progressSceneID: sceneID,
-                floorSceneID: .floor08ResidueIsolation,
-                cameraPreset: .descentInput,
+                floorSceneID: .floor08AdministratorObservatory,
+                cameraPreset: .main,
                 experience: .floor8Exploration
             )
         case .floor8AdministratorEncounter:
@@ -529,19 +542,16 @@ struct FinalSceneContract: Decodable {
     }
 
     static func nextRoom(for progress: ExpansionProgress) -> FloorSceneID? {
-        let destination: (Int, String)?
-        switch progress.stage {
-        case .recordReward, .residualDefeated:
-            destination = progress.isLowerFloor && progress.residualIndex == 0
-                ? (progress.floorNumber, "residualB") : (progress.floorNumber, "administrator")
-        case .sealedDoor:
-            destination = (progress.floorNumber, "administrator")
-        case .reward, .descent, .finalRecord:
-            destination = progress.floorNumber > 1 ? (progress.floorNumber - 1, "residualA") : nil
-        default: destination = nil
+        guard let destination = RoomWarmupDestination.next(scene: .demoComplete, expansion: progress) else { return nil }
+        return room(forWarmup: destination)
+    }
+
+    static func room(forWarmup destination: RoomWarmupDestination) -> FloorSceneID? {
+        if destination.floor == 9 { return .floor09ArchiveRedesign }
+        if destination.floor == 8 {
+            return destination.role == "administrator" ? .floor08AdministratorObservatory : .floor08ResidueIsolation
         }
-        guard let destination else { return nil }
-        return installed.first { $0.floor == destination.0 && $0.role == destination.1 }
+        return installed.first { $0.floor == destination.floor && $0.role == destination.role }
             .flatMap { FloorSceneID(rawValue: $0.resource) }
     }
 

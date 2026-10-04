@@ -22,7 +22,7 @@ enum GameFeedbackCue: Equatable, Sendable {
 }
 
 struct GameFeedbackMapper: Sendable {
-    func cues(for events: [DemoSessionEvent]) -> [GameFeedbackCue] {
+    func cues(for events: [DemoSessionEvent], enemyActionPresentation: EnemyActionPresentation? = nil) -> [GameFeedbackCue] {
         var cues: [GameFeedbackCue] = []
         var currentEnemyAttackIsStrong = false
         var isResolvingEnemyAttack = false
@@ -85,17 +85,14 @@ struct GameFeedbackMapper: Sendable {
                     isResolvingPlayerSpell = false
                     isResolvingEnemyAttack = false
                     currentEnemyAttackIsStrong = false
-                    if case let .attack(_, _, isStrong) = action {
-                        currentEnemyAttackIsStrong = isStrong
+                    let presentation = enemyActionPresentation ?? EnemyActionPresentation(action: action, resolvedEvents: events)
+                    if let strong = presentation.attackStrength {
+                        currentEnemyAttackIsStrong = strong
                         isResolvingEnemyAttack = true
-                        cues.append(.enemyAttack(strong: isStrong))
-                    } else if case let .expansion(_, expansionAction) = action {
+                        cues.append(.enemyAttack(strong: strong))
+                    } else if case .expansion = action {
                         // A delayed hit can arrive during any expansion action, including a wait.
                         isResolvingEnemyAttack = true
-                        if let strong = expansionAttackStrength(expansionAction) {
-                            currentEnemyAttackIsStrong = strong
-                            cues.append(.enemyAttack(strong: strong))
-                        }
                     }
                 case .victory:
                     cues.append(.victory)
@@ -128,18 +125,4 @@ struct GameFeedbackMapper: Sendable {
         return cues
     }
 
-    private func expansionAttackStrength(_ action: ExpansionEnemyAction) -> Bool? {
-        switch action {
-        case .correctionStrike: true
-        case .copyReaction: false
-        case let .directHits(hits): hits.contains { $0 >= 30 }
-        case .barrierStrike: true
-        case .counterExecute: false
-        case let .sequence(actions): actions.compactMap(expansionAttackStrength).first
-        case .correctionBarrier, .amplify, .schedule, .recordLastSpell,
-             .lockAndSchedule, .preparedLockAndSchedule, .wait, .flatAmplify,
-             .timedBarrier, .counterPrepare, .lockCards, .preparedCardSeal, .absoluteSeal:
-            nil
-        }
-    }
 }

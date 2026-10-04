@@ -10,20 +10,32 @@ struct ExpansionNarrative: Equatable, Sendable {
     let floorNumber: Int
     let isBoss: Bool
     let isDefeated: Bool
+    var residualIndex: Int = 0
 
     var backgroundAsset: String {
-        "Floor\(floorNumber)\(isBoss ? "Administrator" : "Residual")\(isDefeated ? "Defeated" : "Encounter")"
+        let actor = isBoss ? "Administrator" : floorNumber <= 4
+            ? (residualIndex == 0 ? "ResidualA" : "ResidualB") : "Residual"
+        return "Floor\(floorNumber)\(actor)\(isDefeated ? "Defeated" : "Encounter")"
     }
 
     var recordTitle: String { isDefeated ? "처치 기록" : "조우 기록" }
 
     var finalAccessibilityHint: String {
         if !isDefeated { return "전투 시작" }
+        if floorNumber <= 4 {
+            if isBoss { return floorNumber == 1 ? "최종 기록 열람" : "두루마리 선택으로 이동" }
+            if residualIndex == 0 { return "잔류체 B 구역 중앙문으로 이동" }
+            return floorNumber >= 3 ? "조사 기록 보상으로 이동" : "관리자 구역 봉인문으로 이동"
+        }
         return isBoss ? "두루마리 선택으로 이동" : "관리자 구역 봉인문으로 이동"
     }
 
     var dialogues: [NarrativeDialogue] {
-        switch (floorNumber, isBoss, isDefeated) {
+        if floorNumber <= 4 {
+            return LowerFloorNarrativeCatalog.dialogues(floor: floorNumber, isBoss: isBoss,
+                residualIndex: residualIndex, isDefeated: isDefeated)
+        }
+        return switch (floorNumber, isBoss, isDefeated) {
         case (7, false, false):
             [
                 .init(speaker: "좌표 표류 잔류체", text: "“좌표… 표류… 기준점… 없음… 그런데… 왜… 당신을 중심으로… 돌아오지…?”")
@@ -92,13 +104,14 @@ struct ExpansionNarrative: Equatable, Sendable {
 
 extension ExpansionNarrative {
     init?(progress: ExpansionProgress) {
-        guard (5...7).contains(progress.floorNumber) else { return nil }
+        guard progress.isValid else { return nil }
         switch progress.stage {
         case .residualEncounter, .residualDefeated, .bossEncounter, .bossDefeated:
             self.init(
                 floorNumber: progress.floorNumber,
                 isBoss: progress.showsBoss,
-                isDefeated: progress.stage == .residualDefeated || progress.stage == .bossDefeated
+                isDefeated: progress.stage == .residualDefeated || progress.stage == .bossDefeated,
+                residualIndex: progress.residualIndex
             )
         default:
             return nil

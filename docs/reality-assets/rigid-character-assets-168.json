@@ -1,0 +1,380 @@
+[
+  {
+    "actor": "BackflowBlockerResidual",
+    "file": "backflow_blocker_residual.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "BackflowBlockerResidual",
+    "file": "backflow_blocker_residual_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "BackflowBlockerResidual",
+    "file": "backflow_blocker_residual_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "CausalityAdministrator",
+    "file": "causality_administrator.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "CausalityAdministrator",
+    "file": "causality_administrator_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "CausalityAdministrator",
+    "file": "causality_administrator_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "CausalityResidue",
+    "file": "causality_residue.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "CausalityResidue",
+    "file": "causality_residue_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "CausalityResidue",
+    "file": "causality_residue_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ConsentCustodianResidual",
+    "file": "consent_custodian_residual.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ConsentCustodianResidual",
+    "file": "consent_custodian_residual_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ConsentCustodianResidual",
+    "file": "consent_custodian_residual_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "CoordinateAdministrator",
+    "file": "coordinate_administrator.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "CoordinateAdministrator",
+    "file": "coordinate_administrator_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "CoordinateAdministrator",
+    "file": "coordinate_administrator_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "CoordinateResidue",
+    "file": "coordinate_residue.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "CoordinateResidue",
+    "file": "coordinate_residue_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "CoordinateResidue",
+    "file": "coordinate_residue_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ExitReviewResidual",
+    "file": "exit_review_residual.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ExitReviewResidual",
+    "file": "exit_review_residual_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ExitReviewResidual",
+    "file": "exit_review_residual_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "FinalAuthorizationAdministrator",
+    "file": "final_authorization_administrator.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "FinalAuthorizationAdministrator",
+    "file": "final_authorization_administrator_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "FinalAuthorizationAdministrator",
+    "file": "final_authorization_administrator_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "IdentityComparisonResidual",
+    "file": "identity_comparison_residual.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "IdentityComparisonResidual",
+    "file": "identity_comparison_residual_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "IdentityComparisonResidual",
+    "file": "identity_comparison_residual_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "MemoryOmissionResidue",
+    "file": "memory_omission_residue.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "MemoryOmissionResidue",
+    "file": "memory_omission_residue_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "MemoryOmissionResidue",
+    "file": "memory_omission_residue_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ObservationAdministrator",
+    "file": "observation_administrator.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ObservationAdministrator",
+    "file": "observation_administrator_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ObservationAdministrator",
+    "file": "observation_administrator_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ObservationResidue",
+    "file": "observation_residue.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ObservationResidue",
+    "file": "observation_residue_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ObservationResidue",
+    "file": "observation_residue_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "OriginalMemoryAdministrator",
+    "file": "original_memory_administrator.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "OriginalMemoryAdministrator",
+    "file": "original_memory_administrator_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "OriginalMemoryAdministrator",
+    "file": "original_memory_administrator_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "OverloadResidual",
+    "file": "overload_residual.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "OverloadResidual",
+    "file": "overload_residual_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "OverloadResidual",
+    "file": "overload_residual_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "QuarantineEnforcerResidual",
+    "file": "quarantine_enforcer_residual.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "QuarantineEnforcerResidual",
+    "file": "quarantine_enforcer_residual_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "QuarantineEnforcerResidual",
+    "file": "quarantine_enforcer_residual_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "RecordAdministrator",
+    "file": "record_administrator.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "RecordAdministrator",
+    "file": "record_administrator_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "RecordAdministrator",
+    "file": "record_administrator_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "RejectionExecutionResidual",
+    "file": "rejection_execution_residual.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "RejectionExecutionResidual",
+    "file": "rejection_execution_residual_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "RejectionExecutionResidual",
+    "file": "rejection_execution_residual_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ResponsibilityAuditAdministrator",
+    "file": "responsibility_audit_administrator.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ResponsibilityAuditAdministrator",
+    "file": "responsibility_audit_administrator_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "ResponsibilityAuditAdministrator",
+    "file": "responsibility_audit_administrator_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "SealMaintenanceAdministrator",
+    "file": "seal_maintenance_administrator.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "SealMaintenanceAdministrator",
+    "file": "seal_maintenance_administrator_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "SealMaintenanceAdministrator",
+    "file": "seal_maintenance_administrator_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "SignatureMimicResidual",
+    "file": "signature_mimic_residual.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "SignatureMimicResidual",
+    "file": "signature_mimic_residual_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "SignatureMimicResidual",
+    "file": "signature_mimic_residual_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "VoluntaryQuarantineAdministrator",
+    "file": "voluntary_quarantine_administrator.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "VoluntaryQuarantineAdministrator",
+    "file": "voluntary_quarantine_administrator_low.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  },
+  {
+    "actor": "VoluntaryQuarantineAdministrator",
+    "file": "voluntary_quarantine_administrator_medium.usdc",
+    "meshes": 1,
+    "skinDeformation": false
+  }
+]

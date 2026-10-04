@@ -1,5 +1,7 @@
 import Foundation
 import RealityKit
+import Metal
+import UIKit
 
 enum RealityDescentPresentationState: Equatable, Sendable {
     case inactive
@@ -55,8 +57,13 @@ final class RealityProgressionVFXRenderer {
     private var doorState: RealityDescentPresentationState = .inactive
     private var doorPanels: [(entity: Entity, closed: Transform, travel: Float)] = []
     private var doorPortal: Entity?
+    private var rectangularPortalMeshes = Set<ObjectIdentifier>()
     private var doorPortalClosed: Transform?
     private var doorReducedMotion = false
+    private var isMiddleDoor = false
+    private var irisLens: Entity?
+    private var irisLensClosed = Transform.identity
+    private var irisBlades: [(entity: Entity, closed: Transform, angle: Float)] = []
     private var transitionGeneration = 0
     private var rewardAppearanceTask: Task<Void, Never>?
     private var rewardIdleTask: Task<Void, Never>?
@@ -70,7 +77,10 @@ final class RealityProgressionVFXRenderer {
         doorOpeningTask = nil
         doorState = .inactive
         doorPanels.removeAll()
+        irisLens = nil
+        irisBlades.removeAll()
         doorPortal = nil
+        rectangularPortalMeshes.removeAll()
         doorPortalClosed = nil
         authoredRewardPlayer?.cancel()
         authoredRewardPlayer = nil
@@ -97,6 +107,17 @@ final class RealityProgressionVFXRenderer {
             }
             doorPortal = registry.entity(named: doorAnimation.portalSurfaceName)
             doorPortalClosed = doorPortal?.transform
+            isMiddleDoor = doorAnimation.portalSurfaceName.hasPrefix("MID_")
+            if !isMiddleDoor { installVeilMaterial() }
+            if let lens = registry.entity(named: "FINAL_F02C_IrisLens") {
+                irisLens = lens
+                irisLensClosed = lens.transform
+                for index in 0..<8 {
+                    if let blade = registry.entity(named: "FINAL_F02C_IrisBlade_\(index)") {
+                        irisBlades.append((blade, blade.transform, (Float(index) + 0.5) * .pi / 4))
+                    }
+                }
+            }
             let openingWidth = doorPortal?.visualBounds(relativeTo: doorPortal?.parent).extents.x ?? 0
             let travel = max(doorAnimation.panelTravelDistance, openingWidth * 0.52)
             for (name, direction): (String, Float) in [(doorAnimation.leftPanelName, -1), (doorAnimation.rightPanelName, 1)] {
@@ -107,6 +128,68 @@ final class RealityProgressionVFXRenderer {
         }
     }
 
+    private static let veilShader: CustomMaterial.SurfaceShader? = {
+        guard let device = MTLCreateSystemDefaultDevice(), let library = device.makeDefaultLibrary() else { return nil }
+        return CustomMaterial.SurfaceShader(named: "descentVeil", in: library)
+    }()
+
+    private func installVeilMaterial() {
+        guard let portal = doorPortal else { return }
+        let material: any Material
+        if let shader = Self.veilShader, var veil = try? CustomMaterial(surfaceShader: shader, lightingModel: .unlit) {
+            veil.faceCulling = .none
+            veil.custom.value = SIMD4<Float>(doorReducedMotion ? 0 : 1, 0, 0, 0)
+            material = veil
+        } else {
+            material = UnlitMaterial(color: UIColor(red: 0.065, green: 0.08, blue: 0.11, alpha: 1))
+        }
+        func apply(_ entity: Entity) {
+            if var model = entity.components[ModelComponent.self] {
+                if !rectangularPortalMeshes.contains(ObjectIdentifier(entity)) {
+                    let bounds = model.mesh.bounds
+                    let axes = [0, 1, 2].sorted { bounds.extents[$0] > bounds.extents[$1] }
+                    let u = axes[0], v = axes[1]
+                    var vertices = [SIMD3<Float>]()
+                    for corner: SIMD2<Float> in [[0, 0], [1, 0], [1, 1], [0, 1]] {
+                        var point = bounds.center
+                        point[u] = bounds.min[u] + corner.x * bounds.extents[u]
+                        point[v] = bounds.min[v] + corner.y * bounds.extents[v]
+                        vertices.append(point)
+                    }
+                    var mesh = MeshDescriptor(name: "RectangularDescentVeil")
+                    mesh.positions = MeshBuffers.Positions(vertices)
+                    mesh.textureCoordinates = MeshBuffers.TextureCoordinates([[0, 0], [1, 0], [1, 1], [0, 1]])
+                    mesh.primitives = .triangles([0, 1, 2, 0, 2, 3])
+                    if let rectangle = try? MeshResource.generate(from: [mesh]) {
+                        model.mesh = rectangle
+                        rectangularPortalMeshes.insert(ObjectIdentifier(entity))
+                    }
+                }
+                model.materials = [material]
+                entity.components.set(model)
+            }
+            entity.children.forEach(apply)
+        }
+        apply(portal)
+    }
+
+    func prepareMiddleDoorPreview(sceneID: FloorSceneID) {
+        guard isMiddleDoor, let portal = doorPortal,
+              let image = UIImage(named: "GatePreview_" + sceneID.rawValue)?.cgImage,
+              let texture = try? TextureResource.generate(from: image, options: .init(semantic: .color)) else { return }
+        var material = UnlitMaterial()
+        material.color = .init(tint: .white, texture: .init(texture))
+        material.faceCulling = .none
+        func apply(_ entity: Entity) {
+            if var model = entity.components[ModelComponent.self] {
+                model.materials = [material]
+                entity.components.set(model)
+            }
+            entity.children.forEach(apply)
+        }
+        apply(portal)
+    }
+
     func presentDescent(
         _ state: RealityDescentPresentationState,
         registry: RealityEntityRegistry,
@@ -114,6 +197,7 @@ final class RealityProgressionVFXRenderer {
     ) {
         guard registry.root != nil else { return }
         doorReducedMotion = reducedMotion
+        if !isMiddleDoor { installVeilMaterial() }
         transitionGeneration += 1
         let generation = transitionGeneration
 
@@ -140,18 +224,7 @@ final class RealityProgressionVFXRenderer {
         restore(.descentStele, in: registry)
         restore(.descentPedestal, in: registry)
 
-        guard !reducedMotion else { return }
-        switch state {
-        case .drawing:
-            pulse(.descentPedestal, scale: 1.025, duration: 0.18, registry: registry)
-        case .failed:
-            shake(.descentPedestal, registry: registry, generation: generation)
-        case .approved:
-            pulse(.descentPedestal, scale: 1.07, duration: 0.28, registry: registry)
-            pulse(.descentStele, scale: 1.025, duration: 0.28, registry: registry)
-        case .inactive, .ready, .open:
-            break
-        }
+        // Input feedback belongs to the glyph UI; architecture stays at its authored pose.
     }
 
     func presentReward(
@@ -167,6 +240,21 @@ final class RealityProgressionVFXRenderer {
         transitionGeneration += 1
         let generation = transitionGeneration
         let roles = rewardRoles
+
+        // Completion and view restoration apply the final pose without replaying acquisition.
+        if case let .resolved(selectedIndex) = state {
+            for (index, role) in roles.enumerated() {
+                guard let entity = registry.entity(for: role), var target = baseTransforms[role] else { continue }
+                entity.stopAllAnimations(recursive: false)
+                entity.isEnabled = index == selectedIndex
+                if index == selectedIndex {
+                    target.translation.z += reducedMotion ? 0 : 0.14
+                    target.scale *= reducedMotion ? 1 : 1.08
+                    entity.transform = target
+                }
+            }
+            return
+        }
 
         if registry.descriptor?.rewardMotionAsset != nil {
             presentAuthoredReward(state, registry: registry, reducedMotion: reducedMotion, generation: generation)
@@ -247,7 +335,10 @@ final class RealityProgressionVFXRenderer {
         doorOpeningTask = nil
         doorState = .inactive
         doorPanels.removeAll()
+        irisLens = nil
+        irisBlades.removeAll()
         doorPortal = nil
+        rectangularPortalMeshes.removeAll()
         doorPortalClosed = nil
         authoredRewardPlayer?.cancel()
         authoredRewardPlayer = nil
@@ -331,6 +422,8 @@ final class RealityProgressionVFXRenderer {
     }
 
     private func restoreDoorControllers(in registry: RealityEntityRegistry) {
+        irisLens?.transform = irisLensClosed
+        for blade in irisBlades { blade.entity.transform = blade.closed }
         for (name, transform) in doorControllerBaseTransforms {
             guard let entity = registry.entity(named: name) else { continue }
             entity.stopAllAnimations(recursive: false)
@@ -376,10 +469,28 @@ final class RealityProgressionVFXRenderer {
         let t = max(0, min(1, (progress - 0.12) / 0.88))
         let eased = t * t * (3 - 2 * t)
         // Entities and bounds are resolved once at attachment, not every frame.
-        for panel in doorPanels {
-            var target = panel.closed
-            target.translation.x += panel.travel * eased
-            panel.entity.transform = target
+        if let lens = irisLens {
+            let extensionPhase = min(1, progress / 0.32)
+            var lensTransform = irisLensClosed
+            lensTransform.translation.y -= 0.075 * extensionPhase * extensionPhase * (3 - 2 * extensionPhase)
+            lens.transform = lensTransform
+            let aperture = max(0, min(1, (progress - 0.26) / 0.74))
+            let opening = aperture * aperture * (3 - 2 * aperture)
+            for blade in irisBlades {
+                var target = blade.closed
+                target.rotation *= simd_quatf(angle: -opening * 1.1, axis: [0, 1, 0])
+                // Retract into the barrel instead of ejecting oversized leaf fragments beyond the rim.
+                target.scale *= 1 - 0.995 * opening
+                target.translation.x += cos(blade.angle) * 0.015 * opening
+                target.translation.z += sin(blade.angle) * 0.015 * opening
+                blade.entity.transform = target
+            }
+        } else {
+            for panel in doorPanels {
+                var target = panel.closed
+                target.translation.x += panel.travel * eased
+                panel.entity.transform = target
+            }
         }
         if let portal = doorPortal, var target = doorPortalClosed {
             // Authored closed state compresses the portal vertically; reveal it in place.
@@ -524,6 +635,8 @@ private final class AuthoredRewardPlayer {
         }
         fps = data.fps
         frames = data.frames
+        // All floors animate the complete authored hierarchy, including the lift
+        // and three lids. Device placement is applied only to their common root.
         tracks = try data.tracks.map { track in
             guard let entity = registry.entity(named: track.entity),
                   track.matrices.count == data.frames else { throw CocoaError(.fileReadCorruptFile) }
@@ -540,6 +653,15 @@ private final class AuthoredRewardPlayer {
             }
             return Track(entity: entity, samples: samples)
         }
+    }
+
+    private static func matrix(_ values: [Float]) throws -> simd_float4x4 {
+        guard values.count == 16, values.allSatisfy(\.isFinite) else { throw CocoaError(.fileReadCorruptFile) }
+        return simd_float4x4(columns: (
+            SIMD4(values[0], values[1], values[2], values[3]),
+            SIMD4(values[4], values[5], values[6], values[7]),
+            SIMD4(values[8], values[9], values[10], values[11]),
+            SIMD4(values[12], values[13], values[14], values[15])))
     }
 
     func cancel() {

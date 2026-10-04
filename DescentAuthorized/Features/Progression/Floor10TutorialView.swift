@@ -554,6 +554,29 @@ struct FloorEntranceConfiguration {
         )
     }
 
+    static func lowerPreparation(current: ExpansionProgress) -> FloorEntranceConfiguration {
+        let index = current.stage == .residualInvestigation ? 1 : current.residualIndex
+        let enemy = ExpansionEnemyCatalog.enemy(floor: current.floorNumber, isBoss: current.showsBoss, residualIndex: index)
+        let records = ExpansionInvestigationCatalog.records(for: current.floorNumber)
+        let record = index == 0 ? records.first : records.last
+        return FloorEntranceConfiguration(
+            code: "제\(current.floorNumber)층 / \(current.showsBoss ? "관리자" : "잔류체 \(index == 0 ? "A" : "B")")",
+            title: enemy?.name ?? current.areaName,
+            summary: current.showsBoss ? "관리자 구역의 봉인이 해제되었다.\n출전 주문을 확인하고 심사에 맞선다." : record?.body ?? "조사를 마쳤습니다.",
+            accent: current.showsBoss ? DAColor.magicGlow : DAColor.defense,
+            statuses: [
+                .init(icon: "checkmark.seal.fill", title: current.showsBoss ? "중앙문 봉인" : "조사 기록", value: current.showsBoss ? "해제" : "확인 완료", color: DAColor.defense),
+                .init(icon: "heart.fill", title: "적 생명력", value: "\(enemy?.maxHP ?? 0)", color: DAColor.attack),
+                .init(icon: "scroll.fill", title: "출전 주문", value: "최대 6개", color: FloorEntrancePalette.brass)
+            ],
+            signalTitle: "첫 행동 예고",
+            signalBody: enemy?.pattern.first?.name ?? "잔류 반응 감지",
+            buttonAsset: "Floor8ProtectionButtonPlate",
+            actionTitle: "전투 시작 · 출전 가방 확인",
+            actionIcon: "door.left.hand.open"
+        )
+    }
+
     static func expansionPreparation(
         floorNumber: Int,
         areaName: String,

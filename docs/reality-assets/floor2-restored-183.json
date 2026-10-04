@@ -1,0 +1,47 @@
+[
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor02/OverloadResidual/floor02_overload_residual.usdc",
+    "restoredCurveObjects": 67,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor02/OverloadResidual/floor02_overload_residual_low.usdc",
+    "restoredCurveObjects": 67,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor02/OverloadResidual/floor02_overload_residual_medium.usdc",
+    "restoredCurveObjects": 67,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor02/BackflowBlockerResidual/floor02_backflow_blocker_residual.usdc",
+    "restoredCurveObjects": 95,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor02/BackflowBlockerResidual/floor02_backflow_blocker_residual_low.usdc",
+    "restoredCurveObjects": 95,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor02/BackflowBlockerResidual/floor02_backflow_blocker_residual_medium.usdc",
+    "restoredCurveObjects": 95,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor02/SealMaintenanceAdministrator/floor02_seal_maintenance_administrator.usdc",
+    "restoredCurveObjects": 453,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor02/SealMaintenanceAdministrator/floor02_seal_maintenance_administrator_low.usdc",
+    "restoredCurveObjects": 453,
+    "remainingCurves": 0
+  },
+  {
+    "asset": "DescentAuthorized/Resources/Reality/Scenes/Floor02/SealMaintenanceAdministrator/floor02_seal_maintenance_administrator_medium.usdc",
+    "restoredCurveObjects": 453,
+    "remainingCurves": 0
+  }
+]

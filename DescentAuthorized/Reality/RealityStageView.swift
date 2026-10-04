@@ -31,6 +31,10 @@ enum LoadingScreenContext: Equatable {
         case .expansion(7): "LoadingFloor07"
         case .expansion(6): "LoadingFloor06"
         case .expansion(5): "LoadingFloor05"
+        case .expansion(4): "LoadingFloor04"
+        case .expansion(3): "LoadingFloor03"
+        case .expansion(2): "LoadingFloor02"
+        case .expansion(1): "LoadingFloor01"
         case .startup, .expansion: "LoadingMain"
         case .floor10: "LoadingFloor10"
         case .floor9: "LoadingFloor09"
@@ -399,8 +403,20 @@ struct Floor9MotionPreview: View {
                     if case .failed = controller.loadState { return }
                     do { try await Task.sleep(for: .milliseconds(30)) } catch { return }
                 }
+                if ProcessInfo.processInfo.arguments.contains("--room-warmup-diagnostics") {
+                    await controller.runRoomWarmupDiagnostics()
+                    return
+                }
                 if ProcessInfo.processInfo.arguments.contains("--final-tour") {
                     await controller.runFinalTourDiagnostics()
+                    return
+                }
+                if ProcessInfo.processInfo.arguments.contains("--combat-effect-diagnostics") {
+                    await controller.runCombatEffectDiagnostics()
+                    return
+                }
+                if ProcessInfo.processInfo.arguments.contains("--attack-motion-diagnostics") {
+                    await controller.runAttackMotionDiagnostics()
                     return
                 }
                 if ProcessInfo.processInfo.arguments.contains("--ambient-diagnostics") {
@@ -409,6 +425,11 @@ struct Floor9MotionPreview: View {
                 }
                 if ProcessInfo.processInfo.arguments.contains("--render-diagnostics") {
                     await controller.runDeviceRenderDiagnostics()
+                    return
+                }
+                if ProcessInfo.processInfo.arguments.contains("--camera-reset-diagnostics") {
+                    controller.setBattleCameraInteractionEnabled(true)
+                    await controller.runBattleCameraResetDiagnostics()
                     return
                 }
                 controller.setRewardPresentation(.inactive, reducedMotion: reducedMotion)

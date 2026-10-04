@@ -1,0 +1,245 @@
+{
+  "device": "iPad Pro 13 M5 Simulator, iOS 26.5",
+  "graphics": "medium",
+  "actors": [
+    {
+      "scene": "floor01_exit_review_residual",
+      "jointCount": 19,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor01_exit_review_residual.jpg"
+    },
+    {
+      "scene": "floor01_final_authorization_administrator",
+      "jointCount": 19,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor01_final_authorization_administrator.jpg"
+    },
+    {
+      "scene": "floor01_identity_comparison_residual",
+      "jointCount": 19,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor01_identity_comparison_residual.jpg"
+    },
+    {
+      "scene": "floor02_backflow_blocker_residual",
+      "jointCount": 20,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor02_backflow_blocker_residual.jpg"
+    },
+    {
+      "scene": "floor02_overload_residual",
+      "jointCount": 19,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor02_overload_residual.jpg"
+    },
+    {
+      "scene": "floor02_seal_maintenance_administrator",
+      "jointCount": 20,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor02_seal_maintenance_administrator.jpg"
+    },
+    {
+      "scene": "floor03_consent_custodian_residual",
+      "jointCount": 19,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor03_consent_custodian_residual.jpg"
+    },
+    {
+      "scene": "floor03_quarantine_enforcer_residual",
+      "jointCount": 19,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor03_quarantine_enforcer_residual.jpg"
+    },
+    {
+      "scene": "floor03_voluntary_quarantine_administrator",
+      "jointCount": 56,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor03_voluntary_quarantine_administrator.jpg"
+    },
+    {
+      "scene": "floor04_rejection_execution_residual",
+      "jointCount": 19,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor04_rejection_execution_residual.jpg"
+    },
+    {
+      "scene": "floor04_responsibility_audit_administrator",
+      "jointCount": 20,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor04_responsibility_audit_administrator.jpg"
+    },
+    {
+      "scene": "floor04_signature_mimic_residual",
+      "jointCount": 19,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor04_signature_mimic_residual.jpg"
+    },
+    {
+      "scene": "floor05_memory_omission_residue",
+      "jointCount": 18,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor05_memory_omission_residue.jpg"
+    },
+    {
+      "scene": "floor05_original_memory_administrator",
+      "jointCount": 19,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor05_original_memory_administrator.jpg"
+    },
+    {
+      "scene": "floor06_causality_administrator",
+      "jointCount": 19,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor06_causality_administrator.jpg"
+    },
+    {
+      "scene": "floor06_causality_residue",
+      "jointCount": 18,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor06_causality_residue.jpg"
+    },
+    {
+      "scene": "floor07_coordinate_administrator",
+      "jointCount": 20,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor07_coordinate_administrator.jpg"
+    },
+    {
+      "scene": "floor07_coordinate_residue",
+      "jointCount": 18,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor07_coordinate_residue.jpg"
+    },
+    {
+      "scene": "floor08_administrator_observatory",
+      "jointCount": 5,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor08_administrator_observatory.jpg"
+    },
+    {
+      "scene": "floor08_residue_isolation",
+      "jointCount": 5,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor08_residue_isolation.jpg"
+    },
+    {
+      "scene": "floor09_archive_redesign",
+      "jointCount": 5,
+      "jointMotionObserved": true,
+      "screenshot": "attack-floor09_archive_redesign.jpg"
+    }
+  ],
+  "gates": [
+    {
+      "scene": "floor01_exit_review_residual",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor01_exit_review_residual.jpg"
+    },
+    {
+      "scene": "floor01_final_authorization_administrator",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor01_final_authorization_administrator.jpg"
+    },
+    {
+      "scene": "floor01_identity_comparison_residual",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor01_identity_comparison_residual.jpg"
+    },
+    {
+      "scene": "floor02_backflow_blocker_residual",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor02_backflow_blocker_residual.jpg"
+    },
+    {
+      "scene": "floor02_overload_residual",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor02_overload_residual.jpg"
+    },
+    {
+      "scene": "floor02_seal_maintenance_administrator",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor02_seal_maintenance_administrator.jpg"
+    },
+    {
+      "scene": "floor03_consent_custodian_residual",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor03_consent_custodian_residual.jpg"
+    },
+    {
+      "scene": "floor03_quarantine_enforcer_residual",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor03_quarantine_enforcer_residual.jpg"
+    },
+    {
+      "scene": "floor03_voluntary_quarantine_administrator",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor03_voluntary_quarantine_administrator.jpg"
+    },
+    {
+      "scene": "floor04_rejection_execution_residual",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor04_rejection_execution_residual.jpg"
+    },
+    {
+      "scene": "floor04_responsibility_audit_administrator",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor04_responsibility_audit_administrator.jpg"
+    },
+    {
+      "scene": "floor04_signature_mimic_residual",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor04_signature_mimic_residual.jpg"
+    },
+    {
+      "scene": "floor05_memory_omission_residue",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor05_memory_omission_residue.jpg"
+    },
+    {
+      "scene": "floor05_original_memory_administrator",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor05_original_memory_administrator.jpg"
+    },
+    {
+      "scene": "floor06_causality_administrator",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor06_causality_administrator.jpg"
+    },
+    {
+      "scene": "floor06_causality_residue",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor06_causality_residue.jpg"
+    },
+    {
+      "scene": "floor07_coordinate_administrator",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor07_coordinate_administrator.jpg"
+    },
+    {
+      "scene": "floor07_coordinate_residue",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor07_coordinate_residue.jpg"
+    },
+    {
+      "scene": "floor08_administrator_observatory",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor08_administrator_observatory.jpg"
+    },
+    {
+      "scene": "floor08_residue_isolation",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor08_residue_isolation.jpg"
+    },
+    {
+      "scene": "floor09_archive_redesign",
+      "doorOpeningCompleted": true,
+      "screenshot": "gate-floor09_archive_redesign.jpg"
+    }
+  ],
+  "latestDeathLifecycle": {
+    "deathDisabled": true,
+    "deathOpacity": 0,
+    "deathPaused": true,
+    "restartOpacity": 1
+  }
+}
