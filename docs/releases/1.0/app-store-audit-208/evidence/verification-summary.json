@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-02",
+  "sourceBaseline": "57d03f0",
+  "xcode": "26.5 (17F42)",
+  "sdk": "26.5",
+  "signing": "CODE_SIGNING_ALLOWED=NO",
+  "uploadsPerformed": false,
+  "results": {
+    "deviceArchive": {
+      "logPath": "/tmp/c5-store-audit/device-archive.log",
+      "summary": [
+        "DescentAuthorized/Reality/RealitySceneController.swift:217:19: warning: value 'arView' was defined but never used; consider replacing with boolean test",
+        "DescentAuthorized/Reality/RealitySceneController.swift:2121:13: warning: variable 'fixtures' was never mutated; consider changing to 'let' constant",
+        "DescentAuthorized/Reality/RealitySceneController.swift:2330:30: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)'",
+        "DescentAuthorized/Reality/RealitySceneController.swift:2473:27: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)'",
+        "DescentAuthorized/Reality/RealityCombatPresentation.swift:1490:37: warning: 'generate(from:withName:options:)' was deprecated in iOS 18.0: replaced by 'init(image:withName:options:)'",
+        "DescentAuthorized/Reality/RealityCombatPresentation.swift:810:16: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)'",
+        "DescentAuthorized/Reality/RealityProgressionPresentation.swift:179:50: warning: 'generate(from:withName:options:)' was deprecated in iOS 18.0: replaced by 'init(image:withName:options:)'",
+        "DescentAuthorized/Reality/RealityProgressionPresentation.swift:202:13: warning: initialization of immutable value 'generation' was never used; consider replacing with assignment to '_' or removing it",
+        "2026-10-02 17:05:08.696 appintentsmetadataprocessor[35446:758808] warning: Metadata extraction skipped. No AppIntents.framework dependency found.",
+        "** ARCHIVE SUCCEEDED **"
+      ]
+    },
+    "simulatorRelease": {
+      "logPath": "/tmp/c5-store-audit/simulator-release.log",
+      "summary": [
+        "DescentAuthorized/Reality/RealitySceneController.swift:217:19: warning: value 'arView' was defined but never used; consider replacing with boolean test",
+        "DescentAuthorized/Reality/RealitySceneController.swift:2121:13: warning: variable 'fixtures' was never mutated; consider changing to 'let' constant",
+        "DescentAuthorized/Reality/RealitySceneController.swift:2330:30: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)'",
+        "DescentAuthorized/Reality/RealitySceneController.swift:2473:27: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)'",
+        "DescentAuthorized/Reality/RealityCombatPresentation.swift:1490:37: warning: 'generate(from:withName:options:)' was deprecated in iOS 18.0: replaced by 'init(image:withName:options:)'",
+        "DescentAuthorized/Reality/RealityCombatPresentation.swift:810:16: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)'",
+        "DescentAuthorized/Reality/RealityProgressionPresentation.swift:179:50: warning: 'generate(from:withName:options:)' was deprecated in iOS 18.0: replaced by 'init(image:withName:options:)'",
+        "DescentAuthorized/Reality/RealityProgressionPresentation.swift:202:13: warning: initialization of immutable value 'generation' was never used; consider replacing with assignment to '_' or removing it",
+        "DescentAuthorized/Reality/RealitySceneController.swift:217:19: warning: value 'arView' was defined but never used; consider replacing with boolean test",
+        "DescentAuthorized/Reality/RealitySceneController.swift:2121:13: warning: variable 'fixtures' was never mutated; consider changing to 'let' constant",
+        "DescentAuthorized/Reality/RealitySceneController.swift:2330:30: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)'",
+        "DescentAuthorized/Reality/RealitySceneController.swift:2473:27: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)'",
+        "DescentAuthorized/Reality/RealityCombatPresentation.swift:1490:37: warning: 'generate(from:withName:options:)' was deprecated in iOS 18.0: replaced by 'init(image:withName:options:)'",
+        "DescentAuthorized/Reality/RealityCombatPresentation.swift:810:16: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)'",
+        "DescentAuthorized/Reality/RealityProgressionPresentation.swift:179:50: warning: 'generate(from:withName:options:)' was deprecated in iOS 18.0: replaced by 'init(image:withName:options:)'",
+        "DescentAuthorized/Reality/RealityProgressionPresentation.swift:202:13: warning: initialization of immutable value 'generation' was never used; consider replacing with assignment to '_' or removing it",
+        "2026-10-02 17:08:40.123 appintentsmetadataprocessor[36184:763754] warning: Metadata extraction skipped. No AppIntents.framework dependency found.",
+        "** BUILD SUCCEEDED **"
+      ]
+    },
+    "coreTests": {
+      "logPath": "/tmp/c5-store-audit/core-tests.log",
+      "summary": [
+        "\t Executed 235 tests, with 0 failures (0 unexpected) in 0.517 (0.532) seconds",
+        "\t Executed 235 tests, with 0 failures (0 unexpected) in 0.517 (0.534) seconds"
+      ]
+    }
+  },
+  "uiEnvironment": {
+    "device": "iPad mini (A17 Pro) Simulator",
+    "runtime": "iOS 26.5",
+    "freshSeparateDevice": true,
+    "configuration": "Release",
+    "previewArguments": false,
+    "testAccountLogin": false
+  }
+}

@@ -108,6 +108,7 @@ struct RealityCombatPresentationMapper {
     }
 
     static func shieldState(for battleState: BattleState) -> RealityShieldState {
+        if battleState.phase == .victory || battleState.phase == .defeat { return .none }
         if battleState.enemy.absoluteBarrierCharges > 0 { return .absolute }
         if battleState.enemy.normalBarrier > 0 { return .general }
         return .none
@@ -131,7 +132,7 @@ struct RealityCombatPresentationMapper {
     private static func expansionIntentCue(for action: ExpansionEnemyAction, battleState: BattleState?) -> RealityEnemyIntentCue? {
         switch action {
         case .correctionBarrier, .timedBarrier: .generalShield
-        case .absoluteSeal: .generalShield
+        case .absoluteSeal: .absoluteShield
         case .correctionStrike, .barrierStrike, .directHits, .counterExecute: .heavyAttack
         case .counterPrepare: .openingWait
         case .copyReaction: .mimicAttack
@@ -176,6 +177,7 @@ struct RealityCombatPresentationMapper {
 
 @MainActor
 final class RealityCombatVFXRenderer {
+    let effects = RealityCombatEffectLibrary()
     private let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier ?? "DescentAuthorized",
         category: "RealityCombatVFX"
@@ -186,8 +188,21 @@ final class RealityCombatVFXRenderer {
     private var hitGeneration = 0
     private var hitTasks: [UUID: Task<Void, Never>] = [:]
     private var hitEntities: [UUID: Entity] = [:]
+    private var hitAnimationControllers: [UUID: [AnimationPlaybackController]] = [:]
     private var enemyAttackTask: Task<Void, Never>?
     private var enemyAttackEntity: Entity?
+    private var enemyAttackElapsed = 0.0
+    private var enemyAttackReleased = false
+    private struct AttackSocketManifest: Decodable {
+        struct Socket: Decodable { let joint: String?; let entity: String?; let offset: [Float]? }
+        let attackSocket: Socket?
+    }
+    private weak var attackSocketModel: ModelEntity?
+    private weak var attackSocketEntity: Entity?
+    private var attackSocketJointIndices: [Int] = []
+    private var attackSocketOffset = SIMD3<Float>.zero
+    private var effectCache: [String: Entity] = [:]
+    private var preloadedHitEffects = false
     private weak var root: Entity?
     private weak var enemyAnchor: Entity?
     private weak var enemyActor: Entity?
@@ -200,14 +215,16 @@ final class RealityCombatVFXRenderer {
     private var intentGeneration = 0
     private var intentScale: Float = 1.15
     private var intentVerticalOffset: Float = 0.3
+    private var intentHalfHeight: Float = 0
     private var intentShieldClearance: Float?
     private var currentShieldState: RealityShieldState = .none
     private var shieldAuraEntity: Entity?
+    private var shieldRestingScale = SIMD3<Float>(repeating: 1)
     private var shieldTransitionTask: Task<Void, Never>?
     private var shieldTransitionGeneration = 0
     var onIntentLayoutChanged: (() -> Void)?
 
-    func projectedIntentFrame(in arView: ARView) -> CGRect? {
+    func projectedIntentFrame(in arView: ARView, clipped: Bool = true) -> CGRect? {
         guard let currentIntentEntity else { return nil }
         let bounds = currentIntentEntity.visualBounds(relativeTo: nil)
         let corners = [
@@ -233,6 +250,7 @@ final class RealityCombatVFXRenderer {
             width: maxX - minX,
             height: maxY - minY
         )
+        if !clipped { return rawFrame }
         let minimumTargetSize: CGFloat = 64
         let maximumTargetSize = CGSize(width: 148, height: 176)
         let targetSize = CGSize(
@@ -255,15 +273,41 @@ final class RealityCombatVFXRenderer {
         return targetFrame
     }
 
+    #if DEBUG
+    var shieldDiagnostics: [String: Any] {
+        ["visible": shieldAuraEntity != nil,
+         "settled": shieldAuraEntity?.scale == shieldRestingScale,
+         "scale": shieldAuraEntity.map { [$0.scale.x, $0.scale.y, $0.scale.z] } ?? [],
+         "effect": shieldAuraEntity?.name ?? "none"]
+    }
+    func intentClearanceDiagnostics() -> [String: Any] {
+        guard let anchor = enemyAnchor, let entity = currentIntentEntity,
+              let bounds = enemyBounds(relativeTo: anchor) else { return ["loaded": false] }
+        let bottom = entity.position.z - intentHalfHeight
+        return ["loaded": true, "actorGap": bottom - bounds.max.z,
+                "shieldGap": shieldAuraEntity.map { bottom - $0.visualBounds(relativeTo: anchor).max.z } ?? 0]
+    }
+    #endif
+
     func attach(to registry: RealityEntityRegistry) {
         root = registry.root
         enemyAnchor = registry.entity(for: .enemySpawn) ?? registry.root
-        enemyActor = registry.entity(for: .enemyActor)
+        let actor = registry.entity(for: .enemyActor)
+        if enemyActor !== actor {
+            enemyActor = actor
+            configureAttackSocket(descriptor: registry.descriptor?.actor)
+        }
         intentScale = registry.descriptor?.actor?.intentScale ?? 1.15
         intentVerticalOffset = registry.descriptor?.actor?.intentVerticalOffset ?? 0.3
         intentShieldClearance = registry.descriptor?.actor?.intentShieldClearance
         registry.setEnabled(true, for: .generalShield)
         registry.setEnabled(true, for: .absoluteShield)
+        if !preloadedHitEffects {
+            preloadedHitEffects = true
+            for hit in [RealityHitCue.normal, .heavy, .critical, .shield] {
+                load(assetID(for: hit), bundle: .main, completion: { _ in }, failure: { _ in })
+            }
+        }
     }
 
     func present(
@@ -274,6 +318,10 @@ final class RealityCombatVFXRenderer {
     ) {
         attach(to: registry)
         intentReducedMotion = reducedMotion
+        if reducedMotion {
+            enemyAttackTask?.cancel(); enemyAttackTask = nil
+            enemyAttackEntity?.removeFromParent(); enemyAttackEntity = nil
+        }
         updateIntentSmokeState()
         var synchronizedShieldState: RealityShieldState?
         for cue in cues {
@@ -302,11 +350,22 @@ final class RealityCombatVFXRenderer {
         enemyAttackTask = nil
         enemyAttackEntity?.removeFromParent()
         enemyAttackEntity = nil
+        enemyAttackElapsed = 0
+        enemyAttackReleased = false
+        attackSocketModel = nil
+        attackSocketEntity = nil
+        attackSocketJointIndices = []
+        attackSocketOffset = .zero
+        effectCache = [:]
+        effects.reset()
+        preloadedHitEffects = false
         hitGeneration += 1
         hitTasks.values.forEach { $0.cancel() }
         hitTasks.removeAll()
         hitEntities.values.forEach { $0.removeFromParent() }
         hitEntities.removeAll()
+        hitAnimationControllers.values.flatMap { $0 }.forEach { $0.stop() }
+        hitAnimationControllers = [:]
         cameraEntity = nil
         onProjectileLaunch = nil
         onProjectileImpact = nil
@@ -340,145 +399,90 @@ final class RealityCombatVFXRenderer {
     ) {
         guard state != currentShieldState else {
             if reducedMotion {
-                shieldTransitionTask?.cancel()
-                shieldTransitionTask = nil
-                if state == .none {
-                    shieldAuraEntity?.removeFromParent()
-                    shieldAuraEntity = nil
-                    repositionCurrentIntent()
-                } else {
+                shieldTransitionTask?.cancel(); shieldTransitionTask = nil
+                if state == .none { shieldAuraEntity?.removeFromParent(); shieldAuraEntity = nil }
+                else {
+                    shieldAuraEntity?.scale = shieldRestingScale
                     shieldAuraEntity?.components.set(OpacityComponent(opacity: 1))
                 }
+                repositionCurrentIntent()
             }
             return
         }
-
         shieldTransitionTask?.cancel()
-        shieldTransitionTask = nil
         shieldTransitionGeneration += 1
         let generation = shieldTransitionGeneration
         let previousAura = shieldAuraEntity
         currentShieldState = state
-
-        guard state != .none else {
-            guard let previousAura else { return }
+        if state == .none {
+            guard let aura = previousAura else { return }
             if reducedMotion {
-                previousAura.removeFromParent()
-                shieldAuraEntity = nil
+                aura.removeFromParent(); shieldAuraEntity = nil; repositionCurrentIntent()
                 return
             }
-
-            var dismissalTransform = previousAura.transform
-            dismissalTransform.scale *= 1.04
-            previousAura.move(
-                to: dismissalTransform,
-                relativeTo: previousAura.parent,
-                duration: 0.24,
-                timingFunction: .easeIn
-            )
-            shieldTransitionTask = Task { @MainActor [weak self, weak previousAura] in
-                guard let self, let previousAura else { return }
-                let steps = 6
-                for step in 1...steps {
-                    do {
-                        try await Task.sleep(for: .milliseconds(40))
-                    } catch {
-                        return
+            let scale = aura.scale
+            shieldTransitionTask = Task { @MainActor [weak self, weak aura] in
+                guard let self, let aura else { return }
+                do {
+                    try await self.animateEffect(duration: 0.24) { t in
+                        aura.scale = scale * (1 + t * 0.07)
+                        aura.components.set(OpacityComponent(opacity: 1 - t))
                     }
-                    guard generation == self.shieldTransitionGeneration else { return }
-                    previousAura.components.set(
-                        OpacityComponent(opacity: Float(steps - step) / Float(steps))
-                    )
-                }
-                previousAura.removeFromParent()
-                if self.shieldAuraEntity === previousAura {
-                    self.shieldAuraEntity = nil
-                }
+                } catch { return }
+                guard generation == self.shieldTransitionGeneration else { return }
+                aura.removeFromParent(); self.shieldAuraEntity = nil
                 self.repositionCurrentIntent()
-                self.shieldTransitionTask = nil
             }
             return
         }
-
         previousAura?.removeFromParent()
-        guard let aura = makeShieldAura(for: state, registry: registry),
-              let enemyAnchor else {
-            currentShieldState = .none
-            shieldAuraEntity = nil
+        guard let aura = makeShieldAura(for: state, registry: registry), let enemyAnchor else {
+            currentShieldState = .none; shieldAuraEntity = nil
             return
         }
-
         shieldAuraEntity = aura
+        shieldRestingScale = aura.scale
         enemyAnchor.addChild(aura)
         repositionCurrentIntent()
-        guard !reducedMotion else {
-            aura.components.set(OpacityComponent(opacity: 1))
-            return
-        }
-
-        let finalTransform = aura.transform
-        var appearanceTransform = finalTransform
-        appearanceTransform.scale *= 0.9
-        aura.transform = appearanceTransform
-        aura.components.set(OpacityComponent(opacity: 0))
-        aura.move(
-            to: finalTransform,
-            relativeTo: enemyAnchor,
-            duration: 0.32,
-            timingFunction: .easeOut
-        )
+        guard !reducedMotion else { return }
+        let scale = aura.scale
         shieldTransitionTask = Task { @MainActor [weak self, weak aura] in
             guard let self, let aura else { return }
-            let steps = 8
-            for step in 1...steps {
-                do {
-                    try await Task.sleep(for: .milliseconds(40))
-                } catch {
-                    return
-                }
-                guard generation == self.shieldTransitionGeneration else { return }
-                aura.components.set(OpacityComponent(opacity: Float(step) / Float(steps)))
+            try? await self.animateEffect(duration: 0.32) { t in
+                let eased = 1 - pow(1 - t, 3)
+                aura.scale = scale * (0.88 + eased * 0.12)
+                aura.components.set(OpacityComponent(opacity: t))
             }
-            self.shieldTransitionTask = nil
         }
     }
 
-    private func makeShieldAura(
+    private func makeLegacyGoldShieldAura(
         for state: RealityShieldState,
         registry: RealityEntityRegistry
     ) -> Entity? {
         guard let enemyAnchor,
               let actorBounds = enemyBounds(relativeTo: enemyAnchor) else { return nil }
 
-        let role: RealityEntityRole
         let tint: UIColor
         let materialOpacity: Float
         switch state {
         case .general:
-            role = .generalShield
             tint = UIColor(red: 0.2, green: 0.72, blue: 1, alpha: 1)
-            materialOpacity = 0.14
+            materialOpacity = 0.06
         case .absolute:
-            role = .absoluteShield
             tint = UIColor(red: 1, green: 0.7, blue: 0.16, alpha: 1)
-            materialOpacity = 0.17
+            materialOpacity = 0.075
         case .none:
             return nil
         }
         let actorSize = actorBounds.max - actorBounds.min
-        let barrierBounds = registry.entity(for: role)?.visualBounds(relativeTo: enemyAnchor)
-        let barrierSize = barrierBounds.map { $0.max - $0.min } ?? actorSize
-        let horizontalDiameter = max(
-            max(barrierSize.x, barrierSize.y),
-            max(actorSize.x, actorSize.y) * 1.45,
-            4.6
-        )
-        let verticalDiameter = max(actorSize.z + 0.4, horizontalDiameter * 0.8)
+        let horizontalDiameter = max(max(actorSize.x, actorSize.y) * 1.25, actorSize.z * 0.75)
+        let verticalDiameter = actorSize.z + 0.4
 
         var material = UnlitMaterial(color: tint)
         material.blending = .transparent(opacity: .init(scale: materialOpacity))
         material.triangleFillMode = .lines
-        material.faceCulling = .none
+        material.faceCulling = .back
         material.writesDepth = false
         material.readsDepth = true
 
@@ -486,13 +490,41 @@ final class RealityCombatVFXRenderer {
             mesh: .generateSphere(radius: 0.5),
             materials: [material]
         )
-        aura.name = "DA_RUNTIME_SHIELD_AURA"
+        aura.name = "DA_RUNTIME_GOLD_ABSOLUTE_SHIELD"
         aura.scale = SIMD3(horizontalDiameter, horizontalDiameter, verticalDiameter)
         aura.position = SIMD3(
             (actorBounds.min.x + actorBounds.max.x) * 0.5,
             (actorBounds.min.y + actorBounds.max.y) * 0.5,
             actorBounds.min.z + verticalDiameter * 0.44
         )
+        return aura
+    }
+
+    private func makeShieldAura(for state: RealityShieldState, registry: RealityEntityRegistry) -> Entity? {
+        if state == .absolute { return makeLegacyGoldShieldAura(for: state, registry: registry) }
+        guard state != .none, let enemyAnchor,
+              let bounds = enemyBounds(relativeTo: enemyAnchor) else { return nil }
+        let id = CombatEffectCatalog.barrier(floor: effects.floor, absolute: state == .absolute)
+        guard let aura = effects.make(id, size: 1) else { return nil }
+        // The supplied correction cage has a solid crosspiece through its center.
+        // Keep it spectral so the caster remains readable behind that authored geometry.
+        if id == .correctionBarrier {
+            aura.children.first?.components.set(OpacityComponent(opacity: 0.38))
+        }
+        let native = aura.visualBounds(relativeTo: aura).extents
+        let clearance: Float = id == .correctionBarrier ? 1.08 : 1
+        let diameter = max(max(bounds.extents.x, bounds.extents.y) * 1.20, bounds.extents.z * 0.82) * clearance
+        let height = bounds.extents.z * 0.87
+        aura.scale = SIMD3(diameter / max(0.01, native.x), diameter / max(0.01, native.y), height / max(0.01, native.z))
+        aura.position = bounds.center
+        aura.position.z = bounds.min.z + height * 0.51
+        // The gap between the physical panels faces the battle camera.
+        if let cameraEntity {
+            let camera = enemyAnchor.convert(position: .zero, from: cameraEntity)
+            let delta = camera - bounds.center
+            let opening: Float = id == .generalBarrier || id == .documentBarrier ? .pi : .pi / 4
+            aura.orientation = simd_quatf(angle: atan2(delta.x, -delta.y) + opening, axis: [0, 0, 1])
+        }
         return aura
     }
 
@@ -518,7 +550,16 @@ final class RealityCombatVFXRenderer {
                     payload: entity,
                     name: "DA_RUNTIME_ENEMY_INTENT"
                 )
-                container.scale = SIMD3(repeating: self.intentScale)
+                // Different authored cues have different dimensions; keep a common visual height.
+                let nativeHeight = container.visualBounds(relativeTo: container).extents.z
+                let actorHeight = self.enemyBounds(relativeTo: enemyAnchor)?.extents.z ?? 4
+                let displayHeight = min(0.85, max(0.4, actorHeight * 0.20))
+                let scale = nativeHeight > 0.001 ? displayHeight / nativeHeight : self.intentScale
+                self.makeIntentReadable(entity)
+                container.scale = SIMD3(repeating: scale)
+                // Measure the authored symbol before smoke/appearance animation changes its bounds.
+                let symbolBounds = container.visualBounds(relativeTo: container)
+                self.intentHalfHeight = max(0, symbolBounds.extents.z * scale * 0.5)
                 container.position = self.intentPosition(relativeTo: enemyAnchor)
                 self.pendingIntentCue = nil
                 self.currentIntentCue = cue
@@ -566,50 +607,42 @@ final class RealityCombatVFXRenderer {
                         effect.removeFromParent()
                         self.hitEntities[id] = nil
                         self.hitTasks[id] = nil
+                        self.hitAnimationControllers[id] = nil
                     }
                     do {
+                        while self.intentEffectsSuspended {
+                            try await Task.sleep(for: .milliseconds(16))
+                        }
                         effect.position = start
                         launchFeedback?()
-                        if !reducedMotion, self.cameraEntity != nil {
-                            effect.scale = SIMD3(repeating: 0.18)
-                            // Fast, straight magical bolt; no gravity or ballistic arc.
-                            let duration = min(0.19, max(0.12, Double(simd_distance(start, target)) / 85))
-                            let began = ProcessInfo.processInfo.systemUptime
-                            while true {
-                                try Task.checkCancellation()
-                                let t = min(1, Float((ProcessInfo.processInfo.systemUptime - began) / duration))
-                                let progress = t
-                                effect.position = start + (target - start) * progress
-                                effect.scale = SIMD3(repeating: 0.18 + 0.24 * progress)
-                                if t >= 1 { break }
-                                try await Task.sleep(for: .milliseconds(16))
-                            }
+                        effect.scale = SIMD3(repeating: 0.18)
+                        // Match the staged HP event and freeze the same flight on pause.
+                        try await self.animateEffect(duration: CombatPresentationTimeline.playerImpactDelay) { t in
+                            effect.position = start + (target - start) * t
+                            effect.scale = SIMD3(repeating: 0.18 + 0.24 * t)
+                            effect.components.set(OpacityComponent(opacity: reducedMotion ? 0 : 1))
                         }
                         effect.position = target
                         effect.scale = SIMD3(repeating: 0.48)
+                        effect.components.set(OpacityComponent(opacity: 1))
                         // Short adhesion follows the actor, then debris falls in room Z-up space.
                         if let actor = self.enemyActor {
                             effect.setParent(actor, preservingWorldTransform: true)
                         }
                         if cue != .shield { impactFeedback?() }
                         self.addImpactAura(to: effect, reducedMotion: reducedMotion)
-                        self.playAuthoredAnimation(on: entity)
-                        try await Task.sleep(for: .milliseconds(reducedMotion ? 250 : 220))
+                        self.hitAnimationControllers[id] = self.playAuthoredAnimation(on: entity)
+                        try await self.animateEffect(duration: reducedMotion ? 0.25 : 0.22) { _ in }
                         effect.setParent(root, preservingWorldTransform: true)
                         let impactTransform = effect.transform
-                        let began = ProcessInfo.processInfo.systemUptime
                         let duration = reducedMotion ? 0.18 : 0.5
-                        while true {
-                            try Task.checkCancellation()
-                            let t = min(1, Float((ProcessInfo.processInfo.systemUptime - began) / duration))
+                        try await self.animateEffect(duration: duration) { t in
                             if !reducedMotion {
                                 effect.position = impactTransform.translation + SIMD3<Float>(0.08 * t, -0.10 * t, -0.7 * t * t)
                                 effect.orientation = impactTransform.rotation * simd_quatf(angle: t * 0.35, axis: SIMD3<Float>(1, 0, 0))
                                 effect.scale = impactTransform.scale * (1 - 0.25 * t)
                             }
                             effect.components.set(OpacityComponent(opacity: 1 - t))
-                            if t >= 1 { break }
-                            try await Task.sleep(for: .milliseconds(16))
                         }
                     } catch { return }
                 }
@@ -621,6 +654,26 @@ final class RealityCombatVFXRenderer {
                 self.logger.error("\(message, privacy: .public)")
             }
         )
+    }
+
+    // Intent is gameplay information: room beams must not hide it, and room lighting
+    // must not turn the attack/defence colors into indistinguishable dark silhouettes.
+    private func makeIntentReadable(_ entity: Entity) {
+        if var model = entity.components[ModelComponent.self] {
+            model.materials = model.materials.map { source in
+                var material = UnlitMaterial(color: .white)
+                if let pbr = source as? PhysicallyBasedMaterial {
+                    material.color = .init(tint: pbr.baseColor.tint, texture: pbr.baseColor.texture)
+                } else if let unlit = source as? UnlitMaterial {
+                    material = unlit
+                }
+                material.readsDepth = false
+                material.writesDepth = false
+                return material
+            }
+            entity.components.set(model)
+        }
+        for child in entity.children { makeIntentReadable(child) }
     }
 
     private func clearIntent() {
@@ -636,17 +689,18 @@ final class RealityCombatVFXRenderer {
         guard let bounds = enemyBounds(relativeTo: anchor) else {
             return SIMD3(0, -0.16, 2.15)
         }
-        let baseHeight = bounds.max.z + intentVerticalOffset
+        let gap = max(0.35, intentVerticalOffset, bounds.extents.z * 0.09)
+        let baseHeight = bounds.max.z + gap + intentHalfHeight
         let resolvedHeight: Float
-        if let intentShieldClearance, let shieldAuraEntity {
+        if let shieldAuraEntity {
             let shieldTop = shieldAuraEntity.visualBounds(relativeTo: anchor).max.z
-            resolvedHeight = max(baseHeight, shieldTop + intentShieldClearance)
+            resolvedHeight = max(baseHeight, shieldTop + max(gap, intentShieldClearance ?? 0) + intentHalfHeight)
         } else {
             resolvedHeight = baseHeight
         }
         return SIMD3(
             (bounds.min.x + bounds.max.x) * 0.5,
-            bounds.min.y - 0.35,
+            (bounds.min.y + bounds.max.y) * 0.5,
             resolvedHeight
         )
     }
@@ -708,9 +762,25 @@ final class RealityCombatVFXRenderer {
         entity.move(to: finalTransform, relativeTo: entity.parent, duration: 0.18, timingFunction: .easeOut)
     }
 
-    private func playAuthoredAnimation(on entity: Entity) {
-        for animation in entity.availableAnimations {
-            entity.playAnimation(animation, transitionDuration: 0.08, startsPaused: false)
+    private func animateEffect(duration: TimeInterval, update: (Float) -> Void) async throws {
+        var elapsed = 0.0
+        var previous = ProcessInfo.processInfo.systemUptime
+        update(0)
+        while elapsed < duration {
+            try await Task.sleep(for: .milliseconds(16))
+            let now = ProcessInfo.processInfo.systemUptime
+            let delta = max(0, now - previous)
+            previous = now
+            guard !intentEffectsSuspended else { continue }
+            elapsed += delta
+            update(Float(min(1, elapsed / duration)))
+        }
+    }
+
+    @discardableResult
+    private func playAuthoredAnimation(on entity: Entity) -> [AnimationPlaybackController] {
+        entity.availableAnimations.map {
+            entity.playAnimation($0, transitionDuration: 0.08, startsPaused: intentEffectsSuspended)
         }
     }
 
@@ -720,6 +790,10 @@ final class RealityCombatVFXRenderer {
         completion: @escaping @MainActor (Entity) -> Void,
         failure: @escaping @MainActor (String) -> Void
     ) {
+        if let cached = effectCache[assetID.rawValue] {
+            completion(cached.clone(recursive: true))
+            return
+        }
         guard let resource = Self.resource(for: assetID) else {
             failure("3D 전투 효과 매핑이 없습니다: \(assetID.rawValue)")
             return
@@ -751,6 +825,7 @@ final class RealityCombatVFXRenderer {
                     }
                     effectEntity.removeFromParent()
                     self.enableHierarchy(effectEntity)
+                    self.effectCache[assetID.rawValue] = effectEntity.clone(recursive: true)
                     completion(effectEntity)
                 }
             )
@@ -833,55 +908,90 @@ final class RealityCombatVFXRenderer {
     }
 }
 
-/// Plays Blender-authored skeletal ranges on the original imported root, so
-/// animation binding paths survive actor normalization and scene installation.
+/// Attack gestures retain rigid equipment. Defeat separates the authored surface
+/// into independently moving pieces instead of tipping the whole actor over.
 @MainActor
 final class RealityActorMotionPlayer {
-    private struct Manifest: Decodable {
-        struct Clip: Decodable { let start: Double; let end: Double; let duration: Double }
-        let clips: [String: Clip]
-        let initialIdleOffset: Double?
+    // Authored articulation owns the gesture; this clock owns its lifetime.
+    private enum MotionProfile {
+        static func duration(for name: String) -> Double {
+            switch name {
+            case "idle", "idleVariant": 4.0
+            case "appear": 1.0
+            case "attack": EnemyAttackTiming.normal.duration
+            case "heavyAttack": EnemyAttackTiming.heavy.duration
+            case "telegraph": 1.2
+            case "special": 2.0
+            case "hit": 0.8
+            case "death": CombatPresentationTimeline.deathPoseDuration
+            default: 1.0
+            }
+        }
+
     }
-    private weak var root: Entity?
+    private struct JointManifest: Decodable {
+        struct Clip: Decodable { let start: Double; let end: Double; let duration: Double? }
+        let clips: [String: Clip]
+    }
+    private var jointManifest: JointManifest?
+    private weak var articulated: Entity?
+    private weak var animatedEntity: Entity?
+    private var jointSource: AnimationResource?
+    private var jointPlayback: AnimationPlaybackController?
     private weak var visualRoot: Entity?
-    private var source: AnimationResource?
-    private var manifest: Manifest?
-    private var playback: AnimationPlaybackController?
-    private var returnTask: Task<Void, Never>?
+    private var baseTransform = Transform.identity
+    private var modelHeight: Float = 3
+    private var footPivot = SIMD3<Float>.zero
+    private var motionTask: Task<Void, Never>?
     private var generation = 0
     private var terminal = false
-    private var terminalMotionStarted = false
+    var isDefeated: Bool { terminal }
     private var reduced = false
     private var suspended = false
     private var currentMotion = "idle"
+    private var elapsed = 0.0
+    private var fragments: [(entity: Entity, closed: Transform, position: SIMD3<Float>)] = []
 
     func install(root: Entity, descriptor: RealityActorDescriptor, bundle: Bundle) throws {
         reset()
-        guard let url = bundle.url(forResource: "motion", withExtension: "json",
-                                   subdirectory: descriptor.resourceSubdirectory) else {
-            throw NSError(domain: "ActorMotion", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "캐릭터 모션 목록이 없습니다."])
-        }
-        manifest = try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: url))
-        func animatedEntity(_ entity: Entity) -> Entity? {
+        visualRoot = root
+        articulated = root.findEntity(named: "DA_Articulated")
+        func findAnimated(_ entity: Entity) -> Entity? {
             if !entity.availableAnimations.isEmpty { return entity }
-            return entity.children.lazy.compactMap { animatedEntity($0) }.first
+            return entity.children.lazy.compactMap { findAnimated($0) }.first
         }
-        guard let animated = animatedEntity(root), let animation = animated.availableAnimations.first else {
-            throw NSError(domain: "ActorMotion", code: 2,
-                          userInfo: [NSLocalizedDescriptionKey: "캐릭터의 관절 애니메이션을 읽지 못했습니다."])
+        if let articulated {
+            animatedEntity = findAnimated(articulated)
+            jointSource = animatedEntity?.availableAnimations.first
         }
-        self.root = animated
-        self.visualRoot = root
+        if let url = bundle.url(forResource: "motion", withExtension: "json", subdirectory: descriptor.resourceSubdirectory) {
+            jointManifest = try JSONDecoder().decode(JointManifest.self, from: Data(contentsOf: url))
+        }
+        guard articulated != nil, jointSource != nil else {
+            throw NSError(domain: "ActorMotion", code: 3, userInfo: [NSLocalizedDescriptionKey: "관절 공격 모션을 불러오지 못했습니다: \(descriptor.resourceName)"])
+        }
+        baseTransform = root.transform
+        let bounds = root.visualBounds(relativeTo: root.parent)
+        modelHeight = max(bounds.extents.z, 0.01)
+        footPivot = SIMD3((bounds.min.x + bounds.max.x) * 0.5,
+                          (bounds.min.y + bounds.max.y) * 0.5, bounds.min.z)
+        func collect(_ entity: Entity) {
+            if entity.name.hasPrefix("DA_Fragment_") {
+                fragments.append((entity, entity.transform, entity.position(relativeTo: root.parent)))
+            } else { entity.children.forEach(collect) }
+        }
+        collect(root)
+        restoreFragments()
+        root.stopAllAnimations(recursive: true)
         root.components.set(OpacityComponent(opacity: 1))
-        source = animation
         play("idle")
     }
 
     func prepareEncounter() {
-        visualRoot?.isEnabled = true
+        restoreFragments()
         terminal = false
-        terminalMotionStarted = false
+        visualRoot?.isEnabled = true
+        visualRoot?.transform = baseTransform
         visualRoot?.components.set(OpacityComponent(opacity: 1))
         play("idle")
     }
@@ -889,29 +999,26 @@ final class RealityActorMotionPlayer {
     func setReducedMotion(_ value: Bool) {
         guard reduced != value else { return }
         reduced = value
+        if terminal { return } // Keep death progress; do not restore the defeated mesh.
+        if value { visualRoot?.transform = baseTransform; restoreFragments() }
         if value {
-            stop()
-            if terminal { terminalMotionStarted = false; play("death") }
+            animatedEntity?.stopAllAnimations(recursive: false)
+            jointPlayback = nil
+            playJoints("idle", paused: true)
+        } else {
+            playJoints(currentMotion, elapsed: elapsed)
         }
-        else if terminal && !terminalMotionStarted { play("death") }
-        else if !terminal { play("idle") }
     }
 
     func setSuspended(_ value: Bool) {
         guard suspended != value else { return }
         suspended = value
-        if value {
-            playback?.pause()
-        } else if playback != nil {
-            playback?.resume()
-        } else if terminal {
-            play("death")
-        } else {
-            play("idle")
-        }
+        if value { jointPlayback?.pause() }
+        else if !reduced, currentMotion == "idle" || currentMotion == "idleVariant" { jointPlayback?.resume() }
     }
 
-    func present(_ events: [DemoSessionEvent], state: BattleState?) {
+    func present(_ events: [DemoSessionEvent], state: BattleState?,
+                 enemyActionPresentation: EnemyActionPresentation? = nil) {
         if state?.phase == .victory { play("death"); return }
         var motion: String?
         for event in events {
@@ -919,9 +1026,8 @@ final class RealityActorMotionPlayer {
             switch event {
             case .victory: motion = "death"
             case let .enemyActionStarted(action):
-                let cues = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
-                if let attack = cues.first(where: { if case .enemyAttack = $0 { return true }; return false }),
-                   case let .enemyAttack(strong) = attack {
+                if let strong = (enemyActionPresentation
+                    ?? EnemyActionPresentation(action: action, state: state)).attackStrength {
                     motion = strong ? "heavyAttack" : "attack"
                 } else if case .telegraph = action {
                     motion = "telegraph"
@@ -941,135 +1047,258 @@ final class RealityActorMotionPlayer {
     }
 
     func play(_ name: String) {
-        guard !terminal || name == "death" else { return }
-        if name == "death" {
-            guard !terminalMotionStarted else { return }
-            terminal = true
+        if terminal {
+            // Defeat/record panels can re-enable the preview after victory.
+            // Reapply the terminal pose without restarting or resurrecting it.
+            if name == "death", let root = visualRoot {
+                applyFracture(elapsed: elapsed, root: root)
+            }
+            return
         }
-        guard !suspended, (!reduced || name == "death"),
-              let root, let source, let clip = manifest?.clips[name] else { return }
-        stop()
+        if name == "death" { terminal = true }
+        // Let RealityKit blend the outgoing pose on the same animation layer.
+        stop(stopJoints: name == "death")
         currentMotion = name
-        if name == "death" { terminalMotionStarted = true }
-        do {
-            let view = AnimationView(source: source.definition, name: name,
-                fillMode: name == "death" ? .forwards : [],
-                trimStart: reduced ? max(clip.start, clip.end - 1.0 / 30) : clip.start,
-                trimEnd: clip.end)
-            let animation = try AnimationResource.generate(with: view)
-            playback = root.playAnimation(name == "idle" ? animation.repeat() : animation,
-                                          transitionDuration: 0.12, startsPaused: false)
-            if name == "death" {
-                let token = generation
-                returnTask = Task { @MainActor [weak self] in
-                    var elapsed = 0.0
-                    let pose = self?.reduced == true ? 0 : clip.duration
-                    let fade = self?.reduced == true ? 0.15 : CombatPresentationTimeline.dissolveDuration
-                    while elapsed < pose + fade {
-                        do { try await Task.sleep(for: .milliseconds(20)) } catch { return }
-                        guard let self, self.generation == token else { return }
-                        if self.suspended { continue }
-                        elapsed += 0.02
-                        let progress = max(0, min(1, (elapsed - pose) / fade))
-                        self.visualRoot?.components.set(OpacityComponent(opacity: Float(1 - progress)))
-                    }
-                    guard let self, self.generation == token else { return }
-                    self.visualRoot?.components.set(OpacityComponent(opacity: 0))
-                    self.visualRoot?.isEnabled = false
+        elapsed = 0
+        guard let root = visualRoot else { return }
+        root.transform = baseTransform
+        articulated?.isEnabled = name != "death"
+        for piece in fragments { piece.entity.isEnabled = name == "death" }
+        if name != "death", !reduced || jointPlayback == nil {
+            playJoints(reduced ? "idle" : name, paused: reduced)
+        }
+        let token = generation
+        motionTask = Task { @MainActor [weak self] in
+            var previous = ProcessInfo.processInfo.systemUptime
+            while !Task.isCancelled {
+                do { try await Task.sleep(for: .milliseconds(16)) } catch { return }
+                let now = ProcessInfo.processInfo.systemUptime
+                let delta = max(now - previous, 0)
+                previous = now
+                guard let self, self.generation == token, let root = self.visualRoot else { return }
+                if self.suspended { continue }
+                self.elapsed += delta
+                let duration = self.duration(for: name)
+                if name == "death" {
+                    self.applyFracture(elapsed: self.elapsed, root: root)
+                    if self.elapsed >= CombatPresentationTimeline.deathDuration { root.components.set(OpacityComponent(opacity: 0)); root.isEnabled = false; return }
+                    continue
                 }
-                return
-            }
-            let hasVariation = manifest?.clips["idleVariant"] != nil
-            if name == "idle", !hasVariation { return }
-            let wait = name == "idle" ? clip.duration * 2 + (manifest?.initialIdleOffset ?? 0) : clip.duration
-            let next = name == "idle" ? "idleVariant" : "idle"
-            let token = generation
-            returnTask = Task { @MainActor [weak self] in
-                var remaining = wait
-                while remaining > 0 {
-                    do { try await Task.sleep(for: .milliseconds(20)) } catch { return }
-                    guard let self, self.generation == token else { return }
-                    if !self.suspended { remaining -= 0.02 }
+                // A second rigid lunge over the skeletal arm/torso arc made every
+                // cast slide and snap. Preserve the installed transform throughout.
+                root.transform = self.baseTransform
+                if !self.reduced, name != "idle", name != "idleVariant" {
+                    // RealityKit's independent clock can lag while a frame is loaded.
+                    // Sample the authored clip from the action clock, including its recovery.
+                    self.jointPlayback?.time = min(self.elapsed, duration)
                 }
-                guard let self, self.generation == token else { return }
-                self.play(next)
+                if name != "idle", name != "idleVariant", self.elapsed >= duration {
+                    self.play("idle")
+                    return
+                }
             }
-        } catch {
-            // A malformed clip does not leave a previous attack looping.
-            playback = nil
         }
     }
 
-    private func stop() {
+    private func restoreFragments() {
+        for piece in fragments {
+            piece.entity.transform = piece.closed
+            piece.entity.components.set(OpacityComponent(opacity: 1))
+            piece.entity.isEnabled = false
+        }
+    }
+
+    private func duration(for name: String) -> Double {
+        // Attack and special windows are shared with the turn presentation clock.
+        if name == "idle" || name == "idleVariant" || name == "hit" || name == "appear",
+           let clip = jointManifest?.clips[name] {
+            return clip.duration ?? (clip.end - clip.start)
+        }
+        return MotionProfile.duration(for: name)
+    }
+
+    private func playJoints(_ name: String, paused: Bool = false, elapsed: Double = 0) {
+        guard let source = jointSource, let entity = animatedEntity,
+              let clip = jointManifest?.clips[name] ?? jointManifest?.clips["idle"] else { return }
+        do {
+            let span = max(0.001, clip.end - clip.start)
+            let view = AnimationView(source: source.definition, name: name,
+                                     fillMode: .forwards,
+                                     trimStart: clip.start, trimEnd: clip.end,
+                                     speed: Float(span / max(0.001, duration(for: name))))
+            let animation = try AnimationResource.generate(with: view)
+            let loops = name == "idle" || name == "idleVariant"
+            jointPlayback = entity.playAnimation(loops ? animation.repeat() : animation,
+                                                 transitionDuration: paused || !loops ? 0 : 0.08,
+                                                 startsPaused: paused || suspended || !loops)
+            jointPlayback?.time = loops
+                ? elapsed.truncatingRemainder(dividingBy: duration(for: name))
+                : min(elapsed, duration(for: name))
+        } catch {
+            assertionFailure("Articulated animation failed: \(error)")
+        }
+    }
+
+    private func applyFracture(elapsed: Double, root: Entity) {
+        root.transform = baseTransform
+        let end = CombatPresentationTimeline.deathDuration
+        root.isEnabled = elapsed < end
+        if reduced || fragments.isEmpty {
+            root.components.set(OpacityComponent(opacity: Float(max(0, 1 - elapsed / end))))
+            return
+        }
+        root.components.set(OpacityComponent(opacity: 1))
+        for (index, piece) in fragments.enumerated() {
+            let delay = 0.025 + Double(index % 5) * 0.018
+            let t = Float(max(0, elapsed - delay)) * 1.8
+            let angle = Float(index) * 2.399963
+            let velocity = modelHeight * (0.10 + Float(index % 3) * 0.025)
+            let lift = modelHeight * (0.12 + Float(index % 4) * 0.025)
+            var position = piece.position + SIMD3(cos(angle) * velocity * t, sin(angle) * velocity * t, lift * t - modelHeight * 0.24 * t * t)
+            // Dissolve above the floor; fragments never tumble through the room.
+            position.z = max(footPivot.z + modelHeight * 0.025, position.z)
+            piece.entity.transform = piece.closed
+            piece.entity.setPosition(position, relativeTo: root.parent)
+            piece.entity.orientation *= simd_quatf(angle: t * (index.isMultiple(of: 2) ? 1.1 : -0.8), axis: simd_normalize(SIMD3<Float>(1, Float(index % 3 + 1), 0.4)))
+            let fade = Float(max(0, min(1, (end - elapsed) / 0.42)))
+            piece.entity.components.set(OpacityComponent(opacity: fade))
+        }
+    }
+
+    private func stop(stopJoints: Bool = true) {
         generation += 1
-        returnTask?.cancel(); returnTask = nil
-        playback?.stop(); playback = nil
+        if stopJoints {
+            jointPlayback?.stop()
+            jointPlayback = nil
+        }
+        motionTask?.cancel()
+        motionTask = nil
     }
 
     func reset() {
-        stop(); visualRoot?.components.set(OpacityComponent(opacity: 1))
-        root = nil; visualRoot = nil; source = nil; manifest = nil
-        terminal = false; terminalMotionStarted = false; reduced = false; suspended = false
-        currentMotion = "idle"
+        stop()
+        restoreFragments()
+        fragments.removeAll()
+        articulated = nil; animatedEntity = nil; jointSource = nil; jointManifest = nil
+        visualRoot?.transform = baseTransform
+        visualRoot?.components.set(OpacityComponent(opacity: 1))
+        visualRoot = nil
+        footPivot = .zero
+        terminal = false; reduced = false; suspended = false
+        currentMotion = "idle"; elapsed = 0
     }
+
+    #if DEBUG
+    var attackDiagnostics: [String: Any] {
+        ["currentMotion": currentMotion, "clipElapsed": elapsed,
+         "clipDuration": duration(for: currentMotion),
+         "controllerTime": jointPlayback?.time ?? -1,
+         "controllerDuration": jointPlayback.map { $0.duration.isFinite ? $0.duration : -1 } ?? -1,
+         "controllerRepeats": jointPlayback.map { !$0.duration.isFinite } ?? false,
+         "controllerPaused": jointPlayback?.isPaused ?? true,
+         "animatedEntity": animatedEntity?.name ?? "missing",
+         "suspended": suspended, "reducedMotion": reduced]
+    }
+    #endif
 }
 
 // Enemy strikes travel from the attacking hand/core toward the player, in room space.
 extension RealityCombatVFXRenderer {
-    func presentEnemyAction(_ events: [DemoSessionEvent], state: BattleState?, reducedMotion: Bool) {
+    private func configureAttackSocket(descriptor: RealityActorDescriptor?) {
+        attackSocketModel = nil
+        attackSocketEntity = nil
+        attackSocketJointIndices = []
+        attackSocketOffset = .zero
+        guard let actor = enemyActor, let descriptor,
+              let url = Bundle.main.url(forResource: "motion", withExtension: "json",
+                                        subdirectory: descriptor.resourceSubdirectory),
+              let data = try? Data(contentsOf: url),
+              let socket = (try? JSONDecoder().decode(AttackSocketManifest.self, from: data))?.attackSocket else { return }
+        if let offset = socket.offset, offset.count == 3 {
+            attackSocketOffset = SIMD3(offset[0], offset[1], offset[2])
+        }
+        if let name = socket.entity { attackSocketEntity = actor.findEntity(named: name) }
+        guard let joint = socket.joint else { return }
+        func find(_ entity: Entity) -> ModelEntity? {
+            if let model = entity as? ModelEntity,
+               model.jointNames.contains(where: { $0 == joint || $0.split(separator: "/").last.map(String.init) == joint }) {
+                return model
+            }
+            return entity.children.lazy.compactMap(find).first
+        }
+        guard let model = find(actor),
+              let name = model.jointNames.first(where: { $0 == joint || $0.split(separator: "/").last.map(String.init) == joint }) else { return }
+        let pieces = name.split(separator: "/")
+        attackSocketJointIndices = (1...pieces.count).compactMap { count in
+            model.jointNames.firstIndex(of: pieces.prefix(count).joined(separator: "/"))
+        }
+        attackSocketModel = model
+    }
+
+    private func attackOrigin(relativeTo root: Entity, fallback: SIMD3<Float>) -> SIMD3<Float> {
+        if let entity = attackSocketEntity {
+            return root.convert(position: attackSocketOffset, from: entity)
+        }
+        if let model = attackSocketModel, !attackSocketJointIndices.isEmpty {
+            let transforms = model.jointTransforms
+            guard attackSocketJointIndices.allSatisfy({ transforms.indices.contains($0) }) else { return fallback }
+            let matrix = attackSocketJointIndices.reduce(matrix_identity_float4x4) { $0 * transforms[$1].matrix }
+            let point = matrix * SIMD4<Float>(attackSocketOffset, 1)
+            let origin = root.convert(position: SIMD3(point.x, point.y, point.z), from: model)
+            if origin.x.isFinite, origin.y.isFinite, origin.z.isFinite { return origin }
+        }
+        // Older assets without a named socket still follow the actor throughout preparation.
+        if let bounds = enemyBounds(relativeTo: root) {
+            return SIMD3(bounds.center.x + bounds.extents.x * 0.20,
+                         bounds.min.y - 0.12, bounds.min.z + bounds.extents.z * 0.62)
+        }
+        return fallback
+    }
+
+    func presentEnemyAction(_ events: [DemoSessionEvent], state: BattleState?, reducedMotion: Bool,
+                           enemyActionPresentation: EnemyActionPresentation? = nil) {
         guard let action = events.compactMap({ event -> EnemyAction? in
             if case let .combat(.enemyActionStarted(action)) = event { return action }
             return nil
         }).first else { return }
-        let attack = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
-            .compactMap { cue -> Bool? in
-                if case let .enemyAttack(strong) = cue { return strong }
-                return nil
-            }.first
-        let scheduled = state?.expansion.scheduledDamage.contains {
-            $0.dueEnemyTurn <= (state?.turnNumber ?? 0)
-        } ?? false
-        guard attack != nil || scheduled else { return }
+        let presentation = enemyActionPresentation ?? EnemyActionPresentation(action: action, state: state)
+        guard let strong = presentation.attackStrength else { return }
+        let scheduled = presentation.includesScheduledDamage
         enemyAttackTask?.cancel()
         enemyAttackEntity?.removeFromParent()
         guard !reducedMotion, let root, let cameraEntity,
               let bounds = enemyBounds(relativeTo: root) else { return }
 
-        let strong = attack ?? false
-        let color: UIColor
-        if scheduled { color = UIColor(red: 1, green: 0.52, blue: 0.12, alpha: 1) }
-        else if strong { color = UIColor(red: 1, green: 0.24, blue: 0.18, alpha: 1) }
-        else { color = UIColor(red: 0.70, green: 0.42, blue: 1, alpha: 1) }
-        var material = UnlitMaterial(color: color)
-        material.blending = .transparent(opacity: .init(scale: 0.85))
+        let effectID = CombatEffectCatalog.projectile(floor: effects.floor, action: action,
+            executionOnly: scheduled && effects.floor == 1)
+        let size = min(1.45, max(0.6, bounds.extents.z * (strong ? 0.33 : 0.27)))
+        let payload = effects.observationResidual
+            ? effects.make("glass", size: size * 0.65) : effects.make(effectID, size: size)
+        guard let core = payload else { return }
         let strike = Entity()
         strike.name = "DA_ENEMY_STRIKE"
-        let core = ModelEntity(mesh: .generateSphere(radius: 1), materials: [material])
-        core.scale = SIMD3(0.055, 0.055, strong ? 0.24 : 0.17)
         strike.addChild(core)
-        var trail: [ModelEntity] = []
-        for index in 0..<4 {
-            let spark = ModelEntity(mesh: .generateSphere(radius: 1), materials: [material])
-            let radius: Float = 0.045 - Float(index) * 0.007
-            spark.scale = SIMD3(radius, radius, 0.10)
-            spark.components.set(OpacityComponent(opacity: 0.40 - Float(index) * 0.07))
-            strike.addChild(spark)
-            trail.append(spark)
-        }
-        let start = SIMD3<Float>(
+        let alignment = simd_quatf(from: simd_normalize(RealityCombatEffectLibrary.forward(effectID)), to: [0, 0, 1])
+        core.orientation = alignment
+        core.scale = SIMD3(repeating: 0.35)
+        let fallbackStart = SIMD3<Float>(
             bounds.center.x + bounds.extents.x * 0.20,
             bounds.min.y - 0.12,
             bounds.min.z + bounds.extents.z * 0.62
         )
+        let start = attackOrigin(relativeTo: root, fallback: fallbackStart)
         let end = root.convert(position: SIMD3<Float>(0.08, -0.08, -0.48), from: cameraEntity)
         let direction = simd_normalize(end - start)
         strike.orientation = simd_quatf(from: SIMD3<Float>(0, 0, 1), to: direction)
         strike.position = start
         root.addChild(strike)
         enemyAttackEntity = strike
-        let impact = strong ? 0.62 : 0.46
-        let flight = 0.16
-        let launch = impact - flight
+        enemyAttackElapsed = 0
+        enemyAttackReleased = false
+        let timing = EnemyAttackTiming.forAttack(strong: strong)
+        let impact = timing.impact
+        let flight = timing.flightDuration
+        let launch = timing.release
         let generation = hitGeneration
         enemyAttackTask = Task { @MainActor [weak self, weak strike] in
             guard let self, let strike else { return }
@@ -1078,6 +1307,8 @@ extension RealityCombatVFXRenderer {
                 if self.enemyAttackEntity === strike { self.enemyAttackEntity = nil }
             }
             var elapsed = 0.0
+            var releasedFrom: SIMD3<Float>?
+            var releasedToward = end
             let clock = ContinuousClock()
             var previous = clock.now
             while elapsed < impact {
@@ -1088,30 +1319,69 @@ extension RealityCombatVFXRenderer {
                 previous = now
                 guard !self.intentEffectsSuspended else { continue }
                 elapsed += Double(delta.seconds) + Double(delta.attoseconds) / 1e18
+                self.enemyAttackElapsed = elapsed
                 if elapsed < launch {
+                    strike.position = self.attackOrigin(relativeTo: root, fallback: start)
                     let charge = Float(elapsed / launch)
-                    core.scale = SIMD3(repeating: 0.035 + charge * 0.065)
-                    trail.forEach { $0.isEnabled = false }
+                    let eased = charge * charge * (3 - 2 * charge)
+                    core.scale = SIMD3(repeating: 0.35 + eased * 0.65)
+                    // Hold the silhouette obliquely while gathering, then aim the tip at release.
+                    let aim = max(0, (charge - 0.76) / 0.24)
+                    core.orientation = simd_quatf(angle: (1 - aim) * 0.95, axis: [0, 1, 0]) * alignment
+                    strike.components.set(OpacityComponent(opacity: min(1, charge * 4)))
                 } else {
-                    let t = Float(min(1, (elapsed - launch) / flight))
-                    strike.position = start + (end - start) * t
-                    core.scale = SIMD3(0.055, 0.055, strong ? 0.24 : 0.17)
-                    for (index, spark) in trail.enumerated() {
-                        spark.isEnabled = true
-                        spark.position.z = -Float(index + 1) * 0.15
+                    if releasedFrom == nil {
+                        let origin = self.attackOrigin(relativeTo: root, fallback: strike.position)
+                        releasedFrom = origin
+                        self.enemyAttackReleased = true
+                        releasedToward = root.convert(position: SIMD3<Float>(0.08, -0.08, -0.48), from: cameraEntity)
+                        let direction = simd_normalize(releasedToward - origin)
+                        strike.orientation = simd_quatf(from: SIMD3<Float>(0, 0, 1), to: direction)
                     }
+                    let t = Float(min(1, (elapsed - launch) / flight))
+                    let origin = releasedFrom ?? start
+                    strike.position = origin + (releasedToward - origin) * t
+                    let spin: Float = effectID == .signatureStroke ? 1.15 : (effectID == .isolationRing ? 0.65 : 0.16)
+                    core.orientation = simd_quatf(angle: t * spin, axis: [0, 0, 1]) * alignment
+                    let contraction: Float = effectID == .memoryCompression || effectID == .isolationRing ? 1 - 0.25 * t : 1
+                    core.scale = SIMD3(repeating: contraction)
                     // Disappear just in front of the camera instead of clipping through it.
                     strike.components.set(OpacityComponent(opacity: min(1, (1 - t) * 7)))
                 }
             }
         }
     }
+
+    #if DEBUG
+    var attackDiagnostics: [String: Any] {
+        ["elapsed": enemyAttackElapsed, "released": enemyAttackReleased,
+         "hasStrike": enemyAttackEntity != nil,
+         "effect": enemyAttackEntity?.children.first?.name ?? "none",
+         "socketModel": attackSocketModel?.name ?? "missing",
+         "socketEntity": attackSocketEntity?.name ?? "none",
+         "socketJoints": attackSocketJointIndices.compactMap { index -> String? in
+             guard let model = attackSocketModel, model.jointNames.indices.contains(index) else { return nil }
+             return model.jointNames[index]
+         }]
+    }
+    #endif
 }
 
 // Shared by all intent types; positions/directions are in the room's Z-up space.
 extension RealityCombatVFXRenderer {
     func setIntentEffectsSuspended(_ suspended: Bool) {
         intentEffectsSuspended = suspended
+        for playback in hitAnimationControllers.values.flatMap({ $0 }) {
+            if suspended { playback.pause() } else { playback.resume() }
+        }
+        func suspendEmitters(_ entity: Entity) {
+            if var emitter = entity.components[ParticleEmitterComponent.self] {
+                emitter.simulationState = suspended ? .pause : .play
+                entity.components.set(emitter)
+            }
+            entity.children.forEach(suspendEmitters)
+        }
+        hitEntities.values.forEach(suspendEmitters)
         updateIntentSmokeState()
     }
 
@@ -1259,6 +1529,7 @@ extension RealityCombatVFXRenderer {
 /// Persistent status visuals are reconstructed from BattleState, including checkpoint restores.
 @MainActor
 final class RealityCombatStatusRenderer {
+    var effects: RealityCombatEffectLibrary?
     private static let segmentMesh = MeshResource.generateBox(size: 1)
     private static var ringMeshes: [Float: MeshResource] = [:]
     private struct Entry {
@@ -1275,6 +1546,7 @@ final class RealityCombatStatusRenderer {
     private var tickerGeneration: UInt64 = 0
     private var reduced = false
     private var suspended = false
+    private var effectTime = 0.0
 
     func reset() {
         tickerGeneration &+= 1
@@ -1291,8 +1563,7 @@ final class RealityCombatStatusRenderer {
 
     func present(_ state: BattleState?, registry: RealityEntityRegistry, reducedMotion: Bool) {
         reduced = reducedMotion
-        guard registry.descriptor?.sceneID.isExpansion == true,
-              let state, state.phase != .victory, state.phase != .defeat,
+        guard let state, state.phase != .victory, state.phase != .defeat,
               state.phase != .preparing,
               let anchor = registry.entity(for: .enemySpawn),
               let actor = registry.entity(for: .enemyActor) else { reset(); return }
@@ -1308,9 +1579,9 @@ final class RealityCombatStatusRenderer {
         let side = min(1.65, max(0.7, (b.max.x - b.min.x) * 0.55))
         let back = SIMD3<Float>(center.x, b.max.y + 0.12, center.z + height * 0.08)
         let front = SIMD3<Float>(center.x, b.min.y - 0.16, center.z)
-        let now = ProcessInfo.processInfo.systemUptime
+        let now = effectTime
         var wanted: Set<String> = []
-        func add(_ key: String, position: SIMD3<Float>, color: UIColor, urgent: Bool = false, make: () -> Entity) {
+        func add(_ key: String, position: SIMD3<Float>, color: UIColor, urgent: Bool = false, make: () -> Entity?) {
             wanted.insert(key)
             if var existing = entries[key] {
                 existing.retiringAt = nil
@@ -1320,87 +1591,83 @@ final class RealityCombatStatusRenderer {
                 entries[key] = existing
                 return
             }
-            let node = make(); node.position = position; node.name = "DA_STATUS_" + key
+            guard let node = make() else { return }
+            node.position = position; node.name = "DA_STATUS_" + key
             root.addChild(node)
-            node.components.set(OpacityComponent(opacity: reduced ? 0.55 : 0))
+            node.components.set(OpacityComponent(opacity: reduced ? 0.85 : 0))
             entries[key] = Entry(entity: node, base: position, born: now, urgent: urgent)
         }
         let e = state.expansion
-        if e.enemyAmplification != nil {
-            add("amplify", position: back, color: .orange) {
-                let node = Entity()
-                self.ring(on: node, radius: 0.56, color: .orange)
-                self.ring(on: node, radius: 0.7, color: .orange)
-                for x: Float in [-0.3, 0, 0.3] {
-                    self.line(on: node, from: [x,0,-0.3], to: [x,0,0.3], color: .orange)
-                    self.line(on: node, from: [x-0.08,0,0.18], to: [x,0,0.3], color: .orange)
+        let deviceSize = min(0.9, max(0.5, height * 0.22))
+        if effects?.floor == 8, let intent = state.currentEnemyIntent {
+            let focused: Bool
+            switch intent {
+            case .telegraph, .attack(_, _, true): focused = true
+            default: focused = false
+            }
+            if focused {
+                add("focus", position: front + [side * 0.7, -0.05, height * 0.25], color: .cyan) {
+                    self.effects?.make(.focusLens, size: deviceSize)
                 }
-                return node
+            }
+        }
+        if e.enemyAmplification != nil || e.flatAmplification > 0 {
+            add("amplify", position: back + [side, 0, height * 0.15], color: .orange) {
+                self.effects?.make("amplify", size: deviceSize)
             }
         }
         if e.retainsCorrectionBarrier && state.enemy.normalBarrier > 0 {
-            add("correction", position: front, color: .cyan) {
-                let node = Entity()
-                for i in 0..<4 {
-                    let a = Float(i) * .pi / 2
-                    let v = SIMD3<Float>(cos(a),0,sin(a))
-                    self.line(on: node, from: v * 0.65, to: v * 0.18, color: .cyan)
-                }
-                return node
+            add("correction", position: front + [side, 0, height * 0.12], color: .cyan) {
+                self.effects?.make(.axisAnchors, size: deviceSize)
             }
         }
         if let value = e.enemyPreservation, value.expiresAfterTurn >= state.turnNumber {
-            add("preservation", position: front, color: .purple) {
-                let node = Entity()
-                for i in 0..<8 {
-                    let a = Float(i) * .pi / 4
-                    let piece = self.segment(from: [0,0,-0.08], to: [0,0,0.08], color: .init(red: 0.8, green: 0.7, blue: 0.95, alpha: 1), thickness: 0.055)
-                    piece.position = [cos(a)*0.52,0,sin(a)*0.7]
-                    piece.orientation = simd_quatf(angle: -a, axis: [0,1,0])
-                    node.addChild(piece)
-                }
-                return node
+            add("preservation", position: center + [0, 0, -height * 0.12], color: .purple) {
+                self.effects?.make(.preservationBand, size: max(height * 0.85, side * 2))
             }
         }
         if let value = e.outputReduction, value.expiresAfterTurn >= state.turnNumber {
-            add("outputReduction", position: front + [0,0,0.25], color: .cyan) {
-                let node = Entity()
-                self.ring(on: node, radius: 0.3, color: .cyan)
-                self.line(on: node, from: [-0.24,0,0.24], to: [0.24,0,-0.24], color: .cyan)
-                return node
+            add("outputReduction", position: front + [-side, 0, -height * 0.18], color: .purple) {
+                self.effects?.make(.suppressionBand, size: deviceSize)
             }
         }
         if let record = e.copyRecord {
-            add("record-\(record.spell.rawValue)-\(record.reused)", position: front + [-side,0,height*0.22], color: .purple, urgent: record.reused) {
+            add("record-\(record.spell.rawValue)-\(record.reused)", position: front + [-side, 0, height * 0.22], color: .purple, urgent: record.reused) {
                 let node = Entity()
-                self.ring(on: node, radius: 0.33, color: .purple)
+                let frame = self.effects?.floor == 1
+                    ? self.effects?.make(.identityScanner, size: deviceSize)
+                    : self.effects?.make("record", size: deviceSize)
+                guard let frame else { return nil }
+                node.addChild(frame)
                 for stroke in SpellCatalog.spell(record.spell).glyph.strokes {
                     let points = stroke.referencePath
                     for i in 1..<points.count {
-                        self.line(on: node, from: [Float(points[i-1].x-0.5)*0.45,0,Float(0.5-points[i-1].y)*0.45], to: [Float(points[i].x-0.5)*0.45,0,Float(0.5-points[i].y)*0.45], color: .purple)
+                        self.line(on: node,
+                            from: [Float(points[i-1].x-0.5)*deviceSize*0.48, -0.14, Float(0.5-points[i-1].y)*deviceSize*0.48],
+                            to: [Float(points[i].x-0.5)*deviceSize*0.48, -0.14, Float(0.5-points[i].y)*deviceSize*0.48], color: .purple)
                     }
                 }
                 return node
             }
         }
         if let through = e.mimicProhibitionThroughEnemyTurn, through >= state.turnNumber {
-            add("mimicProhibition", position: front + [-side,0,height*0.22], color: .systemPurple) {
-                let node = Entity()
-                self.ring(on: node, radius: 0.3, color: .systemPurple)
-                self.line(on: node, from: [-0.23,0,-0.23], to: [0.23,0,0.23], color: .systemPurple)
-                self.line(on: node, from: [-0.23,0,0.23], to: [0.23,0,-0.23], color: .systemPurple)
-                return node
+            add("mimicProhibition", position: front + [-side, 0, -height * 0.05], color: .systemPurple) {
+                self.effects?.make(.suppressionBand, size: deviceSize)
+            }
+        }
+        if e.lockedSpells.values.contains(where: { $0 >= state.turnNumber }) {
+            add("cardSeal", position: front + [side, 0, -height * 0.23], color: .purple) {
+                self.effects?.make("seal", size: deviceSize * 0.8)
             }
         }
         let reservations = e.scheduledDamage.sorted { ($0.dueEnemyTurn, $0.id) < ($1.dueEnemyTurn, $1.id) }
         for (index, reservation) in reservations.prefix(3).enumerated() {
             let urgent = reservation.dueEnemyTurn <= state.turnNumber
             let color: UIColor = urgent ? .systemRed : (reservation.wasDelayed ? .cyan : .orange)
-            add("reservation-\(reservation.id)-\(reservation.dueEnemyTurn)-\(urgent)", position: front + [side,0,height*0.25-Float(index)*0.48], color: color, urgent: urgent) {
-                let node = Entity()
-                let points: [SIMD3<Float>] = [[-0.17,0,0.2],[0.17,0,0.2],[-0.17,0,-0.2],[0.17,0,-0.2],[-0.17,0,0.2]]
-                for i in 1..<points.count { self.line(on: node, from: points[i-1], to: points[i], color: color) }
-                if reservation.wasDelayed { self.ring(on: node, radius: 0.25, color: color) }
+            add("reservation-\(reservation.id)-\(reservation.dueEnemyTurn)-\(urgent)",
+                position: front + [side, 0, height * 0.3 - Float(index) * deviceSize * 0.72], color: color, urgent: urgent) {
+                guard let node = self.effects?.make(urgent ? "execution" : "reservation", size: deviceSize * 0.65) else { return nil }
+                if reservation.wasDelayed { self.ring(on: node, radius: deviceSize * 0.38, color: color) }
                 return node
             }
         }
@@ -1417,13 +1684,17 @@ final class RealityCombatStatusRenderer {
     }
 
     private func updateTicker() {
-        if reduced || suspended || entries.isEmpty {
+        if suspended {
+            tickerGeneration &+= 1; ticker?.cancel(); ticker = nil
+            return
+        }
+        if reduced || entries.isEmpty {
             tickerGeneration &+= 1
             ticker?.cancel(); ticker = nil
             for key in Array(entries.keys) {
                 guard let entry = entries[key] else { continue }
                 if entry.retiringAt != nil { entry.entity.removeFromParent(); entries[key] = nil }
-                else { entry.entity.components.set(OpacityComponent(opacity: entry.urgent ? 0.7 : 0.5)) }
+                else { entry.entity.components.set(OpacityComponent(opacity: entry.urgent ? 1 : 0.85)) }
             }
             return
         }
@@ -1433,21 +1704,28 @@ final class RealityCombatStatusRenderer {
             defer {
                 if self?.tickerGeneration == generation { self?.ticker = nil }
             }
+            var previous = ProcessInfo.processInfo.systemUptime
             while !Task.isCancelled {
                 guard let self else { return }
-                let now = ProcessInfo.processInfo.systemUptime
+                let clock = ProcessInfo.processInfo.systemUptime
+                self.effectTime += max(0, clock - previous)
+                previous = clock
+                let now = self.effectTime
                 for key in Array(self.entries.keys) {
                     guard let e = self.entries[key] else { continue }
                     if let retired = e.retiringAt {
                         let t = min(1, Float((now-retired)/0.3))
-                        e.entity.components.set(OpacityComponent(opacity: (1-t)*0.5))
+                        e.entity.components.set(OpacityComponent(opacity: (1-t)*0.85))
                         e.entity.scale = SIMD3(repeating: 1-t*0.4)
                         e.entity.position = e.base + ((e.destination ?? (e.base + SIMD3(0,0,-0.1)))-e.base)*t
                         if t == 1 { e.entity.removeFromParent(); self.entries[key] = nil }
                     } else {
                         let fade = min(1, Float((now-e.born)/0.25))
                         let pulse = Float(sin((now-e.born)*(e.urgent ? 3 : 1.5)))
-                        e.entity.components.set(OpacityComponent(opacity: fade * ((e.urgent ? 0.65 : 0.42) + pulse*0.08)))
+                        if key == "correction" || key == "preservation" {
+                            e.entity.orientation = simd_quatf(angle: Float(now - e.born) * 0.12, axis: [0, 0, 1])
+                        }
+                        e.entity.components.set(OpacityComponent(opacity: fade * ((e.urgent ? 0.93 : 0.85) + pulse*0.06)))
                     }
                 }
                 if self.entries.isEmpty { return }

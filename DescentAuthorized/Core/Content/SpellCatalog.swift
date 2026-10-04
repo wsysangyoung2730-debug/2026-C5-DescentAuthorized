@@ -557,7 +557,7 @@ extension SpellCatalog {
         case .consequenceErasure:
             SpellMetadata(
                 acquisitionFloor: 7, acquisitionKind: .choice,
-                effectSummary: "등록된 예약 피해 한 건을 취소하거나 적의 일반 방어막 하나를 제거합니다.",
+                effectSummary: "가장 빨리 집행될 예약 피해 한 건을 자동 취소합니다. 예약이 없으면 적의 일반 방어막을 제거합니다.",
                 usageNote: "2획을 사용하며 두 효과 중 하나만 적용합니다. 아직 등록되지 않은 공격과 절대 방어막은 지울 수 없습니다."
             )
         case .outputReduction:

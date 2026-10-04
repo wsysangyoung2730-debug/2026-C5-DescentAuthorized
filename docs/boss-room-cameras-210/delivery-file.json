@@ -1,0 +1,8 @@
+{
+  "path": "/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/outputs/DA_F01_F02_F03_F04_F05_F06_F07_F08_F09_F10_Combined_v068_boss_room_sweep_cameras.blend",
+  "bytes": 2802510651,
+  "sha256": "cc7d70ce30d4f050c7e420de6da488492ae46729a80aef2b82c46feecae6bbb6",
+  "issue": 210,
+  "base_commit": "8f89ac2",
+  "note": "Full scene stays in shared outputs; camera-only library and authoring scripts are versioned in Git."
+}

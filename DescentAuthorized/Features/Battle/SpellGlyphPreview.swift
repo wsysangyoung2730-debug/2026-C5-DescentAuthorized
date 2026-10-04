@@ -1,6 +1,8 @@
 import SwiftUI
+import UIKit
 
-/// Uses finished artwork where available and the actual casting path for new spells.
+/// Attack glyphs use their casting paths so every attack shares the same red ink.
+/// Other categories retain their finished artwork where available.
 struct SpellGlyphPreview: View {
     enum Artwork: Equatable {
         case battle
@@ -15,7 +17,9 @@ struct SpellGlyphPreview: View {
 
     var body: some View {
         Group {
-            if let assetName, !showsNodes {
+            if artwork == .scroll, !showsNodes {
+                AcquisitionGlyphArtwork(spell: spell)
+            } else if let assetName, !showsNodes {
                 Image(assetName)
                     .resizable()
                     .scaledToFit()
@@ -32,7 +36,7 @@ struct SpellGlyphPreview: View {
         Canvas { context, size in
             let side = min(size.width, size.height)
             let lineWidth = max(1.5, min(side * 0.025, 5))
-            let tint = color ?? categoryColor
+            let tint = spell.category == .attack ? DAColor.attack : (color ?? categoryColor)
 
             for (index, stroke) in spell.glyph.strokes.enumerated() {
                 guard let first = stroke.referencePath.first else { continue }
@@ -80,7 +84,7 @@ struct SpellGlyphPreview: View {
     }
 
     private var assetName: String? {
-        guard artwork != .path else { return nil }
+        guard artwork != .path, spell.category != .attack else { return nil }
         let suffix: String
         switch spell.id {
         case .afterglowErasure: suffix = "AfterglowErasure"
@@ -138,3 +142,98 @@ extension SpellDefinition {
         }
     }
 }
+
+/// Acquisition art shares the exact polylines used by input evaluation.
+/// Light is rendered around those paths; it never changes their topology.
+struct AcquisitionGlyphArtwork: View {
+    let spell: SpellDefinition
+    private var tint: Color {
+        switch spell.category {
+        case .attack: Color(red: 1, green: 0.20, blue: 0.22)
+        case .defense: Color(red: 0.25, green: 0.85, blue: 1)
+        case .dispel: Color(red: 1, green: 0.77, blue: 0.25)
+        case .debuff: Color(red: 0.72, green: 0.45, blue: 1)
+        }
+    }
+    var body: some View {
+        Canvas { context, size in
+            let side = min(size.width, size.height)
+            let inset = side * 0.05
+            func point(_ node: NormalizedPoint) -> CGPoint {
+                CGPoint(x: (size.width - side) / 2 + inset + node.x / 100 * side * 0.9,
+                        y: (size.height - side) / 2 + inset + node.y / 100 * side * 0.9)
+            }
+            var glyph = Path()
+            for stroke in spell.glyph.strokes {
+                guard let first = stroke.referencePath.first else { continue }
+                glyph.move(to: point(first))
+                for node in stroke.referencePath.dropFirst() { glyph.addLine(to: point(node)) }
+            }
+            func ink(_ color: Color, width: CGFloat, blur: CGFloat = 0) {
+                context.drawLayer { layer in
+                    if blur > 0 { layer.addFilter(.blur(radius: blur)) }
+                    layer.stroke(glyph, with: .color(color), style: StrokeStyle(
+                        lineWidth: side * width, lineCap: .round, lineJoin: .round))
+                }
+            }
+            ink(.purple.opacity(0.32), width: 0.040, blur: side * 0.018)
+            ink(tint.opacity(0.7), width: 0.026, blur: side * 0.008)
+            ink(Color(red: 0.78, green: 0.58, blue: 0.25), width: 0.019)
+            ink(tint, width: 0.014)
+            ink(.white.opacity(0.95), width: 0.005)
+            // Small highlights sit on the actual stroke, never in detached ornaments.
+            for stroke in spell.glyph.strokes {
+                guard stroke.referencePath.count > 1 else { continue }
+                let a = point(stroke.referencePath[0]), b = point(stroke.referencePath[1])
+                let p = CGPoint(x: a.x * 0.35 + b.x * 0.65, y: a.y * 0.35 + b.y * 0.65)
+                let r = side * 0.014
+                var glint = Path()
+                glint.move(to: CGPoint(x: p.x-r, y: p.y)); glint.addLine(to: CGPoint(x: p.x+r, y: p.y))
+                glint.move(to: CGPoint(x: p.x, y: p.y-r)); glint.addLine(to: CGPoint(x: p.x, y: p.y+r))
+                context.stroke(glint, with: .color(.white.opacity(0.85)), lineWidth: max(0.5, side * 0.002))
+            }
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .accessibilityHidden(true)
+    }
+}
+
+#if DEBUG
+struct GlyphFidelityPreview: View {
+    private var spells: [SpellDefinition] { SpellID.allCases.map(SpellCatalog.spell) }
+    private var grid: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 4) {
+            ForEach(spells, id: \.id) { spell in
+                VStack(spacing: 0) {
+                    AcquisitionGlyphArtwork(spell: spell).frame(width: 120, height: 120)
+                    Text(spell.name).font(.system(size: 13)).foregroundStyle(.white)
+                }.frame(height: 144)
+            }
+        }.padding(12).background(Color.black)
+    }
+    var body: some View {
+        ScrollView { grid }.background(.black).task { export() }
+    }
+    @MainActor private func export() {
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("GlyphFidelity")
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            var manifest: [[String: Any]] = []
+            for spell in spells {
+                let renderer = ImageRenderer(content: AcquisitionGlyphArtwork(spell: spell).frame(width: 512, height: 512))
+                renderer.scale = 1
+                guard let data = renderer.uiImage?.pngData() else { continue }
+                try data.write(to: directory.appendingPathComponent("AcquisitionGlyph_\(spell.id.rawValue).png"))
+                manifest.append(["id": spell.id.rawValue, "name": spell.name,
+                                 "paths": spell.glyph.strokes.map { $0.referencePath.map { [$0.x, $0.y] } }])
+            }
+            let overview = ImageRenderer(content: grid.frame(width: 640))
+            overview.scale = 2
+            try overview.uiImage?.pngData()?.write(to: directory.appendingPathComponent("all-glyphs.png"))
+            try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys])
+                .write(to: directory.appendingPathComponent("geometry.json"))
+        } catch { print("Glyph export failed: \(error)") }
+    }
+}
+#endif

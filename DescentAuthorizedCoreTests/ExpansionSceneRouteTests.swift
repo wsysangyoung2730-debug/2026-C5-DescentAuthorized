@@ -59,3 +59,34 @@ final class ExpansionSceneRouteTests: XCTestCase {
         }
     }
 }
+
+final class RoomWarmupTests: XCTestCase {
+    func testLowerBattlesAndInterveningDialogueKeepTheSameDestination() {
+        for floor in 1...4 {
+            for index in 0...1 {
+                for stage in [ExpansionStage.residualBattle, .residualDefeated, index == 0 ? .residualGate : .sealedDoor] {
+                    let next = RoomWarmupDestination.next(scene: .demoComplete, expansion: .init(floorNumber: floor, stage: stage, residualIndex: index))
+                    XCTAssertEqual(next, .init(floor: floor, role: index == 0 ? "residualB" : "administrator"))
+                }
+            }
+        }
+    }
+
+    func testEveryBossWarmsNextFloorButFinalBossDoesNot() {
+        for floor in 1...7 {
+            for stage in [ExpansionStage.bossBattle, .bossDefeated, .reward, .descent] {
+                XCTAssertEqual(RoomWarmupDestination.next(scene: .demoComplete, expansion: .init(floorNumber: floor, stage: stage)),
+                               floor > 1 ? .init(floor: floor - 1, role: "residualA") : nil)
+            }
+        }
+    }
+
+    func testLegacyBattlesIncludeEightToSevenAndTutorialExit() {
+        XCTAssertEqual(RoomWarmupDestination.next(scene: .floor10DescentDoor, expansion: nil), .init(floor: 9, role: "administrator"))
+        XCTAssertEqual(RoomWarmupDestination.next(scene: .floor9RecordsBattle, expansion: nil), .init(floor: 8, role: "residualA"))
+        XCTAssertEqual(RoomWarmupDestination.next(scene: .floor8ResidualBattle, expansion: nil), .init(floor: 8, role: "administrator"))
+        for scene in [SceneID.floor8AdministratorBattle, .floor8AdministratorDefeated, .floor8Reward, .floor8DescentDoor] {
+            XCTAssertEqual(RoomWarmupDestination.next(scene: scene, expansion: nil), .init(floor: 7, role: "residualA"))
+        }
+    }
+}

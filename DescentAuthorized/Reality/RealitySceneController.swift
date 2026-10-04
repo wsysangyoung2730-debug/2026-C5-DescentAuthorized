@@ -16,12 +16,12 @@ struct BattleCameraInteractionConfiguration: Equatable, Sendable {
     let maximumFieldOfViewScale: Float
 
     static let standard = BattleCameraInteractionConfiguration(
-        maximumYaw: .pi * 60 / 180,
-        maximumUpwardPitch: .pi * 25 / 180,
-        maximumDownwardPitch: .pi * 25 / 180,
-        yawRadiansPerViewport: .pi * 120 / 180,
-        pitchRadiansPerViewport: .pi * 50 / 180,
-        minimumFieldOfViewScale: 0.85,
+        maximumYaw: .pi * 28 / 180,
+        maximumUpwardPitch: .pi * 6 / 180,
+        maximumDownwardPitch: .pi * 3 / 180,
+        yawRadiansPerViewport: .pi * 48 / 180,
+        pitchRadiansPerViewport: .pi * 18 / 180,
+        minimumFieldOfViewScale: 0.95,
         maximumFieldOfViewScale: 1.10
     )
 
@@ -84,6 +84,7 @@ final class RealitySceneController: ObservableObject {
     @Published private(set) var projectedInvestigationAnchors: [String: RealityProjectedInvestigationAnchor] = [:]
     @Published private(set) var cameraFadeOpacity: Double = 0
     @Published private(set) var isCameraTransitioning = false
+    @Published private(set) var isBossRoomSweepActive = false
     @Published private(set) var isBattleCameraInteractionEnabled = false
     @Published private(set) var isBattleCameraAdjusted = false
     @Published private(set) var isDescentFailurePresentationActive = false
@@ -108,6 +109,9 @@ final class RealitySceneController: ObservableObject {
     private var actorStartedAt = Date()
     private static let loadLog = Logger(subsystem: "com.wsysangyoung.DescentAuthorized", category: "SceneLoading")
     private var cameraTransitionTask: Task<Void, Never>?
+    private var bossRoomSweepGeneration: UInt64 = 0
+    private var bossRoomSweepSuspended = false
+    private var bossRoomSweepSkipRequested = false
     private var battleCameraImpactTask: Task<Void, Never>?
     private let actorMotion = RealityActorMotionPlayer()
     private var enemyPreviewRevealTask: Task<Void, Never>?
@@ -122,10 +126,43 @@ final class RealitySceneController: ObservableObject {
     private var floor10OpeningCameraGeneration: UInt64 = 0
     private var enemyPreviewRevealGeneration: UInt64 = 0
     private var requestedSceneID: FloorSceneID?
+    private var prefetchCombatBusy = false
+    private var prefetchEncounterActive = false
+    private var prefetchFrameSubscription: (any Cancellable)?
+    private var lastFrameStall = Date.distantPast
+    private var lastInteractiveWork = Date.distantPast
+
+    func setPrefetchCombatBusy(_ busy: Bool) {
+        prefetchCombatBusy = busy
+        if busy { noteInteractiveWork() }
+    }
+
+    func noteInteractiveWork() { lastInteractiveWork = Date() }
+
+    private var canStartSpeculativeResource: Bool {
+        guard case .ready = loadState else { return false }
+        return !prefetchCombatBusy && !isCameraTransitioning
+            && Date().timeIntervalSince(lastInteractiveWork) > 1.2
+            && Date().timeIntervalSince(lastFrameStall) > 2
+            && UIApplication.shared.applicationState == .active
+            && ProcessInfo.processInfo.thermalState != .serious
+            && ProcessInfo.processInfo.thermalState != .critical
+            && (os_proc_available_memory() == 0 || os_proc_available_memory() > 256 * 1024 * 1024)
+    }
+
     private var requestedCameraPreset: RealityCameraPreset = .main
     private var activeCameraName: String?
     private var pendingCameraName: String?
     private var authoredCameraSnapshots: [String: AuthoredCameraSnapshot] = [:]
+    private var battleSubjectSnapshot: (name: String, snapshot: AuthoredCameraSnapshot)?
+    private var activeUsesBattleFraming = false
+
+    private func resolvedCameraSnapshot(_ name: String) -> AuthoredCameraSnapshot? {
+        if requestedCameraPreset == .battle, let subject = battleSubjectSnapshot, subject.name == name {
+            return subject.snapshot
+        }
+        return authoredCameraSnapshots[name]
+    }
     private var battleCameraYaw: Float = 0
     private var battleCameraPitch: Float = 0
     private var battleCameraFieldOfViewScale: Float = 1
@@ -159,6 +196,11 @@ final class RealitySceneController: ObservableObject {
             arView.scene.addAnchor(sceneAnchor)
         }
         self.arView = arView
+        prefetchFrameSubscription?.cancel()
+        prefetchFrameSubscription = arView.scene.subscribe(to: SceneEvents.Update.self) { [weak self] event in
+            guard event.deltaTime > 0.04 else { return }
+            Task { @MainActor [weak self] in self?.lastFrameStall = Date() }
+        }
         scheduleBoardProjectionRefresh()
     }
 
@@ -201,9 +243,18 @@ final class RealitySceneController: ObservableObject {
         let auxiliaryURLs = auxiliaryAssetURLs(descriptor: descriptor, quality: graphicsQuality, bundle: bundle)
         prepared.prepareAuxiliary(urls: auxiliaryURLs)
         let rewards = rewardAssetURLs(descriptor: descriptor, quality: graphicsQuality, bundle: bundle)
-        let rewardResources = Publishers.MergeMany(rewards.map { resourceURL in
-            prepared.cloneAuxiliary(url: resourceURL).map { (resourceURL, $0) }.eraseToAnyPublisher()
-        }).collect().map { Dictionary(uniqueKeysWithValues: $0) }
+            + Array(RealityCombatEffectLibrary.resources(for: descriptor, bundle: bundle).values)
+        let rewardResources: AnyPublisher<[URL: Entity], Error>
+        if rewards.isEmpty {
+            // Residual rooms have no reward device. Zip still needs one value
+            // before it can hand the decoded room to install().
+            rewardResources = Just([URL: Entity]())
+                .setFailureType(to: Error.self).eraseToAnyPublisher()
+        } else {
+            rewardResources = Publishers.MergeMany(rewards.map { resourceURL in
+                prepared.cloneAuxiliary(url: resourceURL).map { (resourceURL, $0) }.eraseToAnyPublisher()
+            }).collect().map { Dictionary(uniqueKeysWithValues: $0) }.eraseToAnyPublisher()
+        }
         loadCancellable = prepared.takeRoom(url: url)
             .handleEvents(receiveOutput: { [weak self] _ in
                 guard let self else { return }
@@ -248,7 +299,7 @@ final class RealitySceneController: ObservableObject {
         guard requestedSceneID == .floor10ClosedOffice,
               requestedCameraPreset == .tutorial,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         floor10OpeningCameraGeneration &+= 1
@@ -269,7 +320,7 @@ final class RealitySceneController: ObservableObject {
         floor10OpeningCameraGeneration &+= 1
         guard requestedSceneID == .floor10ClosedOffice,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
         cameraEntity.stopAllAnimations(recursive: false)
         cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
@@ -284,7 +335,7 @@ final class RealitySceneController: ObservableObject {
         guard requestedSceneID == .floor10ClosedOffice,
               requestedCameraPreset == .tutorial,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         floor10OpeningCameraGeneration &+= 1
@@ -350,8 +401,8 @@ final class RealitySceneController: ObservableObject {
 
     func setEnemyPreviewVisible(_ isVisible: Bool) {
         cancelEnemyPreviewReveal(restoreActor: true)
-        requestedEnemyPreviewVisibility = isVisible
-        registry.setEnabled(isVisible, for: .enemyActor)
+        requestedEnemyPreviewVisibility = isVisible && !actorMotion.isDefeated
+        registry.setEnabled(requestedEnemyPreviewVisibility, for: .enemyActor)
     }
 
     func revealEnemyPreview(reducedMotion: Bool) {
@@ -428,7 +479,7 @@ final class RealitySceneController: ObservableObject {
 
         guard [.main, .battle, .tutorial].contains(requestedCameraPreset),
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else {
             completion()
             return
@@ -467,6 +518,7 @@ final class RealitySceneController: ObservableObject {
 
     func beginBattleCameraLook() {
         guard canAdjustBattleCamera else { return }
+        noteInteractiveWork()
         cancelBattleCameraImpact(restoreCamera: true)
         battleCameraLookStartYaw = battleCameraYaw
         battleCameraLookStartPitch = battleCameraPitch
@@ -481,6 +533,7 @@ final class RealitySceneController: ObservableObject {
               viewportSize.width > 0,
               viewportSize.height > 0 else { return }
 
+        noteInteractiveWork()
         let horizontalProgress = Float(translation.width / viewportSize.width)
         let verticalProgress = Float(translation.height / viewportSize.height)
         let horizontalSweep = configuration.yawRadiansPerViewport
@@ -502,6 +555,7 @@ final class RealitySceneController: ObservableObject {
 
     func beginBattleCameraZoom() {
         guard canAdjustBattleCamera else { return }
+        noteInteractiveWork()
         cancelBattleCameraImpact(restoreCamera: true)
         battleCameraZoomStartFieldOfViewScale = battleCameraFieldOfViewScale
     }
@@ -511,6 +565,7 @@ final class RealitySceneController: ObservableObject {
         configuration: BattleCameraInteractionConfiguration = .standard
     ) {
         guard canAdjustBattleCamera, magnification > 0 else { return }
+        noteInteractiveWork()
         battleCameraFieldOfViewScale = clamp(
             battleCameraZoomStartFieldOfViewScale / Float(magnification),
             minimum: configuration.minimumFieldOfViewScale,
@@ -529,9 +584,10 @@ final class RealitySceneController: ObservableObject {
         battleCameraZoomStartFieldOfViewScale = 1
         isBattleCameraAdjusted = false
 
-        guard [.main, .battle, .tutorial].contains(requestedCameraPreset),
+        guard !isBossRoomSweepActive,
+              [.main, .battle, .tutorial].contains(requestedCameraPreset),
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         if animated {
@@ -557,7 +613,7 @@ final class RealitySceneController: ObservableObject {
         guard !reducedMotion,
               canAdjustBattleCamera,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         cancelBattleCameraImpact(restoreCamera: true)
@@ -608,7 +664,7 @@ final class RealitySceneController: ObservableObject {
         setBattleCameraInteractionEnabled(false)
         guard requestedCameraPreset == .battle,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         cameraEntity.stopAllAnimations(recursive: false)
@@ -665,7 +721,7 @@ final class RealitySceneController: ObservableObject {
         cancelDescentCameraEffect(restoreCamera: true)
         guard requestedCameraPreset == .descentInput,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         descentCameraEffectGeneration &+= 1
@@ -715,7 +771,7 @@ final class RealitySceneController: ObservableObject {
         cancelDescentCameraEffect(restoreCamera: true)
         guard requestedCameraPreset == .descentInput,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         descentCameraEffectGeneration &+= 1
@@ -817,12 +873,14 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func transitionCamera(to preset: RealityCameraPreset) {
+        // SwiftUI keeps synchronizing its scene preset while the cinematic owns the camera.
+        guard !isBossRoomSweepActive else { return }
         guard
             let descriptor = registry.descriptor,
             let cameraName = descriptor.cameraName(for: preset)
         else { return }
         guard cameraName != pendingCameraName else { return }
-        guard cameraName != activeCameraName else {
+        guard cameraName != activeCameraName || activeUsesBattleFraming != (preset == .battle) else {
             if pendingCameraName != nil || isCameraTransitioning {
                 cancelCameraTransition()
             }
@@ -874,8 +932,9 @@ final class RealitySceneController: ObservableObject {
     }
 
     private func applyCamera(named cameraName: String) {
+        guard !isBossRoomSweepActive else { return }
         guard
-            let snapshot = authoredCameraSnapshots[cameraName],
+            let snapshot = resolvedCameraSnapshot(cameraName),
             let cameraEntity
         else { return }
 
@@ -885,6 +944,7 @@ final class RealitySceneController: ObservableObject {
         )
         cameraEntity.camera = snapshot.camera
         activeCameraName = cameraName
+        activeUsesBattleFraming = requestedCameraPreset == .battle
         clearBattleCameraAdjustmentState()
         scheduleBoardProjectionRefresh()
     }
@@ -900,7 +960,7 @@ final class RealitySceneController: ObservableObject {
     private func applyBattleCameraTransform() {
         guard canAdjustBattleCamera,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
 
         let adjustedMatrix = adjustedBattleCameraMatrix(from: snapshot)
@@ -935,7 +995,7 @@ final class RealitySceneController: ObservableObject {
         let pitchRotation = simd_quatf(angle: battleCameraPitch, axis: pitchAxis)
         let lookRotation = pitchRotation * yawRotation
 
-        // Blender가 저장한 카메라 위치는 유지하고 시선 축만 회전한다.
+        // Keep the resolved battle viewpoint fixed and rotate only the viewing axes.
         var adjustedMatrix = baseMatrix
         for columnIndex in 0..<3 {
             let column = baseMatrix[columnIndex]
@@ -1047,7 +1107,7 @@ final class RealitySceneController: ObservableObject {
         guard restoreCamera,
               requestedCameraPreset == .descentInput,
               let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName],
+              let snapshot = resolvedCameraSnapshot(activeCameraName),
               let cameraEntity else { return }
         restoreDescentCamera(snapshot: snapshot, cameraEntity: cameraEntity)
     }
@@ -1118,6 +1178,7 @@ final class RealitySceneController: ObservableObject {
         events: [DemoSessionEvent],
         battleState: BattleState?,
         reducedMotion: Bool,
+        enemyActionPresentation: EnemyActionPresentation? = nil,
         onProjectileLaunch: (() -> Void)? = nil,
         onProjectileImpact: (() -> Void)? = nil
     ) {
@@ -1134,7 +1195,7 @@ final class RealitySceneController: ObservableObject {
         requestedBattleState = battleState
         requestedReducedMotion = reducedMotion
         actorMotion.setReducedMotion(reducedMotion)
-        actorMotion.present(events, state: battleState)
+        actorMotion.present(events, state: battleState, enemyActionPresentation: enemyActionPresentation)
         observatoryAmbientMotion.setReducedMotion(reducedMotion)
         let cues = RealityCombatPresentationMapper.cues(for: events, battleState: battleState)
         guard registry.root != nil else {
@@ -1147,14 +1208,16 @@ final class RealitySceneController: ObservableObject {
             registry: registry,
             reducedMotion: reducedMotion
         )
-        combatVFXRenderer.presentEnemyAction(events, state: battleState, reducedMotion: reducedMotion)
+        combatVFXRenderer.presentEnemyAction(events, state: battleState, reducedMotion: reducedMotion,
+                                            enemyActionPresentation: enemyActionPresentation)
     }
 
     func synchronizeCombatState(_ battleState: BattleState?, reducedMotion: Bool) {
+        prefetchEncounterActive = battleState.map { $0.phase != .victory && $0.phase != .defeat } ?? false
         actorMotion.setReducedMotion(reducedMotion)
         if battleState?.phase == .victory {
             actorMotion.play("death")
-        } else {
+        } else if battleState != nil {
             actorMotion.prepareEncounter()
         }
         requestedBattleState = battleState
@@ -1180,6 +1243,11 @@ final class RealitySceneController: ObservableObject {
             registry: registry,
             reducedMotion: reducedMotion
         )
+    }
+
+    func prepareMiddleDoorPreview(floorNumber: Int) {
+        guard let sceneID = requestedSceneID else { return }
+        progressionVFXRenderer.prepareMiddleDoorPreview(sceneID: sceneID)
     }
 
     func waitForDescentDoorOpening() async -> Bool {
@@ -1239,8 +1307,11 @@ final class RealitySceneController: ObservableObject {
     }
 
     func unload() {
+        cancelBossRoomSweep(restoreCamera: false)
+        PreparedRealityAssets.shared.stopSpeculativeWork()
         actorMotion.reset()
         finalRewardTemplates.removeAll()
+        finalRewardModelTransforms.removeAll()
         observatoryAmbientMotion.reset()
         environmentTask?.cancel()
         environmentTask = nil
@@ -1323,6 +1394,8 @@ final class RealitySceneController: ObservableObject {
         cameraEntity = camera
         combatVFXRenderer.cameraEntity = camera
         registry.rebuild(root: root, descriptor: descriptor)
+        combatVFXRenderer.effects.install(descriptor: descriptor, resources: rewards, bundle: bundle)
+        combatStatusRenderer.effects = combatVFXRenderer.effects
         if descriptor.sceneID.isExpansion, descriptor.entityNames[.rewardStand] != nil {
             do { try installExpansionRewards(bundle: bundle, resources: rewards) }
             catch { fail(sceneID: descriptor.sceneID, message: error.localizedDescription); return }
@@ -1435,6 +1508,7 @@ final class RealitySceneController: ObservableObject {
                     )
                     spawn.addChild(actorContainer)
                     self.registry.register(actorContainer, for: .enemyActor)
+                    self.frameBattleSubject(descriptor: descriptor)
                     self.registry.setEnabled(
                         self.requestedEnemyPreviewVisibility,
                         for: .enemyActor
@@ -1505,8 +1579,9 @@ final class RealitySceneController: ObservableObject {
         }
     }
 
-    /// Final rooms keep their authored pedestal. Only scroll meshes are attached to slots.
+    /// Final rooms use the complete 8F device: lift, lids and scroll controller chains.
     private var finalRewardTemplates: [ScrollTier: Entity] = [:]
+    private var finalRewardModelTransforms: [RealityEntityRole: Transform] = [:]
     private var requestedFinalRewardTiers: [ScrollTier]?
 
     func configureFinalRewardCandidates(_ candidates: [RewardCandidate]) {
@@ -1519,37 +1594,56 @@ final class RealitySceneController: ObservableObject {
               !finalRewardTemplates.isEmpty else { return }
         let tiers = requestedFinalRewardTiers ?? RewardCatalog.candidates(forFloorNumber: contract.floor).map(\.tier)
         for (index, role) in [RealityEntityRole.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight].enumerated() {
-            guard let holder = registry.entity(for: role), holder.name.hasPrefix("FINAL_Animated_") else { continue }
+            guard let holder = registry.entity(for: role),
+                  let modelTransform = finalRewardModelTransforms[role] else { continue }
             for child in Array(holder.children) { child.removeFromParent() }
             guard tiers.indices.contains(index), let template = finalRewardTemplates[tiers[index]] else { continue }
             let scroll = template.clone(recursive: true); holder.addChild(scroll)
-            scroll.transform = .identity
-            var bounds = scroll.visualBounds(relativeTo: holder)
-            scroll.scale = SIMD3(repeating: 0.72 / max(bounds.extents.z, 0.01))
-            bounds = scroll.visualBounds(relativeTo: holder)
-            scroll.position -= [(bounds.min.x + bounds.max.x) / 2, (bounds.min.y + bounds.max.y) / 2, bounds.min.z]
+            // Keep the source slot's lean and unit-height convention. The parent
+            // controllers own emergence; candidate changes never reset their pose.
+            scroll.transform = modelTransform
         }
     }
 
     private func installFinalRewardScrolls(contract: FinalSceneContract, bundle: Bundle, resources: [URL: Entity]) throws {
-        guard let room = registry.root, let stand = registry.entity(for: .rewardStand) else { throw CocoaError(.fileReadCorruptFile) }
+        guard let room = registry.root, let oldStand = registry.entity(for: .rewardStand) else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
         let suffix = graphicsQuality == .high ? "" : "_\(graphicsQuality.rawValue)"
         guard let url = bundle.url(forResource: "reward_scroll" + suffix, withExtension: "usdc", subdirectory: "Reality/Interactables/RewardScroll"),
-              let template = resources[url]?.findEntity(named: "F09_RewardScroll_Center") else { throw CocoaError(.fileReadCorruptFile) }
-        guard let deviceURL = bundle.url(forResource: "reward_device" + suffix, withExtension: "usdc", subdirectory: "Reality/Interactables/RewardDevice"),
-              let device = resources[deviceURL] else { throw CocoaError(.fileReadCorruptFile) }
-        finalRewardTemplates = [.engraved: template.clone(recursive: true)]
+              let engraved = resources[url]?.findEntity(named: "F09_RewardScroll_Center"),
+              let deviceURL = bundle.url(forResource: "reward_device" + suffix, withExtension: "usdc", subdirectory: "Reality/Interactables/RewardDevice"),
+              let source = resources[deviceURL]?.findEntity(named: "DA_SharedRewardDevice") else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        let device = source.clone(recursive: true)
+        guard let stand = device.findEntity(named: "F08B_RewardStand") else { throw CocoaError(.fileReadCorruptFile) }
+        finalRewardTemplates = [.engraved: engraved.clone(recursive: true)]
         for (tier, slot): (ScrollTier, String) in [(.worn,"Left"),(.sealed,"Center"),(.forbidden,"Right")] {
             guard let model = device.findEntity(named: "F08B_RewardScroll_" + slot) else { throw CocoaError(.fileReadCorruptFile) }
             finalRewardTemplates[tier] = model.clone(recursive: true)
         }
-        let standBounds = stand.visualBounds(relativeTo: room)
-        for role: RealityEntityRole in [.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight] {
-            guard let slot = registry.entity(for: role) else { throw CocoaError(.fileReadCorruptFile) }
-            let holder = Entity(); holder.name = "FINAL_Animated_" + role.rawValue
-            room.addChild(holder)
-            holder.position = slot.position(relativeTo: room)
-            holder.position.z = max(holder.position.z, standBounds.max.z + 0.12)
+        // Some room wrappers have large inherited offsets; fit physical pedestal
+        // bounds in that wrapper's local space instead of using its origin/slots.
+        let oldBounds = oldStand.visualBounds(relativeTo: oldStand)
+        let sourceBounds = stand.visualBounds(relativeTo: device)
+        guard oldBounds.extents.x > 0.01, sourceBounds.extents.x > 0.01 else { throw CocoaError(.fileReadCorruptFile) }
+        let scale = oldBounds.extents.x / sourceBounds.extents.x
+        let oldBase = SIMD3<Float>(oldBounds.center.x, oldBounds.center.y, oldBounds.min.z)
+        let sourceBase = SIMD3<Float>(sourceBounds.center.x, sourceBounds.center.y, sourceBounds.min.z)
+        let localFit = Transform(scale: SIMD3(repeating: scale), rotation: simd_quatf(angle: 0, axis: [0, 0, 1]),
+                                 translation: oldBase - sourceBase * scale)
+        let placement = oldStand.transformMatrix(relativeTo: room) * localFit.matrix
+        room.addChild(device)
+        device.setTransformMatrix(placement, relativeTo: room)
+        oldStand.isEnabled = false
+        registry.register(stand, for: .rewardStand)
+        let roles: [RealityEntityRole] = [.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight]
+        for (slot, role) in zip(["Left", "Center", "Right"], roles) {
+            guard let holder = device.findEntity(named: "F08B_RewardScroll_\(slot)_Idle"),
+                  let model = device.findEntity(named: "F08B_RewardScroll_\(slot)") else { throw CocoaError(.fileReadCorruptFile) }
+            registry.entity(for: role)?.isEnabled = false
+            finalRewardModelTransforms[role] = model.transform
             holder.isEnabled = false
             registry.register(holder, for: role)
         }
@@ -1651,6 +1745,80 @@ final class RealitySceneController: ObservableObject {
         enemyPreviewFinalTransform = nil
     }
 
+    private func restoreDarkSubjectDetail(_ entity: Entity) {
+        if var model = entity.components[ModelComponent.self] {
+            model.materials = model.materials.map { source in
+                guard var material = source as? PhysicallyBasedMaterial else { return source }
+                // Reduce mirror-like metal response so the front light reveals the bronze detail.
+                // Keep the authored color, normal, roughness and emissive textures untouched.
+                material.metallic.scale = min(material.metallic.scale, 0.35)
+                return material
+            }
+            entity.components.set(model)
+        }
+        for child in entity.children { restoreDarkSubjectDetail(child) }
+    }
+
+    /// Use a lower viewer height and mid-body aim for a grounded face-to-face view.
+    /// Keep horizontal retreat within the authored camera distance for each room.
+    private func frameBattleSubject(descriptor: RealitySceneDescriptor) {
+        guard let actor = registry.entity(for: .enemyActor),
+              let name = descriptor.cameraName(for: .battle),
+              let snapshot = authoredCameraSnapshots[name] else { return }
+        if descriptor.sceneID == .floor06CausalityResidue {
+            restoreDarkSubjectDetail(actor)
+        }
+        let bounds = actor.visualBounds(relativeTo: nil)
+        let height = bounds.extents.y
+        guard height > 0.1 else { return }
+        let center = bounds.center
+        let oldPosition = SIMD3<Float>(snapshot.transformMatrix.columns.3.x,
+                                      snapshot.transformMatrix.columns.3.y,
+                                      snapshot.transformMatrix.columns.3.z)
+        var towardViewer = oldPosition - center
+        towardViewer.y = 0
+        let oldDistance = simd_length(towardViewer)
+        guard oldDistance > 0.1 else { return }
+        towardViewer /= oldDistance
+        // Retreat about 9% from the previous 2.65-height framing without crossing
+        // the authored horizontal distance. Height and aim are independent so
+        // lowering the viewer also reduces the excess ceiling above the enemy.
+        let distance = min(oldDistance, height * 2.90)
+        let target = SIMD3<Float>(center.x, bounds.min.y + height * 0.48, center.z)
+        let viewer = SIMD3<Float>(center.x, bounds.min.y + height * 0.50, center.z)
+        let lateral = SIMD3<Float>(towardViewer.z, 0, -towardViewer.x)
+        // A slight off-axis viewpoint separates crowns/halos from the central door machinery.
+        let position = viewer + towardViewer * distance + lateral * height * 0.18
+        let framing = PerspectiveCamera()
+        framing.look(at: target, from: position, relativeTo: nil)
+        var optics = snapshot.camera
+        optics.fieldOfViewInDegrees = 48
+        battleSubjectSnapshot = (name, AuthoredCameraSnapshot(
+            transformMatrix: framing.transformMatrix(relativeTo: nil), camera: optics))
+        if activeCameraName == name { applyCamera(named: name) }
+
+        // Actor-local illumination keeps dark silhouettes readable without lifting the room.
+        guard let root = registry.root else { return }
+        for (index, side) in [Float(-1), Float(1)].enumerated() {
+            let lamp = SpotLight()
+            lamp.name = "DA_SUBJECT_LIGHT_\(index)"
+            lamp.light.color = index == 0 ? UIColor(red: 1, green: 0.94, blue: 0.85, alpha: 1)
+                : UIColor(red: 0.70, green: 0.83, blue: 1, alpha: 1)
+            let detailBoost: Float = descriptor.sceneID == .floor06CausalityResidue ? 4 : 1
+            lamp.light.intensity = (index == 0 ? 700 : 500) * height * height * detailBoost
+            lamp.light.innerAngleInDegrees = 22
+            lamp.light.outerAngleInDegrees = 48
+            lamp.light.attenuationRadius = height * 3
+            root.addChild(lamp)
+            let right = SIMD3<Float>(towardViewer.z, 0, -towardViewer.x)
+            let source = center + right * side * height * 0.65
+                + towardViewer * (index == 0 ? height : -height * 0.45)
+                + SIMD3<Float>(0, height * 0.6, 0)
+            lamp.look(at: center, from: source, relativeTo: nil)
+        }
+        applyFloor9ShadowQuality()
+    }
+
     private func completeInstallation(descriptor: RealitySceneDescriptor) {
         setErasureZones(requestedErasureZones)
         combatVFXRenderer.attach(to: registry)
@@ -1711,6 +1879,7 @@ final class RealitySceneController: ObservableObject {
         in root: Entity,
         descriptor: RealitySceneDescriptor
     ) -> [String: AuthoredCameraSnapshot] {
+        battleSubjectSnapshot = nil
         var snapshots: [String: AuthoredCameraSnapshot] = [:]
         for cameraName in Set(descriptor.cameraNames.values) {
             guard
@@ -1724,6 +1893,17 @@ final class RealitySceneController: ObservableObject {
                 let pitch = room.cameraPitchDegrees?[cameraName] ?? 0
                 transform.rotation *= simd_quatf(angle: pitch * .pi / 180, axis: [1, 0, 0])
                 optics.fieldOfViewInDegrees *= room.cameraFOVScale?[cameraName] ?? 1
+                if cameraName == descriptor.cameraName(for: .rewardSelection) {
+                    // The shared device raises scrolls above the old static slots.
+                    // Leave room for the entire ascent, including the center cap.
+                    optics.fieldOfViewInDegrees = max(optics.fieldOfViewInDegrees, 55)
+                }
+            }
+            if FinalSceneContract.contract(for: descriptor.sceneID)?.floor == 5,
+               FinalSceneContract.contract(for: descriptor.sceneID)?.role == "residualA",
+               cameraName == descriptor.cameraName(for: .descentInput) {
+                // Dolly along the authored view axis, preserving its aim and perspective.
+                transform.translation += transform.rotation.act(SIMD3<Float>(0, 0, -0.45))
             }
             snapshots[cameraName] = AuthoredCameraSnapshot(transformMatrix: transform.matrix, camera: optics)
         }
@@ -1927,6 +2107,281 @@ final class RealitySceneController: ObservableObject {
 }
 
 
+// MARK: - Authored boss-room reveal
+
+extension RealitySceneController {
+    /// Runs only after the encounter dialogue. The caller owns progression and awaits
+    /// this result before starting combat; this controller only owns the camera.
+    func playBossRoomSweep(floor: Int, reducedMotion: Bool) async -> Bool {
+        guard !isBossRoomSweepActive,
+              let sceneID = requestedSceneID,
+              bossRoomFloor(sceneID) == floor,
+              loadState == .ready(sceneID),
+              let root = registry.root, let cameraEntity,
+              let battle = bossRoomBattleCamera() else { return false }
+        guard let track = BossRoomSweepCatalog.track(for: floor) else {
+            Self.loadLog.error("sweep.missing floor=\(floor)")
+            finishBossRoomSweepCamera(named: battle.name, snapshot: battle.snapshot)
+            return true
+        }
+
+        cancelCameraTransition()
+        cancelBattleCameraImpact(restoreCamera: false)
+        cancelDescentCameraEffect(restoreCamera: false)
+        clearBattleCameraAdjustmentState()
+        cameraEntity.stopAllAnimations(recursive: false)
+        bossRoomSweepGeneration &+= 1
+        let generation = bossRoomSweepGeneration
+        isBossRoomSweepActive = true
+        isCameraTransitioning = true
+        bossRoomSweepSkipRequested = false
+        var completed = false
+        defer {
+            if generation == bossRoomSweepGeneration {
+                if !completed, let activeCameraName,
+                   let snapshot = resolvedCameraSnapshot(activeCameraName) {
+                    cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+                    cameraEntity.camera = snapshot.camera
+                }
+                isBossRoomSweepActive = false
+                isCameraTransitioning = false
+                cameraFadeOpacity = 0
+                bossRoomSweepSkipRequested = false
+                scheduleBoardProjectionRefresh()
+            }
+        }
+
+        // Fade conceals the intentional cut from the dialogue's still to the left
+        // object. Subsequent motion is the authored positional path, not a yaw pan.
+        if !reducedMotion {
+            cameraFadeOpacity = 1
+            guard await waitDuringBossRoomSweep(0.18, generation: generation) else { return false }
+        }
+        guard generation == bossRoomSweepGeneration, !Task.isCancelled else { return false }
+        if reducedMotion || requestedReducedMotion {
+            finishBossRoomSweepCamera(named: battle.name, snapshot: battle.snapshot)
+            completed = true
+            recordBossRoomSweepDiagnostic(floor: floor, label: "reduced-motion", elapsed: 0,
+                                         maximumStep: 0, target: battle.snapshot)
+            return true
+        }
+
+        let roomMatrix = root.transformMatrix(relativeTo: nil)
+        var clock = BossRoomSweepPlayback(duration: track.duration)
+        var previousTick = ProcessInfo.processInfo.systemUptime
+        var previousPosition: SIMD3<Float>?
+        var maximumStep: Float = 0
+        var diagnosticStep = 0
+        let milestones: [(TimeInterval, String)] = [(0, "left"), (3.4, "wide"), (7.2, "right"), (11.2, "return")]
+
+        Self.loadLog.notice("sweep.begin floor=\(floor) generation=\(generation)")
+        while !Task.isCancelled, generation == bossRoomSweepGeneration,
+              requestedSceneID == sceneID {
+            let now = ProcessInfo.processInfo.systemUptime
+            let delta = now - previousTick
+            previousTick = now
+            let suspended = bossRoomSweepSuspended || UIApplication.shared.applicationState != .active
+            if !suspended {
+                // Skip also handles enabling Reduce Motion while the tour is open.
+                // Conceal the cut rather than sweeping rapidly across the room.
+                if bossRoomSweepSkipRequested || requestedReducedMotion {
+                    cameraFadeOpacity = 1
+                    guard await waitDuringBossRoomSweep(0.18, generation: generation) else { return false }
+                    break
+                }
+                clock.advance(elapsed: delta, isSuspended: false)
+                let snapshot = bossRoomSweepCamera(track: track, elapsed: clock.elapsedTime,
+                    roomMatrix: roomMatrix, battle: bossRoomBattleCamera()?.snapshot ?? battle.snapshot)
+                cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+                cameraEntity.camera = snapshot.camera
+                cameraFadeOpacity = 0
+                let position = Transform(matrix: snapshot.transformMatrix).translation
+                if let previousPosition { maximumStep = max(maximumStep, simd_distance(previousPosition, position)) }
+                previousPosition = position
+                if diagnosticStep < milestones.count,
+                   clock.elapsedTime >= milestones[diagnosticStep].0 {
+                    recordBossRoomSweepDiagnostic(floor: floor, label: milestones[diagnosticStep].1,
+                        elapsed: clock.elapsedTime, maximumStep: maximumStep)
+                    diagnosticStep += 1
+                }
+                if clock.isFinished { break }
+            }
+            do { try await Task.sleep(for: .milliseconds(16)) } catch { return false }
+        }
+        guard !Task.isCancelled, generation == bossRoomSweepGeneration,
+              requestedSceneID == sceneID else { return false }
+        let target = bossRoomBattleCamera() ?? battle
+        finishBossRoomSweepCamera(named: target.name, snapshot: target.snapshot)
+        completed = true
+        recordBossRoomSweepDiagnostic(floor: floor,
+            label: bossRoomSweepSkipRequested ? "skipped" : "battle", elapsed: clock.elapsedTime,
+            maximumStep: maximumStep, target: target.snapshot)
+        Self.loadLog.notice("sweep.complete floor=\(floor) skipped=\(self.bossRoomSweepSkipRequested)")
+        return true
+    }
+
+    func setBossRoomSweepSuspended(_ suspended: Bool) {
+        guard bossRoomSweepSuspended != suspended else { return }
+        bossRoomSweepSuspended = suspended
+        if isBossRoomSweepActive, let sceneID = requestedSceneID, let floor = bossRoomFloor(sceneID) {
+            recordBossRoomSweepDiagnostic(floor: floor, label: suspended ? "paused" : "resumed",
+                                         elapsed: 0, maximumStep: 0)
+        }
+    }
+
+    func skipBossRoomSweep() {
+        guard isBossRoomSweepActive else { return }
+        bossRoomSweepSkipRequested = true
+    }
+
+    func cancelBossRoomSweep(restoreCamera: Bool = true) {
+        bossRoomSweepGeneration &+= 1
+        guard isBossRoomSweepActive else { return }
+        isBossRoomSweepActive = false
+        isCameraTransitioning = false
+        cameraFadeOpacity = 0
+        bossRoomSweepSkipRequested = false
+        if restoreCamera, let activeCameraName,
+           let snapshot = resolvedCameraSnapshot(activeCameraName), let cameraEntity {
+            cameraEntity.stopAllAnimations(recursive: false)
+            cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+            cameraEntity.camera = snapshot.camera
+            scheduleBoardProjectionRefresh()
+        }
+    }
+
+    private func waitDuringBossRoomSweep(_ duration: TimeInterval, generation: UInt64) async -> Bool {
+        var clock = BossRoomSweepPlayback(duration: duration)
+        var previous = ProcessInfo.processInfo.systemUptime
+        while !clock.isFinished {
+            guard !Task.isCancelled, generation == bossRoomSweepGeneration else { return false }
+            let now = ProcessInfo.processInfo.systemUptime
+            clock.advance(elapsed: now - previous,
+                          isSuspended: bossRoomSweepSuspended || UIApplication.shared.applicationState != .active)
+            previous = now
+            do { try await Task.sleep(for: .milliseconds(16)) } catch { return false }
+        }
+        return true
+    }
+
+    private func bossRoomBattleCamera() -> (name: String, snapshot: AuthoredCameraSnapshot)? {
+        guard let name = registry.descriptor?.cameraName(for: .battle) else { return nil }
+        // Dialogue may still request `.main`; use the actual actor-based battle
+        // framing explicitly, especially for the interior return poses on floors 1–3.
+        if let subject = battleSubjectSnapshot, subject.name == name { return (name, subject.snapshot) }
+        return authoredCameraSnapshots[name].map { (name, $0) }
+    }
+
+    private func finishBossRoomSweepCamera(named name: String, snapshot: AuthoredCameraSnapshot) {
+        guard let cameraEntity else { return }
+        cameraEntity.stopAllAnimations(recursive: false)
+        cameraEntity.setTransformMatrix(snapshot.transformMatrix, relativeTo: nil)
+        cameraEntity.camera = snapshot.camera
+        requestedCameraPreset = .battle
+        activeCameraName = name
+        activeUsesBattleFraming = true
+        clearBattleCameraAdjustmentState()
+    }
+
+    private func bossRoomSweepCamera(track: BossRoomSweepTrack, elapsed: TimeInterval,
+                                     roomMatrix: simd_float4x4,
+                                     battle: AuthoredCameraSnapshot) -> AuthoredCameraSnapshot {
+        let pose = track.pose(at: elapsed)
+        let aspect = arView.map { Float($0.bounds.width / max(1, $0.bounds.height)) }
+            ?? track.authoredAspectRatio
+        let optics = PerspectiveCameraComponent(near: track.nearClip, far: track.farClip,
+            fieldOfViewInDegrees: track.verticalFieldOfView(lensMillimeters: pose.lensMillimeters,
+                                                            aspectRatio: aspect),
+            fieldOfViewOrientation: .vertical)
+        let local = Transform(scale: .one, rotation: pose.orientation, translation: pose.position)
+        let authored = AuthoredCameraSnapshot(transformMatrix: roomMatrix * local.matrix, camera: optics)
+        // Keep the Blender room route, then land on the exact runtime camera so
+        // revealing the battle HUD cannot cause a second camera jump.
+        let blendDuration: TimeInterval = 1.2
+        let fraction = Float((elapsed - (track.duration - blendDuration)) / blendDuration)
+        return blendedSweepCamera(from: authored, to: battle, fraction: fraction)
+    }
+
+    private func blendedSweepCamera(from start: AuthoredCameraSnapshot, to end: AuthoredCameraSnapshot,
+                                    fraction: Float) -> AuthoredCameraSnapshot {
+        let t = min(1, max(0, fraction))
+        let eased = t * t * t * (t * (t * 6 - 15) + 10)
+        let a = Transform(matrix: start.transformMatrix)
+        let b = Transform(matrix: end.transformMatrix)
+        let transform = Transform(scale: .one,
+            rotation: simd_slerp(a.rotation, b.rotation, eased),
+            translation: simd_mix(a.translation, b.translation, SIMD3(repeating: eased)))
+        var optics = start.camera
+        let aspect = arView.map { Float($0.bounds.width / max(1, $0.bounds.height)) } ?? Float(4.0 / 3.0)
+        func verticalFOV(_ camera: PerspectiveCameraComponent) -> Float {
+            camera.fieldOfViewOrientation == .horizontal
+                ? 2 * atan(tan(camera.fieldOfViewInDegrees * .pi / 360) / max(0.1, aspect)) * 180 / .pi
+                : camera.fieldOfViewInDegrees
+        }
+        optics.fieldOfViewOrientation = .vertical
+        optics.fieldOfViewInDegrees = verticalFOV(start.camera)
+            + (verticalFOV(end.camera) - verticalFOV(start.camera)) * eased
+        if t >= 1 { optics = end.camera }
+        return AuthoredCameraSnapshot(transformMatrix: transform.matrix, camera: optics)
+    }
+
+    private func bossRoomFloor(_ scene: FloorSceneID) -> Int? {
+        switch scene {
+        case .floor09ArchiveRedesign: return 9
+        case .floor08AdministratorObservatory: return 8
+        case .floor07CoordinateAdministrator: return 7
+        case .floor06CausalityAdministrator: return 6
+        case .floor05OriginalMemoryAdministrator: return 5
+        case .floor04ResponsibilityAuditAdministrator: return 4
+        case .floor03VoluntaryQuarantineAdministrator: return 3
+        case .floor02SealMaintenanceAdministrator: return 2
+        case .floor01FinalAuthorizationAdministrator: return 1
+        default: return nil
+        }
+    }
+
+    private func recordBossRoomSweepDiagnostic(floor: Int, label: String, elapsed: TimeInterval,
+                                              maximumStep: Float, target: AuthoredCameraSnapshot? = nil) {
+        #if DEBUG
+        guard ProcessInfo.processInfo.arguments.contains("--boss-sweep-diagnostics"),
+              let cameraEntity, let arView else { return }
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("BossRoomSweepDiagnostics", isDirectory: true)
+        let prefix = String(format: "F%02d-%@", floor, label)
+        func values(_ matrix: simd_float4x4) -> [Float] {
+            (0..<4).flatMap { column in (0..<4).map { matrix[column][$0] } }
+        }
+        let matrix = cameraEntity.transformMatrix(relativeTo: nil)
+        var report: [String: Any] = ["floor": floor, "phase": label, "elapsed": elapsed,
+            "generation": bossRoomSweepGeneration, "scene": requestedSceneID?.rawValue ?? "",
+            "position": [matrix.columns.3.x, matrix.columns.3.y, matrix.columns.3.z],
+            "entityCamera": values(matrix), "renderedCamera": values(arView.cameraTransform.matrix),
+            "rootMatrix": values(registry.root?.transformMatrix(relativeTo: nil) ?? matrix_identity_float4x4),
+            "fieldOfView": cameraEntity.camera.fieldOfViewInDegrees, "maximumFrameDistance": maximumStep,
+            "viewport": [arView.bounds.width, arView.bounds.height], "paused": bossRoomSweepSuspended]
+        if let target {
+            let actual = Transform(matrix: matrix)
+            let desired = Transform(matrix: target.transformMatrix)
+            report["battlePositionError"] = simd_distance(actual.translation, desired.translation)
+            report["battleRotationDot"] = abs(simd_dot(actual.rotation.vector, desired.rotation.vector))
+            report["battleFieldOfViewError"] = abs(cameraEntity.camera.fieldOfViewInDegrees - target.camera.fieldOfViewInDegrees)
+        }
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+            try data.write(to: directory.appendingPathComponent(prefix + ".json"), options: .atomic)
+            arView.snapshot(saveToHDR: false) { image in
+                if let data = image?.pngData() {
+                    try? data.write(to: directory.appendingPathComponent(prefix + ".png"), options: .atomic)
+                }
+            }
+            print("C5_BOSS_SWEEP floor=\(floor) phase=\(label) time=\(elapsed) maxStep=\(maximumStep)")
+        } catch { print("C5_BOSS_SWEEP diagnostic error=\(error)") }
+        #endif
+    }
+}
+
+
 extension RealitySceneController {
     /// Blender's Cycles area lights do not survive the RealityKit USD import.
     /// Positions and aim points use the authored F09 scene's local, Z-up coordinates.
@@ -2057,14 +2512,17 @@ extension RealitySceneController {
     }
 
     private func applyFloor9ShadowQuality() {
+        let subjectLight = registry.entity(named: "DA_SUBJECT_LIGHT_0") as? SpotLight
+        subjectLight?.shadow = graphicsQuality.shadowLightCount > 0 ? SpotLightComponent.Shadow() : nil
+        let roomShadowCount = max(0, graphicsQuality.shadowLightCount - (subjectLight == nil ? 0 : 1))
         for index in 0..<6 {
             guard let lamp = registry.entity(named: "ROOM_RUNTIME_\(index)") as? SpotLight else { continue }
-            lamp.shadow = index < graphicsQuality.shadowLightCount ? SpotLightComponent.Shadow() : nil
+            lamp.shadow = index < roomShadowCount ? SpotLightComponent.Shadow() : nil
         }
         // Alternate fixtures retain even coverage when only two shadows are enabled.
         for (rank, index) in [3, 4, 0, 7].enumerated() {
             guard let lamp = registry.entity(named: "F09_RUNTIME_CEILING_\(index)") as? SpotLight else { continue }
-            lamp.shadow = rank < graphicsQuality.shadowLightCount ? SpotLightComponent.Shadow() : nil
+            lamp.shadow = rank < roomShadowCount ? SpotLightComponent.Shadow() : nil
         }
     }
 }
@@ -2081,10 +2539,11 @@ extension RealitySceneController {
 
     private func auxiliaryAssetURLs(descriptor: RealitySceneDescriptor, quality: GraphicsQuality, bundle: Bundle) -> [URL] {
         var urls = rewardAssetURLs(descriptor: descriptor, quality: quality, bundle: bundle)
+            + Array(RealityCombatEffectLibrary.resources(for: descriptor, bundle: bundle).values)
         if let actor = descriptor.actor,
            let url = bundle.url(forResource: actor.resourceName + (quality == .high ? "" : "_\(quality.rawValue)"),
                                 withExtension: "usdc", subdirectory: actor.resourceSubdirectory) {
-            urls.append(url)
+            urls.insert(url, at: 0)
         }
         return urls
     }
@@ -2100,13 +2559,17 @@ extension RealitySceneController {
             withExtension: "usdc",
             subdirectory: descriptor.resourceSubdirectory
         ) else { return }
-        PreparedRealityAssets.shared.preloadRoom(url: url)
-        PreparedRealityAssets.shared.prepareAuxiliary(urls: auxiliaryAssetURLs(descriptor: descriptor, quality: quality, bundle: bundle))
+        guard sceneID != requestedSceneID else { return }
+        PreparedRealityAssets.shared.prefetchSequentially(
+            roomURL: url, auxiliaryURLs: auxiliaryAssetURLs(descriptor: descriptor, quality: quality, bundle: bundle),
+            sceneID: sceneID, bundle: bundle,
+            canStart: { [weak self] in self?.canStartSpeculativeResource == true },
+            canDecode: { [weak self] in self?.prefetchEncounterActive == false }
+        )
     }
 
     func prefetchFloor9(quality: GraphicsQuality, bundle: Bundle = .main) {
         prefetchRoom(sceneID: .floor09ArchiveRedesign, quality: quality, bundle: bundle)
-        PreparedRealityAssets.shared.prepareEnvironment(bundle: bundle)
     }
 
     func waitForEnemyReady() async -> Bool {
@@ -2141,7 +2604,7 @@ extension RealitySceneController {
 @MainActor
 private final class PreparedRealityAssets {
     static let shared = PreparedRealityAssets()
-    private final class Entry {
+    @MainActor private final class Entry {
         let url: URL
         let result = CurrentValueSubject<Entity?, Error>(nil)
         var request: AnyCancellable?
@@ -2158,6 +2621,90 @@ private final class PreparedRealityAssets {
         }
     }
     private var room: Entry?
+    private var speculativeTask: Task<Void, Never>?
+    private var speculativeURL: URL?
+    private var filesWarmed = false
+    private var memoryCooldownUntil = Date.distantPast
+
+    func stopSpeculativeWork() {
+        speculativeTask?.cancel()
+        speculativeTask = nil
+        speculativeURL = nil
+        filesWarmed = false
+    }
+
+    /// Battle: stream resource bytes on a utility executor with bounded memory.
+    /// After battle: decode one RealityKit entity at a time during dialogue/rewards.
+    /// RealityKit requires its loader on the main queue and may stall on large USDs,
+    /// so idle input alone is NOT sufficient permission to decode during combat.
+    func prefetchSequentially(roomURL: URL, auxiliaryURLs: [URL], sceneID: FloorSceneID,
+                              bundle: Bundle, canStart: @escaping @MainActor () -> Bool,
+                              canDecode: @escaping @MainActor () -> Bool) {
+        guard speculativeURL != roomURL else { return }
+        stopSpeculativeWork()
+        speculativeURL = roomURL
+        speculativeTask = Task(priority: .background) { @MainActor [weak self] in
+            guard let self else { return }
+            @MainActor func waitForQuiet() async throws {
+                try Task.checkCancellation()
+                while !canStart() || Date() < self.memoryCooldownUntil {
+                    try await Task.sleep(for: .milliseconds(200))
+                }
+            }
+            @MainActor func awaitDecode(_ entry: Entry) async throws {
+                while entry.result.value == nil && !entry.failed {
+                    try await Task.sleep(for: .milliseconds(80))
+                }
+                try Task.checkCancellation()
+            }
+            do {
+                let directories = Set(([roomURL] + auxiliaryURLs).map { $0.deletingLastPathComponent() })
+                let files = await Task.detached(priority: .utility) {
+                    directories.flatMap { directory -> [URL] in
+                        guard let enumerator = FileManager.default.enumerator(at: directory,
+                            includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles]) else { return [] }
+                        return enumerator.compactMap { $0 as? URL }.filter {
+                            ["usdc", "usdz", "png", "jpg", "jpeg", "hdr"].contains($0.pathExtension.lowercased())
+                        }
+                    }
+                }.value
+                for file in files {
+                    try await waitForQuiet()
+                    // Chunk reads never retain an entire model/texture or construct GPU resources.
+                    var offset: UInt64 = 0
+                    while true {
+                        try await waitForQuiet()
+                        let chunkOffset = offset
+                        let count = await Task.detached(priority: .utility) { () -> Int in
+                            guard let handle = try? FileHandle(forReadingFrom: file) else { return 0 }
+                            defer { try? handle.close() }
+                            try? handle.seek(toOffset: chunkOffset)
+                            return (try? handle.read(upToCount: 1024 * 1024))?.count ?? 0
+                        }.value
+                        if count == 0 { break }
+                        offset += UInt64(count)
+                        try await Task.sleep(for: .milliseconds(8))
+                    }
+                }
+                self.filesWarmed = true
+                while !canDecode() { try await Task.sleep(for: .milliseconds(200)) }
+                try await waitForQuiet()
+                self.preloadRoom(url: roomURL)
+                if let entry = self.room { try await awaitDecode(entry) }
+                for url in auxiliaryURLs {
+                    while !canDecode() { try await Task.sleep(for: .milliseconds(200)) }
+                    try await waitForQuiet()
+                    if self.auxiliary[url] == nil || self.auxiliary[url]?.failed == true {
+                        self.auxiliary[url] = Entry(url: url)
+                    }
+                    if let entry = self.auxiliary[url] { try await awaitDecode(entry) }
+                }
+                try await waitForQuiet()
+                self.prepareEnvironment(bundle: bundle, sceneID: sceneID)
+            } catch { /* Foreground loading or navigation owns the next request. */ }
+        }
+    }
+
     // Only the selected scene's actor and two shared reward templates are retained.
     // In-flight subscribers own their entry even when another scene replaces the cache.
     private var auxiliary: [URL: Entry] = [:]
@@ -2167,6 +2714,8 @@ private final class PreparedRealityAssets {
     private init() {
         memoryWarning = NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)
             .receive(on: DispatchQueue.main).sink { [weak self] _ in
+                self?.stopSpeculativeWork()
+                self?.memoryCooldownUntil = Date().addingTimeInterval(30)
                 self?.room = nil
                 self?.auxiliary.removeAll()
                 self?.environmentTasks.values.forEach { $0.cancel() }
@@ -2175,6 +2724,11 @@ private final class PreparedRealityAssets {
             }
     }
     #if DEBUG
+    var warmupFilesReady: Bool { filesWarmed }
+    var warmupDecoded: Bool {
+        room?.result.value != nil && !auxiliary.values.contains { $0.result.value == nil || $0.failed }
+    }
+    var hasSpeculativeRoom: Bool { room != nil }
     var cacheCounts: [String: Int] { ["rooms": room == nil ? 0 : 1, "auxiliary": auxiliary.count, "environments": environmentTasks.count] }
     #endif
     func prepareAuxiliary(urls: [URL]) {
@@ -2254,7 +2808,7 @@ extension RealitySceneController {
     func runDeviceRenderDiagnostics() async {
         guard ProcessInfo.processInfo.arguments.contains("--render-diagnostics"),
               let cameraEntity, let activeCameraName,
-              let snapshot = authoredCameraSnapshots[activeCameraName], let arView else { return }
+              let snapshot = resolvedCameraSnapshot(activeCameraName), let arView else { return }
         let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("RenderDiagnostics", isDirectory: true)
         do { try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true) }
@@ -2437,6 +2991,67 @@ extension RealitySceneController {
         print("C5_EXPLORATION_DIAGNOSTICS \(id.rawValue) \(mode) complete")
     }
 
+    func runRoomWarmupDiagnostics() async {
+        guard let arView else { return }
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("RoomWarmupDiagnostics")
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        var rows: [[String: Any]] = []
+        for floor in [4, 3, 2, 1] {
+            guard let source = FinalSceneContract.room(forWarmup: .init(floor: floor, role: "residualA")),
+                  let target = FinalSceneContract.room(forWarmup: .init(floor: floor, role: "residualB")) else { continue }
+            setPrefetchCombatBusy(false)
+            load(sceneID: source, cameraPreset: .battle)
+            let start = Date()
+            while !isReady(sceneID: source, cameraPreset: .battle), Date().timeIntervalSince(start) < 60 {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+            let cold = Date().timeIntervalSince(start)
+            prefetchEncounterActive = true
+            setPrefetchCombatBusy(true)
+            prefetchRoom(sceneID: target, quality: graphicsQuality)
+            try? await Task.sleep(for: .milliseconds(500))
+            let deferred = !PreparedRealityAssets.shared.hasSpeculativeRoom
+            setPrefetchCombatBusy(false)
+            var frames: [Double] = []
+            let subscription = arView.scene.subscribe(to: SceneEvents.Update.self) { frames.append($0.deltaTime * 1000) }
+            let warmStart = Date()
+            while !PreparedRealityAssets.shared.warmupFilesReady, Date().timeIntervalSince(warmStart) < 60 {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+            subscription.cancel()
+            let filesReady = PreparedRealityAssets.shared.warmupFilesReady
+            let noDecodeDuringBattle = !PreparedRealityAssets.shared.hasSpeculativeRoom
+            let fileDuration = Date().timeIntervalSince(warmStart)
+            prefetchEncounterActive = false
+            let decodeStart = Date()
+            while !PreparedRealityAssets.shared.warmupDecoded, Date().timeIntervalSince(decodeStart) < 60 {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+            let decoded = PreparedRealityAssets.shared.warmupDecoded
+            let duration = Date().timeIntervalSince(decodeStart)
+            let transition = Date()
+            load(sceneID: target, cameraPreset: .battle)
+            while !isReady(sceneID: target, cameraPreset: .battle), Date().timeIntervalSince(transition) < 60 {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+            let warm = Date().timeIntervalSince(transition)
+            let png: Data? = await withCheckedContinuation { continuation in
+                arView.snapshot(saveToHDR: false) { continuation.resume(returning: $0?.pngData()) }
+            }
+            try? png?.write(to: directory.appendingPathComponent("floor-\(floor).png"))
+            frames.sort()
+            rows.append(["floor": floor, "sourceColdReadySeconds": cold, "targetWarmReadySeconds": warm,
+                         "deferredWhileBusy": deferred, "filesReadyDuringBattle": filesReady,
+                         "noEntityDecodeDuringBattle": noDecodeDuringBattle,
+                         "fileWarmupSeconds": fileDuration, "decoded": decoded, "postBattleDecodeSeconds": duration,
+                         "updateP95MS": frames.isEmpty ? 0 : frames[min(frames.count-1, Int(Double(frames.count)*0.95))],
+                         "updateMaxMS": frames.max() ?? 0, "ready": isReady(sceneID: target, cameraPreset: .battle)])
+            try? JSONSerialization.data(withJSONObject: ["complete": floor == 1, "runs": rows], options: [.prettyPrinted, .sortedKeys])
+                .write(to: directory.appendingPathComponent("report.json"))
+        }
+    }
+
     func runFinalTourDiagnostics() async {
         guard let arView else { return }
         let rooms = FinalSceneContract.installed.compactMap { FloorSceneID(rawValue: $0.resource) }
@@ -2505,6 +3120,362 @@ extension RealitySceneController {
         }
     }
 
+    func runBattleCameraResetDiagnostics() async {
+        guard let cameraEntity, let id = requestedSceneID, let arView else { return }
+        await environmentTask?.value
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CameraResetDiagnostics/\(id.rawValue)")
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let base = cameraEntity.transformMatrix(relativeTo: nil)
+        let fov = cameraEntity.camera.fieldOfViewInDegrees
+        func capture(_ name: String) async {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                arView.snapshot(saveToHDR: false) { image in
+                    try? image?.pngData()?.write(to: directory.appendingPathComponent(name + ".png"))
+                    continuation.resume()
+                }
+            }
+        }
+        await capture("base")
+        let intentCues: [RealityEnemyIntentCue] = [.attack, .heavyAttack, .generalShield, .absoluteShield,
+            .memoryRecord, .mimicAttack, .openingWait, .scheduledExecution, .spellSeal, .amplify, .damageReservation]
+        var intentChecks: [[String: Any]] = []
+        if registry.entity(for: .enemyActor) != nil {
+            for (index, cue) in intentCues.enumerated() {
+                combatVFXRenderer.present([.intent(cue)], registry: registry, reducedMotion: true)
+                try? await Task.sleep(for: .milliseconds(600))
+                await capture("intent-\(index)")
+                let frame = combatVFXRenderer.projectedIntentFrame(in: arView, clipped: false)
+                intentChecks.append(["cue": String(describing: cue), "visible": frame != nil,
+                    "insideViewport": frame.map { arView.bounds.contains($0) } ?? false,
+                    "clearance": combatVFXRenderer.intentClearanceDiagnostics()])
+            }
+            for (name, state) in [("general", RealityShieldState.general), ("absolute", .absolute)] {
+                combatVFXRenderer.present([.shield(state), .intent(.attack)], registry: registry, reducedMotion: true)
+                try? await Task.sleep(for: .milliseconds(600))
+                await capture("shield-\(name)")
+                let frame = combatVFXRenderer.projectedIntentFrame(in: arView, clipped: false)
+                intentChecks.append(["cue": "shield-\(name)",
+                    "insideViewport": frame.map { arView.bounds.contains($0) } ?? false,
+                    "clearance": combatVFXRenderer.intentClearanceDiagnostics()])
+            }
+            combatVFXRenderer.present([.shield(.none)], registry: registry, reducedMotion: true)
+        }
+        beginBattleCameraLook()
+        updateBattleCameraLook(translation: CGSize(width: 450, height: -180), viewportSize: CGSize(width: 1000, height: 700))
+        beginBattleCameraZoom()
+        updateBattleCameraZoom(magnification: 1.15)
+        let adjusted = cameraEntity.transformMatrix(relativeTo: nil)
+        await capture("look")
+        resetBattleCamera(animated: true)
+        try? await Task.sleep(for: .milliseconds(400))
+        let restored = cameraEntity.transformMatrix(relativeTo: nil)
+        let error = (0..<4).flatMap { c in (0..<4).map { r in abs(base[c][r] - restored[c][r]) } }.max() ?? 0
+        let fovError = abs(fov - cameraEntity.camera.fieldOfViewInDegrees)
+        let resetButtonHidden = !isBattleCameraAdjusted
+        await capture("reset")
+        beginBattleCameraLook()
+        updateBattleCameraLook(translation: CGSize(width: 1000, height: 700), viewportSize: CGSize(width: 1000, height: 700))
+        await capture("left-ceiling")
+        resetBattleCamera(animated: false)
+        beginBattleCameraLook()
+        updateBattleCameraLook(translation: CGSize(width: -1000, height: 700), viewportSize: CGSize(width: 1000, height: 700))
+        await capture("right-ceiling")
+        resetBattleCamera(animated: false)
+        for (name, x) in [("left-down", CGFloat(1000)), ("right-down", CGFloat(-1000))] {
+            beginBattleCameraLook()
+            updateBattleCameraLook(translation: CGSize(width: x, height: -700), viewportSize: CGSize(width: 1000, height: 700))
+            beginBattleCameraZoom()
+            updateBattleCameraZoom(magnification: 2)
+            await capture(name)
+            let frame = combatVFXRenderer.projectedIntentFrame(in: arView, clipped: false)
+            if registry.entity(for: .enemyActor) != nil {
+                intentChecks.append(["cue": name, "insideViewport": frame.map { arView.bounds.contains($0) } ?? false,
+                    "clearance": combatVFXRenderer.intentClearanceDiagnostics()])
+            }
+            resetBattleCamera(animated: false)
+        }
+        let report: [String: Any] = ["scene": id.rawValue, "lookChanged": base != adjusted,
+            "resetMatrixError": error, "resetFOVError": fovError,
+            "resetButtonHidden": resetButtonHidden, "intents": intentChecks]
+        try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+            .write(to: directory.appendingPathComponent("report.json"))
+        print("C5_CAMERA_RESET \(report)")
+    }
+
+    /// Uses production loading, attack events and state reconciliation; isolated preview only.
+    func runCombatEffectDiagnostics() async {
+        guard let id = requestedSceneID, let arView,
+              let actor = registry.entity(for: .enemyActor), let anchor = registry.entity(for: .enemySpawn) else { return }
+        await environmentTask?.value
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CombatEffectDiagnostics/\(id.rawValue)")
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        var checks: [[String: Any]] = []
+        func capture(_ name: String) async {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                arView.snapshot(saveToHDR: false) { image in
+                    if let data = image?.jpegData(compressionQuality: 0.85) {
+                        try? data.write(to: directory.appendingPathComponent(name + ".jpg"))
+                    }
+                    continuation.resume()
+                }
+            }
+        }
+        actorMotion.prepareEncounter()
+        setDescentPresentation(.inactive, reducedMotion: false)
+        setRewardPresentation(.inactive, reducedMotion: false)
+        try? await Task.sleep(for: .milliseconds(500))
+        let floor = combatVFXRenderer.effects.floor
+        let bounds = actor.visualBounds(relativeTo: anchor)
+        for effect in CombatEffectCatalog.required(floor: floor).sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let model = combatVFXRenderer.effects.make(effect, size: min(1.5, bounds.extents.z * 0.45)) else {
+                checks.append(["asset": effect.rawValue, "loaded": false]); continue
+            }
+            model.position = bounds.center + [max(1.0, bounds.extents.x * 0.65), -0.35, 0]
+            anchor.addChild(model)
+            try? await Task.sleep(for: .milliseconds(130))
+            await capture("asset-" + effect.rawValue)
+            checks.append(["asset": effect.rawValue, "loaded": true, "width": model.visualBounds(relativeTo: anchor).extents.x])
+            model.removeFromParent()
+        }
+        var attackChecks: [[String: Any]] = []
+        let actions: [(String, EnemyAction)] = [
+            ("normal", .attack(name: "검증", damage: 12, isStrong: false)),
+            ("heavy", .attack(name: "검증", damage: 32, isStrong: true)),
+            ("counter", .expansion(name: "검증", action: .sequence([.directHits([24]), .counterExecute])))
+        ]
+        for (name, action) in actions {
+            presentCombat(events: [.combat(.enemyActionStarted(action))], battleState: nil, reducedMotion: false)
+            try? await Task.sleep(for: .milliseconds(300))
+            setActorMotionSuspended(true)
+            let before = combatVFXRenderer.attackDiagnostics
+            await capture("attack-" + name)
+            try? await Task.sleep(for: .milliseconds(150))
+            let after = combatVFXRenderer.attackDiagnostics
+            attackChecks.append(["name": name, "state": before,
+                "pauseHeld": before["elapsed"] as? Double == after["elapsed"] as? Double])
+            setActorMotionSuspended(false)
+            try? await Task.sleep(for: .milliseconds(1250))
+        }
+        var base = CombatEngine(enemy: EnemyCatalog.recordsAdministrator).state
+        base.phase = .playerTurn; base.turnNumber = 1
+        for (name, shield) in [("general", RealityShieldState.general), ("absolute", .absolute)] {
+            combatVFXRenderer.present([.shield(shield)], registry: registry, reducedMotion: false)
+            try? await Task.sleep(for: .milliseconds(380))
+            await capture("barrier-" + name)
+        }
+        combatVFXRenderer.present([.shield(.none)], registry: registry, reducedMotion: true)
+        var cases: [(String, BattleState)] = []
+        var state = base
+        state.expansion.outputReduction = .init(multiplier: 0.75, expiresAfterTurn: 2)
+        cases.append(("suppression", state))
+        state = base
+        state.expansion.flatAmplification = 8
+        state.expansion.scheduledDamage = [.init(id: "later", name: "예약", damage: 16, dueEnemyTurn: 3),
+            .init(id: "now", name: "집행", damage: 16, dueEnemyTurn: 1)]
+        state.expansion.lockedSpells[.basicBarrier] = 3
+        cases.append(("reused-status", state))
+        if floor == 8 {
+            state = base; state.currentEnemyIntent = .telegraph(name: "초점", upcomingActionName: "공격")
+            cases.append(("focus", state))
+        }
+        if floor == 7 {
+            state = base; state.enemy.normalBarrier = 20; state.expansion.retainsCorrectionBarrier = true
+            cases.append(("axis", state))
+        }
+        if floor == 5 {
+            state = base; state.expansion.enemyPreservation = .init(multiplier: 0.5, expiresAfterTurn: 2)
+            cases.append(("preservation", state))
+        }
+        if floor == 1 || floor == 4 || floor == 5 {
+            state = base; state.expansion.copyRecord = .init(spell: .basicBarrier, category: .defense)
+            cases.append(("record", state))
+        }
+        for (name, state) in cases {
+            combatStatusRenderer.present(state, registry: registry, reducedMotion: false)
+            try? await Task.sleep(for: .milliseconds(370))
+            await capture("status-" + name)
+        }
+        combatStatusRenderer.present(nil, registry: registry, reducedMotion: false)
+        checks.append(["cleanup": anchor.findEntity(named: "DA_PERSISTENT_COMBAT_STATUS") == nil])
+        // Pause midway through shield appearance, then settle immediately when motion is reduced.
+        combatVFXRenderer.present([.shield(.general)], registry: registry, reducedMotion: false)
+        try? await Task.sleep(for: .milliseconds(90))
+        setActorMotionSuspended(true)
+        let shieldBefore = combatVFXRenderer.shieldDiagnostics["scale"] as? [Float]
+        try? await Task.sleep(for: .milliseconds(180))
+        let shieldPauseHeld = shieldBefore == combatVFXRenderer.shieldDiagnostics["scale"] as? [Float]
+        setActorMotionSuspended(false)
+        combatVFXRenderer.present([.shield(.general)], registry: registry, reducedMotion: true)
+        let shieldReducedSettled = combatVFXRenderer.shieldDiagnostics["settled"] as? Bool ?? false
+        presentCombat(events: [.combat(.enemyActionStarted(.attack(name: "검증", damage: 12, isStrong: false)))],
+            battleState: nil, reducedMotion: false)
+        try? await Task.sleep(for: .milliseconds(200))
+        combatVFXRenderer.present([], registry: registry, reducedMotion: true)
+        let reducedRemovedStrike = combatVFXRenderer.attackDiagnostics["hasStrike"] as? Bool == false
+        var terminal = base; terminal.phase = .victory; terminal.enemy.normalBarrier = 20
+        let terminalCues = RealityCombatPresentationMapper.cues(for: [], battleState: terminal)
+        combatVFXRenderer.present(terminalCues, registry: registry, reducedMotion: true)
+        let terminalRemovedShield = combatVFXRenderer.shieldDiagnostics["visible"] as? Bool == false
+        let playbackStart = Date().timeIntervalSince1970
+        var flightSamples: [[String: Any]] = []
+        for (name, action) in actions {
+            presentCombat(events: [.combat(.enemyActionStarted(action))], battleState: nil, reducedMotion: false)
+            let start = Date()
+            while Date().timeIntervalSince(start) < 1.5 {
+                try? await Task.sleep(for: .milliseconds(20))
+                flightSamples.append(["action": name, "time": Date().timeIntervalSince(start),
+                    "projectile": combatVFXRenderer.attackDiagnostics])
+            }
+        }
+        let report: [String: Any] = ["scene": id.rawValue, "floor": floor, "complete": true,
+            "playbackStart": playbackStart, "flightSamples": flightSamples,
+            "assets": checks, "attacks": attackChecks,
+            "lifecycle": ["shieldPauseHeld": shieldPauseHeld, "shieldReducedSettled": shieldReducedSettled,
+                "reducedRemovedStrike": reducedRemovedStrike, "terminalRemovedShield": terminalRemovedShield]]
+        try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+            .write(to: directory.appendingPathComponent("report.json"))
+    }
+
+    /// Captures the full attack arc through the same event entry point used by battle.
+    /// Kept separate from the quick asset check: one impact frame cannot reveal a bad return pose.
+    func runAttackMotionDiagnostics() async {
+        guard let id = requestedSceneID, let arView,
+              let actor = registry.entity(for: .enemyActor) else { return }
+        await environmentTask?.value
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("AttackMotionDiagnostics/\(id.rawValue)/\(graphicsQuality.rawValue)")
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        func joints(_ entity: Entity) -> [[Float]] {
+            var result: [[Float]] = []
+            if let model = entity as? ModelEntity {
+                result = model.jointTransforms.map {
+                    [$0.rotation.vector.x, $0.rotation.vector.y, $0.rotation.vector.z, $0.rotation.vector.w,
+                     $0.translation.x, $0.translation.y, $0.translation.z]
+                }
+            }
+            return result + entity.children.flatMap { joints($0) }
+        }
+        func startAttack(strong: Bool) {
+            presentCombat(events: [.combat(.enemyActionStarted(.attack(
+                name: strong ? "강공격 검증" : "공격 검증", damage: 12, isStrong: strong)))],
+                battleState: nil, reducedMotion: false)
+        }
+        func capture(_ name: String) async -> Bool {
+            await withCheckedContinuation { continuation in
+                arView.snapshot(saveToHDR: false) { image in
+                    guard let data = image?.jpegData(compressionQuality: 0.86) else {
+                        continuation.resume(returning: false); return
+                    }
+                    do {
+                        try data.write(to: directory.appendingPathComponent(name + ".jpg"), options: .atomic)
+                        continuation.resume(returning: true)
+                    } catch { continuation.resume(returning: false) }
+                }
+            }
+        }
+        actorMotion.prepareEncounter()
+        setDescentPresentation(.inactive, reducedMotion: false)
+        setRewardPresentation(.inactive, reducedMotion: false)
+        try? await Task.sleep(for: .milliseconds(500))
+        let initialRoot = actor.transform.matrix
+        var runs: [[String: Any]] = []
+        for strong in [false, true] {
+            guard !Task.isCancelled else { return }
+            actorMotion.prepareEncounter()
+            try? await Task.sleep(for: .milliseconds(180))
+            let baseline = joints(actor)
+            let name = strong ? "heavy" : "normal"
+            var frames: [[String: Any]] = []
+            let ready = await capture(name + "-00-ready")
+            frames.append(["phase": "ready", "file": name + "-00-ready.jpg", "snapshot": ready,
+                           "motion": actorMotion.attackDiagnostics, "joints": baseline])
+            let beginning = Date()
+            startAttack(strong: strong)
+            let samples: [(String, Double)] = strong
+                ? [("anticipation", 0.18), ("windup", 0.38), ("release", 0.54), ("impact", 0.62),
+                   ("followthrough", 0.78), ("recovery", 1.04), ("settled", 1.28), ("idle", 1.50)]
+                : [("anticipation", 0.12), ("windup", 0.28), ("release", 0.40), ("impact", 0.46),
+                   ("followthrough", 0.59), ("recovery", 0.78), ("settled", 0.96), ("idle", 1.20)]
+            for (index, sample) in samples.enumerated() {
+                let wait = sample.1 - Date().timeIntervalSince(beginning)
+                if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
+                guard !Task.isCancelled else { return }
+                let sampleTime = Date().timeIntervalSince(beginning)
+                let currentJoints = joints(actor)
+                let state = actorMotion.attackDiagnostics
+                let file = "\(name)-\(String(format: "%02d", index + 1))-\(sample.0)"
+                let available = await capture(file)
+                frames.append(["phase": sample.0, "targetSeconds": sample.1,
+                               "sampleSeconds": sampleTime, "snapshot": available, "file": file + ".jpg",
+                               "motion": state, "projectile": combatVFXRenderer.attackDiagnostics,
+                               "joints": currentJoints,
+                               "jointMotionObserved": currentJoints != baseline,
+                               "finiteJoints": currentJoints.flatMap { $0 }.allSatisfy(\.isFinite)])
+            }
+            runs.append(["attack": name, "frames": frames, "rootUnchanged": actor.transform.matrix == initialRoot])
+            try? await Task.sleep(for: .milliseconds(250))
+        }
+        // Uninterrupted playback is also recorded externally with simctl recordVideo.
+        // No snapshot work competes with animation during this second pass.
+        let playbackStart = Date().timeIntervalSince1970
+        var continuousSamples: [[String: Any]] = []
+        for strong in [false, true, false, true] {
+            startAttack(strong: strong)
+            let start = Date()
+            while Date().timeIntervalSince(start) < (strong ? 1.65 : 1.35) {
+                try? await Task.sleep(for: .milliseconds(40))
+                continuousSamples.append(["strong": strong,
+                    "sincePlaybackStart": Date().timeIntervalSince1970 - playbackStart,
+                    "motion": actorMotion.attackDiagnostics,
+                    "projectile": combatVFXRenderer.attackDiagnostics])
+            }
+        }
+        let wait = EnemyAction.expansion(name: "예약 집행 검증", action: .wait)
+        let execution = EnemyActionPresentation(action: wait, resolvedEvents: [
+            .combat(.scheduledDamageExecuted(name: "예약 집행 검증", damage: 32))])
+        presentCombat(events: [.combat(.enemyActionStarted(wait))], battleState: nil,
+                      reducedMotion: false, enemyActionPresentation: execution)
+        try? await Task.sleep(for: .milliseconds(350))
+        let scheduledMotion = actorMotion.attackDiagnostics["currentMotion"] as? String ?? "missing"
+        let scheduledWindup = await capture("scheduled-windup")
+        try? await Task.sleep(for: .milliseconds(200))
+        let scheduledImpact = await capture("scheduled-impact")
+        try? await Task.sleep(for: .seconds(1))
+        startAttack(strong: false)
+        try? await Task.sleep(for: .milliseconds(220))
+        setActorMotionSuspended(true)
+        try? await Task.sleep(for: .milliseconds(100))
+        let paused = joints(actor)
+        try? await Task.sleep(for: .milliseconds(250))
+        let pauseHeld = paused == joints(actor)
+        setActorMotionSuspended(false)
+        try? await Task.sleep(for: .seconds(1.2))
+        actorMotion.setReducedMotion(true)
+        // The renderer applies the new frozen idle pose on the next frame.
+        // Compare two settled poses, not the outgoing animated pose.
+        try? await Task.sleep(for: .milliseconds(100))
+        let reduced = joints(actor)
+        try? await Task.sleep(for: .milliseconds(250))
+        let reducedHeld = reduced == joints(actor)
+        actorMotion.setReducedMotion(false)
+        actorMotion.prepareEncounter()
+        let report: [String: Any] = ["scene": id.rawValue, "quality": graphicsQuality.rawValue,
+            "camera": activeCameraName ?? "", "jointCount": joints(actor).count,
+            "missingRoles": missingEntityRoles.map(\.rawValue), "runs": runs,
+            "continuousPlaybackStartEpoch": playbackStart, "continuousPlaybackCount": 4,
+            "continuousSamples": continuousSamples,
+            "scheduledExecution": ["motion": scheduledMotion,
+                "expectedHeavyAttack": scheduledMotion == "heavyAttack",
+                "windupSnapshot": scheduledWindup, "impactSnapshot": scheduledImpact],
+            "pauseHeld": pauseHeld, "reducedMotionHeld": reducedHeld,
+            "restoredVisibility": actor.isEnabled, "complete": true]
+        try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+            .write(to: directory.appendingPathComponent("report.json"), options: .atomic)
+        print("C5_ATTACK_MOTION_DIAGNOSTICS \(id.rawValue) \(graphicsQuality.rawValue) complete")
+    }
+
     func runExpansionDiagnostics() async {
         guard let id = requestedSceneID, let arView else { return }
         let preset = requestedCameraPreset
@@ -2535,6 +3506,8 @@ extension RealitySceneController {
         try? await Task.sleep(for: .milliseconds(350))
         let actor = registry.entity(for: .enemyActor)
         let before = joints(actor)
+        // Gate diagnostics represent the post-victory flow; the defeated actor is absent.
+        if preset == .descentInput { actor?.isEnabled = false }
         await capture("ready")
         var animated: [[Float]] = []
         var lifecycle: [String: Any] = [:]
@@ -2548,7 +3521,8 @@ extension RealitySceneController {
             await capture("reduced-motion")
             actorMotion.setReducedMotion(false)
             actorMotion.play("death")
-            try? await Task.sleep(for: .milliseconds(1950))
+            try? await Task.sleep(for: .milliseconds(350))
+            await capture("fracture")
             actorMotion.setSuspended(true)
             let pausedOpacity = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 1
             try? await Task.sleep(for: .milliseconds(200))
@@ -2556,20 +3530,98 @@ extension RealitySceneController {
             actorMotion.setSuspended(false)
             try? await Task.sleep(for: .milliseconds(900))
             lifecycle["deathOpacity"] = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 1
+            lifecycle["deathDisabled"] = actor?.children.first?.isEnabled == false
             await capture("death")
+            synchronizeCombatState(nil, reducedMotion: false)
+            setEnemyPreviewVisible(true)
+            lifecycle["hiddenAfterDialogueReset"] = actor?.isEnabled == false
+            actorMotion.setReducedMotion(true)
+            lifecycle["hiddenAfterMotionSettingChange"] = actor?.children.first?.isEnabled == false
+            await capture("after-defeat-dialogue")
             actorMotion.prepareEncounter()
             lifecycle["restartOpacity"] = actor?.children.first?.components[OpacityComponent.self]?.opacity ?? 0
         } else if preset == .descentInput {
+            progressionVFXRenderer.prepareMiddleDoorPreview(sceneID: id)
+            let doorFrame = registry.entity(named: "F08B_Door_Frame")
+            let frameClosed = doorFrame?.transform.matrix
+            let platformRoles: [RealityEntityRole] = [.descentStele, .descentPedestal]
+            let platforms = platformRoles.compactMap { registry.entity(for: $0) }
+            let platformBase = platforms.map { $0.transform.matrix }
+            var stable = true
+            for state: RealityDescentPresentationState in [.ready, .drawing, .failed] {
+                setDescentPresentation(state, reducedMotion: false)
+                try? await Task.sleep(for: .milliseconds(250))
+                stable = stable && platformBase == platforms.map { $0.transform.matrix }
+            }
+            lifecycle["fixedInputPlatforms"] = stable
             setDescentPresentation(.approved, reducedMotion: false)
+            try? await Task.sleep(for: .milliseconds(800))
+            await capture("door-opening")
             lifecycle["doorOpeningCompleted"] = await waitForDescentDoorOpening()
+            lifecycle["fixedPlatformsAfterApproval"] = platformBase == platforms.map { $0.transform.matrix }
             setDescentPresentation(.open, reducedMotion: false)
             try? await Task.sleep(for: .milliseconds(100))
             await capture("door-open")
+            try? await Task.sleep(for: .seconds(2))
+            await capture("door-open-later")
+            if let frameClosed {
+                lifecycle["fixedFrameUnchanged"] = frameClosed == doorFrame?.transform.matrix
+                setDescentPresentation(.ready, reducedMotion: false)
+                try? await Task.sleep(for: .milliseconds(100))
+                await capture("door-reset")
+                setDescentPresentation(.approved, reducedMotion: true)
+                await capture("door-reduced-motion")
+            }
+        }
+        if preset == .rewardSelection {
+            let lidNames = ["Left", "Center", "Right"].map { "F08B_RewardSlot_\($0)Lid" }
+            let lift = registry.entity(named: "F08B_RewardPedestal_CentralLift")
+            if let stand = registry.entity(for: .rewardStand), let root = registry.root {
+                lifecycle["pedestalWidth"] = stand.visualBounds(relativeTo: root).extents.x
+            }
+            setRewardPresentation(.inactive, reducedMotion: true)
+            let closedLids = lidNames.compactMap { registry.entity(named: $0)?.transform.matrix }
+            let closedLift = lift?.transform.matrix
+            await capture("reward-closed")
+            setRewardPresentation(.appearing, reducedMotion: false)
+            try? await Task.sleep(for: .seconds(1))
+            await capture("reward-opening")
+            lifecycle["appearanceCompleted"] = await waitForRewardAppearance()
+            setRewardPresentation(.choosing, reducedMotion: false)
+            let openLids = lidNames.compactMap { registry.entity(named: $0)?.transform.matrix }
+            lifecycle["movingLidCount"] = zip(closedLids, openLids).filter { $0 != $1 }.count
+            lifecycle["liftMoved"] = closedLift != lift?.transform.matrix
+            await capture("reward-open")
+            setRewardPresentation(.resolving(selectedIndex: 1), reducedMotion: false)
+            try? await Task.sleep(for: .milliseconds(500))
+            let selected = registry.entity(for: .rewardScrollCenter)
+            let acquired = selected?.transform.matrix
+            func poseDelta() -> Float {
+                guard let acquired, let actual = selected?.transform.matrix else { return .infinity }
+                return (0..<4).flatMap { column in (0..<4).map { row in abs(acquired[column][row] - actual[column][row]) } }.max() ?? 0
+            }
+            await capture("reward-acquired")
+            setRewardPresentation(.resolved(selectedIndex: 1), reducedMotion: false)
+            lifecycle["completionPoseMaxDelta"] = poseDelta()
+            lifecycle["completionKeepsSelectedPose"] = poseDelta() < 0.0001
+            try? await Task.sleep(for: .milliseconds(500))
+            lifecycle["completionDoesNotReplay"] = poseDelta() < 0.0001
+            setRewardPresentation(.resolved(selectedIndex: 1), reducedMotion: false)
+            lifecycle["restorationDoesNotReplay"] = poseDelta() < 0.0001
+            lifecycle["discardedRewardsHidden"] = registry.entity(for: .rewardScrollLeft)?.isEnabled == false
+                && registry.entity(for: .rewardScrollRight)?.isEnabled == false
+            await capture("reward-complete")
+            setRewardPresentation(.inactive, reducedMotion: true)
+            lifecycle["closedPoseRestored"] = closedLids == lidNames.compactMap { registry.entity(named: $0)?.transform.matrix }
+                && closedLift == lift?.transform.matrix
+            setRewardPresentation(.appearing, reducedMotion: true)
+            lifecycle["reducedMotionCompleted"] = await waitForRewardAppearance()
+            setRewardPresentation(.choosing, reducedMotion: true)
         }
         let rewardModelCount = [RealityEntityRole.rewardScrollLeft, .rewardScrollCenter, .rewardScrollRight]
             .filter { role in
                 guard let holder = registry.entity(for: role) else { return false }
-                return holder.name.hasPrefix("FINAL_Animated_") && !holder.children.isEmpty
+                return finalRewardModelTransforms[role] != nil && !holder.children.isEmpty
             }.count
         let expectedRewardCount = requestedFinalRewardTiers?.count ?? 0
         let report: [String: Any] = ["scene": id.rawValue, "quality": graphicsQuality.rawValue,

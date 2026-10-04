@@ -1,0 +1,223 @@
+{
+  "7-floor07_coordinate_administrator-descentInput": {
+    "actorPresent": true,
+    "camera": "CAM_F07_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 56.357181549072266,
+    "jointCount": 20,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedInputPlatforms": true,
+      "fixedPlatformsAfterApproval": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "medium",
+    "rewardModelCount": 3,
+    "rewardReady": true,
+    "scene": "floor07_coordinate_administrator"
+  },
+  "2-floor02_seal_maintenance_administrator-descentInput": {
+    "actorPresent": true,
+    "camera": "CAM_F02_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 45.74732971191406,
+    "jointCount": 20,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedInputPlatforms": true,
+      "fixedPlatformsAfterApproval": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "medium",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor02_seal_maintenance_administrator"
+  },
+  "5-floor05_memory_omission_residue-descentInput": {
+    "actorPresent": true,
+    "camera": "CAM_F05A_BossAccess",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 52.12932586669922,
+    "jointCount": 18,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedInputPlatforms": true,
+      "fixedPlatformsAfterApproval": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "medium",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor05_memory_omission_residue"
+  },
+  "8-floor08_administrator_observatory-descentInput": {
+    "actorPresent": true,
+    "camera": "CAM_F08_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 42.67372131347656,
+    "jointCount": 5,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedFrameUnchanged": true,
+      "fixedInputPlatforms": true,
+      "fixedPlatformsAfterApproval": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "medium",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor08_administrator_observatory"
+  },
+  "5-floor05_original_memory_administrator-descentInput": {
+    "actorPresent": true,
+    "camera": "CAM_F05_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 50.22966766357422,
+    "jointCount": 19,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedInputPlatforms": true,
+      "fixedPlatformsAfterApproval": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "medium",
+    "rewardModelCount": 3,
+    "rewardReady": true,
+    "scene": "floor05_original_memory_administrator"
+  },
+  "10-floor10_closed_office-descentInput": {
+    "actorPresent": false,
+    "camera": "CAM_F10_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 41.112091064453125,
+    "jointCount": 0,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedInputPlatforms": true,
+      "fixedPlatformsAfterApproval": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "medium",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor10_closed_office"
+  },
+  "6-floor06_causality_administrator-descentInput": {
+    "actorPresent": true,
+    "camera": "CAM_F06_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 56.357181549072266,
+    "jointCount": 19,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedInputPlatforms": true,
+      "fixedPlatformsAfterApproval": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "medium",
+    "rewardModelCount": 3,
+    "rewardReady": true,
+    "scene": "floor06_causality_administrator"
+  },
+  "4-floor04_responsibility_audit_administrator-descentInput": {
+    "actorPresent": true,
+    "camera": "CAM_F04_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 50.22966766357422,
+    "jointCount": 20,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedInputPlatforms": true,
+      "fixedPlatformsAfterApproval": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "medium",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor04_responsibility_audit_administrator"
+  },
+  "3-floor03_voluntary_quarantine_administrator-descentInput": {
+    "actorPresent": true,
+    "camera": "CAM_F03_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 45.74732971191406,
+    "jointCount": 56,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedInputPlatforms": true,
+      "fixedPlatformsAfterApproval": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "medium",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor03_voluntary_quarantine_administrator"
+  },
+  "9-floor09_archive_redesign-descentInput": {
+    "actorPresent": true,
+    "camera": "CAM_F09_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 45.74733352661133,
+    "jointCount": 5,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedInputPlatforms": true,
+      "fixedPlatformsAfterApproval": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "medium",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor09_archive_redesign"
+  },
+  "1-floor01_final_authorization_administrator-descentInput": {
+    "actorPresent": true,
+    "camera": "CAM_F01_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 45.74732971191406,
+    "jointCount": 19,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedInputPlatforms": true,
+      "fixedPlatformsAfterApproval": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "medium",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor01_final_authorization_administrator"
+  }
+}

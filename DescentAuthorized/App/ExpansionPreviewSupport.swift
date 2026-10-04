@@ -3,21 +3,37 @@ import Foundation
 
 /// Isolated simulator preview; never reads or writes the player's persistent save.
 enum ExpansionPreviewSupport {
+    /// Enters the real boss dialogue; completion still owns the room sweep and combat transition.
+    static var bossEncounterFloor: Int? {
+        let args = ProcessInfo.processInfo.arguments
+        guard let index = args.firstIndex(of: "--preview-boss-encounter"), args.indices.contains(index + 1),
+              let floor = Int(args[index + 1]), (1...9).contains(floor) else { return nil }
+        return floor
+    }
+
     static var floor: Int? {
+        if let floor = bossEncounterFloor, floor <= 7 { return floor }
         let args = ProcessInfo.processInfo.arguments
         guard let index = args.firstIndex(of: "--preview-floor"), args.indices.contains(index + 1),
               let floor = Int(args[index + 1]), (1...7).contains(floor) else { return nil }
         return floor
     }
     static var loadoutFloor: Int? {
+        if let floor = bossEncounterFloor, floor >= 8 { return floor }
         let args = ProcessInfo.processInfo.arguments
         guard let index = args.firstIndex(of: "--preview-loadout-floor"), args.indices.contains(index + 1),
               let floor = Int(args[index + 1]), (8...9).contains(floor) else { return nil }
         return floor
     }
 
+    static var sealChoice: SpellID? {
+        let args = ProcessInfo.processInfo.arguments
+        guard let index = args.firstIndex(of: "--preview-seal-choice"), args.indices.contains(index + 1) else { return nil }
+        return SpellID(rawValue: args[index + 1])
+    }
+
     static var isBattle: Bool { ProcessInfo.processInfo.arguments.contains("--preview-battle") }
-    static var isBoss: Bool { ProcessInfo.processInfo.arguments.contains("--preview-boss") }
+    static var isBoss: Bool { bossEncounterFloor != nil || ProcessInfo.processInfo.arguments.contains("--preview-boss") }
     static func makeStore() -> (any GameSaveStore)? {
         if let loadoutFloor {
             var seed = GameProgress.newGame
@@ -42,7 +58,8 @@ enum ExpansionPreviewSupport {
             if floor <= 5 { _ = try controller.learnExpansionSpell(.executionDelay) }
             let args = ProcessInfo.processInfo.arguments
             var stage: ExpansionStage = isBoss ? .bossPreparation : .preparation
-            if let index = args.firstIndex(of: "--preview-stage"), args.indices.contains(index + 1),
+            if bossEncounterFloor == nil,
+               let index = args.firstIndex(of: "--preview-stage"), args.indices.contains(index + 1),
                let requested = ExpansionStage(rawValue: args[index + 1]),
                !requested.isBattle, requested != .complete { stage = requested }
             var approvals = 0
@@ -61,7 +78,8 @@ enum ExpansionPreviewSupport {
             return args[index + 1]
         }
         let requested = value("--preview-stage").flatMap(ExpansionStage.init(rawValue:))
-        let stage = requested ?? (isBoss ? .bossPreparation : .preparation)
+        let stage: ExpansionStage = bossEncounterFloor != nil ? .bossPreparation
+            : requested ?? (isBoss ? .bossPreparation : .preparation)
         let residualIndex = min(1, max(0, Int(value("--preview-residual") ?? "0") ?? 0))
         let approvals = min(3, max(0, Int(value("--preview-approvals") ?? "0") ?? 0))
         let current = ExpansionProgress(floorNumber: floor, stage: stage,

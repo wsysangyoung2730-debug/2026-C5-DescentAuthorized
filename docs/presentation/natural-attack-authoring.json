@@ -1,0 +1,798 @@
+{
+  "version": 2,
+  "actors": [
+    {
+      "actor": "BackflowBlockerResidual",
+      "action": "brace the round shield, swing the right hook from outside inward, let it follow through",
+      "clips": {
+        "attack": {
+          "start": 8.9,
+          "end": 9.9,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 10.0,
+          "end": 11.3,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/upper_arm_L"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R",
+        "offset": [
+          0.05419,
+          0.872565,
+          -0.225817
+        ]
+      }
+    },
+    {
+      "actor": "CausalityAdministrator",
+      "action": "keep the open ledger supported, lift the right quill, inscribe then flick forward",
+      "clips": {
+        "attack": {
+          "start": 9.4,
+          "end": 10.4,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 10.5,
+          "end": 11.8,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/neck/head"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R",
+        "offset": [
+          -0.225792,
+          0.48637,
+          -0.277421
+        ]
+      }
+    },
+    {
+      "actor": "CausalityResidue",
+      "action": "hold the rear clock frame steady, suspend the front right hand, delayed sharp strike",
+      "clips": {
+        "attack": {
+          "start": 9.8,
+          "end": 10.8,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 10.9,
+          "end": 12.2,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/upper_arm_L"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R",
+        "offset": [
+          0.05419,
+          0.872565,
+          -0.225817
+        ]
+      }
+    },
+    {
+      "actor": "ConsentCustodianResidual",
+      "action": "present the held book with both hands together, recoil its weight, lower together",
+      "clips": {
+        "attack": {
+          "start": 9.7,
+          "end": 10.7,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 10.8,
+          "end": 12.1,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine",
+        "root/pelvis/spine/chest",
+        "root/pelvis/spine/chest/neck/head"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/equipment_book",
+        "offset": [
+          -0.181375,
+          0.07012,
+          0.101207
+        ]
+      }
+    },
+    {
+      "actor": "CoordinateAdministrator",
+      "action": "ground the staff and halo, raise free left instrument, issue an outward decree",
+      "clips": {
+        "attack": {
+          "start": 9.6,
+          "end": 10.6,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 10.7,
+          "end": 12.0,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_L",
+        "root/pelvis/spine/chest/neck/head"
+      ],
+      "fixedSupport": "R",
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_L",
+        "offset": [
+          0.225793,
+          0.48637,
+          -0.277421
+        ]
+      }
+    },
+    {
+      "actor": "CoordinateResidue",
+      "action": "brace the left tool, draw right coordinate spear, thrust and retract",
+      "clips": {
+        "attack": {
+          "start": 8.8,
+          "end": 9.8,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 9.9,
+          "end": 11.2,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/upper_arm_L",
+        "root/pelvis/spine/chest"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R",
+        "offset": [
+          0.05419,
+          0.872565,
+          -0.225817
+        ]
+      }
+    },
+    {
+      "actor": "ExitReviewResidual",
+      "action": "brace the tower shield, raise the right baton, deliver a diagonal downward judgement",
+      "clips": {
+        "attack": {
+          "start": 9.2,
+          "end": 10.2,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 10.3,
+          "end": 11.6,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/upper_arm_L"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R",
+        "offset": [
+          0.152159,
+          1.791339,
+          -0.136419
+        ]
+      }
+    },
+    {
+      "actor": "FinalAuthorizationAdministrator",
+      "action": "keep left authority staff grounded, gather with right palm then deliver an outward decree",
+      "clips": {
+        "attack": {
+          "start": 10.2,
+          "end": 11.2,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 11.3,
+          "end": 12.6,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/neck/head"
+      ],
+      "fixedSupport": "L",
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R",
+        "offset": [
+          -0.225792,
+          0.48637,
+          -0.277421
+        ]
+      }
+    },
+    {
+      "actor": "IdentityComparisonResidual",
+      "action": "keep the identity ledger supported, trace a short scan with the raised pointer and point outward",
+      "clips": {
+        "attack": {
+          "start": 9.3,
+          "end": 10.3,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 10.4,
+          "end": 11.7,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/upper_arm_R/forearm_R",
+        "root/pelvis/spine/chest/upper_arm_R/forearm_R/hand_R",
+        "root/pelvis/spine/chest/neck/head"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R/forearm_R/hand_R",
+        "offset": [
+          -0.0,
+          0.084853,
+          -0.084853
+        ]
+      }
+    },
+    {
+      "actor": "MemoryOmissionResidue",
+      "action": "spread the heavy claws, rake inward with the right arm, finish with left claw",
+      "clips": {
+        "attack": {
+          "start": 8.5,
+          "end": 9.5,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 9.6,
+          "end": 10.9,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/upper_arm_L",
+        "root/pelvis/spine/chest"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R",
+        "offset": [
+          0.083881,
+          0.980242,
+          -0.602486
+        ]
+      }
+    },
+    {
+      "actor": "ObservationAdministrator",
+      "action": "raise and hold the arm cannon on target, fire, absorb recoil, lower",
+      "clips": {
+        "attack": {
+          "start": 6.5,
+          "end": 7.5,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 7.6,
+          "end": 8.9,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/spine/arm_R",
+        "root/spine/arm_L",
+        "root/spine",
+        "root/spine/head"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/spine/arm_R",
+        "offset": [
+          -0.214285,
+          0.879507,
+          -0.331836
+        ]
+      }
+    },
+    {
+      "actor": "ObservationResidue",
+      "action": "open paired claws, sweep the right claw across, left claw follows",
+      "clips": {
+        "attack": {
+          "start": 6.5,
+          "end": 7.5,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 7.6,
+          "end": 8.9,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/spine/arm_R",
+        "root/spine/arm_L",
+        "root/spine"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/spine/arm_R",
+        "offset": [
+          -0.059228,
+          0.9826,
+          -0.389674
+        ]
+      }
+    },
+    {
+      "actor": "OriginalMemoryAdministrator",
+      "action": "raise the complete memory stamp in the right hand, press forward, settle its weight",
+      "clips": {
+        "attack": {
+          "start": 10.0,
+          "end": 11.0,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 11.1,
+          "end": 12.4,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/neck/head"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R",
+        "offset": [
+          -0.225791,
+          0.48637,
+          -0.277421
+        ]
+      }
+    },
+    {
+      "actor": "OverloadResidual",
+      "action": "wind up the pressurized right clamp, snap it forward, absorb the pressure kick",
+      "clips": {
+        "attack": {
+          "start": 8.3,
+          "end": 9.3,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 9.4,
+          "end": 10.7,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/upper_arm_L",
+        "root/pelvis/spine/chest/neck/head"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R",
+        "offset": [
+          0.05419,
+          0.872565,
+          -0.225817
+        ]
+      }
+    },
+    {
+      "actor": "QuarantineEnforcerResidual",
+      "action": "open the two rigid pincers, right clamp reaches then left clamp closes the space",
+      "clips": {
+        "attack": {
+          "start": 8.7,
+          "end": 9.7,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 9.8,
+          "end": 11.1,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/upper_arm_L"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R",
+        "offset": [
+          0.05419,
+          0.872565,
+          -0.225817
+        ]
+      }
+    },
+    {
+      "actor": "RecordAdministrator",
+      "action": "draw the sword back, diagonal forward cut, shield held in guard",
+      "clips": {
+        "attack": {
+          "start": 6.5,
+          "end": 7.5,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 7.6,
+          "end": 8.9,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/spine/arm_R",
+        "root/spine/arm_L",
+        "root/spine",
+        "root/spine/head"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/spine/arm_R",
+        "offset": [
+          0.03321,
+          1.362264,
+          -0.400703
+        ]
+      }
+    },
+    {
+      "actor": "RejectionExecutionResidual",
+      "action": "lift the entire right stamp assembly, drive it down and forward, shield stays braced",
+      "clips": {
+        "attack": {
+          "start": 8.6,
+          "end": 9.6,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 9.7,
+          "end": 11.0,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/upper_arm_L",
+        "root/pelvis/spine/chest/neck/head"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R",
+        "offset": [
+          -0.265148,
+          1.38303,
+          -0.193452
+        ]
+      }
+    },
+    {
+      "actor": "ResponsibilityAuditAdministrator",
+      "action": "hold the grounded right staff and scales, cock the left seal and punch its face forward",
+      "clips": {
+        "attack": {
+          "start": 9.8,
+          "end": 10.8,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 10.9,
+          "end": 12.2,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_L",
+        "root/pelvis/spine/chest/neck/head"
+      ],
+      "fixedSupport": "R",
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_L",
+        "offset": [
+          0.225792,
+          0.48637,
+          -0.277421
+        ]
+      }
+    },
+    {
+      "actor": "SealMaintenanceAdministrator",
+      "action": "anchor right staff and rear tanks, draw the left claw inward then release a pressure push",
+      "clips": {
+        "attack": {
+          "start": 9.6,
+          "end": 10.6,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 10.7,
+          "end": 12.0,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_L",
+        "root/pelvis/spine/chest/neck/head"
+      ],
+      "fixedSupport": "R",
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_L",
+        "offset": [
+          0.225791,
+          0.48637,
+          -0.277422
+        ]
+      }
+    },
+    {
+      "actor": "SignatureMimicResidual",
+      "action": "support the book with left hand, draw a right-hand signature arc and flick it out",
+      "clips": {
+        "attack": {
+          "start": 9.1,
+          "end": 10.1,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 10.2,
+          "end": 11.5,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "root/pelvis/spine/chest/upper_arm_R",
+        "root/pelvis/spine/chest/upper_arm_R/forearm_R",
+        "root/pelvis/spine/chest/upper_arm_R/forearm_R/hand_R",
+        "root/pelvis/spine/chest/neck/head"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "root/pelvis/spine/chest/upper_arm_R/forearm_R/hand_R",
+        "offset": [
+          0.0,
+          0.084853,
+          -0.084853
+        ]
+      }
+    },
+    {
+      "actor": "VoluntaryQuarantineAdministrator",
+      "action": "draw the open right palm toward the chest, turn and extend it to command isolation",
+      "clips": {
+        "attack": {
+          "start": 10.0,
+          "end": 11.0,
+          "duration": 1.0,
+          "impact": 0.46,
+          "settledAt": 0.96,
+          "release": 0.4,
+          "authoredFrames": 31
+        },
+        "heavyAttack": {
+          "start": 11.1,
+          "end": 12.4,
+          "duration": 1.3,
+          "impact": 0.62,
+          "settledAt": 1.28,
+          "release": 0.54,
+          "authoredFrames": 40
+        }
+      },
+      "movingJoints": [
+        "mixamorig_Hips/mixamorig_Spine/mixamorig_Spine1/mixamorig_Spine2/mixamorig_RightShoulder/mixamorig_RightArm",
+        "mixamorig_Hips/mixamorig_Spine/mixamorig_Spine1/mixamorig_Spine2/mixamorig_RightShoulder/mixamorig_RightArm/mixamorig_RightForeArm",
+        "mixamorig_Hips/mixamorig_Spine/mixamorig_Spine1/mixamorig_Spine2/mixamorig_RightShoulder/mixamorig_RightArm/mixamorig_RightForeArm/mixamorig_RightHand",
+        "mixamorig_Hips/mixamorig_Spine/mixamorig_Spine1/mixamorig_Spine2/mixamorig_Neck/mixamorig_Head"
+      ],
+      "fixedSupport": null,
+      "attackSocket": {
+        "joint": "mixamorig_Hips/mixamorig_Spine/mixamorig_Spine1/mixamorig_Spine2/mixamorig_RightShoulder/mixamorig_RightArm/mixamorig_RightForeArm/mixamorig_RightHand",
+        "offset": [
+          -0.014361,
+          0.082528,
+          0.085923
+        ]
+      }
+    }
+  ]
+}

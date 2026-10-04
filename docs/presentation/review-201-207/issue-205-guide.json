@@ -1,0 +1,33 @@
+{
+  "rows" : [
+    {
+      "charges" : 1,
+      "guideVisible" : false,
+      "sealPermitted" : false,
+      "stage" : "initial-disabled",
+      "tutorialRecorded" : false
+    },
+    {
+      "charges" : 1,
+      "guideVisible" : true,
+      "sealPermitted" : true,
+      "stage" : "after-first-action",
+      "tutorialRecorded" : false
+    },
+    {
+      "charges" : 1,
+      "guideVisible" : false,
+      "sealPermitted" : true,
+      "stage" : "guide-confirmed",
+      "tutorialRecorded" : true
+    },
+    {
+      "charges" : 0,
+      "guideVisible" : false,
+      "sealPermitted" : false,
+      "stage" : "released-disabled",
+      "tutorialRecorded" : true
+    }
+  ],
+  "stage" : "released-disabled"
+}

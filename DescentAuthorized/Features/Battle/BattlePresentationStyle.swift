@@ -70,9 +70,7 @@ struct FloorTitleAssetView: View {
 
     private var floorTitleAssetName: String? {
         switch displayedFloorNumber {
-        case 10: "FloorTitle10"
-        case 9: "FloorTitle9"
-        case 8: "FloorTitle8"
+        case 1...10: "FloorTitle\(displayedFloorNumber)"
         default: nil
         }
     }

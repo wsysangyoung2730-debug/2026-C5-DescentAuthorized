@@ -8,6 +8,7 @@ enum ExpansionStage: String, Codable, CaseIterable, Sendable {
     case residualBattle
     case residualDefeated
     case residualInvestigation
+    case residualGate
     case recordReward
     case sealedDoor
     case bossPreparation
@@ -68,6 +69,7 @@ struct ExpansionProgress: Codable, Equatable, Sendable {
 }
 
 enum LoadoutTutorialFlag: String, Codable, Hashable, Sendable {
+    case absoluteBarrierRelease
     case firstSixLoadout
     case firstOverflowLoadout
     case statusEffects
@@ -259,7 +261,7 @@ extension GameProgress {
 
 /// A single route drives room and camera selection, including restored progress.
 struct ExpansionSceneRoute: Equatable, Sendable {
-    enum Camera: String, Sendable { case battle, rewardSelection, descentInput }
+    enum Camera: String, Sendable { case battle, rewardSelection, descentInput, tutorial }
     let floorNumber: Int
     enum Room: String, Sendable { case residualA, residualB, administrator }
     let room: Room
@@ -270,10 +272,11 @@ struct ExpansionSceneRoute: Equatable, Sendable {
         guard (1...7).contains(progress.floorNumber), progress.stage != .complete else { return nil }
         floorNumber = progress.floorNumber
         room = progress.showsBoss ? .administrator
-            : (progress.isLowerFloor && progress.residualIndex == 1 ? .residualB : .residualA)
+            : (progress.isLowerFloor && (progress.residualIndex == 1 || progress.stage == .residualInvestigation) ? .residualB : .residualA)
         switch progress.stage {
-        case .sealedDoor, .descent: camera = .descentInput
+        case .residualGate, .sealedDoor, .descent: camera = .descentInput
         case .reward, .finalRecord: camera = .rewardSelection
+        case .entrance, .residualInvestigation: camera = progress.floorNumber == 4 ? .tutorial : .battle
         default: camera = .battle
         }
     }
@@ -324,7 +327,7 @@ extension ExpansionProgress {
         case .learnDebuff: return .floor6Learning
         case .preparation, .residualEncounter, .residualBattle: return checkpoints[1]
         case .residualDefeated, .sealedDoor: return checkpoints[2]
-        case .residualInvestigation: return checkpoints[1]
+        case .residualInvestigation, .residualGate: return checkpoints[1]
         case .bossPreparation, .bossEncounter, .bossBattle: return checkpoints[3]
         case .bossDefeated, .reward, .recordReward, .finalRecord: return checkpoints[4]
         case .descent, .complete: return checkpoints[5]
@@ -353,5 +356,34 @@ extension GameProgress {
         }
         checkpoint = current
         if current.progressionIndex > furthestCheckpoint.progressionIndex { furthestCheckpoint = current }
+    }
+}
+
+/// The next required room, independent of view mounting and dialogue routing.
+struct RoomWarmupDestination: Equatable, Sendable {
+    let floor: Int
+    let role: String
+
+    static func next(scene: SceneID, expansion: ExpansionProgress?) -> Self? {
+        if let progress = expansion {
+            switch progress.stage {
+            case .residualBattle, .residualDefeated, .residualGate, .recordReward, .sealedDoor:
+                return Self(floor: progress.floorNumber,
+                            role: progress.isLowerFloor && progress.residualIndex == 0 ? "residualB" : "administrator")
+            case .bossBattle, .bossDefeated, .reward, .descent:
+                return progress.floorNumber > 1 ? Self(floor: progress.floorNumber - 1, role: "residualA") : nil
+            default: return nil
+            }
+        }
+        switch scene {
+        case .floor10DescentDoor: return Self(floor: 9, role: "administrator")
+        case .floor9RecordsBattle, .floor9RecordsDefeated, .floor9RewardVault, .floor9DescentDoor:
+            return Self(floor: 8, role: "residualA")
+        case .floor8ResidualBattle, .floor8ResidualDefeated, .floor8SealedDoor:
+            return Self(floor: 8, role: "administrator")
+        case .floor8AdministratorBattle, .floor8AdministratorDefeated, .floor8Reward, .floor8DescentDoor:
+            return Self(floor: 7, role: "residualA")
+        default: return nil
+        }
     }
 }

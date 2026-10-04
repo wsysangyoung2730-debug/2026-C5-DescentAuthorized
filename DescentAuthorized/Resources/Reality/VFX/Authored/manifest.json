@@ -1,0 +1,542 @@
+[
+  {
+    "id": "01-record-lance",
+    "sourceSHA256": "867cbad85989ac99e756a1ea31820a5236ec3f48bfae51a0958093349a6bde78",
+    "sourceBytes": 14114236,
+    "sourceBounds": [
+      0.99951171875,
+      0.3012695610523224,
+      0.7836913466453552
+    ],
+    "normalizedBounds": [
+      1.0,
+      0.3014167249202728,
+      0.7840741872787476
+    ],
+    "triangles": 1647,
+    "textures": [
+      {
+        "name": "01-record-lance_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "02-focus-lens",
+    "sourceSHA256": "8c262c1ebff42e05786a11b8a9484e978cd73dd3c0b770ef8c09477b9f6dedae",
+    "sourceBytes": 12566240,
+    "sourceBounds": [
+      0.95068359375,
+      0.2211914360523224,
+      0.99951171875
+    ],
+    "normalizedBounds": [
+      0.9511480331420898,
+      0.22129949927330017,
+      1.0
+    ],
+    "triangles": 1518,
+    "textures": [
+      {
+        "name": "02-focus-lens_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "03-rift-ray",
+    "sourceSHA256": "d8948540e38a7611dc9a02d690b75ae332772ea999f53d5861abd8cf478f8aaa",
+    "sourceBytes": 14225344,
+    "sourceBounds": [
+      0.99951171875,
+      0.40087890625,
+      0.52294921875
+    ],
+    "normalizedBounds": [
+      1.0,
+      0.40107473731040955,
+      0.5232046842575073
+    ],
+    "triangles": 3138,
+    "textures": [
+      {
+        "name": "03-rift-ray_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "04-coordinate-wedge",
+    "sourceSHA256": "6ea670dd90e8035acaf72dde4ba0f0e7121099799a7bda6bf516ad5b26610fb2",
+    "sourceBytes": 15974188,
+    "sourceBounds": [
+      0.9995117783546448,
+      0.45263671875,
+      0.74755859375
+    ],
+    "normalizedBounds": [
+      1.0,
+      0.4528578519821167,
+      0.7479237914085388
+    ],
+    "triangles": 2730,
+    "textures": [
+      {
+        "name": "04-coordinate-wedge_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "05-axis-anchors",
+    "sourceSHA256": "c07bd5f0cf56d91db7367337589030a9f9495727ef3c38d1b18a62197d59eeec",
+    "sourceBytes": 11367732,
+    "sourceBounds": [
+      0.99951171875,
+      0.90771484375,
+      0.90771484375
+    ],
+    "normalizedBounds": [
+      1.0,
+      0.9081583023071289,
+      0.9081583023071289
+    ],
+    "triangles": 2891,
+    "textures": [
+      {
+        "name": "05-axis-anchors_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "06-causality-bolt",
+    "sourceSHA256": "5b3bcd260cfb331e105d059f8a891517391d75af7d51f8af9eb63ae134fcd300",
+    "sourceBytes": 16400340,
+    "sourceBounds": [
+      0.9995117783546448,
+      0.3041991889476776,
+      0.5375975966453552
+    ],
+    "normalizedBounds": [
+      1.0,
+      0.30434778332710266,
+      0.5378602147102356
+    ],
+    "triangles": 1872,
+    "textures": [
+      {
+        "name": "06-causality-bolt_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "07-memory-compression",
+    "sourceSHA256": "db02117f68de7e2802a41aa9d5a20834bb44bafec8a331971903d516e1e040a1",
+    "sourceBytes": 13174136,
+    "sourceBounds": [
+      0.88525390625,
+      0.72412109375,
+      0.99951171875
+    ],
+    "normalizedBounds": [
+      0.8856863975524902,
+      0.7244748473167419,
+      1.0
+    ],
+    "triangles": 2044,
+    "textures": [
+      {
+        "name": "07-memory-compression_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "08-signature-stroke",
+    "sourceSHA256": "3553d1ed96a55b1fd2c6b9983af32376e295c5b496b3435357717d555fb49653",
+    "sourceBytes": 11873288,
+    "sourceBounds": [
+      0.9995115995407104,
+      0.45849621295928955,
+      0.99951171875
+    ],
+    "normalizedBounds": [
+      0.9999998807907104,
+      0.45872020721435547,
+      1.0
+    ],
+    "triangles": 1542,
+    "textures": [
+      {
+        "name": "08-signature-stroke_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "09-verdict-stamp",
+    "sourceSHA256": "8f5eb3c6c0184bdc120545c2ead88956cd54e6641cb5fb6e74e6c2fc1efcf814",
+    "sourceBytes": 14304576,
+    "sourceBounds": [
+      0.97705078125,
+      0.7182618379592896,
+      0.97705078125
+    ],
+    "normalizedBounds": [
+      1.0,
+      0.7351325750350952,
+      1.0
+    ],
+    "triangles": 2540,
+    "textures": [
+      {
+        "name": "09-verdict-stamp_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "10-isolation-ring",
+    "sourceSHA256": "2e18a67bce167a4d53b7c639e92171eecf09985e4b73a046999f4bb370254d6f",
+    "sourceBytes": 15825176,
+    "sourceBounds": [
+      0.99951171875,
+      0.89501953125,
+      0.6489257216453552
+    ],
+    "normalizedBounds": [
+      1.0,
+      0.8954567909240723,
+      0.6492427587509155
+    ],
+    "triangles": 1642,
+    "textures": [
+      {
+        "name": "10-isolation-ring_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "11-seal-energy-core",
+    "sourceSHA256": "0e31921ec1ec308ccc2a2d52cb2a674dd929512ef7ba6baacee3e04b4f0401ad",
+    "sourceBytes": 14664264,
+    "sourceBounds": [
+      0.8852540254592896,
+      0.4936522841453552,
+      0.99951171875
+    ],
+    "normalizedBounds": [
+      0.8856865167617798,
+      0.49389344453811646,
+      1.0
+    ],
+    "triangles": 2055,
+    "textures": [
+      {
+        "name": "11-seal-energy-core_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "12-identity-scanner",
+    "sourceSHA256": "c291a9e35ec7ef9aa44e19f18452a38eb0cfc9ba55b093d4164196ea7b5f231b",
+    "sourceBytes": 13721256,
+    "sourceBounds": [
+      0.99853515625,
+      0.16943371295928955,
+      0.99951171875
+    ],
+    "normalizedBounds": [
+      0.9990229606628418,
+      0.16951648890972137,
+      1.0
+    ],
+    "triangles": 1933,
+    "textures": [
+      {
+        "name": "12-identity-scanner_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "13-suppression-band",
+    "sourceSHA256": "b89338182c13ca1d730b9d8ea3387544da4a3c6a96b9052d34056a71b7507b1b",
+    "sourceBytes": 13659808,
+    "sourceBounds": [
+      0.97998046875,
+      0.4594725966453552,
+      0.99951171875
+    ],
+    "normalizedBounds": [
+      0.9804592132568359,
+      0.45969706773757935,
+      1.0
+    ],
+    "triangles": 1573,
+    "textures": [
+      {
+        "name": "13-suppression-band_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "14-preservation-band",
+    "sourceSHA256": "d2300e07992dc42c0b8f93e3ebb9113d3ef9d2ce77bf7e04564dba3ee2255cbe",
+    "sourceBytes": 16496596,
+    "sourceBounds": [
+      0.9604493379592896,
+      0.9995118379592896,
+      0.90966796875
+    ],
+    "normalizedBounds": [
+      0.9609184265136719,
+      1.0,
+      0.9101122617721558
+    ],
+    "triangles": 2327,
+    "textures": [
+      {
+        "name": "14-preservation-band_basecolor",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "15-document-barrier",
+    "sourceSHA256": "b2928b7a0863009f7d12b1707fb9b5baf921a22d110f1ab7c823ed2c8785473c",
+    "sourceBytes": 18035180,
+    "sourceBounds": [
+      0.99951171875,
+      0.4702149033546448,
+      0.68115234375
+    ],
+    "normalizedBounds": [
+      1.0,
+      0.47044461965560913,
+      0.681485116481781
+    ],
+    "triangles": 1951,
+    "textures": [
+      {
+        "name": "15-document-barrier_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "16-observation-barrier",
+    "sourceSHA256": "3f85477f643b39bdd4f172afad14337d8db51c48f5e5b2a6b247d192babfcfcf",
+    "sourceBytes": 15191180,
+    "sourceBounds": [
+      0.78271484375,
+      0.76708984375,
+      0.99951171875
+    ],
+    "normalizedBounds": [
+      0.7830972075462341,
+      0.7674645781517029,
+      1.0
+    ],
+    "triangles": 2659,
+    "textures": [
+      {
+        "name": "16-observation-barrier_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "17-correction-barrier",
+    "sourceSHA256": "bf429fa279b28fa7c6961782fdfca9b17a6dd7d9464eab6a511fa8dc00b5cb39",
+    "sourceBytes": 11978896,
+    "sourceBounds": [
+      0.92236328125,
+      0.9077149033546448,
+      0.99951171875
+    ],
+    "normalizedBounds": [
+      0.922813892364502,
+      0.9081583619117737,
+      1.0
+    ],
+    "triangles": 2672,
+    "textures": [
+      {
+        "name": "17-correction-barrier_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  },
+  {
+    "id": "18-general-barrier",
+    "sourceSHA256": "65e081ae9e947e888fba71bbf62710675f1e94546c1a485c5cffe6eced8fcf7c",
+    "sourceBytes": 16446620,
+    "sourceBounds": [
+      0.99951171875,
+      0.84423828125,
+      0.77685546875
+    ],
+    "normalizedBounds": [
+      1.0,
+      0.8446506857872009,
+      0.7772349715232849
+    ],
+    "triangles": 2580,
+    "textures": [
+      {
+        "name": "18-general-barrier_basecolor.jpg",
+        "original": [
+          8192,
+          8192
+        ],
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "meshes": 1
+  }
+]

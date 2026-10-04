@@ -1,0 +1,124 @@
+{
+  "cause": "Installed simulator app contained legacy pre-repair assets; develop already includes the skeleton fix.",
+  "baseCommit": "8759c5cfd662c57c44fe97c75a01286e5aa97a47",
+  "before": {
+    "changedOrMissingFiles": 2611,
+    "extraFiles": 2405,
+    "recordAdministrator": {
+      "path": "Actors/RecordAdministrator/record_administrator.usdc",
+      "reason": "different",
+      "sourceSHA256": "91d713eca671c56f9d624ca3dcb7d03cc02e28bef09d6b3d1d4b5ddaf0be3d48",
+      "bundleSHA256": "89cb18631d08c67368e476eae51089b9166a77ad3d4f53d0cce11f6301a3200c"
+    },
+    "recordAdministratorSkelRoots": 0
+  },
+  "after": {
+    "expectedFiles": 2911,
+    "changedOrMissingFiles": 0,
+    "extraFiles": 0,
+    "recordAdministratorSkelRoots": 1,
+    "build": "Debug simulator succeeded"
+  },
+  "runtime": [
+    {
+      "actorPresent": true,
+      "camera": "F08_iPad_MainCamera",
+      "environmentReady": true,
+      "expectedRewardCount": 0,
+      "fieldOfView": 45.23972702026367,
+      "jointCount": 5,
+      "jointMotionObserved": true,
+      "lifecycle": {
+        "deathOpacity": 0,
+        "deathPaused": true,
+        "restartOpacity": 1
+      },
+      "missingRoles": [],
+      "preset": "battle",
+      "quality": "high",
+      "rewardModelCount": 0,
+      "rewardReady": true,
+      "scene": "floor08_administrator_observatory"
+    },
+    {
+      "actorPresent": true,
+      "camera": "F08A_iPadCamera",
+      "environmentReady": true,
+      "expectedRewardCount": 0,
+      "fieldOfView": 54.879459381103516,
+      "jointCount": 5,
+      "jointMotionObserved": true,
+      "lifecycle": {
+        "deathOpacity": 0,
+        "deathPaused": true,
+        "restartOpacity": 1
+      },
+      "missingRoles": [],
+      "preset": "battle",
+      "quality": "high",
+      "rewardModelCount": 0,
+      "rewardReady": true,
+      "scene": "floor08_residue_isolation"
+    },
+    {
+      "actorPresent": true,
+      "camera": "F09_iPad_MainCamera",
+      "environmentReady": true,
+      "expectedRewardCount": 0,
+      "fieldOfView": 48.45549011230469,
+      "jointCount": 5,
+      "jointMotionObserved": true,
+      "lifecycle": {
+        "deathOpacity": 0,
+        "deathPaused": true,
+        "restartOpacity": 1
+      },
+      "missingRoles": [],
+      "preset": "battle",
+      "quality": "high",
+      "rewardModelCount": 0,
+      "rewardReady": true,
+      "scene": "floor09_archive_redesign"
+    },
+    {
+      "actorPresent": true,
+      "camera": "F09_iPad_MainCamera",
+      "environmentReady": true,
+      "expectedRewardCount": 0,
+      "fieldOfView": 48.45549011230469,
+      "jointCount": 5,
+      "jointMotionObserved": true,
+      "lifecycle": {
+        "deathOpacity": 0,
+        "deathPaused": true,
+        "restartOpacity": 1
+      },
+      "missingRoles": [],
+      "preset": "battle",
+      "quality": "low",
+      "rewardModelCount": 0,
+      "rewardReady": true,
+      "scene": "floor09_archive_redesign"
+    },
+    {
+      "actorPresent": true,
+      "camera": "F09_iPad_MainCamera",
+      "environmentReady": true,
+      "expectedRewardCount": 0,
+      "fieldOfView": 48.45549011230469,
+      "jointCount": 5,
+      "jointMotionObserved": true,
+      "lifecycle": {
+        "deathOpacity": 0,
+        "deathPaused": true,
+        "restartOpacity": 1
+      },
+      "missingRoles": [],
+      "preset": "battle",
+      "quality": "medium",
+      "rewardModelCount": 0,
+      "rewardReady": true,
+      "scene": "floor09_archive_redesign"
+    }
+  ]
+}

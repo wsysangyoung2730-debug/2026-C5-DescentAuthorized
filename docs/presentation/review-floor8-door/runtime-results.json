@@ -1,0 +1,59 @@
+[
+  {
+    "actorPresent": true,
+    "camera": "CAM_F08_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 42.67372131347656,
+    "jointCount": 5,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedFrameUnchanged": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "low",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor08_administrator_observatory"
+  },
+  {
+    "actorPresent": true,
+    "camera": "CAM_F08_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 42.67372131347656,
+    "jointCount": 5,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedFrameUnchanged": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "medium",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor08_administrator_observatory"
+  },
+  {
+    "actorPresent": true,
+    "camera": "CAM_F08_DescentDoor",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 42.67372131347656,
+    "jointCount": 5,
+    "jointMotionObserved": false,
+    "lifecycle": {
+      "doorOpeningCompleted": true,
+      "fixedFrameUnchanged": true
+    },
+    "missingRoles": [],
+    "preset": "descentInput",
+    "quality": "high",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor08_administrator_observatory"
+  }
+]

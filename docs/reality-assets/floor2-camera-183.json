@@ -1,0 +1,83 @@
+[
+  {
+    "asset": "floor02_overload_residual.usdc",
+    "cameraPosition": [
+      0.0,
+      -7.0,
+      5.800000190734863
+    ],
+    "entranceReturn": true
+  },
+  {
+    "asset": "floor02_overload_residual_low.usdc",
+    "cameraPosition": [
+      0.0,
+      -7.0,
+      5.800000190734863
+    ],
+    "entranceReturn": true
+  },
+  {
+    "asset": "floor02_overload_residual_medium.usdc",
+    "cameraPosition": [
+      0.0,
+      -7.0,
+      5.800000190734863
+    ],
+    "entranceReturn": true
+  },
+  {
+    "asset": "floor02_backflow_blocker_residual.usdc",
+    "cameraPosition": [
+      0.0,
+      -7.0,
+      6.199999809265137
+    ],
+    "entranceReturn": true
+  },
+  {
+    "asset": "floor02_backflow_blocker_residual_low.usdc",
+    "cameraPosition": [
+      0.0,
+      -7.0,
+      6.199999809265137
+    ],
+    "entranceReturn": true
+  },
+  {
+    "asset": "floor02_backflow_blocker_residual_medium.usdc",
+    "cameraPosition": [
+      0.0,
+      -7.0,
+      6.199999809265137
+    ],
+    "entranceReturn": true
+  },
+  {
+    "asset": "floor02_seal_maintenance_administrator.usdc",
+    "cameraPosition": [
+      0.0,
+      -8.5,
+      7.199999809265137
+    ],
+    "entranceReturn": false
+  },
+  {
+    "asset": "floor02_seal_maintenance_administrator_low.usdc",
+    "cameraPosition": [
+      0.0,
+      -8.5,
+      7.199999809265137
+    ],
+    "entranceReturn": false
+  },
+  {
+    "asset": "floor02_seal_maintenance_administrator_medium.usdc",
+    "cameraPosition": [
+      0.0,
+      -8.5,
+      7.199999809265137
+    ],
+    "entranceReturn": false
+  }
+]

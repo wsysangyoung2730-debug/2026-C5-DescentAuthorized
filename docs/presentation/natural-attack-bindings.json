@@ -1,0 +1,359 @@
+[
+  {
+    "actor": "BackflowBlockerResidual",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "638cbde4ce444a042d1a3b4c3db2552f399d1a426577905f697d20c069c22c3c",
+    "meshes": [
+      {
+        "mesh": "/backflow_blocker_residual/ACTOR_BackflowBlockerResidual/BackflowBlockerResidual_Skin/meshes_0__001",
+        "vertices": 30944,
+        "weldedVertices": 11132,
+        "connectedComponents": 24,
+        "rigidComponents": 9,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 3098
+      }
+    ]
+  },
+  {
+    "actor": "CausalityAdministrator",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "17f754633d362ea2bb0f27c5ffb843a7e15c22ed244380d8d45c0a1c81f9d377",
+    "meshes": [
+      {
+        "mesh": "/causality_administrator/ACTOR_CausalityAdministrator/CausalityAdministrator_Skin/meshes_0__003",
+        "vertices": 28240,
+        "weldedVertices": 10663,
+        "connectedComponents": 81,
+        "rigidComponents": 31,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 4672
+      }
+    ]
+  },
+  {
+    "actor": "CausalityResidue",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "014e4150d6a17a3d221ae5918a5fa510a6236dbbb70d4f2b81c42efc0b2fad25",
+    "meshes": [
+      {
+        "mesh": "/causality_residue/ACTOR_CausalityResidue/CausalityResidue_Skin/meshes_0__002",
+        "vertices": 27635,
+        "weldedVertices": 10674,
+        "connectedComponents": 125,
+        "rigidComponents": 36,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 5427
+      }
+    ]
+  },
+  {
+    "actor": "ConsentCustodianResidual",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "75c37f5bb0314d9b05c02510b2f96588a696d298221a6908e1e9769270abda00",
+    "meshes": [
+      {
+        "mesh": "/consent_custodian_residual/ACTOR_ConsentCustodianResidual/ConsentCustodianResidual_Skin/meshes_0__003",
+        "vertices": 37965,
+        "weldedVertices": 15042,
+        "connectedComponents": 61,
+        "rigidComponents": 24,
+        "staffComponents": 0,
+        "bookComponents": 8,
+        "changedWeldedVertices": 5059
+      }
+    ]
+  },
+  {
+    "actor": "CoordinateAdministrator",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "9c3465ae67fb4aec89fc4f6581289f884285017b4b54ad81ecb93932a07e1f52",
+    "meshes": [
+      {
+        "mesh": "/coordinate_administrator/ACTOR_CoordinateAdministrator/CoordinateAdministrator_Skin/meshes_0__001",
+        "vertices": 31579,
+        "weldedVertices": 11244,
+        "connectedComponents": 182,
+        "rigidComponents": 145,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 7920
+      }
+    ]
+  },
+  {
+    "actor": "CoordinateResidue",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "9090a701b821eecdf68497114d5c055f258911053bb21f208b04dab3f06ee3d0",
+    "meshes": [
+      {
+        "mesh": "/coordinate_residue/ACTOR_CoordinateResidue/CoordinateResidue_Skin/meshes_0_",
+        "vertices": 28004,
+        "weldedVertices": 10985,
+        "connectedComponents": 148,
+        "rigidComponents": 48,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 5944
+      }
+    ]
+  },
+  {
+    "actor": "ExitReviewResidual",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "0bbddfefdbeaa7aba2792b8bef5f7d1ba14111cad6ad6dddc0b1cb1be9096bc7",
+    "meshes": [
+      {
+        "mesh": "/exit_review_residual/ACTOR_ExitReviewResidual/ExitReviewResidual_Skin/meshes_0__004",
+        "vertices": 28381,
+        "weldedVertices": 11141,
+        "connectedComponents": 81,
+        "rigidComponents": 33,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 3570
+      }
+    ]
+  },
+  {
+    "actor": "FinalAuthorizationAdministrator",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "677b9b502b87452c23d4f4898a7cc1b6447a1de1ee1e82aa370806976a359d69",
+    "meshes": [
+      {
+        "mesh": "/final_authorization_administrator/ACTOR_FinalAuthorizationAdministrator/FinalAuthorizationAdministrator_Skin/meshes_0__005",
+        "vertices": 41949,
+        "weldedVertices": 14151,
+        "connectedComponents": 274,
+        "rigidComponents": 65,
+        "staffComponents": 24,
+        "bookComponents": 0,
+        "changedWeldedVertices": 5258
+      }
+    ]
+  },
+  {
+    "actor": "IdentityComparisonResidual",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "c1cf70544803883b3e417600dc88309fb3d83a018c2833bcd308053847e82364",
+    "meshes": [
+      {
+        "mesh": "/identity_comparison_residual/ACTOR_IdentityComparisonResidual/IdentityComparisonResidual_Skin/meshes_0__003",
+        "vertices": 31394,
+        "weldedVertices": 13373,
+        "connectedComponents": 34,
+        "rigidComponents": 0,
+        "staffComponents": 0,
+        "bookComponents": 3,
+        "changedWeldedVertices": 4471
+      }
+    ]
+  },
+  {
+    "actor": "MemoryOmissionResidue",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "911b3c2bc9ee3e824242226655f5e46ae3a3268a7e72ab8d98f69093bfa7cb8e",
+    "meshes": [
+      {
+        "mesh": "/memory_omission_residue/ACTOR_MemoryOmissionResidue/MemoryOmissionResidue_Skin/meshes_0__004",
+        "vertices": 28091,
+        "weldedVertices": 11733,
+        "connectedComponents": 46,
+        "rigidComponents": 19,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 6794
+      }
+    ]
+  },
+  {
+    "actor": "ObservationAdministrator",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "9ad74f7b84b3eaefc2e69968ff94a2a842fe83934a69ce9230d01d2610e975ac",
+    "meshes": [
+      {
+        "mesh": "/observation_administrator/ACTOR_ObservationAdministrator/ObservationAdministrator_Skin/ObservationAdministrator_Skin",
+        "vertices": 27947,
+        "weldedVertices": 11180,
+        "connectedComponents": 230,
+        "rigidComponents": 52,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 2723
+      }
+    ]
+  },
+  {
+    "actor": "ObservationResidue",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "656c8d748d6d4efc18f1a7e5553ede91bfb7b852a98b55458b9c41e632b51a44",
+    "meshes": [
+      {
+        "mesh": "/observation_residue/ACTOR_ObservationResidue/ObservationResidue_Skin/ObservationResidue_Skin",
+        "vertices": 24864,
+        "weldedVertices": 10970,
+        "connectedComponents": 120,
+        "rigidComponents": 66,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 5541
+      }
+    ]
+  },
+  {
+    "actor": "OriginalMemoryAdministrator",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "f53ab5103e74f30691ad8601d13830b29fbdc642e41a40c89b7d18a7d3b62c51",
+    "meshes": [
+      {
+        "mesh": "/original_memory_administrator/ACTOR_OriginalMemoryAdministrator/OriginalMemoryAdministrator_Skin/meshes_0__005",
+        "vertices": 32139,
+        "weldedVertices": 11082,
+        "connectedComponents": 110,
+        "rigidComponents": 35,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 3582
+      }
+    ]
+  },
+  {
+    "actor": "OverloadResidual",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "e6f60b937f982ce781c5e306c2d5c5350af5b2ef3e951b29d76f1d99a03793ee",
+    "meshes": [
+      {
+        "mesh": "/overload_residual/ACTOR_OverloadResidual/OverloadResidual_Skin/meshes_0_",
+        "vertices": 31170,
+        "weldedVertices": 11278,
+        "connectedComponents": 65,
+        "rigidComponents": 40,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 3794
+      }
+    ]
+  },
+  {
+    "actor": "QuarantineEnforcerResidual",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "3970026d45442561807922e229acb16a2a8477f4c8c97181d7c82443ce70f293",
+    "meshes": [
+      {
+        "mesh": "/quarantine_enforcer_residual/ACTOR_QuarantineEnforcerResidual/QuarantineEnforcerResidual_Skin/meshes_0__004",
+        "vertices": 28231,
+        "weldedVertices": 10968,
+        "connectedComponents": 193,
+        "rigidComponents": 38,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 2789
+      }
+    ]
+  },
+  {
+    "actor": "RecordAdministrator",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "c3f448e6b82b03002d45f7430fe8724eb0a377563591b3f20a0257aba5805664",
+    "meshes": [
+      {
+        "mesh": "/record_administrator/ACTOR_RecordAdministrator/RecordAdministrator_Skin/RecordAdministrator_Skin",
+        "vertices": 17067,
+        "weldedVertices": 10650,
+        "connectedComponents": 85,
+        "rigidComponents": 8,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 3823
+      }
+    ]
+  },
+  {
+    "actor": "RejectionExecutionResidual",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "576a0e840d8927e2f433e732c20b7e7204b7d65f4c2f6c18f7172aada5fb4c54",
+    "meshes": [
+      {
+        "mesh": "/rejection_execution_residual/ACTOR_RejectionExecutionResidual/RejectionExecutionResidual_Skin/meshes_0__001",
+        "vertices": 59817,
+        "weldedVertices": 10729,
+        "connectedComponents": 84,
+        "rigidComponents": 37,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 2087
+      }
+    ]
+  },
+  {
+    "actor": "ResponsibilityAuditAdministrator",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "14a922e46455e78ed1d983c9777a76e5c0114a4c510f456814d4c8be68f89965",
+    "meshes": [
+      {
+        "mesh": "/responsibility_audit_administrator/ACTOR_ResponsibilityAuditAdministrator/ResponsibilityAuditAdministrator_Skin/meshes_0__002",
+        "vertices": 25647,
+        "weldedVertices": 10196,
+        "connectedComponents": 43,
+        "rigidComponents": 27,
+        "staffComponents": 2,
+        "bookComponents": 0,
+        "changedWeldedVertices": 4832
+      }
+    ]
+  },
+  {
+    "actor": "SealMaintenanceAdministrator",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "9e61f672fcba4691cbc7b96ec71a49c3ec0f6fb3b89cca3874b96a271aff3cb6",
+    "meshes": [
+      {
+        "mesh": "/seal_maintenance_administrator/ACTOR_SealMaintenanceAdministrator/SealMaintenanceAdministrator_Skin/meshes_0__002",
+        "vertices": 31824,
+        "weldedVertices": 11220,
+        "connectedComponents": 123,
+        "rigidComponents": 67,
+        "staffComponents": 9,
+        "bookComponents": 0,
+        "changedWeldedVertices": 5215
+      }
+    ]
+  },
+  {
+    "actor": "SignatureMimicResidual",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "fb7c1923518569dc51ee5c2841609ecb6ca3ce27fe9e237804faed825c3dc610",
+    "meshes": [
+      {
+        "mesh": "/signature_mimic_residual/ACTOR_SignatureMimicResidual/SignatureMimicResidual_Skin/meshes_0_",
+        "vertices": 35427,
+        "weldedVertices": 14503,
+        "connectedComponents": 66,
+        "rigidComponents": 16,
+        "staffComponents": 0,
+        "bookComponents": 2,
+        "changedWeldedVertices": 6694
+      }
+    ]
+  },
+  {
+    "actor": "VoluntaryQuarantineAdministrator",
+    "bindingVersion": "2026-09-30.1",
+    "preservedContentSHA256": "642b7dee459ee338f943331d6b21b87d90340f6e1ea650f3109b5cfec9b9ecb9",
+    "meshes": [
+      {
+        "mesh": "/voluntary_quarantine_administrator/ACTOR_VoluntaryQuarantineAdministrator/VoluntaryQuarantineAdministrator_Skin/meshes_0__005",
+        "vertices": 38633,
+        "weldedVertices": 14428,
+        "connectedComponents": 96,
+        "rigidComponents": 34,
+        "staffComponents": 0,
+        "bookComponents": 0,
+        "changedWeldedVertices": 4414
+      }
+    ]
+  }
+]

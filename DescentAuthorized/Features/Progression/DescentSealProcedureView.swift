@@ -12,9 +12,15 @@ struct DescentSealProcedureConfiguration {
     let loadingContext: LoadingScreenContext
     let stages: [DescentSealStageConfiguration]
     let accessibilityLabel: String
-    /// Nil allows resubmission without resetting an already approved stage.
+    /// Nil means failed input has no attempt limit.
     let maximumAttempts: Int?
     let layout: DescentSealPatternLayout
+
+    /// Saving approved expansion stages is independent of the failure budget.
+    var preservesApprovedStages: Bool {
+        if case .expansion = loadingContext { return true }
+        return false
+    }
 
     static let floor10 = DescentSealProcedureConfiguration(
         recordSubtitle: "제10층 봉인 해제 기록",
@@ -75,7 +81,7 @@ struct DescentSealProcedureConfiguration {
     )
 
     static func expansion(floorNumber: Int) -> DescentSealProcedureConfiguration {
-        precondition((5...7).contains(floorNumber), "Expansion seals exist on floors 7, 6, and 5")
+        precondition((1...7).contains(floorNumber), "Expansion seals exist on floors 7 through 1")
         let destination: String
         let stages: [DescentSealStageConfiguration]
         switch floorNumber {
@@ -95,7 +101,7 @@ struct DescentSealProcedureConfiguration {
                 .init(recordTitle: "2단계 · 결과 승인", inputTitle: "2차 결과 인계 승인",
                       sequence: [8, 5, 2, 3, 0, 1, 4, 7])
             ]
-        default:
+        case 5:
             destination = "제4층 하강 구역"
             stages = [
                 .init(recordTitle: "1단계 · 원본 대조", inputTitle: "1차 원본 기억 대조",
@@ -103,14 +109,20 @@ struct DescentSealProcedureConfiguration {
                 .init(recordTitle: "2단계 · 기억 인계", inputTitle: "2차 기억 인계 승인",
                       sequence: [2, 5, 4, 1, 0, 3, 6, 8, 9])
             ]
+        default:
+            destination = floorNumber == 1 ? "다음 탑 · 제10층" : "제\(floorNumber - 1)층 하강 구역"
+            stages = LowerDescentApprovalPattern.patterns(floor: floorNumber).enumerated().map { index, pattern in
+                .init(recordTitle: "\(index + 1)단계 · \(pattern.title)",
+                      inputTitle: "\(index + 1)차 \(pattern.title)", sequence: pattern.sequence)
+            }
         }
         return DescentSealProcedureConfiguration(
-            recordSubtitle: "제\(floorNumber)층 이중 하강 승인 기록",
+            recordSubtitle: "제\(floorNumber)층 \(stages.count)단계 하강 승인 기록",
             destination: destination,
             loadingContext: .expansion(floorNumber),
             stages: stages,
-            accessibilityLabel: "제\(floorNumber)층 이중 하강 승인 정답 기록",
-            maximumAttempts: nil,
+            accessibilityLabel: "제\(floorNumber)층 \(stages.count)단계 하강 승인 정답 기록",
+            maximumAttempts: floorNumber <= 5 ? 2 : nil,
             layout: .standard
         )
     }
@@ -129,6 +141,7 @@ struct DescentDoorSceneView: View {
     @State private var transitionTask: Task<Void, Never>?
     @State private var isSealInterfaceVisible = true
     @State private var isCompletingDescent = false
+    @State private var transitionError: String?
 
     var body: some View {
         ZStack {
@@ -148,6 +161,19 @@ struct DescentDoorSceneView: View {
                 )
                 .transition(.opacity)
             }
+
+            if let transitionError {
+                VStack(spacing: 18) {
+                    Text(transitionError)
+                        .foregroundStyle(DAColor.body)
+                        .multilineTextAlignment(.center)
+                    Button("하강 다시 진행", action: completeDescent)
+                        .buttonStyle(.borderedProminent)
+                        .tint(DAColor.magic)
+                }
+                .padding(28)
+                .background(.black.opacity(0.9), in: RoundedRectangle(cornerRadius: 12))
+            }
         }
         .animation(
             .easeOut(duration: RealityDescentTransitionTiming.interfaceFadeDuration),
@@ -158,6 +184,7 @@ struct DescentDoorSceneView: View {
             transitionTask = nil
             isSealInterfaceVisible = true
             isCompletingDescent = false
+            transitionError = nil
             retryLoadingPresentation = nil
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
             sceneController.resetDescentCamera()
@@ -267,20 +294,36 @@ struct DescentDoorSceneView: View {
 
     private func completeDescent() {
         guard !isCompletingDescent else { return }
+        let isRetry = transitionError != nil
         isCompletingDescent = true
+        transitionError = nil
         isSealInterfaceVisible = false
-        if descentState != .approved {
-            setDescentState(.approved)
-        }
+        // Reapply approval when retrying an interrupted presentation. The
+        // durable approved stages stay intact; the player need not redraw them.
+        if isRetry { setDescentState(.ready) }
+        setDescentState(.approved)
         transitionTask?.cancel()
         transitionTask = Task { @MainActor in
-            guard await sceneController.waitForDescentDoorOpening() else { return }
+            guard await sceneController.waitForDescentDoorOpening() else {
+                guard !Task.isCancelled else { return }
+                restoreDescentRetry("문 열림이 중단되었습니다. 승인된 문양을 유지한 채 다시 진행할 수 있습니다.")
+                return
+            }
             guard !Task.isCancelled else { return }
             setDescentState(.open)
             try? await Task.sleep(for: RealityDescentTransitionTiming.openStateHold)
             guard !Task.isCancelled else { return }
-            gameSession.send(isExpansion ? .advanceExpansion : .approveDescentDoor)
+            guard gameSession.sendChecked(isExpansion ? .advanceExpansion : .approveDescentDoor) else {
+                restoreDescentRetry("하강 진행을 저장하지 못했습니다. 다시 진행해 주세요.")
+                return
+            }
         }
+    }
+
+    private func restoreDescentRetry(_ message: String) {
+        isCompletingDescent = false
+        transitionTask = nil
+        transitionError = message
     }
 
     private func setDescentState(_ state: RealityDescentPresentationState) {
@@ -372,7 +415,7 @@ struct DescentSealProcedureView: View {
         .background(isSealInterfaceSuppressed ? Color.clear : Color.black.opacity(0.18))
         .overlay {
             if isGameOver {
-                sealGameOverOverlay
+                DescentSealGameOverOverlay(isRetrying: isRetrying, onRetry: retrySeal)
                     .transition(.opacity)
             }
         }
@@ -405,116 +448,6 @@ struct DescentSealProcedureView: View {
             if replay == .floor10DescentSeal {
                 resumeCoachIfNeeded()
             }
-        }
-    }
-
-    private var sealGameOverOverlay: some View {
-        GeometryReader { proxy in
-            let panelWidth = min(720, proxy.size.width * 0.58)
-            let panelHeight = panelWidth * 0.75
-            let retryButtonWidth = panelWidth * 0.72
-            let retryButtonHeight = panelHeight * 0.19
-
-            ZStack {
-                Color.black.opacity(0.76)
-                    .ignoresSafeArea()
-
-                ZStack {
-                    Image("DescentSealFailurePanel")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: panelWidth, height: panelHeight)
-
-                    Image("DescentSealFailureSeal")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: panelWidth * 0.37, height: panelWidth * 0.37)
-                        .position(
-                            x: panelWidth * 0.5,
-                            y: panelHeight * 0.09
-                        )
-                        .shadow(color: .black.opacity(0.7), radius: 12, y: 6)
-
-                    Image("DescentSealFailureTitle")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: panelWidth * 0.65, height: panelHeight * 0.13)
-                        .clipped()
-                        .position(
-                            x: panelWidth * 0.5,
-                            y: panelHeight * 0.37
-                        )
-
-                    Image("DescentSealFailureDecoration")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: panelWidth * 0.72, height: panelHeight * 0.07)
-                        .clipped()
-                        .position(
-                            x: panelWidth * 0.5,
-                            y: panelHeight * 0.465
-                        )
-
-                    Text("하강 절차가 일시 중단되었습니다.")
-                        .font(.system(size: 18, weight: .semibold, design: .serif))
-                        .foregroundStyle(DAColor.attack)
-                        .position(
-                            x: panelWidth * 0.5,
-                            y: panelHeight * 0.515
-                        )
-
-                    Text("입력 기록을 초기화하고 현재 단계부터 다시 검수합니다.")
-                        .font(.system(size: 15, weight: .medium, design: .serif))
-                        .foregroundStyle(DAColor.body.opacity(0.86))
-                        .position(
-                            x: panelWidth * 0.5,
-                            y: panelHeight * 0.59
-                        )
-
-                    Button(action: retrySeal) {
-                        ZStack {
-                            Image("DescentSealFailureRetryButton")
-                                .resizable()
-                                .scaledToFill()
-                                .frame(
-                                    width: retryButtonWidth,
-                                    height: retryButtonHeight
-                                )
-                                .clipped()
-
-                            HStack(spacing: 26) {
-                                Image("DescentSealFailureRetryIcon")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 54, height: 54)
-                                    .offset(x: -20)
-
-                                Text("봉인 검수 재시도")
-                                    .font(.system(size: 23, weight: .semibold, design: .serif))
-                                    .foregroundStyle(DAColor.body)
-                                    .offset(x: -20)
-                            }
-                            .frame(
-                                width: retryButtonWidth,
-                                height: retryButtonHeight,
-                                alignment: .center
-                            )
-                        }
-                        .frame(width: retryButtonWidth, height: retryButtonHeight)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isRetrying)
-                    .accessibilityLabel("봉인 검수 재시도")
-                    .accessibilityHint("현재 봉인 검수 단계부터 다시 시작합니다")
-                    .position(
-                        x: panelWidth * 0.5,
-                        y: panelHeight * 0.76
-                    )
-                }
-                .frame(width: panelWidth, height: panelHeight)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
@@ -633,7 +566,7 @@ struct DescentSealProcedureView: View {
                 }
             }
 
-            if phase == .approved, configuration.maximumAttempts == nil {
+            if phase == .approved, configuration.preservesApprovedStages {
                 // If final navigation could not save, the accepted two stages remain retryable.
                 Button(action: onApproved) {
                     Label("하강 진행", systemImage: "arrow.down")
@@ -646,7 +579,7 @@ struct DescentSealProcedureView: View {
             } else {
                 Button(action: resetInput) {
                     Label(
-                        configuration.maximumAttempts == nil
+                        configuration.preservesApprovedStages
                             ? "현재 단계 초기화"
                             : (configuration.stages.count == 1 ? "입력 초기화" : "전체 입력 초기화"),
                         systemImage: "arrow.counterclockwise"
@@ -725,8 +658,9 @@ struct DescentSealProcedureView: View {
     }
 
     private var canResetInput: Bool {
-        phase != .approved && (!selectedNodes.isEmpty
-            || (configuration.maximumAttempts != nil && completedStageCount > 0))
+        phase != .approved && phase != .failed && !isGameOver && !isRetrying
+            && (!selectedNodes.isEmpty
+                || (!configuration.preservesApprovedStages && completedStageCount > 0))
     }
 
     private var currentStageIndex: Int {
@@ -789,7 +723,8 @@ struct DescentSealProcedureView: View {
             }
             .onEnded { _ in
                 dragLocation = nil
-                guard !selectedNodes.isEmpty, phase != .approved, !isGameOver else { return }
+                guard !selectedNodes.isEmpty, phase != .approved, phase != .failed,
+                      !isGameOver, !isRetrying, coachStep == nil else { return }
                 evaluateInput()
             }
     }
@@ -831,7 +766,7 @@ struct DescentSealProcedureView: View {
     }
 
     private func resetInput() {
-        if configuration.maximumAttempts != nil { completedStageCount = 0 }
+        if !configuration.preservesApprovedStages { completedStageCount = 0 }
         selectedNodes.removeAll()
         dragLocation = nil
         phase = .ready
@@ -1060,18 +995,7 @@ struct DescentSealPatternLayout {
     let centerMark: CGPoint
 
     static let standard = DescentSealPatternLayout(
-        nodes: [
-            CGPoint(x: 0.50, y: 0.08),
-            CGPoint(x: 0.22, y: 0.25),
-            CGPoint(x: 0.78, y: 0.25),
-            CGPoint(x: 0.50, y: 0.33),
-            CGPoint(x: 0.27, y: 0.50),
-            CGPoint(x: 0.73, y: 0.50),
-            CGPoint(x: 0.50, y: 0.68),
-            CGPoint(x: 0.30, y: 0.82),
-            CGPoint(x: 0.70, y: 0.82),
-            CGPoint(x: 0.50, y: 0.94)
-        ],
+        nodes: LowerDescentApprovalPattern.nodes.map { CGPoint(x: $0.x / 100, y: $0.y / 100) },
         guideEdges: [
             (0, 3), (1, 3), (3, 2), (1, 4), (2, 5),
             (4, 5), (4, 7), (5, 8), (7, 6), (6, 8), (6, 9)
@@ -1175,4 +1099,121 @@ enum DescentSealPalette {
     static let cyan = Color(red: 89 / 255, green: 204 / 255, blue: 224 / 255)
     static let magic = Color(red: 154 / 255, green: 104 / 255, blue: 246 / 255)
     static let ink = Color(red: 45 / 255, green: 34 / 255, blue: 25 / 255)
+}
+
+/// Shared with the multi-stroke lower-floor procedure; matches the 8F failure screen.
+struct DescentSealGameOverOverlay: View {
+    let isRetrying: Bool
+    let onRetry: () -> Void
+
+    var body: some View {
+        GeometryReader { proxy in
+            let panelWidth = min(720, proxy.size.width * 0.58)
+            let panelHeight = panelWidth * 0.75
+            let retryButtonWidth = panelWidth * 0.72
+            let retryButtonHeight = panelHeight * 0.19
+
+            ZStack {
+                Color.black.opacity(0.76)
+                    .ignoresSafeArea()
+
+                ZStack {
+                    Image("DescentSealFailurePanel")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: panelWidth, height: panelHeight)
+
+                    Image("DescentSealFailureSeal")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: panelWidth * 0.37, height: panelWidth * 0.37)
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.09
+                        )
+                        .shadow(color: .black.opacity(0.7), radius: 12, y: 6)
+
+                    Image("DescentSealFailureTitle")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: panelWidth * 0.65, height: panelHeight * 0.13)
+                        .clipped()
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.37
+                        )
+
+                    Image("DescentSealFailureDecoration")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: panelWidth * 0.72, height: panelHeight * 0.07)
+                        .clipped()
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.465
+                        )
+
+                    Text("하강 절차가 일시 중단되었습니다.")
+                        .font(.system(size: 18, weight: .semibold, design: .serif))
+                        .foregroundStyle(DAColor.attack)
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.515
+                        )
+
+                    Text("입력 기록을 초기화하고 현재 단계부터 다시 검수합니다.")
+                        .font(.system(size: 15, weight: .medium, design: .serif))
+                        .foregroundStyle(DAColor.body.opacity(0.86))
+                        .position(
+                            x: panelWidth * 0.5,
+                            y: panelHeight * 0.59
+                        )
+
+                    Button(action: onRetry) {
+                        ZStack {
+                            Image("DescentSealFailureRetryButton")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(
+                                    width: retryButtonWidth,
+                                    height: retryButtonHeight
+                                )
+                                .clipped()
+
+                            HStack(spacing: 26) {
+                                Image("DescentSealFailureRetryIcon")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 54, height: 54)
+                                    .offset(x: -20)
+
+                                Text("봉인 검수 재시도")
+                                    .font(.system(size: 23, weight: .semibold, design: .serif))
+                                    .foregroundStyle(DAColor.body)
+                                    .offset(x: -20)
+                            }
+                            .frame(
+                                width: retryButtonWidth,
+                                height: retryButtonHeight,
+                                alignment: .center
+                            )
+                        }
+                        .frame(width: retryButtonWidth, height: retryButtonHeight)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isRetrying)
+                    .accessibilityLabel("봉인 검수 재시도")
+                    .accessibilityHint("현재 봉인 검수 단계부터 다시 시작합니다")
+                    .position(
+                        x: panelWidth * 0.5,
+                        y: panelHeight * 0.76
+                    )
+                }
+                .frame(width: panelWidth, height: panelHeight)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
 }

@@ -1,0 +1,18 @@
+{
+  "scenes": 6,
+  "captureFailures": [],
+  "intentChecks": 90,
+  "failures": [],
+  "maximumResetMatrixError": 7.450580596923828e-09,
+  "maximumResetFOVError": 0,
+  "sceneNames": [
+    "floor08_administrator_observatory",
+    "floor07_coordinate_residue",
+    "floor04_responsibility_audit_administrator",
+    "floor03_voluntary_quarantine_administrator",
+    "floor02_seal_maintenance_administrator",
+    "floor01_final_authorization_administrator"
+  ],
+  "quality": "medium",
+  "device": "iPad Pro 13 M5 simulator, iOS 26.5"
+}

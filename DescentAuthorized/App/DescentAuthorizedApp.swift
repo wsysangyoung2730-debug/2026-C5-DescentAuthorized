@@ -66,7 +66,8 @@ struct DescentAuthorizedApp: App {
 
     @ViewBuilder private var initialView: some View {
         #if DEBUG
-        if isFloor9Preview { Floor9MotionPreview() } else { HomeView() }
+        if ProcessInfo.processInfo.arguments.contains("--glyph-fidelity") { GlyphFidelityPreview() }
+        else if isFloor9Preview { Floor9MotionPreview() } else { HomeView() }
         #else
         HomeView()
         #endif
@@ -101,7 +102,8 @@ struct DescentAuthorizedApp: App {
                 .onChange(of: gameSession.eventSequence) { _, _ in
                     gameFeedback.consume(
                         gameSession.latestEvents,
-                        settings: appSettings.settings
+                        settings: appSettings.settings,
+                        enemyActionPresentation: gameSession.currentEnemyActionPresentation
                     )
                 }
                 .onChange(of: appSettings.settings) { _, settings in

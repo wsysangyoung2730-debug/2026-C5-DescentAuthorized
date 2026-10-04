@@ -1,25 +1,86 @@
 import Foundation
 
+/// A resolved action keeps its gesture even after the staged state removes due reservations.
+struct EnemyActionPresentation: Equatable, Sendable {
+    let attackStrength: Bool?
+    let includesScheduledDamage: Bool
+
+    init(action: EnemyAction, resolvedEvents: [DemoSessionEvent]? = nil, state: BattleState? = nil) {
+        let direct: Bool?
+        switch action {
+        case let .attack(_, _, strong): direct = strong
+        case let .expansion(_, action): direct = Self.expansionStrength(action)
+        default: direct = nil
+        }
+        let scheduled: [Int]
+        if let resolvedEvents {
+            scheduled = resolvedEvents.compactMap {
+                if case let .combat(.scheduledDamageExecuted(_, damage)) = $0 { return damage }
+                return nil
+            }
+        } else if let state {
+            scheduled = state.expansion.scheduledDamage
+                .filter { $0.dueEnemyTurn <= state.turnNumber }.map(\.damage)
+        } else {
+            scheduled = []
+        }
+        includesScheduledDamage = !scheduled.isEmpty
+        let actualDamage = resolvedEvents?.compactMap { event -> Int? in
+            if case let .combat(.damageApplied(.player, amount, _)) = event, amount > 0 { return amount }
+            return nil
+        } ?? []
+        if direct != nil || !scheduled.isEmpty || !actualDamage.isEmpty {
+            attackStrength = direct == true || scheduled.contains { $0 >= 30 } || actualDamage.contains { $0 >= 30 }
+        } else {
+            attackStrength = nil
+        }
+    }
+
+    private static func expansionStrength(_ action: ExpansionEnemyAction) -> Bool? {
+        switch action {
+        case .correctionStrike, .barrierStrike: return true
+        case .copyReaction, .counterExecute: return false
+        case let .directHits(hits): return hits.contains { $0 >= 30 }
+        case let .sequence(actions):
+            let strengths = actions.compactMap(expansionStrength)
+            return strengths.isEmpty ? nil : strengths.contains(true)
+        default: return nil
+        }
+    }
+}
+
+/// Shared by authored poses, the released projectile, and damage presentation.
+struct EnemyAttackTiming: Equatable, Sendable {
+    let release: TimeInterval
+    let impact: TimeInterval
+    let settled: TimeInterval
+    let duration: TimeInterval
+
+    static let normal = Self(release: 0.40, impact: 0.46, settled: 0.96, duration: 1.0)
+    static let heavy = Self(release: 0.54, impact: 0.62, settled: 1.28, duration: 1.3)
+
+    static func forAttack(strong: Bool) -> Self { strong ? .heavy : .normal }
+    var flightDuration: TimeInterval { impact - release }
+    var recoveryDuration: TimeInterval { duration - impact }
+}
+
 /// Timing belongs to presentation; combat and saving still resolve synchronously.
 struct CombatPresentationTimeline {
     static let playerImpactDelay: TimeInterval = 0.20
     static let playerToEnemyDelay: TimeInterval = 0.38
-    static let deathPoseDuration: TimeInterval = 1.80
-    static let dissolveDuration: TimeInterval = 0.65
+    static let deathPoseDuration: TimeInterval = 0.65
+    static let dissolveDuration: TimeInterval = 0.40
     static let deathDuration: TimeInterval = deathPoseDuration + dissolveDuration
+    static let defeatSettleDuration: TimeInterval = 0.35
 
-    static func enemyImpactDelay(strong: Bool) -> TimeInterval { strong ? 0.62 : 0.46 }
-    static func enemyRecovery(strong: Bool) -> TimeInterval { strong ? 0.68 : 0.54 }
+    static func enemyImpactDelay(strong: Bool) -> TimeInterval { EnemyAttackTiming.forAttack(strong: strong).impact }
+    static func enemyRecovery(strong: Bool) -> TimeInterval { EnemyAttackTiming.forAttack(strong: strong).recoveryDuration }
 
-    static func enemyActionDuration(_ action: EnemyAction) -> TimeInterval {
-        let cues = GameFeedbackMapper().cues(for: [.combat(.enemyActionStarted(action))])
-        for cue in cues {
-            if case let .enemyAttack(strong) = cue {
-                return enemyImpactDelay(strong: strong) + enemyRecovery(strong: strong)
-            }
+    static func enemyActionDuration(_ action: EnemyAction, presentation: EnemyActionPresentation? = nil) -> TimeInterval {
+        if let strong = (presentation ?? EnemyActionPresentation(action: action)).attackStrength {
+            return EnemyAttackTiming.forAttack(strong: strong).duration
         }
         if case .telegraph = action { return 1.20 }
-        // Reservations can strike during a wait while its special gesture continues.
         return 2.00
     }
 
@@ -34,13 +95,15 @@ struct CombatPresentationTimeline {
         let events: [DemoSessionEvent]
         /// Projectile events launch immediately, but their HP changes wait for impact.
         let stateEvents: [DemoSessionEvent]
+        let enemyAction: EnemyActionPresentation?
 
         init(_ kind: Kind, after delay: TimeInterval, events: [DemoSessionEvent],
-             stateEvents: [DemoSessionEvent]? = nil) {
+             stateEvents: [DemoSessionEvent]? = nil, enemyAction: EnemyActionPresentation? = nil) {
             self.kind = kind
             self.delay = delay
             self.events = events
             self.stateEvents = stateEvents ?? events
+            self.enemyAction = enemyAction
         }
     }
 
@@ -83,27 +146,24 @@ struct CombatPresentationTimeline {
         }
 
         if hasVictory {
-            result.append(Step(.victoryRelease, after: deathDuration, events: completion))
+            result.append(Step(.victoryRelease, after: deathDuration + defeatSettleDuration, events: completion))
         } else if let enemyIndex {
             let enemyEvents = Array(combat.suffix(from: enemyIndex))
             let nextTurn = enemyEvents.firstIndex {
                 if case .combat(.turnStarted) = $0 { true } else { false }
             } ?? enemyEvents.count
             let actionEvents = Array(enemyEvents.prefix(nextTurn))
-            let strong = isStrongEnemyAction(in: actionEvents)
+            guard case let .combat(.enemyActionStarted(action)) = enemyEvents[0] else { return result }
+            let presentation = EnemyActionPresentation(action: action, resolvedEvents: actionEvents)
+            let strong = presentation.attackStrength ?? false
             let impactDelay = enemyImpactDelay(strong: strong)
-            let actionDuration: TimeInterval
-            if case let .combat(.enemyActionStarted(action)) = enemyEvents[0] {
-                actionDuration = enemyActionDuration(action)
-            } else {
-                actionDuration = impactDelay + enemyRecovery(strong: strong)
-            }
+            let actionDuration = enemyActionDuration(action, presentation: presentation)
             let windupEvents = (hasPlayerCast ? [] : playerEvents) + [enemyEvents[0]]
             result.append(Step(.enemyWindup,
                                after: hasPlayerCast ? playerToEnemyDelay - playerImpactDelay : 0,
-                               events: windupEvents))
+                               events: windupEvents, enemyAction: presentation))
             result.append(Step(.enemyImpact, after: impactDelay,
-                               events: Array(actionEvents.dropFirst())))
+                               events: Array(actionEvents.dropFirst()), enemyAction: presentation))
             result.append(Step(.recovery, after: max(0, actionDuration - impactDelay),
                                events: Array(enemyEvents.suffix(from: nextTurn)) + completion))
         } else {
@@ -161,5 +221,27 @@ struct CombatPresentationTimeline {
         }
         if step.kind == .enemyImpact { state.currentEnemyIntent = nil }
         return state
+    }
+}
+
+/// Deterministic whole-model fall. No joint indices or accumulated transforms are used.
+struct GroundedDeathPose {
+    let forwardTilt: Float
+    let sideTilt: Float
+    let opacity: Float
+
+    static func sample(elapsed: TimeInterval, reducedMotion: Bool) -> Self {
+        let time = elapsed.isFinite ? max(0, elapsed) : 0
+        func smooth(_ value: Double) -> Float {
+            let t = min(1, max(0, value))
+            return Float(t * t * (3 - 2 * t))
+        }
+        let droop = smooth(time / 0.65)
+        let fall = smooth((time - 0.65) / 0.95)
+        let fadeStart = reducedMotion ? 0 : CombatPresentationTimeline.deathPoseDuration
+        let fadeDuration = reducedMotion ? 0.15 : CombatPresentationTimeline.dissolveDuration
+        return Self(forwardTilt: reducedMotion ? 0 : 0.18 * droop + 1.22 * fall,
+                    sideTilt: reducedMotion ? 0 : 0.12 * fall,
+                    opacity: 1 - smooth((time - fadeStart) / fadeDuration))
     }
 }

@@ -1,0 +1,48 @@
+{
+  "8-floor08_administrator_observatory-battle": {
+    "actorPresent": true,
+    "camera": "F08_iPad_MainCamera",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 48,
+    "jointCount": 5,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathDisabled": true,
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "hiddenAfterDialogueReset": true,
+      "hiddenAfterMotionSettingChange": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor08_administrator_observatory"
+  },
+  "9-floor09_archive_redesign-battle": {
+    "actorPresent": true,
+    "camera": "F09_iPad_MainCamera",
+    "environmentReady": true,
+    "expectedRewardCount": 0,
+    "fieldOfView": 48,
+    "jointCount": 5,
+    "jointMotionObserved": true,
+    "lifecycle": {
+      "deathDisabled": true,
+      "deathOpacity": 0,
+      "deathPaused": true,
+      "hiddenAfterDialogueReset": true,
+      "hiddenAfterMotionSettingChange": true,
+      "restartOpacity": 1
+    },
+    "missingRoles": [],
+    "preset": "battle",
+    "quality": "medium",
+    "rewardModelCount": 0,
+    "rewardReady": true,
+    "scene": "floor09_archive_redesign"
+  }
+}
