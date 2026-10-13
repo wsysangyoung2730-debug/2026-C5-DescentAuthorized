@@ -250,6 +250,8 @@ struct SettingsView: View {
             tutorialSettings
         case .gameCenter:
             gameCenterSettings
+        case .privacy:
+            privacySettings
         }
     }
 
@@ -457,6 +459,76 @@ struct SettingsView: View {
                         .padding(20)
                 }
             }
+        }
+    }
+
+    private var privacySettings: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            settingsSection(title: "개인정보 처리방침", subtitle: "하강 승인: 제0균열 · 시행일 2026년 10월 13일") {
+                VStack(alignment: .leading, spacing: 22) {
+                    privacyParagraph(
+                        title: "기기에 저장하는 정보",
+                        text: "게임 진행, 주문 습득·숙련도, 튜토리얼 기록과 입력·음향·화면 설정을 기기에 저장하여 이어하기와 설정 유지에 사용합니다. 문양을 그린 원본 입력 획은 저장 파일에 보관하지 않습니다. 개발자 서버로 게임 기록을 보내는 기능이나 광고·분석·추적 도구는 없습니다."
+                    )
+                    privacyParagraph(
+                        title: "선택 기능 · Game Center",
+                        text: "Game Center에 연결하지 않아도 게임을 이용할 수 있습니다. 연결하면 업적과 달성률을 Apple에 보고합니다. 앱은 연결 상태를 보여주기 위해 표시 이름을 사용하며, 중복 보고를 줄이기 위해 이 게임의 계정 식별자와 업적 동기화 기록을 기기에 저장합니다. 기기의 Game Center 설정에서 로그아웃하거나 활동 공유 범위를 변경할 수 있습니다. Apple이 처리하는 정보에는 Apple의 정책이 적용됩니다."
+                    )
+                    if let url = URL(string: "https://www.apple.com/legal/privacy/data/ko/game-center/") {
+                        Link(destination: url) {
+                            Label("Apple Game Center 개인정보 안내", systemImage: "arrow.up.right.square")
+                                .font(.subheadline)
+                                .frame(minHeight: 44, alignment: .leading)
+                        }
+                        .foregroundStyle(SettingsPalette.magicBright)
+                    }
+                    privacyParagraph(
+                        title: "보관과 삭제",
+                        text: "기기 내 기록은 별도 자동 만료 없이 보관됩니다. 새 게임을 시작하면 기존 게임 진행이 초기화되지만 설정과 업적 동기화 기록은 유지됩니다. 튜토리얼 초기화는 안내 기록만 바꿉니다. 기기에서 앱을 삭제하면 앱의 로컬 데이터가 삭제되며, 앱 정리하기는 데이터를 남길 수 있습니다. Apple에 이미 보고된 업적은 새 게임이나 앱 삭제로 지워지지 않습니다."
+                    )
+                    privacyParagraph(
+                        title: "백업과 복원",
+                        text: "앱은 자체 클라우드 저장 기능을 제공하지 않습니다. 기기 설정에 따라 운영체제의 백업에 앱 데이터가 포함되거나 백업 복원 시 다시 저장될 수 있습니다. 백업 및 Game Center 데이터 관리는 Apple의 설정과 정책을 따릅니다."
+                    )
+                }
+                .padding(20)
+            }
+
+            settingsSection(title: "개인정보 문의", subtitle: "제작자 · SangYoung Woo") {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("개인정보 처리와 삭제에 관한 문의는 아래 이메일로 연락해 주세요. 문의를 보내면 발신 이메일 주소와 작성한 내용이 전달되며, 문의 응대에 사용됩니다.")
+                        .font(.subheadline)
+                        .foregroundStyle(SettingsPalette.body)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("sangyoung2730@naver.com")
+                        .font(.subheadline)
+                        .foregroundStyle(SettingsPalette.title)
+                        .textSelection(.enabled)
+                    if let url = URL(string: "mailto:sangyoung2730@naver.com") {
+                        Link(destination: url) {
+                            Label("이메일로 문의", systemImage: "envelope")
+                                .font(.subheadline.weight(.medium))
+                                .frame(minHeight: 44, alignment: .leading)
+                        }
+                        .foregroundStyle(SettingsPalette.magicBright)
+                    }
+                }
+                .padding(20)
+            }
+        }
+        .accessibilityIdentifier("settings.privacy")
+    }
+
+    private func privacyParagraph(title: String, text: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(SettingsPalette.title)
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(SettingsPalette.body)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -743,6 +815,7 @@ private enum SettingsCategory: String, CaseIterable, Identifiable {
     case display
     case tutorial
     case gameCenter
+    case privacy
 
     var id: Self { self }
 
@@ -753,6 +826,7 @@ private enum SettingsCategory: String, CaseIterable, Identifiable {
         case .display: "화면 효과"
         case .tutorial: "튜토리얼"
         case .gameCenter: "Game Center"
+        case .privacy: "개인정보"
         }
     }
 
@@ -763,6 +837,7 @@ private enum SettingsCategory: String, CaseIterable, Identifiable {
         case .display: "움직임과 섬광 연출의 강도를 조정합니다"
         case .tutorial: "완료한 안내를 원하는 시점에 다시 예약합니다"
         case .gameCenter: "계정 연결 상태와 달성한 업적을 확인합니다"
+        case .privacy: "게임 데이터의 저장과 사용, 삭제 방법을 안내합니다"
         }
     }
 
@@ -773,6 +848,7 @@ private enum SettingsCategory: String, CaseIterable, Identifiable {
         case .display: "sparkles"
         case .tutorial: "book.closed"
         case .gameCenter: "circle.hexagongrid"
+        case .privacy: "hand.raised"
         }
     }
 }
