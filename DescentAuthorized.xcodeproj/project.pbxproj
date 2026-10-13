@@ -569,10 +569,10 @@
 			};
 			buildConfigurationList = 900000000000000000000001 /* Build configuration list for PBXProject "DescentAuthorized" */;
 			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = en;
+			developmentRegion = ko;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
+				ko,
 				Base,
 			);
 			mainGroup = 400000000000000000000001;
