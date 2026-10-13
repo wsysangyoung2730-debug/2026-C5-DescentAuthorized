@@ -6,6 +6,7 @@ struct DemoCompleteView: View {
     let onReturnToTitle: () -> Void
 
     @State private var revealsMessage = false
+    @State private var isConfirmingNewGame = false
 
     var body: some View {
         ZStack {
@@ -40,13 +41,22 @@ struct DemoCompleteView: View {
                     .buttonStyle(.bordered)
 
                     Button("처음부터 다시") {
-                        gameSession.startNewGame()
+                        isConfirmingNewGame = true
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.purple)
                 }
                 .padding(.bottom, 38)
             }
+        }
+        .confirmationDialog("처음부터 시작할까요?", isPresented: $isConfirmingNewGame,
+                            titleVisibility: .visible) {
+            Button("기존 진행을 지우고 시작", role: .destructive) {
+                gameSession.startNewGame(replacingSavedProgress: true)
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("기존 게임 진행과 습득 주문이 초기화되며 되돌릴 수 없습니다. 설정과 Game Center 업적은 유지됩니다.")
         }
         .task {
             try? await Task.sleep(for: .milliseconds(550))

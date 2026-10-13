@@ -8,6 +8,7 @@ struct HomeView: View {
 
     @State private var isShowingSettings = false
     @State private var isPlaying = false
+    @State private var isConfirmingNewGame = false
     @State private var isShowingGameSystemOverlay = false
     @State private var isPreparingStartup = false
     @State private var isStartupReady = false
@@ -156,10 +157,7 @@ struct HomeView: View {
                             accessibilityLabel: "처음부터",
                             width: menuButtonWidth
                         ) {
-                            gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-                            if gameSession.startNewGame() {
-                                isPlaying = true
-                            }
+                            requestNewGame()
                         }
                     } else {
                         homeButton(
@@ -167,10 +165,7 @@ struct HomeView: View {
                             accessibilityLabel: "하강 절차 시작",
                             width: menuButtonWidth
                         ) {
-                            gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-                            if gameSession.startNewGame() {
-                                isPlaying = true
-                            }
+                            requestNewGame()
                         }
                     }
 
@@ -195,6 +190,30 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $isShowingSettings) {
             SettingsView()
+        }
+        .confirmationDialog("처음부터 시작할까요?", isPresented: $isConfirmingNewGame,
+                            titleVisibility: .visible) {
+            Button("기존 진행을 지우고 시작", role: .destructive) {
+                beginNewGame(replacingSavedProgress: true)
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("기존 게임 진행과 습득 주문이 초기화되며 되돌릴 수 없습니다. 불러오지 못해 보관 중인 저장도 삭제됩니다. 설정과 Game Center 업적은 유지됩니다.")
+        }
+    }
+
+    private func requestNewGame() {
+        if gameSession.requiresNewGameConfirmation {
+            isConfirmingNewGame = true
+        } else {
+            beginNewGame()
+        }
+    }
+
+    private func beginNewGame(replacingSavedProgress: Bool = false) {
+        if gameSession.startNewGame(replacingSavedProgress: replacingSavedProgress) {
+            gameFeedback.playInterface(.confirm, settings: appSettings.settings)
+            isPlaying = true
         }
     }
 
