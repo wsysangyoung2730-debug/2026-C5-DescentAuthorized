@@ -1,0 +1,242 @@
+{
+  "scope": "Unsigned device Release bundle; inspection only, not signing/ASC/device approval",
+  "sourceRevisionProvidedByCaller": "d7f474f",
+  "bundleInfo": {
+    "BuildMachineOSBuild": "26A434",
+    "CFBundleDevelopmentRegion": "ko",
+    "CFBundleDisplayName": "하강 승인: 제0균열",
+    "CFBundleExecutable": "DescentAuthorized",
+    "CFBundleIcons": {
+      "CFBundlePrimaryIcon": {
+        "CFBundleIconFiles": [
+          "AppIcon60x60"
+        ]
+      }
+    },
+    "CFBundleIcons~ipad": {
+      "CFBundlePrimaryIcon": {
+        "CFBundleIconFiles": [
+          "AppIcon60x60",
+          "AppIcon76x76"
+        ],
+        "CFBundleIconName": "AppIcon"
+      }
+    },
+    "CFBundleIdentifier": "com.wsysangyoung.DescentAuthorized",
+    "CFBundleInfoDictionaryVersion": "6.0",
+    "CFBundleName": "DescentAuthorized",
+    "CFBundlePackageType": "APPL",
+    "CFBundleShortVersionString": "0.1.0",
+    "CFBundleSupportedPlatforms": [
+      "iPhoneOS"
+    ],
+    "CFBundleVersion": "1",
+    "DTCompiler": "com.apple.compilers.llvm.clang.1_0",
+    "DTPlatformBuild": "24A430",
+    "DTPlatformName": "iphoneos",
+    "DTPlatformVersion": "27.0",
+    "DTSDKBuild": "24A430",
+    "DTSDKName": "iphoneos27.0",
+    "DTXcode": "2700",
+    "DTXcodeBuild": "27A266a",
+    "LSRequiresIPhoneOS": true,
+    "MinimumOSVersion": "18.0",
+    "NSAccentColorName": "AccentColor",
+    "UIApplicationSceneManifest": {
+      "UIApplicationSupportsMultipleScenes": false,
+      "UISceneConfigurations": {}
+    },
+    "UIApplicationSupportsIndirectInputEvents": true,
+    "UIDeviceFamily": [
+      2
+    ],
+    "UILaunchScreen": {},
+    "UIRequiredDeviceCapabilities": [
+      "arm64"
+    ],
+    "UIRequiresFullScreen": true,
+    "UIRequiresFullScreenIgnoredStartingWithVersion": "26.0",
+    "UISupportedInterfaceOrientations": [
+      "UIInterfaceOrientationLandscapeLeft",
+      "UIInterfaceOrientationLandscapeRight"
+    ],
+    "UISupportedInterfaceOrientations~ipad": [
+      "UIInterfaceOrientationPortrait",
+      "UIInterfaceOrientationPortraitUpsideDown",
+      "UIInterfaceOrientationLandscapeLeft",
+      "UIInterfaceOrientationLandscapeRight"
+    ]
+  },
+  "bundleBytes": 1599421418,
+  "bundleFileCount": 3000,
+  "binaryBytes": 4807384,
+  "binarySHA256": "0d5ccab339c4a9af0a6e0d3179b95afdc31c928fd196acd80930f592f3e6b090",
+  "topLevelBytes": {
+    "Reality": 1313412456,
+    "Assets.car": 271857080,
+    "Audio": 8950782,
+    "DescentAuthorized": 4807384,
+    "BossRoomSweepTracks.json": 258182,
+    "AppIcon76x76@2x~ipad.png": 58026,
+    "AppIcon60x60@2x.png": 36666,
+    "AssetManifest.json": 30276,
+    "default.metallib": 8276,
+    "Info.plist": 1603,
+    "PrivacyInfo.xcprivacy": 679,
+    "PkgInfo": 8
+  },
+  "extensionCounts": {
+    "(none)": 2,
+    ".car": 1,
+    ".exr": 8,
+    ".hdr": 22,
+    ".jpg": 2326,
+    ".json": 29,
+    ".md": 2,
+    ".metallib": 1,
+    ".mp3": 14,
+    ".plist": 1,
+    ".png": 379,
+    ".usdc": 210,
+    ".wav": 4,
+    ".xcprivacy": 1
+  },
+  "largestFiles": [
+    {
+      "path": "Assets.car",
+      "bytes": 271857080
+    },
+    {
+      "path": "Reality/Scenes/Floor08/AdministratorObservatory/floor08_administrator_observatory.usdc",
+      "bytes": 27562523
+    },
+    {
+      "path": "Reality/Scenes/Floor05/OriginalMemoryAdministrator/floor05_original_memory_administrator.usdc",
+      "bytes": 11343262
+    },
+    {
+      "path": "Reality/Scenes/Floor06/CausalityAdministrator/floor06_causality_administrator.usdc",
+      "bytes": 10610589
+    },
+    {
+      "path": "Reality/Scenes/Floor04/ResponsibilityAuditAdministrator/floor04_responsibility_audit_administrator.usdc",
+      "bytes": 9818582
+    },
+    {
+      "path": "Reality/Scenes/Floor09/ArchiveRedesign/textures/F09_Service_Iron_normal.png",
+      "bytes": 9307507
+    },
+    {
+      "path": "Reality/Scenes/Floor09/ArchiveRedesign/textures/F09_Aged_Plaster_normal.png",
+      "bytes": 9307504
+    },
+    {
+      "path": "Reality/Scenes/Floor09/ArchiveRedesign/textures/F09_Faded_Marking_normal.png",
+      "bytes": 9307503
+    },
+    {
+      "path": "Reality/Scenes/Floor09/ArchiveRedesign/textures/F09_Worn_Concrete_normal.png",
+      "bytes": 9307500
+    },
+    {
+      "path": "Reality/Scenes/Floor08/AdministratorObservatory/textures/F08B_WeatheredConcrete_normal.png",
+      "bytes": 9191275
+    },
+    {
+      "path": "Reality/Scenes/Floor08/AdministratorObservatory/textures/F09_Faded_Marking_normal.png",
+      "bytes": 8733399
+    },
+    {
+      "path": "Reality/Scenes/Floor08/ResidueIsolation/textures/F09_Service_Iron_normal.png",
+      "bytes": 8733397
+    }
+  ],
+  "linkedLibraries": [
+    "/System/Library/Frameworks/AVFAudio.framework/AVFAudio (compatibility version 1.0.0, current version 1.0.0)",
+    "/System/Library/Frameworks/GameKit.framework/GameKit (compatibility version 1.0.0, current version 821.0.25)",
+    "/System/Library/Frameworks/Foundation.framework/Foundation (compatibility version 300.0.0, current version 5027.0.69)",
+    "/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)",
+    "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)",
+    "/System/Library/Frameworks/Combine.framework/Combine (compatibility version 1.0.0, current version 3023.0.0)",
+    "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation (compatibility version 150.0.0, current version 5027.0.69)",
+    "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics (compatibility version 64.0.0, current version 2050.0.0)",
+    "/System/Library/Frameworks/ImageIO.framework/ImageIO (compatibility version 1.0.0, current version 1.0.0)",
+    "/System/Library/Frameworks/Metal.framework/Metal (compatibility version 1.0.0, current version 382.5.3)",
+    "/System/Library/Frameworks/RealityFoundation.framework/RealityFoundation (compatibility version 1.0.0, current version 453.2.1)",
+    "/System/Library/Frameworks/RealityKit.framework/RealityKit (compatibility version 1.0.0, current version 453.2.1)",
+    "/System/Library/Frameworks/SwiftUI.framework/SwiftUI (compatibility version 1.0.0, current version 8.0.84)",
+    "/System/Library/Frameworks/UIKit.framework/UIKit (compatibility version 1.0.0, current version 9127.0.84)",
+    "/usr/lib/swift/libswiftARKit.dylib (compatibility version 1.0.0, current version 781.0.7, weak)",
+    "/usr/lib/swift/libswiftAVFoundation.dylib (compatibility version 1.0.0, current version 2450.77.1, weak)",
+    "/usr/lib/swift/libswiftAccelerate.dylib (compatibility version 1.0.0, current version 82.0.0, weak)",
+    "/usr/lib/swift/libswiftCompression.dylib (compatibility version 1.0.0, current version 18.0.0, weak)",
+    "/usr/lib/swift/libswiftCore.dylib (compatibility version 0.0.0, current version 0.0.0)",
+    "/usr/lib/swift/libswiftCoreAudio.dylib (compatibility version 1.0.0, current version 482.102.0, weak)",
+    "/usr/lib/swift/libswiftCoreFoundation.dylib (compatibility version 1.0.0, current version 120.100.0)",
+    "/usr/lib/swift/libswiftCoreImage.dylib (compatibility version 1.0.0, current version 3.0.0, weak)",
+    "/usr/lib/swift/libswiftCoreLocation.dylib (compatibility version 1.0.0, current version 57.0.0, weak)",
+    "/usr/lib/swift/libswiftCoreMIDI.dylib (compatibility version 1.0.0, current version 6.0.0, weak)",
+    "/usr/lib/swift/libswiftDispatch.dylib (compatibility version 1.0.0, current version 1605.0.2)",
+    "/usr/lib/swift/libswiftGLKit.dylib (compatibility version 1.0.0, current version 1.2.0, weak)",
+    "/usr/lib/swift/libswiftGameplayKit.dylib (compatibility version 1.0.0, current version 2.0.0, weak)",
+    "/usr/lib/swift/libswiftMetal.dylib (compatibility version 1.0.0, current version 382.5.3, weak)",
+    "/usr/lib/swift/libswiftMetalKit.dylib (compatibility version 1.0.0, current version 1.3.0, weak)",
+    "/usr/lib/swift/libswiftModelIO.dylib (compatibility version 1.0.0, current version 2.0.0, weak)",
+    "/usr/lib/swift/libswiftOSLog.dylib (compatibility version 1.0.0, current version 10.0.0, weak)",
+    "/usr/lib/swift/libswiftObjectiveC.dylib (compatibility version 1.0.0, current version 973.1.0)",
+    "/usr/lib/swift/libswiftQuartzCore.dylib (compatibility version 1.0.0, current version 5.0.0, weak)",
+    "/usr/lib/swift/libswiftSceneKit.dylib (compatibility version 1.0.0, current version 1.2.0, weak)",
+    "/usr/lib/swift/libswiftSpatial.dylib (compatibility version 1.0.0, current version 1.0.0, weak)",
+    "/usr/lib/swift/libswiftSpriteKit.dylib (compatibility version 1.0.0, current version 1.2.0, weak)",
+    "/usr/lib/swift/libswiftUniformTypeIdentifiers.dylib (compatibility version 1.0.0, current version 919.0.1, weak)",
+    "/usr/lib/swift/libswiftXPC.dylib (compatibility version 1.0.0, current version 167.0.2, weak)",
+    "/usr/lib/swift/libswift_Builtin_float.dylib (compatibility version 0.0.0, current version 0.0.0, weak)",
+    "/usr/lib/swift/libswift_Concurrency.dylib (compatibility version 0.0.0, current version 0.0.0)",
+    "/usr/lib/swift/libswiftos.dylib (compatibility version 1.0.0, current version 1090.0.0)",
+    "/usr/lib/swift/libswiftsimd.dylib (compatibility version 1.0.0, current version 25.0.0, weak)"
+  ],
+  "bundledPrivacyManifest": {
+    "NSPrivacyAccessedAPITypes": [
+      {
+        "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+        "NSPrivacyAccessedAPITypeReasons": [
+          "CA92.1"
+        ]
+      },
+      {
+        "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+        "NSPrivacyAccessedAPITypeReasons": [
+          "35F9.1"
+        ]
+      }
+    ]
+  },
+  "bundledPrivacySHA256": "86e8b51babb604cf9a30dc4902a9e7c3d5195eec21fadceb1f231b856fba33c9",
+  "sourceIcon": {
+    "width": 1024,
+    "height": 1024,
+    "bitDepth": 8,
+    "colorType": 2,
+    "rgbWithoutAlpha": true,
+    "sha256": "31051b804dfbec4f404ed447bac003b9a255776a3b711fe6c0ec763ef42fa6b2"
+  },
+  "releaseSystemUptimeSelectorPresent": true,
+  "selectedPreviewMarkers": {
+    "--floor9-preview": false,
+    "--glyph-fidelity": false,
+    "--expansion-diagnostics": false,
+    "--barrier-guide-diagnostics": false,
+    "--room-warmup-diagnostics": false
+  },
+  "bundledDocumentation": [
+    "Reality/Interactables/README.md",
+    "Reality/UIReference/README.md"
+  ],
+  "inspectionWarnings": [],
+  "limitations": [
+    "No exhaustive private API or executable reachability analysis",
+    "No compressed IPA or App Store thinning size measured",
+    "No distribution signing or App Store Connect validation",
+    "No real iPad performance or end-to-end gameplay certification"
+  ]
+}
