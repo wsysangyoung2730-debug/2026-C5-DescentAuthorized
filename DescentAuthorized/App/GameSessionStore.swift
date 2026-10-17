@@ -251,7 +251,8 @@ final class GameSessionStore: ObservableObject {
 
     private func reportAchievementSnapshot(events: [DemoSessionEvent] = []) {
         achievementReporter?.submit(
-            achievementTracker.updates(for: session.progress, events: events)
+            achievementTracker.updates(for: session.progress, events: events),
+            learnedSpells: session.progress.learnedSpells
         )
     }
 
