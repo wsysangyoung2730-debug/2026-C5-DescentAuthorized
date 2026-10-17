@@ -7,6 +7,7 @@ struct SettingsView: View {
     @EnvironmentObject private var gameCenter: GameCenterManager
     @EnvironmentObject private var gameSession: GameSessionStore
 
+    @State private var usesCompactLayout = false
     @State private var selectedCategory = SettingsCategory.input
     @State private var testStrokes: [DrawnStroke] = []
     @State private var lastInputMethod: DrawingInputMethod?
@@ -26,9 +27,12 @@ struct SettingsView: View {
                 DASettingsBackdrop(imageName: "SettingsMenuBackground")
                 Color.black.opacity(0.48).ignoresSafeArea()
 
-                settingsPanel(sidebarWidth: sidebarWidth)
+                settingsPanel(sidebarWidth: sidebarWidth, compact: panelWidth < 760)
                     .frame(width: panelWidth, height: panelHeight)
                     .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+            }
+            .onChange(of: panelWidth, initial: true) { _, width in
+                usesCompactLayout = width < 760
             }
         }
         .preferredColorScheme(.dark)
@@ -54,7 +58,7 @@ struct SettingsView: View {
         }
     }
 
-    private func settingsPanel(sidebarWidth: CGFloat) -> some View {
+    private func settingsPanel(sidebarWidth: CGFloat, compact: Bool) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 5)
                 .fill(SettingsPalette.panel.opacity(0.975))
@@ -77,23 +81,28 @@ struct SettingsView: View {
 
             VStack(spacing: 0) {
                 panelHeader
-                    .frame(height: 88)
+                    .frame(height: compact ? 72 : 88)
 
                 Rectangle()
                     .fill(SettingsPalette.gold.opacity(0.4))
                     .frame(height: 1)
                     .padding(.horizontal, 26)
 
-                HStack(spacing: 0) {
-                    categorySidebar
-                        .frame(width: sidebarWidth)
-
-                    Rectangle()
-                        .fill(SettingsPalette.gold.opacity(0.28))
-                        .frame(width: 1)
-                        .padding(.vertical, 18)
-
+                if compact {
+                    compactCategoryPicker
                     categoryDetail
+                } else {
+                    HStack(spacing: 0) {
+                        categorySidebar
+                            .frame(width: sidebarWidth)
+
+                        Rectangle()
+                            .fill(SettingsPalette.gold.opacity(0.28))
+                            .frame(width: 1)
+                            .padding(.vertical, 18)
+
+                        categoryDetail
+                    }
                 }
             }
             .padding(10)
@@ -109,9 +118,11 @@ struct SettingsView: View {
                     .font(.system(size: 32, weight: .medium, design: .serif))
                     .foregroundStyle(SettingsPalette.title)
 
-                Text("절차 환경과 입력 방식을 조정합니다")
-                    .font(.subheadline)
-                    .foregroundStyle(SettingsPalette.secondary)
+                if !usesCompactLayout {
+                    Text("절차 환경과 입력 방식을 조정합니다")
+                        .font(.subheadline)
+                        .foregroundStyle(SettingsPalette.secondary)
+                }
             }
 
             Spacer()
@@ -134,8 +145,34 @@ struct SettingsView: View {
             .help("설정 닫기")
             .accessibilityLabel("설정 닫기")
         }
-        .padding(.leading, 34)
-        .padding(.trailing, 22)
+        .padding(.leading, usesCompactLayout ? 18 : 34)
+        .padding(.trailing, usesCompactLayout ? 14 : 22)
+    }
+
+    private var compactCategoryPicker: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(SettingsCategory.allCases) { category in
+                    Button {
+                        selectedCategory = category
+                        gameFeedback.playInterface(.select, settings: appSettings.settings)
+                    } label: {
+                        Label(category.title, systemImage: category.icon)
+                            .font(.subheadline.weight(.medium))
+                            .fixedSize()
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: 44)
+                            .foregroundStyle(selectedCategory == category
+                                ? SettingsPalette.magicBright : SettingsPalette.body)
+                            .background(SettingsPalette.surface.opacity(0.8))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(selectedCategory == category ? .isSelected : [])
+                }
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 12)
+        }
     }
 
     private var categorySidebar: some View {
@@ -211,13 +248,13 @@ struct SettingsView: View {
                     .font(.subheadline)
                     .foregroundStyle(SettingsPalette.secondary)
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, usesCompactLayout ? 16 : 32)
             .padding(.top, 23)
             .padding(.bottom, 18)
 
             ScrollView(showsIndicators: false) {
                 categoryContent
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, usesCompactLayout ? 16 : 32)
                     .padding(.bottom, 28)
             }
             .mask {
@@ -569,30 +606,33 @@ struct SettingsView: View {
         systemImage: String? = nil,
         @ViewBuilder control: () -> Control
     ) -> some View {
-        HStack(spacing: 18) {
-            if let systemImage {
-                Image(systemName: systemImage)
-                    .font(.system(size: 19, weight: .light))
-                    .foregroundStyle(SettingsPalette.magicBright)
-                    .frame(width: 26)
+        let layout = usesCompactLayout
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 18))
+        return layout {
+            HStack(spacing: 12) {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 19, weight: .light))
+                        .foregroundStyle(SettingsPalette.magicBright)
+                        .frame(width: 26)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(SettingsPalette.body)
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(SettingsPalette.secondary)
+                }
             }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(SettingsPalette.body)
-                Text(detail)
-                    .font(.caption)
-                    .foregroundStyle(SettingsPalette.secondary)
-            }
-
-            Spacer(minLength: 20)
-
+            if !usesCompactLayout { Spacer(minLength: 20) }
             control()
-                .frame(maxWidth: 470)
+                .frame(maxWidth: usesCompactLayout ? .infinity : 470)
         }
-        .padding(.horizontal, 20)
-        .frame(maxWidth: .infinity, minHeight: 76)
+        .padding(.horizontal, usesCompactLayout ? 14 : 20)
+        .padding(.vertical, usesCompactLayout ? 14 : 0)
+        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
     }
 
     private func toggleRow(
@@ -645,11 +685,14 @@ struct SettingsView: View {
     }
 
     private var inputConfirmationControls: some View {
-        HStack(spacing: 16) {
+        let layout = usesCompactLayout
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 16))
+        return layout {
             Label(inputMethodTitle, systemImage: inputMethodIcon)
                 .foregroundStyle(SettingsPalette.secondary)
 
-            Spacer(minLength: 16)
+            if !usesCompactLayout { Spacer(minLength: 16) }
 
             Text("\(testStrokes.count) / 2획")
                 .monospacedDigit()

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct Floor10OpeningExperienceView: View {
+    @Environment(\.isGlyphInputSuspended) private var isSuspended
     @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameSession: GameSessionStore
@@ -41,8 +42,18 @@ struct Floor10OpeningExperienceView: View {
         .ignoresSafeArea()
         .onAppear(perform: resume)
         .onChange(of: isSceneReady) { _, ready in
-            guard ready, presentation == .awakening else { return }
+            guard !isSuspended, ready, presentation == .awakening else { return }
             prepareAwakeningIfNeeded()
+        }
+        .onChange(of: isSuspended) { _, suspended in
+            if suspended {
+                openingTask?.cancel()
+                openingTask = nil
+                isAwakeningSequenceRunning = false
+                sceneController.restoreFloor10OpeningCamera()
+            } else {
+                resume()
+            }
         }
         .onDisappear {
             openingTask?.cancel()
@@ -349,8 +360,19 @@ struct Floor10OpeningExperienceView: View {
     }
 
     private func resume() {
+        guard !isSuspended else { return }
         let progress = gameSession.progress.tutorialProgress
         guard progress.shouldPresent(.floor10Intro) else { return }
+
+        // Older saves may have recorded the last focus before its camera
+        // settled. Do not restart the terminal when resuming that final step.
+        if progress.activeSequence == .floor10Intro,
+           progress.activeStep == nil,
+           progress.completedSteps.contains(.surveyDoor) {
+            sceneController.restoreFloor10OpeningCamera()
+            gameSession.send(.completeTutorial(.floor10Intro))
+            return
+        }
 
         let step = progress.activeSequence == .floor10Intro
             ? (progress.activeStep ?? .terminalBoot)
@@ -447,7 +469,7 @@ struct Floor10OpeningExperienceView: View {
     }
 
     private func prepareAwakeningIfNeeded() {
-        guard isSceneReady else { return }
+        guard !isSuspended, isSceneReady else { return }
         if let step = gameSession.progress.tutorialProgress.activeStep,
            [.surveyTarget, .surveyDesk, .surveyDamage, .surveyDoor].contains(step) {
             showsAwakeningEffects = false
@@ -547,6 +569,7 @@ struct Floor10OpeningExperienceView: View {
     }
 
     private func persist(_ newFocus: Floor10OpeningCameraFocus) {
+        guard !isSuspended else { return }
         switch newFocus {
         case .trainingTarget:
             completeIfNeeded(.surveyTarget, next: .surveyDesk)
@@ -554,9 +577,8 @@ struct Floor10OpeningExperienceView: View {
             completeIfNeeded(.surveyDesk, next: .surveyDamage)
         case .damagedRoom:
             completeIfNeeded(.surveyDamage, next: .surveyDoor)
-        case .lockedDoor:
-            completeIfNeeded(.surveyDoor, next: nil)
         case .settled:
+            completeIfNeeded(.surveyDoor, next: nil)
             gameSession.send(.completeTutorial(.floor10Intro))
         default:
             break

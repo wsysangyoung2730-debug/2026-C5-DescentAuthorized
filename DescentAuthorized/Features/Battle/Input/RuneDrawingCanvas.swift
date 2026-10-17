@@ -35,6 +35,7 @@ final class RuneDrawingCanvasController {
 }
 
 struct RuneDrawingCanvas: UIViewRepresentable {
+    @Environment(\.isGlyphInputSuspended) private var isInputSuspended
     let inputPreference: DrawingInputPreference
     let maximumStrokeCount: Int
     let guidePaths: [[NormalizedPoint]]
@@ -108,6 +109,17 @@ struct RuneDrawingCanvas: UIViewRepresentable {
     }
 
     func updateUIView(_ view: RuneDrawingCanvasView, context: Context) {
+        if view.isUserInteractionEnabled == isInputSuspended {
+            view.isUserInteractionEnabled = !isInputSuspended
+            if isInputSuspended {
+                // Cancellation publishes the preview binding; do it after SwiftUI's
+                // update pass, with interaction already disabled for this frame.
+                DispatchQueue.main.async { [weak view] in
+                    guard let view, !view.isUserInteractionEnabled else { return }
+                    view.cancelActiveStroke()
+                }
+            }
+        }
         context.coordinator.strokes = $strokes
         context.coordinator.lastInputMethod = $lastInputMethod
         context.coordinator.onDrawingChanged = onDrawingChanged

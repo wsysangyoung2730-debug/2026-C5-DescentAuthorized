@@ -7,6 +7,7 @@ struct DemoFlowView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
 
+    var isViewportBlocked = false
     let onExit: () -> Void
     let onSystemOverlayVisibilityChange: (Bool) -> Void
 
@@ -148,7 +149,7 @@ struct DemoFlowView: View {
         .ignoresSafeArea(edges: isEndingPresentation ? [] : .top)
         .environment(
             \.isGlyphInputSuspended,
-            isShowingPauseMenu || isShowingSettings || retryLoadingPresentation != nil || scenePhase != .active
+            isViewportBlocked || isShowingPauseMenu || isShowingSettings || retryLoadingPresentation != nil || scenePhase != .active
         )
         .sheet(isPresented: $isShowingPauseMenu) {
             PauseMenuView(
@@ -173,10 +174,15 @@ struct DemoFlowView: View {
             synchronizeRecordsBattleTutorial()
             scheduleWarmup()
         }
+        .onChange(of: isViewportBlocked) { _, blocked in
+            synchronizeBossSweepSuspension()
+            sceneController.setPrefetchCombatBusy(gameSession.isCombatPresentationActive || blocked)
+            if !blocked { scheduleWarmup() }
+        }
         .onChange(of: warmupScene) { _, _ in scheduleWarmup() }
         .onChange(of: appSettings.graphicsQuality) { _, _ in scheduleWarmup() }
         .onChange(of: gameSession.isCombatPresentationActive) { _, busy in
-            sceneController.setPrefetchCombatBusy(busy)
+            sceneController.setPrefetchCombatBusy(busy || isViewportBlocked)
             if !busy { scheduleWarmup() }
         }
         .onDisappear {
@@ -259,8 +265,8 @@ struct DemoFlowView: View {
     }
 
     private func scheduleWarmup() {
-        sceneController.setPrefetchCombatBusy(gameSession.isCombatPresentationActive)
-        guard isPresentationReady, let next = warmupScene else { return }
+        sceneController.setPrefetchCombatBusy(gameSession.isCombatPresentationActive || isViewportBlocked)
+        guard !isViewportBlocked, isPresentationReady, let next = warmupScene else { return }
         sceneController.prefetchRoom(sceneID: next, quality: appSettings.graphicsQuality)
     }
 
@@ -918,7 +924,7 @@ struct DemoFlowView: View {
     }
 
     private var isBossSweepSuspended: Bool {
-        isShowingPauseMenu || isShowingSettings || retryLoadingPresentation != nil || scenePhase != .active
+        isViewportBlocked || isShowingPauseMenu || isShowingSettings || retryLoadingPresentation != nil || scenePhase != .active
     }
 
     private func cancelBossSweep() {
@@ -1130,6 +1136,7 @@ private struct BossNarrativeView: View {
     @State private var dialogueIndex = 0
     @State private var revealedCharacterCount = 0
     @State private var hasFinished = false
+    @State private var revealingDialogueIndex = -1
 
     var body: some View {
         ZStack {
@@ -1189,7 +1196,7 @@ private struct BossNarrativeView: View {
         }
         .ignoresSafeArea()
         .preferredColorScheme(.dark)
-        .task(id: dialogueIndex) {
+        .task(id: "\(dialogueIndex)-\(isSuspended)") {
             await revealCurrentDialogue()
         }
         .task(id: autoAdvanceTaskID) {
@@ -1367,14 +1374,20 @@ private struct BossNarrativeView: View {
 
     @MainActor
     private func revealCurrentDialogue() async {
+        guard !isSuspended else { return }
         let scheduledIndex = dialogueIndex
         let characters = Array(currentDialogue.text)
-        revealedCharacterCount = appSettings.reducedMotion ? characters.count : 0
+        if revealingDialogueIndex != dialogueIndex {
+            revealingDialogueIndex = dialogueIndex
+            revealedCharacterCount = 0
+        }
+        if appSettings.reducedMotion {
+            revealedCharacterCount = characters.count
+            return
+        }
 
-        guard !appSettings.reducedMotion else { return }
-
-        for (index, character) in characters.enumerated() {
-            guard !Task.isCancelled, scheduledIndex == dialogueIndex else { return }
+        for (index, character) in characters.enumerated().dropFirst(revealedCharacterCount) {
+            guard !Task.isCancelled, !isSuspended, scheduledIndex == dialogueIndex else { return }
             revealedCharacterCount = index + 1
 
             guard index < characters.count - 1 else { continue }
