@@ -6,13 +6,17 @@ final class LandscapeAppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         supportedInterfaceOrientationsFor window: UIWindow?
     ) -> UIInterfaceOrientationMask {
-        .landscape
+        if #available(iOS 26.0, *) { return .all }
+        return .landscape
     }
 }
 
 enum LandscapeOrientationController {
     @MainActor
     static func requestLandscape() {
+        // Modern iPad windows follow the device and can be resized independently.
+        // The game host handles an unsuitable viewport without rotating the window.
+        if #available(iOS 26.0, *) { return }
         for case let windowScene as UIWindowScene in UIApplication.shared.connectedScenes {
             applyLandscape(to: windowScene)
 
@@ -25,10 +29,11 @@ enum LandscapeOrientationController {
 
     @MainActor
     private static func applyLandscape(to windowScene: UIWindowScene) {
+        guard !windowScene.interfaceOrientation.isLandscape else { return }
         windowScene.windows.first?.rootViewController?
             .setNeedsUpdateOfSupportedInterfaceOrientations()
         windowScene.requestGeometryUpdate(
-            .iOS(interfaceOrientations: .landscapeRight)
+            .iOS(interfaceOrientations: .landscape)
         )
     }
 }

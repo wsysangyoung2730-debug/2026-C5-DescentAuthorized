@@ -8,45 +8,111 @@ struct HomeView: View {
 
     @State private var isShowingSettings = false
     @State private var isPlaying = false
+    @State private var isConfirmingNewGame = false
     @State private var isShowingGameSystemOverlay = false
     @State private var isPreparingStartup = false
     @State private var isStartupReady = false
     @State private var startupProgress = 0.0
+    @State private var lastPlayableSize = CGSize(width: 1024, height: 768)
     @State private var startupTip = LoadingTipCatalog.randomTip(for: .startup)
 
     var body: some View {
-        ZStack {
-            if isStartupReady {
-                NavigationStack {
-                    if isPlaying {
-                        DemoFlowView(
-                            onExit: {
-                                isShowingGameSystemOverlay = false
-                                isPlaying = false
-                            },
-                            onSystemOverlayVisibilityChange: { isPresented in
-                                isShowingGameSystemOverlay = isPresented
+        GeometryReader { viewport in
+            let playable = viewport.size.width >= 900 && viewport.size.height >= 600
+                && viewport.size.width > viewport.size.height
+            let gameSize = playable ? viewport.size : lastPlayableSize
+
+            ZStack {
+                if isStartupReady {
+                    NavigationStack {
+                        ZStack {
+                            if isPlaying {
+                                // Keep the same game subtree and layout while its window is
+                                // unsuitable, so rotation never resets a battle or dialogue.
+                                DemoFlowView(
+                                    isViewportBlocked: !playable,
+                                    onExit: returnToTitle,
+                                    onSystemOverlayVisibilityChange: { isPresented in
+                                        isShowingGameSystemOverlay = isPresented
+                                    }
+                                )
+                                .frame(width: gameSize.width, height: gameSize.height)
+                                .opacity(playable ? 1 : 0)
+                                .allowsHitTesting(playable)
+                                .accessibilityHidden(!playable)
+                            } else {
+                                homeContent
                             }
-                        )
-                    } else {
-                        homeContent
+
+                            if isPlaying && !playable {
+                                viewportGuidance(isPortrait: viewport.size.height >= viewport.size.width)
+                            }
+                        }
+                        .frame(width: viewport.size.width, height: viewport.size.height)
+                        .clipped()
+                        .toolbar(isPlaying && !playable ? .hidden : .automatic, for: .navigationBar)
                     }
+                    .transition(.opacity)
+                } else {
+                    LoadingScreenView(
+                        context: .startup,
+                        progress: startupProgress,
+                        tip: startupTip
+                    )
+                    .transition(.opacity)
                 }
-                .transition(.opacity)
-            } else {
-                LoadingScreenView(
-                    context: .startup,
-                    progress: startupProgress,
-                    tip: startupTip
-                )
-                .transition(.opacity)
             }
+            .frame(width: viewport.size.width, height: viewport.size.height)
+            .onChange(of: viewport.size, initial: true) { _, size in
+                if playable { lastPlayableSize = size }
+            }
+            .preferredColorScheme(.dark)
+            .gameStatusBarHidden(isPlaying && playable && !isShowingGameSystemOverlay)
         }
-        .preferredColorScheme(.dark)
-        .gameStatusBarHidden(isPlaying && !isShowingGameSystemOverlay)
-        .task {
-            await prepareStartupAssets()
+        .fullScreenCover(isPresented: $isShowingSettings) { SettingsView() }
+        .task { await prepareStartupAssets() }
+    }
+
+    private func returnToTitle() {
+        isShowingGameSystemOverlay = false
+        isPlaying = false
+    }
+
+    private func viewportGuidance(isPortrait: Bool) -> some View {
+        ZStack {
+            Color(red: 0.025, green: 0.028, blue: 0.035)
+                .ignoresSafeArea()
+            ScrollView {
+                VStack(spacing: 20) {
+                    Image(systemName: isPortrait ? "ipad.landscape" : "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 42, weight: .light))
+                        .foregroundStyle(DAColor.gold)
+                        .accessibilityHidden(true)
+                    Text(isPortrait ? "가로 화면으로 전환해 주세요" : "게임 창을 조금 더 넓혀 주세요")
+                        .font(.title2.weight(.medium))
+                        .foregroundStyle(DAColor.gold)
+                        .accessibilityAddTraits(.isHeader)
+                    Text(isPortrait
+                        ? "iPad를 가로로 돌리거나 창을 가로로 넓히면 이어서 진행합니다."
+                        : "전체 화면 또는 넓은 가로 창에서 이어서 진행할 수 있습니다.")
+                        .font(.body)
+                        .foregroundStyle(.white.opacity(0.8))
+                    Text("현재 진행은 잠시 멈춰 있습니다.")
+                        .font(.footnote)
+                        .foregroundStyle(.white.opacity(0.6))
+                    Button("타이틀로", action: returnToTitle)
+                    .buttonStyle(.bordered)
+                    .tint(DAColor.gold)
+                    .padding(.top, 8)
+                }
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 440)
+                .padding(28)
+                .frame(maxWidth: .infinity)
+            }
+            .defaultScrollAnchor(.center)
         }
+        .accessibilityIdentifier("game.viewportGuidance")
     }
 
     @MainActor
@@ -123,7 +189,7 @@ struct HomeView: View {
 
     private var homeContent: some View {
         GeometryReader { proxy in
-            let menuButtonWidth = min(max(proxy.size.width * 0.23, 280), 325)
+            let menuButtonWidth = min(max(proxy.size.width * 0.23, 240), 325, max(1, proxy.size.width - 32))
 
             ZStack {
                 Image("HomeMainBackground")
@@ -156,10 +222,7 @@ struct HomeView: View {
                             accessibilityLabel: "처음부터",
                             width: menuButtonWidth
                         ) {
-                            gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-                            if gameSession.startNewGame() {
-                                isPlaying = true
-                            }
+                            requestNewGame()
                         }
                     } else {
                         homeButton(
@@ -167,10 +230,7 @@ struct HomeView: View {
                             accessibilityLabel: "하강 절차 시작",
                             width: menuButtonWidth
                         ) {
-                            gameFeedback.playInterface(.confirm, settings: appSettings.settings)
-                            if gameSession.startNewGame() {
-                                isPlaying = true
-                            }
+                            requestNewGame()
                         }
                     }
 
@@ -193,8 +253,29 @@ struct HomeView: View {
                 .accessibilityLabel("설정")
             }
         }
-        .fullScreenCover(isPresented: $isShowingSettings) {
-            SettingsView()
+        .confirmationDialog("처음부터 시작할까요?", isPresented: $isConfirmingNewGame,
+                            titleVisibility: .visible) {
+            Button("기존 진행을 지우고 시작", role: .destructive) {
+                beginNewGame(replacingSavedProgress: true)
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("기존 게임 진행과 습득 주문이 초기화되며 되돌릴 수 없습니다. 불러오지 못해 보관 중인 저장도 삭제됩니다. 설정과 Game Center 업적은 유지됩니다.")
+        }
+    }
+
+    private func requestNewGame() {
+        if gameSession.requiresNewGameConfirmation {
+            isConfirmingNewGame = true
+        } else {
+            beginNewGame()
+        }
+    }
+
+    private func beginNewGame(replacingSavedProgress: Bool = false) {
+        if gameSession.startNewGame(replacingSavedProgress: replacingSavedProgress) {
+            gameFeedback.playInterface(.confirm, settings: appSettings.settings)
+            isPlaying = true
         }
     }
 

@@ -1,0 +1,692 @@
+Building for debugging...
+[Pre-planning 1 / 124]
+[Planning deferred tasks]
+[40 / 67] DescentAuthorizedCore_DescentAuthorizedCore
+[42 / 67]
+[43 / 68] DescentAuthorizedCore
+[43 / 77] DescentAuthorizedCore
+[43 / 115]
+[52 / 116]
+[53 / 116]
+[55 / 116]
+[59 / 116]
+[62 / 116]
+[64 / 116]
+[65 / 116]
+[68 / 116]
+[69 / 116]
+[70 / 116]
+[71 / 116]
+[72 / 116]
+[74 / 116]
+[77 / 116]
+[78 / 116]
+[79 / 116]
+[80 / 116]
+[90 / 116] DescentAuthorizedCore
+[92 / 116] DescentAuthorizedCore
+[93 / 116] DescentAuthorizedCore
+[99 / 116] DescentAuthorizedCore
+[101 / 116] DescentAuthorizedCore
+[103 / 117] DescentAuthorizedCoreTests-product
+[106 / 117]
+[106 / 117] DescentAuthorizedCoreTests-product
+[117 / 158]
+[120 / 158]
+[121 / 158]
+[126 / 158]
+[127 / 158]
+[128 / 158]
+[130 / 158]
+[132 / 158]
+[133 / 158]
+[135 / 158]
+[136 / 158]
+[146 / 158] DescentAuthorizedCoreTests-product
+[147 / 158] DescentAuthorizedCoreTests-product
+[152 / 158] DescentAuthorizedCoreTests-product
+[154 / 158] DescentAuthorizedCoreTests-product
+[155 / 158]
+Build complete! (45.11초)
+Test Suite 'All tests' started at 2026-10-18 08:12:41.181.
+Test Suite 'DescentAuthorizedCoreTests.xctest' started at 2026-10-18 08:12:41.185.
+Test Suite 'BossEncounterTransitionTests' started at 2026-10-18 08:12:41.185.
+Test Case '-[DescentAuthorizedCoreTests.BossEncounterTransitionTests testCheckpointTravelDuringPresentationLeavesNoActiveBossBattle]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossEncounterTransitionTests testCheckpointTravelDuringPresentationLeavesNoActiveBossBattle]' passed (0.018 seconds).
+Test Case '-[DescentAuthorizedCoreTests.BossEncounterTransitionTests testEveryBossWaitsForPresentationCompletionBeforeStartingCombat]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossEncounterTransitionTests testEveryBossWaitsForPresentationCompletionBeforeStartingCombat]' passed (0.011 seconds).
+Test Case '-[DescentAuthorizedCoreTests.BossEncounterTransitionTests testSavingDuringBossPresentationRestoresPreparationWithoutStartingCombat]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossEncounterTransitionTests testSavingDuringBossPresentationRestoresPreparationWithoutStartingCombat]' passed (0.015 seconds).
+Test Suite 'BossEncounterTransitionTests' passed at 2026-10-18 08:12:41.231.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.044 (0.046) seconds
+Test Suite 'BossRoomSweepTests' started at 2026-10-18 08:12:41.231.
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testBundledTrackExistsForEveryBossAndOnlyBossFloors]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testBundledTrackExistsForEveryBossAndOnlyBossFloors]' passed (0.044 seconds).
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testInterpolationUsesPhysicalPositionLensAndNormalizedQuaternion]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testInterpolationUsesPhysicalPositionLensAndNormalizedQuaternion]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testLandscapeLensConversionPreservesHorizontalSensorFit]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testLandscapeLensConversionPreservesHorizontalSensorFit]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testMalformedSamplesCannotReachCameraPlayback]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testMalformedSamplesCannotReachCameraPlayback]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testPlaybackEndsExactlyOnceAfterTwelveActiveSeconds]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testPlaybackEndsExactlyOnceAfterTwelveActiveSeconds]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testPlaybackSuspendsAndDoesNotCatchUpAfterBackgrounding]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testPlaybackSuspendsAndDoesNotCatchUpAfterBackgrounding]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testQuaternionSignChangeDoesNotCauseFullSpin]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testQuaternionSignChangeDoesNotCauseFullSpin]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testRefinedObservatoryRightPoseAndInteriorLowerFloorReturnsArePreserved]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testRefinedObservatoryRightPoseAndInteriorLowerFloorReturnsArePreserved]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testSamplingClampsBeforeAndAfterTrackAndRejectsNaNTime]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testSamplingClampsBeforeAndAfterTrackAndRejectsNaNTime]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testSkipAndReducedMotionCannotCompleteTheFlowTwice]' started.
+Test Case '-[DescentAuthorizedCoreTests.BossRoomSweepTests testSkipAndReducedMotionCannotCompleteTheFlowTwice]' passed (0.000 seconds).
+Test Suite 'BossRoomSweepTests' passed at 2026-10-18 08:12:41.279.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.048 (0.049) seconds
+Test Suite 'CatalogTests' started at 2026-10-18 08:12:41.279.
+Test Case '-[DescentAuthorizedCoreTests.CatalogTests testEnemyCatalogContainsEveryDemoEnemy]' started.
+Test Case '-[DescentAuthorizedCoreTests.CatalogTests testEnemyCatalogContainsEveryDemoEnemy]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CatalogTests testNewGameProgressRoundTripsThroughJSON]' started.
+Test Case '-[DescentAuthorizedCoreTests.CatalogTests testNewGameProgressRoundTripsThroughJSON]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CatalogTests testObservationAdministratorStartsWithAbsoluteBarrier]' started.
+Test Case '-[DescentAuthorizedCoreTests.CatalogTests testObservationAdministratorStartsWithAbsoluteBarrier]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CatalogTests testSpellCatalogContainsEveryDemoSpell]' started.
+Test Case '-[DescentAuthorizedCoreTests.CatalogTests testSpellCatalogContainsEveryDemoSpell]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CatalogTests testSpellEffectRangesMatchBattleBalance]' started.
+Test Case '-[DescentAuthorizedCoreTests.CatalogTests testSpellEffectRangesMatchBattleBalance]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CatalogTests testSpellStrokeCountsMatchPRD]' started.
+Test Case '-[DescentAuthorizedCoreTests.CatalogTests testSpellStrokeCountsMatchPRD]' passed (0.000 seconds).
+Test Suite 'CatalogTests' passed at 2026-10-18 08:12:41.283.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Suite 'CheckpointReplayTests' started at 2026-10-18 08:12:41.283.
+Test Case '-[DescentAuthorizedCoreTests.CheckpointReplayTests testActualProgressUnlocksCheckpointsWithoutUnlockingUnreachedFloor]' started.
+Test Case '-[DescentAuthorizedCoreTests.CheckpointReplayTests testActualProgressUnlocksCheckpointsWithoutUnlockingUnreachedFloor]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CheckpointReplayTests testChangedRewardReplacesOldSpellInLowerFloorsAfterSaveAndRepeatedTravel]' started.
+Test Case '-[DescentAuthorizedCoreTests.CheckpointReplayTests testChangedRewardReplacesOldSpellInLowerFloorsAfterSaveAndRepeatedTravel]' passed (0.020 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CheckpointReplayTests testEveryCheckpointRestoresAValidSaveAndSurvivesRelaunch]' started.
+Test Case '-[DescentAuthorizedCoreTests.CheckpointReplayTests testEveryCheckpointRestoresAValidSaveAndSurvivesRelaunch]' passed (0.123 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CheckpointReplayTests testInvestigationCanRepeatAndEncounterSkipsOnlyItsOwnCompletedInvestigation]' started.
+Test Case '-[DescentAuthorizedCoreTests.CheckpointReplayTests testInvestigationCanRepeatAndEncounterSkipsOnlyItsOwnCompletedInvestigation]' passed (0.006 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CheckpointReplayTests testSixthFloorLearningAndDescentApprovalAreReplayable]' started.
+Test Case '-[DescentAuthorizedCoreTests.CheckpointReplayTests testSixthFloorLearningAndDescentApprovalAreReplayable]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CheckpointReplayTests testVersionFiveSaveMigratesItsActualExpansionLocationAndRewardChoices]' started.
+Test Case '-[DescentAuthorizedCoreTests.CheckpointReplayTests testVersionFiveSaveMigratesItsActualExpansionLocationAndRewardChoices]' passed (0.002 seconds).
+Test Suite 'CheckpointReplayTests' passed at 2026-10-18 08:12:41.437.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.154 (0.155) seconds
+Test Suite 'CombatEffectCatalogTests' started at 2026-10-18 08:12:41.437.
+Test Case '-[DescentAuthorizedCoreTests.CombatEffectCatalogTests testAllAttacksAndBarriersArePreloadedForTheirFloor]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatEffectCatalogTests testAllAttacksAndBarriersArePreloadedForTheirFloor]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatEffectCatalogTests testCounterAndScheduledExecutionUseVerdictRatherThanCopyStroke]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatEffectCatalogTests testCounterAndScheduledExecutionUseVerdictRatherThanCopyStroke]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatEffectCatalogTests testEverySuppliedEffectIsReachableAndPackaged]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatEffectCatalogTests testEverySuppliedEffectIsReachableAndPackaged]' passed (0.004 seconds).
+Test Suite 'CombatEffectCatalogTests' passed at 2026-10-18 08:12:41.443.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+Test Suite 'CombatEngineTests' started at 2026-10-18 08:12:41.443.
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testAbsoluteBarrierNegatesAttackWithoutLosingCharge]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testAbsoluteBarrierNegatesAttackWithoutLosingCharge]' passed (0.003 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testBarrierPiercingDamagesHPAndClearsNormalBarrier]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testBarrierPiercingDamagesHPAndClearsNormalBarrier]' passed (0.004 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testBasicBarrierStacksToMaximumForty]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testBasicBarrierStacksToMaximumForty]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testEnemyDamageConsumesBarrierBeforeHP]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testEnemyDamageConsumesBarrierBeforeHP]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testLethalSpellCancelsEnemyAction]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testLethalSpellCancelsEnemyAction]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testPerfectAttackAppliesDamageMultiplier]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testPerfectAttackAppliesDamageMultiplier]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testSealReleaseRemovesOneAbsoluteBarrierCharge]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testSealReleaseRemovesOneAbsoluteBarrierCharge]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testTwoStrokeSpellConsumesWholeTurn]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testTwoStrokeSpellConsumesWholeTurn]' passed (0.004 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testUnlearnedSpellCannotBeCast]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatEngineTests testUnlearnedSpellCannotBeCast]' passed (0.000 seconds).
+Test Suite 'CombatEngineTests' passed at 2026-10-18 08:12:41.462.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.017 (0.019) seconds
+Test Suite 'CombatPresentationTimelineTests' started at 2026-10-18 08:12:41.462.
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testAuthoredAttackReleaseImpactAndRecoveryMatchEveryRuntimeActor]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testAuthoredAttackReleaseImpactAndRecoveryMatchEveryRuntimeActor]' passed (0.006 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testCombinedTurnLaunchesProjectileThenStagesEnemyImpactAndRecovery]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testCombinedTurnLaunchesProjectileThenStagesEnemyImpactAndRecovery]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testDeathDroopsThenFallsBeforeDissolvingWithoutUnboundedAngles]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testDeathDroopsThenFallsBeforeDissolvingWithoutUnboundedAngles]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testDueNormalReservationUsesAttackAndCancelledOrDelayedWaitStaysSpecial]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testDueNormalReservationUsesAttackAndCancelledOrDelayedWaitStaysSpecial]' passed (0.003 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testExpansionSequenceUsesStrongTimingAndWaitCanDeliverScheduledDamage]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testExpansionSequenceUsesStrongTimingAndWaitCanDeliverScheduledDamage]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testLethalEnemyDamageArrivesAtImpactWithoutRepeatingWindup]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testLethalEnemyDamageArrivesAtImpactWithoutRepeatingWindup]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testRealExitReviewReservationGetsHeavyGestureEvenWhenFullyGuarded]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testRealExitReviewReservationGetsHeavyGestureEvenWhenFullyGuarded]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testVictoryStartsAtProjectileImpactAndHoldsProgressionForCollapse]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatPresentationTimelineTests testVictoryStartsAtProjectileImpactAndHoldsProgressionForCollapse]' passed (0.000 seconds).
+Test Suite 'CombatPresentationTimelineTests' passed at 2026-10-18 08:12:41.475.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.012 (0.013) seconds
+Test Suite 'CombatStatusPresentationTests' started at 2026-10-18 08:12:41.475.
+Test Case '-[DescentAuthorizedCoreTests.CombatStatusPresentationTests testEffectsFollowAffectedCombatantAndThreatsStayWithEnemy]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatStatusPresentationTests testEffectsFollowAffectedCombatantAndThreatsStayWithEnemy]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.CombatStatusPresentationTests testFinishedBattleRemovesEffectsAndTheirHitArea]' started.
+Test Case '-[DescentAuthorizedCoreTests.CombatStatusPresentationTests testFinishedBattleRemovesEffectsAndTheirHitArea]' passed (0.000 seconds).
+Test Suite 'CombatStatusPresentationTests' passed at 2026-10-18 08:12:41.476.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'DemoFlowIntegrationTests' started at 2026-10-18 08:12:41.476.
+Test Case '-[DescentAuthorizedCoreTests.DemoFlowIntegrationTests testLegacyEncounterSaveReturnsToPreparationWithoutLosingHP]' started.
+Test Case '-[DescentAuthorizedCoreTests.DemoFlowIntegrationTests testLegacyEncounterSaveReturnsToPreparationWithoutLosingHP]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.DemoFlowIntegrationTests testRecordsPreparationWaitsForExplicitStartAndSurvivesRestore]' started.
+Test Case '-[DescentAuthorizedCoreTests.DemoFlowIntegrationTests testRecordsPreparationWaitsForExplicitStartAndSurvivesRestore]' passed (0.003 seconds).
+Test Case '-[DescentAuthorizedCoreTests.DemoFlowIntegrationTests testReferencePlaythroughReachesDemoEndingThroughAllBattles]' started.
+Test Case '-[DescentAuthorizedCoreTests.DemoFlowIntegrationTests testReferencePlaythroughReachesDemoEndingThroughAllBattles]' passed (0.023 seconds).
+Test Suite 'DemoFlowIntegrationTests' passed at 2026-10-18 08:12:41.504.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.028 (0.028) seconds
+Test Suite 'DemoGameSessionTests' started at 2026-10-18 08:12:41.504.
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testActiveEncounterRestartsAtCheckpointHPAndResetsEnemy]' started.
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testActiveEncounterRestartsAtCheckpointHPAndResetsEnemy]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testCheckpointRestartRequiresActiveEncounter]' started.
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testCheckpointRestartRequiresActiveEncounter]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testCheckpointTravelClearsActiveEncounter]' started.
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testCheckpointTravelClearsActiveEncounter]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testDefeatCanRestartEncounterAtFullHP]' started.
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testDefeatCanRestartEncounterAtFullHP]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testResidualEncounterKeepsBarrierFromProtectionTraining]' started.
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testResidualEncounterKeepsBarrierFromProtectionTraining]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testSessionConnectsRealCombatVictoryToFloorProgression]' started.
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testSessionConnectsRealCombatVictoryToFloorProgression]' passed (0.007 seconds).
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testSessionRejectsCombatCommandsWithoutEncounter]' started.
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testSessionRejectsCombatCommandsWithoutEncounter]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testSessionSaveRestoresCheckpointStateWithoutMidBattleState]' started.
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testSessionSaveRestoresCheckpointStateWithoutMidBattleState]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testTwoStrokeSpellAutomaticallyAdvancesEnemyTurn]' started.
+Test Case '-[DescentAuthorizedCoreTests.DemoGameSessionTests testTwoStrokeSpellAutomaticallyAdvancesEnemyTurn]' passed (0.004 seconds).
+Test Suite 'DemoGameSessionTests' passed at 2026-10-18 08:12:41.523.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.017 (0.019) seconds
+Test Suite 'DescentDoorGlyphCatalogTests' started at 2026-10-18 08:12:41.523.
+Test Case '-[DescentAuthorizedCoreTests.DescentDoorGlyphCatalogTests testDoorStrokeComplexityIncreasesByFloor]' started.
+Test Case '-[DescentAuthorizedCoreTests.DescentDoorGlyphCatalogTests testDoorStrokeComplexityIncreasesByFloor]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.DescentDoorGlyphCatalogTests testEveryReferenceDoorGlyphIsAccepted]' started.
+Test Case '-[DescentAuthorizedCoreTests.DescentDoorGlyphCatalogTests testEveryReferenceDoorGlyphIsAccepted]' passed (0.024 seconds).
+Test Suite 'DescentDoorGlyphCatalogTests' passed at 2026-10-18 08:12:41.547.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.024 (0.024) seconds
+Test Suite 'EndingCreditsPlaybackTests' started at 2026-10-18 08:12:41.547.
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testActualScrollPositionReplacesPriorTargetAfterManualInteraction]' started.
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testActualScrollPositionReplacesPriorTargetAfterManualInteraction]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testDifferentContentHeightsTakeApproximatelyNinetySeconds]' started.
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testDifferentContentHeightsTakeApproximatelyNinetySeconds]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testInvalidGeometryAndElapsedTimeDoNotCorruptValidPosition]' started.
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testInvalidGeometryAndElapsedTimeDoNotCorruptValidPosition]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testLastTargetClampsToEndAndHoldsUntilReaderScrollsBack]' started.
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testLastTargetClampsToEndAndHoldsUntilReaderScrollsBack]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testNewLayoutClampsPositionAndRecomputesTheRemainingScroll]' started.
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testNewLayoutClampsPositionAndRecomputesTheRemainingScroll]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testSuspensionHoldsPositionAndLongResumeFrameDoesNotCatchUp]' started.
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testSuspensionHoldsPositionAndLongResumeFrameDoesNotCatchUp]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testWaitsForScrollableLayoutBeforeStarting]' started.
+Test Case '-[DescentAuthorizedCoreTests.EndingCreditsPlaybackTests testWaitsForScrollableLayoutBeforeStarting]' passed (0.000 seconds).
+Test Suite 'EndingCreditsPlaybackTests' passed at 2026-10-18 08:12:41.553.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'EnemyPatternTests' started at 2026-10-18 08:12:41.553.
+Test Case '-[DescentAuthorizedCoreTests.EnemyPatternTests testObservationAdministratorRegeneratesBarrierOnceAtHalfHP]' started.
+Test Case '-[DescentAuthorizedCoreTests.EnemyPatternTests testObservationAdministratorRegeneratesBarrierOnceAtHalfHP]' passed (0.005 seconds).
+Test Case '-[DescentAuthorizedCoreTests.EnemyPatternTests testObservationResidualTelegraphsBeforeStrongAttack]' started.
+Test Case '-[DescentAuthorizedCoreTests.EnemyPatternTests testObservationResidualTelegraphsBeforeStrongAttack]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.EnemyPatternTests testRecordsAdministratorAddsOneErasureZoneAtHalfHP]' started.
+Test Case '-[DescentAuthorizedCoreTests.EnemyPatternTests testRecordsAdministratorAddsOneErasureZoneAtHalfHP]' passed (0.006 seconds).
+Test Case '-[DescentAuthorizedCoreTests.EnemyPatternTests testRecordsAdministratorAlternatesAttackAndBarrier]' started.
+Test Case '-[DescentAuthorizedCoreTests.EnemyPatternTests testRecordsAdministratorAlternatesAttackAndBarrier]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.EnemyPatternTests testScriptedObservationBattleReachesVictory]' started.
+Test Case '-[DescentAuthorizedCoreTests.EnemyPatternTests testScriptedObservationBattleReachesVictory]' passed (0.007 seconds).
+Test Suite 'EnemyPatternTests' passed at 2026-10-18 08:12:41.572.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.019 (0.020) seconds
+Test Suite 'ExpansionBattleHPTests' started at 2026-10-18 08:12:41.572.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionBattleHPTests testAllSixEncountersKeepEntryHPAndRestartAtFullHP]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionBattleHPTests testAllSixEncountersKeepEntryHPAndRestartAtFullHP]' passed (0.009 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionBattleHPTests testSixthFloorLearnsDiscoveredScrollBeforeEncounter]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionBattleHPTests testSixthFloorLearnsDiscoveredScrollBeforeEncounter]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionBattleHPTests testUpperFloorEntryHealsFullyAndLowerFloorEntryRestoresThirty]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionBattleHPTests testUpperFloorEntryHealsFullyAndLowerFloorEntryRestoresThirty]' passed (0.002 seconds).
+Test Suite 'ExpansionBattleHPTests' passed at 2026-10-18 08:12:41.587.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.011 (0.015) seconds
+Test Suite 'ExpansionIntegrationTests' started at 2026-10-18 08:12:41.587.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionIntegrationTests testAllFloorsRewardsAndResumableApprovalReachFourthFloor]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionIntegrationTests testAllFloorsRewardsAndResumableApprovalReachFourthFloor]' passed (0.007 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionIntegrationTests testCatalogPathsAndLegacyRewardMigration]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionIntegrationTests testCatalogPathsAndLegacyRewardMigration]' passed (0.056 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionIntegrationTests testCopyTriggersOnceAndLocksKeepProtectedCoreUsable]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionIntegrationTests testCopyTriggersOnceAndLocksKeepProtectedCoreUsable]' passed (0.006 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionIntegrationTests testReservationSnapshotDelayAndSingleReducedHit]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionIntegrationTests testReservationSnapshotDelayAndSingleReducedHit]' passed (0.004 seconds).
+Test Suite 'ExpansionIntegrationTests' passed at 2026-10-18 08:12:41.661.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.073 (0.074) seconds
+Test Suite 'ExpansionInvestigationTests' started at 2026-10-18 08:12:41.661.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionInvestigationTests testPartialInvestigationSurvivesSaveWithoutRevealingEnemyEarly]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionInvestigationTests testPartialInvestigationSurvivesSaveWithoutRevealingEnemyEarly]' passed (0.003 seconds).
+Test Suite 'ExpansionInvestigationTests' passed at 2026-10-18 08:12:41.665.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Suite 'ExpansionProgressTests' started at 2026-10-18 08:12:41.665.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionProgressTests testChosenAttackAndOrderSurviveRoundTripAndInvalidSelectionIsRejected]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionProgressTests testChosenAttackAndOrderSurviveRoundTripAndInvalidSelectionIsRejected]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionProgressTests testLearnedDefenseStillRequiresEquippingAndShowsProtection]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionProgressTests testLearnedDefenseStillRequiresEquippingAndShowsProtection]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionProgressTests testLearningFillsAvailableSlotsAndDoesNotLosePlayerProtectionChoice]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionProgressTests testLearningFillsAvailableSlotsAndDoesNotLosePlayerProtectionChoice]' passed (0.003 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionProgressTests testLegacySaveMigratesLearnedCardsAndKeepsFurthestCheckpoint]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionProgressTests testLegacySaveMigratesLearnedCardsAndKeepsFurthestCheckpoint]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionProgressTests testUnlearnedDefenseDoesNotAppearInPreparationRequirements]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionProgressTests testUnlearnedDefenseDoesNotAppearInPreparationRequirements]' passed (0.000 seconds).
+Test Suite 'ExpansionProgressTests' passed at 2026-10-18 08:12:41.672.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.006 (0.007) seconds
+Test Suite 'ExpansionSceneRouteTests' started at 2026-10-18 08:12:41.672.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionSceneRouteTests testEveryPlayableStageRoutesToExpectedRoomAndCamera]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionSceneRouteTests testEveryPlayableStageRoutesToExpectedRoomAndCamera]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionSceneRouteTests testLowerFloorRoomIdentitySurvivesSaveAndBattleResume]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionSceneRouteTests testLowerFloorRoomIdentitySurvivesSaveAndBattleResume]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionSceneRouteTests testRecordRewardStaysInResidualRoomAndFinalRecordUsesAdministrator]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionSceneRouteTests testRecordRewardStaysInResidualRoomAndFinalRecordUsesAdministrator]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionSceneRouteTests testRestoredBattlesKeepTheirRoomAndPartialDescentKeepsInputCamera]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionSceneRouteTests testRestoredBattlesKeepTheirRoomAndPartialDescentKeepsInputCamera]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ExpansionSceneRouteTests testTerminalAndUnsupportedFloorsHaveNoRoom]' started.
+Test Case '-[DescentAuthorizedCoreTests.ExpansionSceneRouteTests testTerminalAndUnsupportedFloorsHaveNoRoom]' passed (0.000 seconds).
+Test Suite 'ExpansionSceneRouteTests' passed at 2026-10-18 08:12:41.675.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'GameAchievementTests' started at 2026-10-18 08:12:41.675.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testAbsoluteBarrierAchievementRequiresActualBarrierChange]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testAbsoluteBarrierAchievementRequiresActualBarrierChange]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testAchievementPercentagesAreClampedToGameCenterRange]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testAchievementPercentagesAreClampedToGameCenterRange]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testCurrentRulesSurviveRelaunchAndKeepFinalCompletionAcrossNewGames]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testCurrentRulesSurviveRelaunchAndKeepFinalCompletionAcrossNewGames]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testDescentAchievementCoversAllNineFloorTransitions]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testDescentAchievementCoversAllNineFloorTransitions]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testLedgerKeepsHighestProgressForEachPlayer]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testLedgerKeepsHighestProgressForEachPlayer]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testLedgerRoundTripsThroughJSON]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testLedgerRoundTripsThroughJSON]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testLegacyDemoHandoffAndFinalBossDefeatDoNotAwardFullGameCompletion]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testLegacyDemoHandoffAndFinalBossDefeatDoNotAwardFullGameCompletion]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testLegacyLedgerRebuildsChangedRulesBeforeReportingToAnyPlayer]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testLegacyLedgerRebuildsChangedRulesBeforeReportingToAnyPlayer]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testNewGameHasNoReportableAchievementProgress]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testNewGameHasNoReportableAchievementProgress]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testSpellArchiveAccumulatesDistinctSpellsAcrossRunsAndRelaunch]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testSpellArchiveAccumulatesDistinctSpellsAcrossRunsAndRelaunch]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testSpellArchiveCannotBeAwardedFromAnUnverifiedPercentage]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testSpellArchiveCannotBeAwardedFromAnUnverifiedPercentage]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testTrackerDerivesProgressFromPersistentGameState]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameAchievementTests testTrackerDerivesProgressFromPersistentGameState]' passed (0.000 seconds).
+Test Suite 'GameAchievementTests' passed at 2026-10-18 08:12:41.682.
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.006 (0.007) seconds
+Test Suite 'GameFeedbackTests' started at 2026-10-18 08:12:41.682.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testAbsoluteBarrierCreationProducesActivationFeedback]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testAbsoluteBarrierCreationProducesActivationFeedback]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testAbsoluteBarrierNegationUsesBarrierImpactAfterCast]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testAbsoluteBarrierNegationUsesBarrierImpactAfterCast]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testBarrierOverflowOrdersBreakBeforePlayerDamage]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testBarrierOverflowOrdersBreakBeforePlayerDamage]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testBarrierPiercingOrdersCastBreakHitAndVictory]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testBarrierPiercingOrdersCastBreakHitAndVictory]' passed (0.004 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testEncounterRestartDoesNotReplayCombatOrOutcomeSound]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testEncounterRestartDoesNotReplayCombatOrOutcomeSound]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testNonAttackEnemyActionDoesNotPlayManagerAttackSound]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testNonAttackEnemyActionDoesNotPlayManagerAttackSound]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testPartialAbsoluteBarrierDispelDoesNotReplayActivationSound]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testPartialAbsoluteBarrierDispelDoesNotReplayActivationSound]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testPerfectDispelProducesCastThenBrokenBarrierFeedback]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testPerfectDispelProducesCastThenBrokenBarrierFeedback]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testPlayerBarrierCreationProducesNormalActivationFeedback]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testPlayerBarrierCreationProducesNormalActivationFeedback]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testRecordRewardAndFloorTransitionEventsAreDistinct]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testRecordRewardAndFloorTransitionEventsAreDistinct]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testRejectedSpellProducesOnlyErrorFeedback]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testRejectedSpellProducesOnlyErrorFeedback]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testSameFloorSceneChangeDoesNotProduceFloorTransition]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testSameFloorSceneChangeDoesNotProduceFloorTransition]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testStrongAttackAbsorbedByRemainingBarrierHasNoPlayerHit]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testStrongAttackAbsorbedByRemainingBarrierHasNoPlayerHit]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testStrongEnemyAttackPlaysAttackBeforePlayerDamage]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testStrongEnemyAttackPlaysAttackBeforePlayerDamage]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testZeroDamageEventDoesNotPlayHitSound]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameFeedbackTests testZeroDamageEventDoesNotPlayHitSound]' passed (0.000 seconds).
+Test Suite 'GameFeedbackTests' passed at 2026-10-18 08:12:41.690.
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.007 (0.008) seconds
+Test Suite 'GameProgressValidatorTests' started at 2026-10-18 08:12:41.690.
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testEveryProducedProgressStateIsValid]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testEveryProducedProgressStateIsValid]' passed (0.015 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testGlyphArchiveRequiresCompletedFirstTraining]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testGlyphArchiveRequiresCompletedFirstTraining]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testInvalidExpansionRestorePreservesOriginalSaveFile]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testInvalidExpansionRestorePreservesOriginalSaveFile]' passed (0.024 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testInvalidHPAndMasteryAreRejected]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testInvalidHPAndMasteryAreRejected]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testInvalidInMemoryExpansionDoesNotCrashCheckpointMigration]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testInvalidInMemoryExpansionDoesNotCrashCheckpointMigration]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testMalformedExpansionIsRejectedBeforeCheckpointMigration]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testMalformedExpansionIsRejectedBeforeCheckpointMigration]' passed (0.015 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testNewGameProgressIsValid]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testNewGameProgressIsValid]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testSerializedUnsupportedSaveVersionIsRejectedBeforeMigration]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testSerializedUnsupportedSaveVersionIsRejectedBeforeMigration]' passed (0.003 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testTrainingWallWithoutLearnedSpellIsRejected]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameProgressValidatorTests testTrainingWallWithoutLearnedSpellIsRejected]' passed (0.000 seconds).
+Test Suite 'GameProgressValidatorTests' passed at 2026-10-18 08:12:41.752.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.061 (0.062) seconds
+Test Suite 'GameSessionCoordinatorTests' started at 2026-10-18 08:12:41.752.
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testCoordinatorRejectsFloorAndSceneMismatch]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testCoordinatorRejectsFloorAndSceneMismatch]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testCoordinatorRejectsFutureSaveVersion]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testCoordinatorRejectsFutureSaveVersion]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testCoordinatorRejectsImpossibleSpellProgress]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testCoordinatorRejectsImpossibleSpellProgress]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testCoordinatorRestoresSavedProgress]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testCoordinatorRestoresSavedProgress]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testFailedSaveDoesNotPublishUpdatedSession]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testFailedSaveDoesNotPublishUpdatedSession]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testNewGameDeletesStoredProgress]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testNewGameDeletesStoredProgress]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testProgressChangingCommandIsSaved]' started.
+Test Case '-[DescentAuthorizedCoreTests.GameSessionCoordinatorTests testProgressChangingCommandIsSaved]' passed (0.000 seconds).
+Test Suite 'GameSessionCoordinatorTests' passed at 2026-10-18 08:12:41.755.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'GlyphCheckpointTrackerTests' started at 2026-10-18 08:12:41.755.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testBarrierPiercingCrossingProducesSeparateAscendingAndDescendingHits]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testBarrierPiercingCrossingProducesSeparateAscendingAndDescendingHits]' passed (0.017 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testEveryCatalogReferencePathEmitsAllCheckpointsInOrder]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testEveryCatalogReferencePathEmitsAllCheckpointsInOrder]' passed (0.009 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testFastSegmentDetectsCheckpointsWithoutSamplesInsideTheirRadius]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testFastSegmentDetectsCheckpointsWithoutSamplesInsideTheirRadius]' passed (0.005 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testFingerUsesItsEvaluationToleranceButFeedbackRemainsPrecise]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testFingerUsesItsEvaluationToleranceButFeedbackRemainsPrecise]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testFinishedStrokeDoesNotReplaySoundsForDuplicateOrReversedSamples]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testFinishedStrokeDoesNotReplaySoundsForDuplicateOrReversedSamples]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testOptionalAndRequiredNodesAreMergedInReferenceOrder]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testOptionalAndRequiredNodesAreMergedInReferenceOrder]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testOutOfOrderNodesDoNotReceiveCreditFromEarlierSegmentPositions]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testOutOfOrderNodesDoNotReceiveCreditFromEarlierSegmentPositions]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testRepeatedCheckpointRequiresLeavingAndReturning]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testRepeatedCheckpointRequiresLeavingAndReturning]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testRepeatedCoordinatesKeepSeparateVisitsInTheirPathOrder]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testRepeatedCoordinatesKeepSeparateVisitsInTheirPathOrder]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testResetClearsPendingProgressAndAllowsFreshAttempt]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testResetClearsPendingProgressAndAllowsFreshAttempt]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testSkippedOptionalNodeDoesNotRewardLaterGuideNodes]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testSkippedOptionalNodeDoesNotRewardLaterGuideNodes]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testTwoStrokeSpellStartsEachStrokeIndependently]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testTwoStrokeSpellStartsEachStrokeIndependently]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testWrongStartCannotRecoverByEnteringTheGuideLater]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphCheckpointTrackerTests testWrongStartCannotRecoverByEnteringTheGuideLater]' passed (0.000 seconds).
+Test Suite 'GlyphCheckpointTrackerTests' passed at 2026-10-18 08:12:41.799.
+	 Executed 13 tests, with 0 failures (0 unexpected) in 0.034 (0.044) seconds
+Test Suite 'GlyphEvaluatorTests' started at 2026-10-18 08:12:41.799.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testBarrierPiercingAcceptsSmallDrawingDeviation]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testBarrierPiercingAcceptsSmallDrawingDeviation]' passed (0.017 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testBarrierPiercingRejectsThePreviousLeftFirstLoopDirection]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testBarrierPiercingRejectsThePreviousLeftFirstLoopDirection]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testBarrierPiercingRisesRightThenLoopsLeftAndCrossesItsFirstPass]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testBarrierPiercingRisesRightThenLoopsLeftAndCrossesItsFirstPass]' passed (0.013 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testDetourConsumesMoreManaThanReferencePath]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testDetourConsumesMoreManaThanReferencePath]' passed (0.007 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testErasureZoneIncreasesManaConsumption]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testErasureZoneIncreasesManaConsumption]' passed (0.008 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testFasterCastProducesStrongerEffectAtSameAccuracy]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testFasterCastProducesStrongerEffectAtSameAccuracy]' passed (0.026 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testFingerReferencePathsCanAlsoProducePerfectCast]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testFingerReferencePathsCanAlsoProducePerfectCast]' passed (0.127 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testFingerStillRejectsMissingRequiredNodes]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testFingerStillRejectsMissingRequiredNodes]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testMissingOptionalHookCapsAfterglowAtIncomplete]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testMissingOptionalHookCapsAfterglowAtIncomplete]' passed (0.003 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testMissingRequiredNodeIsRejected]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testMissingRequiredNodeIsRejected]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testReferencePathsProducePerfectCastForEverySpell]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testReferencePathsProducePerfectCastForEverySpell]' passed (0.068 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testRelaxedStartPointToleranceAcceptsPencilAndFinger]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testRelaxedStartPointToleranceAcceptsPencilAndFinger]' passed (0.008 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testRelaxedToleranceAcceptsImperfectGlyphWithReducedEffect]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testRelaxedToleranceAcceptsImperfectGlyphWithReducedEffect]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testWrongStrokeCountIsRejected]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphEvaluatorTests testWrongStrokeCountIsRejected]' passed (0.000 seconds).
+Test Suite 'GlyphEvaluatorTests' passed at 2026-10-18 08:12:42.090.
+	 Executed 14 tests, with 0 failures (0 unexpected) in 0.280 (0.291) seconds
+Test Suite 'GlyphInputFeedbackModeTests' started at 2026-10-18 08:12:42.090.
+Test Case '-[DescentAuthorizedCoreTests.GlyphInputFeedbackModeTests testBattleProvidesCheckpointFeedbackWithoutTeachingGuidance]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphInputFeedbackModeTests testBattleProvidesCheckpointFeedbackWithoutTeachingGuidance]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphInputFeedbackModeTests testDisabledModeDoesNotAddGuidanceOrCheckpointFeedback]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphInputFeedbackModeTests testDisabledModeDoesNotAddGuidanceOrCheckpointFeedback]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphInputFeedbackModeTests testEveryFeedbackModeHasFiniteVolumeWithinPlaybackRange]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphInputFeedbackModeTests testEveryFeedbackModeHasFiniteVolumeWithinPlaybackRange]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphInputFeedbackModeTests testPracticeKeepsDemonstrationAndCheckpointFeedbackTogether]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphInputFeedbackModeTests testPracticeKeepsDemonstrationAndCheckpointFeedbackTogether]' passed (0.000 seconds).
+Test Suite 'GlyphInputFeedbackModeTests' passed at 2026-10-18 08:12:42.092.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'GlyphManaEstimatorTests' started at 2026-10-18 08:12:42.092.
+Test Case '-[DescentAuthorizedCoreTests.GlyphManaEstimatorTests testErasureZoneCostIsReportedSeparately]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphManaEstimatorTests testErasureZoneCostIsReportedSeparately]' passed (0.004 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphManaEstimatorTests testLivePartialPathUsesLessManaThanCompletePath]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphManaEstimatorTests testLivePartialPathUsesLessManaThanCompletePath]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphManaEstimatorTests testReferencePathUsesRecommendedMana]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphManaEstimatorTests testReferencePathUsesRecommendedMana]' passed (0.000 seconds).
+Test Suite 'GlyphManaEstimatorTests' passed at 2026-10-18 08:12:42.097.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+Test Suite 'GlyphPracticeDemonstrationTests' started at 2026-10-18 08:12:42.097.
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testAllCatalogDemonstrationsFinishWithEverySeparateReferencePath]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testAllCatalogDemonstrationsFinishWithEverySeparateReferencePath]' passed (0.005 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testDrawingAdvancesByDistanceRatherThanVertexCount]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testDrawingAdvancesByDistanceRatherThanVertexCount]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testEmptyGlyphCompletesImmediatelyWithoutACursor]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testEmptyGlyphCompletesImmediatelyWithoutACursor]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testFirstStrokeHoldsAtItsStartBeforeDrawing]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testFirstStrokeHoldsAtItsStartBeforeDrawing]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testNegativeAndNonfiniteTimesReturnTheInitialFrame]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testNegativeAndNonfiniteTimesReturnTheInitialFrame]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testReducedMotionRevealsOneWholeStrokeAtATimeWithoutMovingCursor]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testReducedMotionRevealsOneWholeStrokeAtATimeWithoutMovingCursor]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testSecondStrokeDrawsInItsOwnPathAndLiftsBeforeCompletion]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testSecondStrokeDrawsInItsOwnPathAndLiftsBeforeCompletion]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testTwoStrokeDemonstrationLiftsThenShowsSeparateSecondStart]' started.
+Test Case '-[DescentAuthorizedCoreTests.GlyphPracticeDemonstrationTests testTwoStrokeDemonstrationLiftsThenShowsSeparateSecondStart]' passed (0.001 seconds).
+Test Suite 'GlyphPracticeDemonstrationTests' passed at 2026-10-18 08:12:42.106.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.008 (0.009) seconds
+Test Suite 'InputSettingsTests' started at 2026-10-18 08:12:42.107.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testAutomaticPolicyAcceptsPencilAndFinger]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testAutomaticPolicyAcceptsPencilAndFinger]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testCorruptedSettingsFallBackToDefaults]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testCorruptedSettingsFallBackToDefaults]' passed (0.012 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testDefaultSettingsUseAutomaticInput]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testDefaultSettingsUseAutomaticInput]' passed (0.004 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testExclusivePoliciesOnlyAcceptConfiguredMethod]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testExclusivePoliciesOnlyAcceptConfiguredMethod]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testFingerEvaluationProfileIsForgivingWithoutLimitingGrade]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testFingerEvaluationProfileIsForgivingWithoutLimitingGrade]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testFutureSettingsVersionFallsBackToDefaults]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testFutureSettingsVersionFallsBackToDefaults]' passed (0.009 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testGraphicsQualityKeepsPreviousSelectionOnSaveFailure]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testGraphicsQualityKeepsPreviousSelectionOnSaveFailure]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testGraphicsQualityMigratesOldAndUnknownSettings]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testGraphicsQualityMigratesOldAndUnknownSettings]' passed (0.003 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testGraphicsQualityRoundTripAndPersistence]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testGraphicsQualityRoundTripAndPersistence]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testInMemorySettingsStoreRoundTripsAndResets]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testInMemorySettingsStoreRoundTripsAndResets]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testSettingsManagerKeepsPreviousValueWhenSaveFails]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testSettingsManagerKeepsPreviousValueWhenSaveFails]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testSettingsManagerPersistsDrawingPadPosition]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testSettingsManagerPersistsDrawingPadPosition]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testSettingsManagerPersistsFeedbackAndAccessibilityOptions]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testSettingsManagerPersistsFeedbackAndAccessibilityOptions]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testSettingsManagerPersistsInputPreferenceBeforePublishingIt]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testSettingsManagerPersistsInputPreferenceBeforePublishingIt]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testSettingsManagerResetRestoresAutomaticMode]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testSettingsManagerResetRestoresAutomaticMode]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testSettingsStoreReturnsMigratedCurrentVersion]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testSettingsStoreReturnsMigratedCurrentVersion]' passed (0.007 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testUserDefaultsSettingsStoreRoundTrips]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testUserDefaultsSettingsStoreRoundTrips]' passed (0.005 seconds).
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testVersionOneSettingsMigrateWithFeedbackDefaults]' started.
+Test Case '-[DescentAuthorizedCoreTests.InputSettingsTests testVersionOneSettingsMigrateWithFeedbackDefaults]' passed (0.000 seconds).
+Test Suite 'InputSettingsTests' passed at 2026-10-18 08:12:42.155.
+	 Executed 18 tests, with 0 failures (0 unexpected) in 0.044 (0.048) seconds
+Test Suite 'LowerFloorNarrativeTests' started at 2026-10-18 08:12:42.155.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorNarrativeTests testAllTwentyFourScenesHaveDistinctAssetsAndApprovedDialogueCount]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorNarrativeTests testAllTwentyFourScenesHaveDistinctAssetsAndApprovedDialogueCount]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorNarrativeTests testNarrativeDoesNotReplacePreparationBattleOrRewards]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorNarrativeTests testNarrativeDoesNotReplacePreparationBattleOrRewards]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorNarrativeTests testPreparedBattleWaitsForDialogueCompletion]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorNarrativeTests testPreparedBattleWaitsForDialogueCompletion]' passed (0.003 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorNarrativeTests testThirdFloorResidualsFollowGameplayOrder]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorNarrativeTests testThirdFloorResidualsFollowGameplayOrder]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorNarrativeTests testUpperFloorAssetsRemainUnchanged]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorNarrativeTests testUpperFloorAssetsRemainUnchanged]' passed (0.000 seconds).
+Test Suite 'LowerFloorNarrativeTests' passed at 2026-10-18 08:12:42.160.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+Test Suite 'LowerFloorTests' started at 2026-10-18 08:12:42.160.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testAllLowerFloorsReachEndingWithDurableRewardsAndApprovals]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testAllLowerFloorsReachEndingWithDurableRewardsAndApprovals]' passed (0.143 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testBloodPiercingKeepsEnemyBarrierAndPaysOnlyOnSuccess]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testBloodPiercingKeepsEnemyBarrierAndPaysOnlyOnSuccess]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testCancellationAutomaticallyChoosesEarliestDueGroup]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testCancellationAutomaticallyChoosesEarliestDueGroup]' passed (0.003 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testCatalogCountsAndAllNewReferencePaths]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testCatalogCountsAndAllNewReferencePaths]' passed (0.028 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testConsequenceErasureFallsBackToNormalBarrierOnlyWithoutReservations]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testConsequenceErasureFallsBackToNormalBarrierOnlyWithoutReservations]' passed (0.003 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testCounterIsSingleConditionalAndMimicProhibitionCancelsIt]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testCounterIsSingleConditionalAndMimicProhibitionCancelsIt]' passed (0.012 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testDamageEventsFollowDirectThenReservationThenCounter]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testDamageEventsFollowDirectThenReservationThenCounter]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testDirectProhibitionDoesNotCancelReservation]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testDirectProhibitionDoesNotCancelReservation]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testEveryLowerApprovalCountSurvivesReloadWithoutPrematureDescent]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testEveryLowerApprovalCountSurvivesReloadWithoutPrematureDescent]' passed (0.052 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testEveryLowerCheckpointCanBeRestoredAndValidated]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testEveryLowerCheckpointCanBeRestoredAndValidated]' passed (0.089 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testFinalBossUsesThreePhasesWithoutHPReset]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testFinalBossUsesThreePhasesWithoutHPReset]' passed (0.027 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testFourthFloorInvestigationRoutesToCorrectRoomAndCamera]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testFourthFloorInvestigationRoutesToCorrectRoomAndCamera]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testHandoffRegeneratesAfterFirstOfTwoHits]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testHandoffRegeneratesAfterFirstOfTwoHits]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testIsolationReducesOnlyChosenReservationAndPressurePreservesShieldWhenBlocked]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testIsolationReducesOnlyChosenReservationAndPressurePreservesShieldWhenBlocked]' passed (0.009 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testLimitBarrierCapExpiresAfterEnemyWindow]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testLimitBarrierCapExpiresAfterEnemyWindow]' passed (0.004 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testLowerDescentPatternsUseThreeDistinctSingleStrokeApprovals]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testLowerDescentPatternsUseThreeDistinctSingleStrokeApprovals]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testLowerResourcesDoNotChangeUpperFloors]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testLowerResourcesDoNotChangeUpperFloors]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testMiddleDoorPatternsAreDistinctAndSingleStroke]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testMiddleDoorPatternsAreDistinctAndSingleStroke]' passed (0.014 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testNullificationCancelsOnlyChosenDueGroup]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testNullificationCancelsOnlyChosenDueGroup]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testOldFourthFloorCompletionMigratesToEntrance]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testOldFourthFloorCompletionMigratesToEntrance]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testPreparedLowerEntryRequiresInvestigationAndStopsAtDialogue]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testPreparedLowerEntryRequiresInvestigationAndStopsAtDialogue]' passed (0.004 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testResidualBRetryDoesNotRepeatA]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testResidualBRetryDoesNotRepeatA]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testSealChoiceBlocksInputAndProtectsCoreCards]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testSealChoiceBlocksInputAndProtectsCoreCards]' passed (0.004 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testSealCountdownAcrossChoiceAutomaticAndScheduledLocks]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testSealCountdownAcrossChoiceAutomaticAndScheduledLocks]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testSealReleaseRequiresAnAbsoluteBarrier]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testSealReleaseRequiresAnAbsoluteBarrier]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testThirdForbiddenStaysLearnedWithoutDisplacingEquippedBooks]' started.
+Test Case '-[DescentAuthorizedCoreTests.LowerFloorTests testThirdForbiddenStaysLearnedWithoutDisplacingEquippedBooks]' passed (0.000 seconds).
+Test Suite 'LowerFloorTests' passed at 2026-10-18 08:12:42.571.
+	 Executed 26 tests, with 0 failures (0 unexpected) in 0.406 (0.410) seconds
+Test Suite 'ProgressionTests' started at 2026-10-18 08:12:42.571.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testBarrierScrollLearningHappensBeforeFloor8Entry]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testBarrierScrollLearningHappensBeforeFloor8Entry]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testCheckpointTravelKeepsUnlockRangeAndRebuildsValidSnapshot]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testCheckpointTravelKeepsUnlockRangeAndRebuildsValidSnapshot]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testCheckpointTravelRejectsLockedDestination]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testCheckpointTravelRejectsLockedDestination]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testEmptyStoreRestoresNewGame]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testEmptyStoreRestoresNewGame]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testEveryFloor9CandidateRequiresPracticeBeforeDescent]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testEveryFloor9CandidateRequiresPracticeBeforeDescent]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testFileStoreRoundTripsAndDeletesProgress]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testFileStoreRoundTripsAndDeletesProgress]' passed (0.008 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testFullDemoProgressionReachesFloor7WithAllDemoSpells]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testFullDemoProgressionReachesFloor7WithAllDemoSpells]' passed (0.003 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testInMemoryStoreRoundTripsProgress]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testInMemoryStoreRoundTripsProgress]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testMasteryTracksBestGradeAndSuccessfulCastCount]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testMasteryTracksBestGradeAndSuccessfulCastCount]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testProgressionRejectsActionsFromWrongScene]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testProgressionRejectsActionsFromWrongScene]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testRecoveryRulesAreAppliedAtFloorBoundaries]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testRecoveryRulesAreAppliedAtFloorBoundaries]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testRewardCanOnlyBeSelectedOnce]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testRewardCanOnlyBeSelectedOnce]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testRewardLearningRejectsFailedOrUnselectedTracing]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testRewardLearningRejectsFailedOrUnselectedTracing]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testScrollLearningCompletesFloor10SpellsWithoutLegacyTrainingScene]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testScrollLearningCompletesFloor10SpellsWithoutLegacyTrainingScene]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testSealReleaseIsLearnedFromScrollAfterResidualDefeat]' started.
+Test Case '-[DescentAuthorizedCoreTests.ProgressionTests testSealReleaseIsLearnedFromScrollAfterResidualDefeat]' passed (0.000 seconds).
+Test Suite 'ProgressionTests' passed at 2026-10-18 08:12:42.590.
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.018 (0.019) seconds
+Test Suite 'RoomWarmupTests' started at 2026-10-18 08:12:42.590.
+Test Case '-[DescentAuthorizedCoreTests.RoomWarmupTests testEveryBossWarmsNextFloorButFinalBossDoesNot]' started.
+Test Case '-[DescentAuthorizedCoreTests.RoomWarmupTests testEveryBossWarmsNextFloorButFinalBossDoesNot]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.RoomWarmupTests testLegacyBattlesIncludeEightToSevenAndTutorialExit]' started.
+Test Case '-[DescentAuthorizedCoreTests.RoomWarmupTests testLegacyBattlesIncludeEightToSevenAndTutorialExit]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.RoomWarmupTests testLowerBattlesAndInterveningDialogueKeepTheSameDestination]' started.
+Test Case '-[DescentAuthorizedCoreTests.RoomWarmupTests testLowerBattlesAndInterveningDialogueKeepTheSameDestination]' passed (0.000 seconds).
+Test Suite 'RoomWarmupTests' passed at 2026-10-18 08:12:42.593.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.003) seconds
+Test Suite 'StrokeProcessorTests' started at 2026-10-18 08:12:42.593.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testAutomaticCaptureLetsPencilReplaceActiveFinger]' started.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testAutomaticCaptureLetsPencilReplaceActiveFinger]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testCaptureCompletesCancelsAndLimitsStrokes]' started.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testCaptureCompletesCancelsAndLimitsStrokes]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testCaptureRejectsInputOutsideConfiguredMode]' started.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testCaptureRejectsInputOutsideConfiguredMode]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testFingerSmoothingReducesMiddlePointJitterAndPreservesEndpoints]' started.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testFingerSmoothingReducesMiddlePointJitterAndPreservesEndpoints]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testPreferenceChangeCancelsDisallowedActiveStroke]' started.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testPreferenceChangeCancelsDisallowedActiveStroke]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testPreferenceChangeCancelsEvenStillAllowedActiveStroke]' started.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testPreferenceChangeCancelsEvenStillAllowedActiveStroke]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testProcessorClampsPointsToCanvasBounds]' started.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testProcessorClampsPointsToCanvasBounds]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testProcessorDropsNonFiniteAndOutOfOrderSamples]' started.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testProcessorDropsNonFiniteAndOutOfOrderSamples]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testProcessorNormalizesCanvasCoordinatesToPercentages]' started.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testProcessorNormalizesCanvasCoordinatesToPercentages]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testProcessorReducesDenseDuplicateSamples]' started.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testProcessorReducesDenseDuplicateSamples]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testProcessorRejectsInvalidCanvasAndEmptySamples]' started.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testProcessorRejectsInvalidCanvasAndEmptySamples]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testUndoAndClearManageCompletedStrokes]' started.
+Test Case '-[DescentAuthorizedCoreTests.StrokeProcessorTests testUndoAndClearManageCompletedStrokes]' passed (0.001 seconds).
+Test Suite 'StrokeProcessorTests' passed at 2026-10-18 08:12:42.599.
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.002 (0.006) seconds
+Test Suite 'TutorialRuntimeTests' started at 2026-10-18 08:12:42.599.
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testActiveStepPersistsAcrossSaveRestore]' started.
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testActiveStepPersistsAcrossSaveRestore]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testExistingSaveWithoutLoadoutGuideFlagCanOpenNewGuide]' started.
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testExistingSaveWithoutLoadoutGuideFlagCanOpenNewGuide]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testInvalidActiveTutorialStateIsRejected]' started.
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testInvalidActiveTutorialStateIsRejected]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testLegacySaveMigratesWithoutForcingCompletedFloorTutorials]' started.
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testLegacySaveMigratesWithoutForcingCompletedFloorTutorials]' passed (0.001 seconds).
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testLoadoutGuideIsRestrictedToFloor9Preparation]' started.
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testLoadoutGuideIsRestrictedToFloor9Preparation]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testLoadoutGuideResumesEveryPageWithoutStartingEncounter]' started.
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testLoadoutGuideResumesEveryPageWithoutStartingEncounter]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testReplayRequestOverridesCompletedAndSkippedSequence]' started.
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testReplayRequestOverridesCompletedAndSkippedSequence]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testResetTutorialsKeepsGameplayProgress]' started.
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testResetTutorialsKeepsGameplayProgress]' passed (0.002 seconds).
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testTutorialFailureCountsPersistThroughRoundTrip]' started.
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testTutorialFailureCountsPersistThroughRoundTrip]' passed (0.000 seconds).
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testTutorialSequenceCanResumeCompleteAndSkip]' started.
+Test Case '-[DescentAuthorizedCoreTests.TutorialRuntimeTests testTutorialSequenceCanResumeCompleteAndSkip]' passed (0.000 seconds).
+Test Suite 'TutorialRuntimeTests' passed at 2026-10-18 08:12:42.613.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.011 (0.014) seconds
+Test Suite 'DescentAuthorizedCoreTests.xctest' passed at 2026-10-18 08:12:42.613.
+	 Executed 265 tests, with 0 failures (0 unexpected) in 1.362 (1.428) seconds
+Test Suite 'All tests' passed at 2026-10-18 08:12:42.613.
+	 Executed 265 tests, with 0 failures (0 unexpected) in 1.362 (1.432) seconds
+􀟈  Test run started.
+􀄵  Testing Library Version: 2084
+􀄵  Target Platform: arm64e-apple-macos14.0
+􁁛  Test run with 0 tests in 0 suites passed after 0.001 seconds.

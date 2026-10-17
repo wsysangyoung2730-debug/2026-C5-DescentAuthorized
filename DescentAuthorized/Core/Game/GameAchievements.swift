@@ -22,15 +22,55 @@ struct GameAchievementUpdate: Codable, Equatable, Sendable {
 }
 
 struct GameAchievementLedger: Codable, Equatable, Sendable {
+    /// Version 1 used demo-ending and single-run collection rules.
+    private static let currentRulesVersion = 2
+    private var rulesVersion = currentRulesVersion
     private(set) var desiredPercentages: [GameAchievementID: Int] = [:]
     private(set) var reportedPercentages: [String: [GameAchievementID: Int]] = [:]
+    private(set) var lifetimeLearnedSpells: Set<SpellID> = []
 
-    mutating func merge(_ updates: [GameAchievementUpdate]) {
-        for update in updates where update.percentComplete > 0 {
+    init() {}
+
+    private enum CodingKeys: String, CodingKey {
+        case rulesVersion, desiredPercentages, reportedPercentages, lifetimeLearnedSpells
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        let previousVersion = try values.decodeIfPresent(Int.self, forKey: .rulesVersion) ?? 1
+        desiredPercentages = try values.decodeIfPresent(
+            [GameAchievementID: Int].self, forKey: .desiredPercentages
+        ) ?? [:]
+        reportedPercentages = try values.decodeIfPresent(
+            [String: [GameAchievementID: Int]].self, forKey: .reportedPercentages
+        ) ?? [:]
+        lifetimeLearnedSpells = try values.decodeIfPresent(
+            Set<SpellID>.self, forKey: .lifetimeLearnedSpells
+        ) ?? []
+        if previousVersion < Self.currentRulesVersion {
+            // Rebuild these from the saved game, not stale demo percentages queued offline.
+            // Successful server reports stay recorded: Game Center cannot reduce them.
+            for id in [GameAchievementID.spellArchive, .descentProcedure, .demoCompleted] {
+                desiredPercentages.removeValue(forKey: id)
+            }
+        }
+        rulesVersion = Self.currentRulesVersion
+    }
+
+    mutating func merge(
+        _ updates: [GameAchievementUpdate],
+        learnedSpells: Set<SpellID> = []
+    ) {
+        lifetimeLearnedSpells.formUnion(learnedSpells)
+        // The archive is a collection across runs; a percentage cannot identify duplicates.
+        for update in updates where update.percentComplete > 0 && update.id != .spellArchive {
             desiredPercentages[update.id] = max(
                 desiredPercentages[update.id] ?? 0,
                 update.percentComplete
             )
+        }
+        if !lifetimeLearnedSpells.isEmpty {
+            desiredPercentages[.spellArchive] = lifetimeLearnedSpells.count * 100 / SpellID.allCases.count
         }
     }
 
@@ -80,10 +120,6 @@ struct GameAchievementTracker: Sendable {
                 .recordsCleared,
                 earned: progress.defeatedEnemies.contains(.recordsAdministrator)
             ),
-            GameAchievementUpdate(
-                id: .spellArchive,
-                percentComplete: progress.learnedSpells.count * 100 / SpellID.allCases.count
-            ),
             binary(
                 .absoluteBarrierDispelled,
                 earned: containsSuccessfulAbsoluteBarrierDispel(in: events)
@@ -96,7 +132,8 @@ struct GameAchievementTracker: Sendable {
                 id: .descentProcedure,
                 percentComplete: descentProgress(for: progress)
             ),
-            binary(.demoCompleted, earned: progress.isDemoComplete)
+            // The old stored isDemoComplete flag marks the handoff from 8F to 7F.
+            binary(.demoCompleted, earned: progress.expansion?.isComplete == true)
         ]
         return updates.filter { $0.percentComplete > 0 }
     }
@@ -109,12 +146,8 @@ struct GameAchievementTracker: Sendable {
     }
 
     private func descentProgress(for progress: GameProgress) -> Int {
-        switch progress.currentFloor {
-        case .floor10: 0
-        case .floor9: 34
-        case .floor8: 67
-        case .floor7: 100
-        }
+        let floor = min(10, max(1, progress.displayedFloorNumber))
+        return (10 - floor) * 100 / 9
     }
 
     private func containsSuccessfulAbsoluteBarrierDispel(

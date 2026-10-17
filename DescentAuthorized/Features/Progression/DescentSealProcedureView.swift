@@ -129,6 +129,7 @@ struct DescentSealProcedureConfiguration {
 }
 
 struct DescentDoorSceneView: View {
+    @Environment(\.isGlyphInputSuspended) private var isSuspended
     @EnvironmentObject private var appSettings: AppSettings
     @EnvironmentObject private var gameFeedback: GameFeedbackManager
     @EnvironmentObject private var gameSession: GameSessionStore
@@ -141,6 +142,7 @@ struct DescentDoorSceneView: View {
     @State private var transitionTask: Task<Void, Never>?
     @State private var isSealInterfaceVisible = true
     @State private var isCompletingDescent = false
+    @State private var hasPendingDescent = false
     @State private var transitionError: String?
 
     var body: some View {
@@ -180,10 +182,21 @@ struct DescentDoorSceneView: View {
             value: isSealInterfaceVisible
         )
         .onAppear {
+            // Suspension may lift before a dismissed settings cover sends
+            // onAppear; do not reset a handoff that already resumed.
+            guard !isCompletingDescent else { return }
+            if hasPendingDescent {
+                // A settings cover can remove and reappear this same view.
+                // Keep approval even on floors without durable stage counts.
+                setDescentState(.ready)
+                completeDescent()
+                return
+            }
             transitionTask?.cancel()
             transitionTask = nil
             isSealInterfaceVisible = true
             isCompletingDescent = false
+            hasPendingDescent = false
             transitionError = nil
             retryLoadingPresentation = nil
             sceneController.resetProgressionPresentation(reducedMotion: appSettings.reducedMotion)
@@ -197,7 +210,18 @@ struct DescentDoorSceneView: View {
         .onChange(of: appSettings.reducedMotion) { _, reducedMotion in
             sceneController.setDescentPresentation(descentState, reducedMotion: reducedMotion)
         }
+        .onChange(of: isSuspended) { _, suspended in
+            if suspended, isCompletingDescent {
+                suspendDescentHandoff()
+            } else if !suspended, hasPendingDescent {
+                completeDescent()
+            }
+        }
         .onDisappear {
+            if isCompletingDescent {
+                hasPendingDescent = true
+                isCompletingDescent = false
+            }
             transitionTask?.cancel()
             transitionTask = nil
             retryLoadingPresentation = nil
@@ -294,6 +318,11 @@ struct DescentDoorSceneView: View {
 
     private func completeDescent() {
         guard !isCompletingDescent else { return }
+        guard !isSuspended else {
+            hasPendingDescent = true
+            return
+        }
+        hasPendingDescent = false
         let isRetry = transitionError != nil
         isCompletingDescent = true
         transitionError = nil
@@ -313,11 +342,25 @@ struct DescentDoorSceneView: View {
             setDescentState(.open)
             try? await Task.sleep(for: RealityDescentTransitionTiming.openStateHold)
             guard !Task.isCancelled else { return }
+            guard !isSuspended else {
+                suspendDescentHandoff()
+                return
+            }
             guard gameSession.sendChecked(isExpansion ? .advanceExpansion : .approveDescentDoor) else {
                 restoreDescentRetry("하강 진행을 저장하지 못했습니다. 다시 진행해 주세요.")
                 return
             }
         }
+    }
+
+    private func suspendDescentHandoff() {
+        transitionTask?.cancel()
+        transitionTask = nil
+        isCompletingDescent = false
+        hasPendingDescent = true
+        // Preserve approval, but replay the opening when visible instead of
+        // advancing a floor behind the pause or resize guidance.
+        setDescentState(.ready)
     }
 
     private func restoreDescentRetry(_ message: String) {
@@ -338,6 +381,7 @@ enum DescentSealValidationFeedback {
 }
 
 struct DescentSealProcedureView: View {
+    @Environment(\.isGlyphInputSuspended) private var isSuspended
     @EnvironmentObject private var gameSession: GameSessionStore
 
     let configuration: DescentSealProcedureConfiguration
@@ -443,6 +487,13 @@ struct DescentSealProcedureView: View {
         .onDisappear {
             validationTask?.cancel()
             validationTask = nil
+        }
+        .onChange(of: isSuspended) { _, suspended in
+            guard suspended, phase == .drawing else { return }
+            selectedNodes.removeAll()
+            dragLocation = nil
+            phase = .ready
+            onStateChanged(.ready)
         }
         .onChange(of: gameSession.progress.tutorialProgress.requestedReplay) { _, replay in
             if replay == .floor10DescentSeal {
@@ -707,7 +758,8 @@ struct DescentSealProcedureView: View {
     private func inputGesture(in size: CGSize) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .local)
             .onChanged { value in
-                guard phase != .approved,
+                guard !isSuspended,
+                      phase != .approved,
                       phase != .failed,
                       !isGameOver,
                       !isRetrying,
@@ -723,7 +775,7 @@ struct DescentSealProcedureView: View {
             }
             .onEnded { _ in
                 dragLocation = nil
-                guard !selectedNodes.isEmpty, phase != .approved, phase != .failed,
+                guard !isSuspended, !selectedNodes.isEmpty, phase != .approved, phase != .failed,
                       !isGameOver, !isRetrying, coachStep == nil else { return }
                 evaluateInput()
             }

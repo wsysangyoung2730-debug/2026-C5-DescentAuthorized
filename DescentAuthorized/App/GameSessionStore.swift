@@ -63,6 +63,8 @@ final class GameSessionStore: ObservableObject {
     var progress: GameProgress { combatSnapshot?.progress ?? session.progress }
     var battleState: BattleState? { combatSnapshot?.battle ?? session.battleState }
     var hasSavedProgress: Bool { coordinator.hasSavedProgress }
+    /// An unreadable save still belongs to the player and requires explicit replacement.
+    var requiresNewGameConfirmation: Bool { hasSavedProgress || isRecoverySession }
     var presentation: DemoScenePresentation {
         .presentation(for: progress.currentScene, expansion: progress.expansion)
     }
@@ -112,7 +114,14 @@ final class GameSessionStore: ObservableObject {
     }
 
     @discardableResult
-    func startNewGame() -> Bool {
+    func startNewGame(replacingSavedProgress: Bool = false) -> Bool {
+        guard !requiresNewGameConfirmation || replacingSavedProgress else {
+            presentedError = PresentedGameError(
+                title: "저장된 진행이 있습니다",
+                message: "처음부터 시작하려면 기존 진행 초기화를 확인해 주세요."
+            )
+            return false
+        }
         cancelCombatPresentation()
         do {
             if isRecoverySession {
@@ -242,7 +251,8 @@ final class GameSessionStore: ObservableObject {
 
     private func reportAchievementSnapshot(events: [DemoSessionEvent] = []) {
         achievementReporter?.submit(
-            achievementTracker.updates(for: session.progress, events: events)
+            achievementTracker.updates(for: session.progress, events: events),
+            learnedSpells: session.progress.learnedSpells
         )
     }
 

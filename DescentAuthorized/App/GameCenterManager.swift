@@ -4,7 +4,7 @@ import UIKit
 
 @MainActor
 protocol GameAchievementReporting: AnyObject {
-    func submit(_ updates: [GameAchievementUpdate])
+    func submit(_ updates: [GameAchievementUpdate], learnedSpells: Set<SpellID>)
 }
 
 enum GameCenterAuthenticationState: Equatable {
@@ -86,8 +86,8 @@ final class GameCenterManager: ObservableObject, GameAchievementReporting {
         }
     }
 
-    func submit(_ updates: [GameAchievementUpdate]) {
-        ledger.merge(updates)
+    func submit(_ updates: [GameAchievementUpdate], learnedSpells: Set<SpellID>) {
+        ledger.merge(updates, learnedSpells: learnedSpells)
         persistLedger()
         flushPendingAchievements()
     }
@@ -130,6 +130,7 @@ final class GameCenterManager: ObservableObject, GameAchievementReporting {
 
     private func flushPendingAchievements() {
         guard GKLocalPlayer.local.isAuthenticated,
+              GKLocalPlayer.local.scopedIDsArePersistent(),
               !isReporting else {
             return
         }

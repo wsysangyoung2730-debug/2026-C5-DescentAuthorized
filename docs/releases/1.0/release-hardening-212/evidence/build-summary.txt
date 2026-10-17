@@ -1,0 +1,56 @@
+2026-10-18 release hardening verification
+Source: d7f474f
+Xcode 27.0 (27A266a), SDK 27.0
+No distribution signing, App Store upload, TestFlight or physical-device verification.
+
+/tmp/c5-release-20261018-build-verified.log: ** BUILD SUCCEEDED **
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealityCombatPresentation.swift:1490:37: warning: 'generate(from:withName:options:)' was deprecated in iOS 18.0: replaced by 'init(image:withName:options:)' [#DeprecatedDeclaration]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealityCombatPresentation.swift:810:16: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)' [#DeprecatedDeclaration]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealityProgressionPresentation.swift:179:50: warning: 'generate(from:withName:options:)' was deprecated in iOS 18.0: replaced by 'init(image:withName:options:)' [#DeprecatedDeclaration]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealityProgressionPresentation.swift:202:13: warning: initialization of immutable value 'generation' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealitySceneController.swift:221:19: warning: value 'arView' was defined but never used; consider replacing with boolean test [#NoUsage]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealitySceneController.swift:2405:13: warning: variable 'fixtures' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealitySceneController.swift:2614:30: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)' [#DeprecatedDeclaration]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealitySceneController.swift:2757:27: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)' [#DeprecatedDeclaration]
+2026-10-18 08:25:16.808 appintentsmetadataprocessor[86165:8651227] warning: Metadata extraction skipped, no AppIntents.framework dependency found
+/tmp/c5-release-20261018-archive-verified.log: ** ARCHIVE SUCCEEDED **
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealityCombatPresentation.swift:1490:37: warning: 'generate(from:withName:options:)' was deprecated in iOS 18.0: replaced by 'init(image:withName:options:)' [#DeprecatedDeclaration]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealityCombatPresentation.swift:810:16: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)' [#DeprecatedDeclaration]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealityProgressionPresentation.swift:179:50: warning: 'generate(from:withName:options:)' was deprecated in iOS 18.0: replaced by 'init(image:withName:options:)' [#DeprecatedDeclaration]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealityProgressionPresentation.swift:202:13: warning: initialization of immutable value 'generation' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealitySceneController.swift:221:19: warning: value 'arView' was defined but never used; consider replacing with boolean test [#NoUsage]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealitySceneController.swift:2405:13: warning: variable 'fixtures' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealitySceneController.swift:2614:30: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)' [#DeprecatedDeclaration]
+/Users/sangyoung/.codex/.chatgpt-projects/g-p-6a72d926fdc08191bf2f8c4848fade1f/c5-final-assets/DescentAuthorized/Reality/RealitySceneController.swift:2757:27: warning: 'loadAsync(contentsOf:withName:)' was deprecated in iOS 18.0: replaced by 'init(contentsOf:withName:)' [#DeprecatedDeclaration]
+2026-10-18 08:25:23.282 appintentsmetadataprocessor[86199:8651486] warning: Metadata extraction skipped, no AppIntents.framework dependency found
+
+/tmp/c5-release-20261018-verified.xcarchive/Products/Applications/DescentAuthorized.app
+PASS: Korean bundle language
+PASS: iPad only
+PASS: Legacy fullscreen
+PASS: Modern window support
+PASS: Single shared game session
+PASS: Four iPad orientations
+PASS: Elapsed-time API reason
+PASS: Local preferences API reason
+
+/tmp/c5-release-20261018-build/Build/Products/Release-iphonesimulator/DescentAuthorized.app
+PASS: Korean bundle language
+PASS: iPad only
+PASS: Legacy fullscreen
+PASS: Modern window support
+PASS: Single shared game session
+PASS: Four iPad orientations
+PASS: Elapsed-time API reason
+PASS: Local preferences API reason
+
+Unsigned device bundle: 1,599,421,418 bytes / 3000 files
+Inspection warnings: []
+
+Core tests: 265 executed, 0 failures (evidence/core-tests.log).
+Manual UI interaction: Device Hub CUA access timed out; button/rotation interaction was not completed.
+
+Final simulator source d7f474f installed and launched on C5 Release Audit 214 (iPad mini, iPadOS 27).
+Unsupported save version 999: recovery alert visibly displayed, original SHA-256 preserved after final-app relaunch.
+Fixture SHA-256: 3f4467f24f629d7a0b4c78925972076f94f487e0de75cf8fd8927b296966f1e3
+Fixture moved to release-audit-invalid-save.fixture in the isolated QA container after testing; no user save changed.

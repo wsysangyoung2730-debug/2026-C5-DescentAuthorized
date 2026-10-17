@@ -569,10 +569,10 @@
 			};
 			buildConfigurationList = 900000000000000000000001 /* Build configuration list for PBXProject "DescentAuthorized" */;
 			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = en;
+			developmentRegion = ko;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
+				ko,
 				Base,
 			);
 			mainGroup = 400000000000000000000001;
@@ -757,14 +757,15 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 36545XSWN8;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DescentAuthorized/Resources/AppInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "하강 승인: 제0균열";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UIInterfaceOrientation = UIInterfaceOrientationLandscapeLeft;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.wsysangyoung.DescentAuthorized;
@@ -788,14 +789,15 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 36545XSWN8;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DescentAuthorized/Resources/AppInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "하강 승인: 제0균열";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UIInterfaceOrientation = UIInterfaceOrientationLandscapeLeft;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.wsysangyoung.DescentAuthorized;

@@ -1,6 +1,7 @@
 # 출시 1.0 문서
 
-> 최신 출시 점검: [2026-10-02 App Store 감사 #208](app-store-audit-208/README.md)
+> 최신 출시 보완: [2026-10-18 #212–#215 결과](release-hardening-212/README.md)
+> 이전 정적 감사: [#208](app-store-audit-208/README.md)
 > 현재 판정: 제출 전 보완 및 실기기·외부 확인 필요. [출시 확인표](RELEASE_CHECKLIST.md) 참조.
 > 아래 범위·격차 문서의 기준은 과거 계획이다.
 > 과거 계획 기준: `develop @ dd2f8e2` (`#74` 포함)

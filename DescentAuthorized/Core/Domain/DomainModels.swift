@@ -636,6 +636,9 @@ struct GameProgress: Codable, Equatable, Sendable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let decodedVersion = try container.decodeIfPresent(Int.self, forKey: .saveVersion) ?? 1
+        guard (1...Self.currentSaveVersion).contains(decodedVersion) else {
+            throw GameProgressValidationError.unsupportedVersion(decodedVersion)
+        }
         currentFloor = try container.decode(FloorID.self, forKey: .currentFloor)
         currentScene = try container.decode(SceneID.self, forKey: .currentScene)
         checkpoint = try container.decode(CheckpointID.self, forKey: .checkpoint)

@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import DescentAuthorizedCore
 
@@ -121,6 +122,73 @@ final class GameProgressValidatorTests: XCTestCase {
                 .missingRequirement("잔광 말소 훈련 완료")
             )
         }
+    }
+
+    func testMalformedExpansionIsRejectedBeforeCheckpointMigration() throws {
+        let malformed: [[String: Any]] = [
+            ["floorNumber": 1, "stage": "recordReward", "residualIndex": 1],
+            ["floorNumber": 2, "stage": "recordReward", "residualIndex": 1],
+            ["floorNumber": 0, "stage": "entrance"],
+            ["floorNumber": 8, "stage": "bossBattle"],
+            ["floorNumber": 2, "stage": "descent", "descentStage": 4],
+            ["floorNumber": 2, "stage": "preparation", "residualIndex": -1],
+            ["floorNumber": 7, "stage": "preparation", "residualIndex": 1]
+        ]
+        for expansion in malformed {
+            let data = try savedData(expansion: expansion)
+            XCTAssertThrowsError(try JSONDecoder().decode(GameProgress.self, from: data)) { error in
+                guard case DecodingError.dataCorrupted = error else {
+                    return XCTFail("Expected invalid expansion to throw safely: \(error)")
+                }
+            }
+        }
+    }
+
+    func testInvalidExpansionRestorePreservesOriginalSaveFile() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("progress.json")
+        let data = try savedData(expansion: ["floorNumber": 2, "stage": "recordReward", "residualIndex": 1])
+        try data.write(to: url)
+
+        XCTAssertThrowsError(try GameSessionCoordinator(saveStore: FileGameSaveStore(fileURL: url)))
+        XCTAssertEqual(try Data(contentsOf: url), data)
+    }
+
+    func testSerializedUnsupportedSaveVersionIsRejectedBeforeMigration() throws {
+        for version in [-1, 0, GameProgress.currentSaveVersion + 1] {
+            var json = try XCTUnwrap(JSONSerialization.jsonObject(
+                with: JSONEncoder().encode(GameProgress.newGame)
+            ) as? [String: Any])
+            json["saveVersion"] = version
+            let data = try JSONSerialization.data(withJSONObject: json)
+            XCTAssertThrowsError(try JSONDecoder().decode(GameProgress.self, from: data)) { error in
+                XCTAssertEqual(error as? GameProgressValidationError, .unsupportedVersion(version))
+            }
+        }
+    }
+
+    func testInvalidInMemoryExpansionDoesNotCrashCheckpointMigration() {
+        var progress = GameProgress.newGame
+        progress.currentScene = .demoComplete
+        progress.isDemoComplete = true
+        progress.expansion = .init(floorNumber: 2, stage: .recordReward, residualIndex: 1)
+        let checkpoint = progress.checkpoint
+        progress.migrateExpansionCheckpoint()
+        XCTAssertEqual(progress.checkpoint, checkpoint)
+    }
+
+    private func savedData(expansion: [String: Any]) throws -> Data {
+        var seed = GameProgress.newGame
+        seed.furthestCheckpoint = .towerHandoffComplete
+        var controller = GameProgressionController(progress: seed)
+        _ = try controller.travel(to: .floor2Encounter)
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(
+            with: JSONEncoder().encode(controller.progress)
+        ) as? [String: Any])
+        json["expansion"] = expansion
+        return try JSONSerialization.data(withJSONObject: json)
     }
 
     private func assertValid(

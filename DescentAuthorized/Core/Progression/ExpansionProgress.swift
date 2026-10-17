@@ -54,6 +54,14 @@ struct ExpansionProgress: Codable, Equatable, Sendable {
             stage = .entrance
             descentStage = 0
         }
+        // Check persisted values before checkpoint migration derives enum identifiers.
+        // Invalid stages such as a 2F record reward have no corresponding checkpoint.
+        guard isValid else {
+            throw DecodingError.dataCorrupted(.init(
+                codingPath: decoder.codingPath,
+                debugDescription: "Invalid expansion floor, stage, or progress counters"
+            ))
+        }
     }
 
     var isComplete: Bool { floorNumber == 1 && stage == .complete }
@@ -346,7 +354,8 @@ extension GameProgress {
 
     /// Older saves used the 8F completion ID throughout the extension.
     mutating func migrateExpansionCheckpoint() {
-        guard currentScene == .demoComplete, isDemoComplete, let expansion else { return }
+        guard currentScene == .demoComplete, isDemoComplete,
+              let expansion, expansion.isValid else { return }
         var current = expansion.replayCheckpoint
         if expansion.stage == .entrance,
            ExpansionInvestigationCatalog.isComplete(floor: expansion.floorNumber, readRecordIDs: readRecordIDs) {
