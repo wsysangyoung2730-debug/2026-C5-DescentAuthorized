@@ -1,15 +1,26 @@
+import Combine
 import SwiftUI
+import UIKit
 
 @MainActor
 final class AppSettings: ObservableObject {
     @Published private(set) var settings: GameSettings
     @Published var showsPersistenceError = false
+    @Published private(set) var systemReducedMotion = UIAccessibility.isReduceMotionEnabled
 
     private var manager: GameSettingsManager
+    private var accessibilityObserver: AnyCancellable?
 
     init(store: any GameSettingsStore = UserDefaultsGameSettingsStore()) {
         manager = GameSettingsManager(store: store)
         settings = manager.settings
+        accessibilityObserver = NotificationCenter.default.publisher(
+            for: UIAccessibility.reduceMotionStatusDidChangeNotification
+        )
+        .receive(on: RunLoop.main)
+        .sink { [weak self] _ in
+            self?.systemReducedMotion = UIAccessibility.isReduceMotionEnabled
+        }
     }
 
     var inputPreference: DrawingInputPreference {
@@ -21,7 +32,7 @@ final class AppSettings: ObservableObject {
     }
 
     var reducedFlashes: Bool { settings.reducedFlashes }
-    var reducedMotion: Bool { settings.reducedMotion }
+    var reducedMotion: Bool { settings.reducedMotion || systemReducedMotion }
     var graphicsQuality: GraphicsQuality { settings.graphicsQuality }
 
     func setGraphicsQuality(_ quality: GraphicsQuality) {

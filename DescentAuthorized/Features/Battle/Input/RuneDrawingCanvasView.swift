@@ -277,6 +277,7 @@ final class RuneDrawingCanvasView: UIView {
         isOpaque = false
         isMultipleTouchEnabled = true
         contentMode = .redraw
+        isAccessibilityElement = true
         accessibilityLabel = "마법진 입력판"
         accessibilityTraits = [.allowsDirectInteraction]
         updateAccessibilityValue()
